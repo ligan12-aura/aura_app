@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#3d4450">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="AURA">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<style>
+  /* PWA: sin zoom automÃ¡tico de iOS al enfocar campos y texto estable al rotar */
+  html { -webkit-text-size-adjust: 100%; }
+  @media (max-width: 900px) { input, select, textarea { font-size: 16px !important; } }
+  main > *, .row2 > *, .row3 > *, fieldset { min-width: 0; }
+  input, select { min-width: 0; max-width: 100%; }
+  .memo, .tablaWrap { overflow-x: auto; }
+  svg { max-width: 100%; }
+</style>
+<title>Ingeniería Estructural</title>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --panel: #ffffff;
+    --ink: #1d2330;
+    --muted: #5f6b7a;
+    --line: #dde1e7;
+    --head: #3d4450;
+    --calc: #e8711c;
+    --esp: #2f7d6d;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 "Segoe UI", system-ui, -apple-system, sans-serif; min-height: 100vh; }
+  header { background: var(--head); color: #fff; padding: 14px 24px; }
+  header h1 { margin: 0; font-size: 19px; font-weight: 600; }
+  header span { color: #c9ced6; font-size: 13px; }
+  main { max-width: 900px; margin: 0 auto; padding: 40px 16px; }
+  .intro { margin: 0 0 24px; color: var(--muted); font-size: 15px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 680px) { .grid { grid-template-columns: 1fr; } main { padding: 24px 16px; } }
+
+  .mat { background: var(--panel); border: 1px solid var(--line); border-top: 4px solid var(--c); border-radius: 10px; overflow: hidden; }
+  .mat > button { all: unset; box-sizing: border-box; width: 100%; display: flex; gap: 16px; align-items: center; padding: 18px 20px; cursor: pointer; }
+  .mat > button:focus-visible { outline: 2px solid var(--c); outline-offset: -2px; }
+  .mat > button:hover { background: #fafbfc; }
+  .mat svg.ico { flex: 0 0 64px; height: 64px; }
+  .mat .tt { flex: 1; }
+  .mat h2 { margin: 0; font-size: 18px; }
+  .mat p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+  .mat .chev { font-size: 18px; color: var(--muted); transition: transform .2s; }
+  .mat.open .chev { transform: rotate(180deg); }
+  .calculo { --c: var(--calc); }
+  .espectros { --c: var(--esp); }
+
+  .opts { display: none; border-top: 1px solid var(--line); padding: 8px; }
+  .mat.open .opts { display: block; }
+  .opts a { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 6px; text-decoration: none; color: var(--ink); }
+  .opts a:hover, .opts a:focus-visible { background: #f2f4f7; outline: none; }
+  .opts a b { display: block; font-weight: 600; }
+  .opts a small { color: var(--muted); }
+  .opts a .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: 0 0 8px; }
+  .opts a .arr { margin-left: auto; color: var(--c); font-weight: 700; }
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 10px 0 24px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Ingeniería estructural</h1>
+  <span>Cálculo de elementos y espectros de diseño sísmico</span>
+</header>
+
+<main>
+  <p class="intro">Seleccione una herramienta.</p>
+  <div class="grid">
+
+    <section class="mat calculo">
+      <button type="button" aria-expanded="false" aria-controls="optCalc">
+        <svg class="ico" viewBox="0 0 64 64" aria-hidden="true">
+          <rect x="8" y="10" width="48" height="6" rx="1" fill="#fbe3d1" stroke="#e8711c" stroke-width="2"/>
+          <rect x="13" y="16" width="6" height="38" fill="#fbe3d1" stroke="#e8711c" stroke-width="2"/>
+          <rect x="45" y="16" width="6" height="38" fill="#fbe3d1" stroke="#e8711c" stroke-width="2"/>
+          <line x1="6" y1="56" x2="58" y2="56" stroke="#3d4450" stroke-width="2.5"/>
+        </svg>
+        <span class="tt"><h2>Cálculo estructural</h2><p>Acero, hormigón armado y madera</p></span>
+        <span class="chev">▾</span>
+      </button>
+      <div class="opts" id="optCalc">
+        <a href="acero.html"><span class="dot"></span><span><b>Acero estructural</b><small>Vigas y columnas · AISC 360-16</small></span><span class="arr">→</span></a>
+        <a href="hormigon.html"><span class="dot"></span><span><b>Hormigón armado</b><small>Vigas, losas y muros · ACI 318-08</small></span><span class="arr">→</span></a>
+        <a href="madera.html"><span class="dot"></span><span><b>Madera</b><small>Envigados · NCh 1198:2024</small></span><span class="arr">→</span></a>
+      </div>
+    </section>
+
+    <section class="mat espectros">
+      <button type="button" aria-expanded="false" aria-controls="optEsp">
+        <svg class="ico" viewBox="0 0 64 64" aria-hidden="true">
+          <line x1="10" y1="54" x2="58" y2="54" stroke="#3d4450" stroke-width="2"/>
+          <line x1="10" y1="54" x2="10" y2="8" stroke="#3d4450" stroke-width="2"/>
+          <path d="M10 40 C 16 18, 20 14, 26 16 S 40 40, 56 47" fill="none" stroke="#2f7d6d" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+        <span class="tt"><h2>Espectros de diseño</h2><p>Espectro elástico para ETABS · normas chilenas</p></span>
+        <span class="chev">▾</span>
+      </button>
+      <div class="opts" id="optEsp">
+        <a href="espectros.html?norma=433-1996"><span class="dot"></span><span><b>NCh 433 Of.1996</b><small>Diseño sísmico de edificios</small></span><span class="arr">→</span></a>
+        <a href="espectros.html?norma=ds117"><span class="dot"></span><span><b>DS 117 (2011)</b><small>Espectro elástico Sae, Art. 14</small></span><span class="arr">→</span></a>
+        <a href="espectros.html?norma=433-2026"><span class="dot"></span><span><b>NCh 433:2026</b><small>Diseño sísmico de edificios</small></span><span class="arr">→</span></a>
+        <a href="espectros.html?norma=2369-2025"><span class="dot"></span><span><b>NCh 2369:2025</b><small>Estructuras e instalaciones industriales</small></span><span class="arr">→</span></a>
+      </div>
+    </section>
+
+  </div>
+</main>
+<footer>Herramienta de apoyo académico. Verifique siempre los resultados.</footer>
+
+<script>
+"use strict";
+document.querySelectorAll(".mat > button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const card = btn.parentElement;
+    btn.setAttribute("aria-expanded", card.classList.toggle("open"));
+  });
+});
+</script>
+<script>
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+</script>
+</body>
+</html>

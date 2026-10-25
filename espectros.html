@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#3d4450">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="AURA">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<style>
+  /* PWA: sin zoom automÃ¡tico de iOS al enfocar campos y texto estable al rotar */
+  html { -webkit-text-size-adjust: 100%; }
+  @media (max-width: 900px) { input, select, textarea { font-size: 16px !important; } }
+  main > *, .row2 > *, .row3 > *, fieldset { min-width: 0; }
+  input, select { min-width: 0; max-width: 100%; }
+  .memo, .tablaWrap { overflow-x: auto; }
+  svg { max-width: 100%; }
+</style>
+<title>Espectros de Diseño</title>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --panel: #ffffff;
+    --ink: #1d2330;
+    --muted: #5f6b7a;
+    --line: #dde1e7;
+    --grid: #e8ebef;
+    --accent: #2f7d6d;
+    --serie: #2a6fb0;
+    --head: #3d4450;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 "Segoe UI", system-ui, -apple-system, sans-serif; }
+  header { background: var(--head); color: #fff; padding: 14px 24px; display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+  header h1 { margin: 0; font-size: 19px; font-weight: 600; }
+  header span { color: #c9ced6; font-size: 13px; }
+  header a.home { color: #fff; text-decoration: none; font-size: 13px; border: 1px solid #6b7380; border-radius: 4px; padding: 3px 9px; }
+  header a.home:hover { background: #4d5562; }
+  main { display: grid; grid-template-columns: 330px 1fr; gap: 20px; padding: 20px 24px; max-width: 1400px; margin: 0 auto; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; padding: 16px; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+  .panel > h2 { margin: 0; padding: 10px 16px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); border-bottom: 1px solid var(--line); }
+  .body { padding: 14px 16px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
+  select, input[type=number] { width: 100%; padding: 7px 9px; border: 1px solid var(--line); border-radius: 5px; font: inherit; background: #fff; color: var(--ink); }
+  select:focus, input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .unit { color: var(--muted); font-size: 11px; }
+  fieldset { border: 1px solid var(--line); border-radius: 6px; margin: 12px 0 0; padding: 4px 12px 12px; }
+  legend { font-size: 12px; font-weight: 600; color: var(--head); padding: 0 4px; }
+  .hidden { display: none !important; }
+  .nota { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; padding: 14px 16px 0; }
+  .tile { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; }
+  .tile .t { font-size: 12px; color: var(--muted); }
+  .tile .v { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tile .s { font-size: 12px; color: var(--muted); }
+  .graf { position: relative; padding: 12px 16px 4px; }
+  .graf h3 { margin: 0 0 4px; font-size: 14px; color: var(--head); }
+  .graf .sub { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .graf svg { display: block; width: 100%; height: auto; }
+  .tip { position: absolute; pointer-events: none; background: #1d2330; color: #fff; font-size: 12px; padding: 5px 8px; border-radius: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; transform: translate(-50%, -110%); }
+  .toolbar { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 16px; flex-wrap: wrap; }
+  .btn { padding: 8px 14px; border-radius: 5px; border: 1px solid var(--accent); background: var(--accent); color: #fff; font: inherit; font-size: 13px; cursor: pointer; }
+  table.par { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.par th { text-align: left; font-size: 11.5px; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); padding: 5px 8px; }
+  table.par td { padding: 5px 8px; border-bottom: 1px solid #eef0f3; font-variant-numeric: tabular-nums; }
+  table.par td.num { text-align: right; }
+  h3.sec { font-size: 13.5px; color: var(--head); margin: 18px 0 6px; padding-bottom: 4px; border-bottom: 2px solid var(--accent); }
+  h3.sec:first-child { margin-top: 4px; }
+  .formula { margin: 10px 0 0; padding: 8px 10px; background: #f3f7f6; border-radius: 5px; font-size: 13px; }
+  details { margin: 0 16px 16px; }
+  details summary { cursor: pointer; font-size: 13px; color: var(--head); font-weight: 600; padding: 6px 0; }
+  .tablaWrap { max-height: 360px; overflow: auto; border: 1px solid var(--line); border-radius: 6px; }
+  .tablaWrap table { width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  .tablaWrap th { position: sticky; top: 0; background: #f7f8fa; text-align: right; padding: 5px 10px; border-bottom: 1px solid var(--line); }
+  .tablaWrap td { text-align: right; padding: 3px 10px; border-bottom: 1px solid #f0f2f5; }
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 10px 0 24px; }
+</style>
+</head>
+<body>
+<header>
+  <a class="home" href="index.html">← Inicio</a>
+  <h1>Espectros de diseño</h1>
+  <span>Espectro elástico de pseudo-aceleración · sin reducir por R* · en unidades de g</span>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>Datos</h2>
+    <div class="body">
+      <label for="norma">Norma</label>
+      <select id="norma">
+        <option value="433-1996">NCh 433 Of.1996</option>
+        <option value="ds117">DS 117 (2011)</option>
+        <option value="433-2026">NCh 433:2026</option>
+        <option value="2369-2025">NCh 2369:2025</option>
+      </select>
+
+      <fieldset>
+        <legend>Parámetros sísmicos</legend>
+        <label for="cat">Categoría de ocupación</label>
+        <select id="cat"></select>
+        <div class="row2">
+          <div><label for="zona">Zona sísmica</label><select id="zona"><option>1</option><option selected>2</option><option>3</option></select></div>
+          <div><label for="suelo">Tipo de suelo</label><select id="suelo"></select></div>
+        </div>
+        <div id="gXi" class="hidden">
+          <label for="xi">Razón de amortiguamiento ξ</label>
+          <input id="xi" type="number" step="0.005" min="0.01" max="0.2" value="0.05">
+        </div>
+        <div class="nota" id="notaNorma"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Factores de reducción R*</legend>
+        <div class="row2">
+          <div><label for="Tx">T*<sub>x</sub> <span class="unit">[s]</span></label><input id="Tx" type="number" step="0.001" min="0" value="0.57"></div>
+          <div><label for="Ty">T*<sub>y</sub> <span class="unit">[s]</span></label><input id="Ty" type="number" step="0.001" min="0" value="0.57"></div>
+        </div>
+        <div class="row2">
+          <div id="gR0"><label for="R0">R<sub>0</sub></label><input id="R0" type="number" step="0.5" min="1" value="11"></div>
+          <div id="gR" class="hidden"><label for="R">R</label><input id="R" type="number" step="0.5" min="1" value="5"></div>
+        </div>
+        <div class="nota">T*: periodo con mayor masa traslacional equivalente en cada dirección (por ejemplo, desde ETABS).</div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Discretización</legend>
+        <div class="row2">
+          <div><label for="dT">ΔT <span class="unit">[s]</span></label><input id="dT" type="number" step="0.01" min="0.005" value="0.01"></div>
+          <div><label for="Tmax">T máx <span class="unit">[s]</span></label><input id="Tmax" type="number" step="0.5" min="0.5" value="4"></div>
+        </div>
+      </fieldset>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 id="titulo">Espectro elástico</h2>
+    <div class="tiles" id="tiles"></div>
+    <div class="graf" id="graf">
+      <h3 id="gTitulo"></h3>
+      <div class="sub">Pseudo-aceleración elástica S<sub>a</sub> [g] versus periodo T [s]. Pase el cursor sobre la curva para leer valores.</div>
+      <div id="svgWrap"></div>
+      <div class="tip hidden" id="tip"></div>
+    </div>
+    <div class="toolbar">
+      <button class="btn" type="button" id="btnTxt">Descargar espectro .txt (ETABS)</button>
+    </div>
+    <div class="body">
+      <h3 class="sec">Factores de reducción de la respuesta</h3>
+      <table class="par" id="tablaR"></table>
+      <div class="formula" id="formulaR"></div>
+      <h3 class="sec">Parámetros del espectro</h3>
+      <table class="par" id="tablaPar"></table>
+      <div class="formula" id="formula"></div>
+      <div class="nota">El archivo .txt contiene dos columnas separadas por tabulación (T en s, S<sub>a</sub> en g), sin dividir por R* ni multiplicar por g: en ETABS defina la función con estos valores y aplique el factor de escala g/R* en el caso de carga.</div>
+    </div>
+    <details>
+      <summary id="sumTabla">Tabla de valores</summary>
+      <div class="tablaWrap"><table id="tablaVal"></table></div>
+    </details>
+  </section>
+</main>
+<footer>Herramienta de apoyo académico basada en la planilla «Espectros Chile». Verifique siempre los parámetros con la norma vigente.</footer>
+
+<script>
+"use strict";
+// ---------------------------------------------------------------------------
+// Tablas normativas (planilla «Espectros Chile», hoja Tablas)
+// ---------------------------------------------------------------------------
+const NORMAS = {
+  "433-1996": {
+    nombre: "NCh 433 Of.1996",
+    cat: { A: 1.2, B: 1.2, C: 1.0, D: 0.6 }, catDef: "C", refCat: "Tabla 6.1",
+    A0: { 1: 0.2, 2: 0.3, 3: 0.4 }, refA0: "Tabla 6.2",
+    suelos: {
+      I: { S: 0.9, T0: 0.15, Tp: 0.20, n: 1.00, p: 2.0 },
+      II: { S: 1.0, T0: 0.30, Tp: 0.35, n: 1.33, p: 1.5 },
+      III: { S: 1.2, T0: 0.75, Tp: 0.85, n: 1.80, p: 1.0 },
+      IV: { S: 1.3, T0: 1.20, Tp: 1.35, n: 1.80, p: 1.0 },
+    }, sueloDef: "II", refSuelo: "Tabla 6.3",
+    nota: "El espectro de NCh 433 Of.1996 no incluye el factor S: S<sub>a</sub> = I·A<sub>0</sub>·α / R*.",
+  },
+  "ds117": {
+    nombre: "DS 117 (2011)",
+    cat: { A: 1.2, B: 1.2, C: 1.0, D: 0.6 }, catDef: "C", refCat: "NCh 433, Tabla 6.1",
+    A0: { 1: 0.2, 2: 0.3, 3: 0.4 }, Z: { 1: 0.5, 2: 0.75, 3: 1.0 }, refA0: "Art. 14",
+    suelos: {
+      I: { Ta: 0, Tb: 0.13, Tc: 0.22, Td: 2.53, aA: 1087, aV: 51.5, aD: 25.0, p: 0.8, T0: 0.15 },
+      II: { Ta: 0, Tb: 0.20, Tc: 0.32, Td: 2.02, aA: 1099, aV: 88.0, aD: 37.5, p: 0.6, T0: 0.30 },
+      III: { Ta: 0, Tb: 0.37, Tc: 0.68, Td: 1.75, aA: 1142, aV: 144, aD: 50.0, p: 0.6, T0: 0.75 },
+    }, sueloDef: "I", refSuelo: "Art. 14",
+    nota: "DS 117, Art. 5: los suelos IV, V o no clasificables requieren estudio especial. α<sub>A</sub>A, α<sub>V</sub>V y α<sub>D</sub>D se multiplican por Z.",
+  },
+  "433-2026": {
+    nombre: "NCh 433:2026",
+    cat: { I: 0.6, II: 1.0, III: 1.2, IV: 1.2 }, catDef: "II", refCat: "Tabla 6",
+    A0: { 1: 0.2, 2: 0.3, 3: 0.4 }, refA0: "Tabla 7",
+    suelos: {
+      A: { S: 0.90, T0: 0.15, Tp: 0.20, n: 1.00, p: 2.0 },
+      B: { S: 1.00, T0: 0.30, Tp: 0.35, n: 1.33, p: 1.5 },
+      C: { S: 1.05, T0: 0.40, Tp: 0.45, n: 1.40, p: 1.6 },
+      D: { S: 1.20, T0: 0.75, Tp: 0.85, n: 1.80, p: 1.0 },
+      E: { S: 1.30, T0: 1.20, Tp: 1.35, n: 1.80, p: 1.0 },
+    }, sueloDef: "D", refSuelo: "Tabla 8",
+    nota: "NCh 433:2026: el sitio tipo F requiere un estudio específico.",
+  },
+  "2369-2025": {
+    nombre: "NCh 2369:2025",
+    cat: { I: 0.8, II: 1.0, III: 1.2, IV: 1.2 }, catDef: "II", refCat: "4.3.2",
+    A0: { 1: 0.2, 2: 0.3, 3: 0.4 }, refA0: "Tabla 3",
+    suelos: {
+      A: { S: 0.90, r: 4.5, T0: 0.15, p: 1.85, q: 3.0, T1: 0.15 },
+      B: { S: 1.00, r: 4.5, T0: 0.30, p: 1.60, q: 3.0, T1: 0.27 },
+      C: { S: 1.05, r: 4.5, T0: 0.40, p: 1.50, q: 3.0, T1: 0.35 },
+      D: { S: 1.00, r: 3.5, T0: 0.60, p: 1.00, q: 2.5, T1: 0.41 },
+      E: { S: 1.00, r: 3.0, T0: 1.20, p: 1.00, q: 2.7, T1: 0.79 },
+    }, sueloDef: "D", refSuelo: "Tabla 6",
+    nota: "NCh 2369:2025: A<sub>r</sub> = 1,4·A<sub>0</sub>; el suelo F requiere espectro de sitio.",
+  },
+};
+
+const $ = (id) => document.getElementById(id);
+const fmt = (x, d = 3) => Number.isFinite(x) ? x.toLocaleString("es-CL", { minimumFractionDigits: d, maximumFractionDigits: d }) : "—";
+const num = (id) => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : 0; };
+
+// ---------------------------------------------------------------------------
+// Pseudo-aceleración elástica Sa(T) en g (sin R*, sin g)
+// ---------------------------------------------------------------------------
+function modelo(norma, cat, zona, suelo, xi) {
+  const N = NORMAS[norma];
+  const I = N.cat[cat], A0 = N.A0[zona], s = N.suelos[suelo];
+  if (norma === "433-1996") {
+    return {
+      par: [["I", I, N.refCat], ["A<sub>0</sub> [g]", A0, N.refA0], ["T<sub>0</sub> [s]", s.T0, N.refSuelo], ["p", s.p, N.refSuelo]],
+      formula: "S<sub>a</sub> = I·A<sub>0</sub>·α ; α = (1 + 4,5(T/T<sub>0</sub>)<sup>p</sup>) / (1 + (T/T<sub>0</sub>)<sup>3</sup>)",
+      Sa: (T) => I * A0 * (1 + 4.5 * (T / s.T0) ** s.p) / (1 + (T / s.T0) ** 3),
+    };
+  }
+  if (norma === "433-2026") {
+    return {
+      par: [["I", I, N.refCat], ["A<sub>0</sub> [g]", A0, N.refA0], ["S", s.S, N.refSuelo], ["T<sub>0</sub> [s]", s.T0, N.refSuelo], ["p", s.p, N.refSuelo]],
+      formula: "S<sub>a</sub> = S·A<sub>0</sub>·I·α ; α = (1 + 4,5(T/T<sub>0</sub>)<sup>p</sup>) / (1 + (T/T<sub>0</sub>)<sup>3</sup>)",
+      Sa: (T) => s.S * A0 * I * (1 + 4.5 * (T / s.T0) ** s.p) / (1 + (T / s.T0) ** 3),
+    };
+  }
+  if (norma === "2369-2025") {
+    const Ar = 1.4 * A0, fxi = (0.05 / xi) ** 0.4;
+    return {
+      par: [["I", I, N.refCat], ["A<sub>0</sub> ; A<sub>r</sub> = 1,4A<sub>0</sub> [g]", `${fmt(A0, 2)} ; ${fmt(Ar, 2)}`, N.refA0], ["S", s.S, N.refSuelo], ["r", s.r, N.refSuelo],
+        ["T<sub>0</sub> [s]", s.T0, N.refSuelo], ["p ; q", `${fmt(s.p, 2)} ; ${fmt(s.q, 2)}`, N.refSuelo], ["(0,05/ξ)<sup>0,4</sup>", fxi, `ξ = ${fmt(xi, 3)}`]],
+      formula: "S<sub>a</sub> = I·A<sub>r</sub>·S·(1 + r(T/T<sub>0</sub>)<sup>p</sup>) / (1 + (T/T<sub>0</sub>)<sup>q</sup>)·(0,05/ξ)<sup>0,4</sup>",
+      Sa: (T) => I * Ar * s.S * (1 + s.r * (T / s.T0) ** s.p) / (1 + (T / s.T0) ** s.q) * fxi,
+    };
+  }
+  // DS 117 — espectro elástico Sae por tramos (cm/s²), Sa = I·Sae/g
+  const g = 981, Z = N.Z[zona];
+  const A0g = A0 * g, aA = s.aA * Z, aV = s.aV * Z, aD = s.aD * Z;
+  const Sae = (T) => T < s.Ta ? A0g
+    : T <= s.Tb ? A0g + (aA - A0g) * (T - s.Ta) / (s.Tb - s.Ta)
+    : T <= s.Tc ? aA
+    : T <= s.Td ? 2 * Math.PI * aV / T ** s.p
+    : 4 * Math.PI ** 2 * aD / T ** 2;
+  return {
+    par: [["I", I, N.refCat], ["A<sub>0</sub> [g] ; Z", `${fmt(A0, 2)} ; ${fmt(Z, 2)}`, N.refA0], ["T<sub>a</sub> ; T<sub>b</sub> ; T<sub>c</sub> ; T<sub>d</sub> [s]", `${s.Ta} ; ${s.Tb} ; ${s.Tc} ; ${s.Td}`, N.refSuelo],
+      ["Z·α<sub>A</sub>A [cm/s²]", aA, N.refSuelo], ["Z·α<sub>V</sub>V [cm/s]", aV, N.refSuelo], ["Z·α<sub>D</sub>D [cm]", aD, N.refSuelo], ["p", s.p, N.refSuelo]],
+    formula: "S<sub>a</sub> = I·S<sub>ae</sub>(T)/g ; S<sub>ae</sub>: A<sub>0</sub>g → lineal hasta Zα<sub>A</sub>A en T<sub>b</sub> ; Zα<sub>A</sub>A hasta T<sub>c</sub> ; 2π·Zα<sub>V</sub>V/T<sup>p</sup> hasta T<sub>d</sub> ; 4π²·Zα<sub>D</sub>D/T²",
+    Sa: (T) => I * Sae(T) / g,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Factor de reducción R* por dirección (planilla «Espectros Chile»)
+// ---------------------------------------------------------------------------
+function factorR(d, Ts) {
+  const s = NORMAS[d.norma].suelos[d.suelo];
+  if (d.norma === "2369-2025") {
+    const R = d.R, Cr = 0.16 * R, lim = Cr * s.T1;
+    let Rs, txt;
+    if (R === 1) { Rs = 1; txt = "R = 1 → R* = 1"; }
+    else if (Ts >= lim) { Rs = R; txt = `T* = ${fmt(Ts, 3)} ≥ C<sub>r</sub>T<sub>1</sub> = ${fmt(lim, 3)} → R* = R = ${fmt(R, 2)}`; }
+    else { Rs = 1.5 + (R - 1.5) * Ts / lim; txt = `1,5 + (${fmt(R, 2)} − 1,5)·${fmt(Ts, 3)}/${fmt(lim, 3)} = ${fmt(Rs, 3)}`; }
+    return { Rs, txt };
+  }
+  const T0 = s.T0, R0 = d.R0;
+  const Rs = 1 + Ts / (0.1 * T0 + Ts / R0);
+  return { Rs, txt: `1 + ${fmt(Ts, 3)}/(0,1·${fmt(T0, 2)} + ${fmt(Ts, 3)}/${fmt(R0, 1)}) = ${fmt(Rs, 3)}` };
+}
+
+function leer() {
+  return { norma: $("norma").value, cat: $("cat").value, zona: +$("zona").value, suelo: $("suelo").value,
+    xi: Math.max(0.005, num("xi")), dT: Math.max(0.001, num("dT")), Tmax: Math.max(0.1, num("Tmax")),
+    Tx: Math.max(0, num("Tx")), Ty: Math.max(0, num("Ty")), R0: Math.max(1, num("R0")), R: Math.max(1, num("R")) };
+}
+
+function serie(d) {
+  const M = modelo(d.norma, d.cat, d.zona, d.suelo, d.xi);
+  const n = Math.round(d.Tmax / d.dT);
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const T = Math.round(i * d.dT * 1e6) / 1e6;
+    pts.push([T, M.Sa(T)]);
+  }
+  return { M, pts };
+}
+
+// ---------------------------------------------------------------------------
+// Gráfico (SVG con crosshair y tooltip)
+// ---------------------------------------------------------------------------
+function niceMax(v) {
+  const e = 10 ** Math.floor(Math.log10(v)), f = v / e;
+  return (f <= 1 ? 1 : f <= 1.2 ? 1.2 : f <= 1.5 ? 1.5 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 3 ? 3 : f <= 4 ? 4 : f <= 5 ? 5 : f <= 6 ? 6 : f <= 8 ? 8 : 10) * e;
+}
+
+let estado = null;
+function graficar(pts, Tmax) {
+  const W = 760, H = 380, ml = 56, mr = 18, mt = 14, mb = 44;
+  const ymax = niceMax(Math.max(...pts.map(p => p[1])) * 1.05);
+  const x = (T) => ml + T / Tmax * (W - ml - mr);
+  const y = (s) => mt + (1 - s / ymax) * (H - mt - mb);
+  const nx = Tmax <= 2 ? Tmax / 0.25 : Tmax <= 5 ? Tmax / 0.5 : Tmax;
+  const stepX = Tmax / Math.round(nx);
+  let g = "";
+  for (let i = 0; i <= 5; i++) {
+    const v = ymax * i / 5, yy = y(v);
+    g += `<line x1="${ml}" x2="${W - mr}" y1="${yy}" y2="${yy}" stroke="var(--grid)" stroke-width="1"/>`;
+    g += `<text x="${ml - 8}" y="${yy + 4}" font-size="11.5" fill="var(--muted)" text-anchor="end">${fmt(v, 2)}</text>`;
+  }
+  for (let T = 0; T <= Tmax + 1e-9; T += stepX) {
+    const xx = x(T);
+    g += `<line x1="${xx}" x2="${xx}" y1="${mt}" y2="${H - mb}" stroke="var(--grid)" stroke-width="1"/>`;
+    g += `<text x="${xx}" y="${H - mb + 18}" font-size="11.5" fill="var(--muted)" text-anchor="middle">${fmt(T, 2)}</text>`;
+  }
+  const d = pts.map((p, i) => `${i ? "L" : "M"}${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join("");
+  const iMax = pts.reduce((b, p, i) => (p[1] > pts[b][1] ? i : b), 0);
+  const pk = pts[iMax];
+  $("svgWrap").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Espectro elástico Sa versus T">
+    ${g}
+    <line x1="${ml}" x2="${W - mr}" y1="${H - mb}" y2="${H - mb}" stroke="#9aa3ae"/>
+    <line x1="${ml}" x2="${ml}" y1="${mt}" y2="${H - mb}" stroke="#9aa3ae"/>
+    <text x="${(ml + W - mr) / 2}" y="${H - 6}" font-size="12" fill="var(--muted)" text-anchor="middle">Periodo T [s]</text>
+    <text x="14" y="${(mt + H - mb) / 2}" font-size="12" fill="var(--muted)" text-anchor="middle" transform="rotate(-90 14 ${(mt + H - mb) / 2})">S<tspan font-size="9" dy="3">a</tspan><tspan dy="-3"> [g]</tspan></text>
+    <path d="${d}" fill="none" stroke="var(--serie)" stroke-width="2" stroke-linejoin="round"/>
+    <circle cx="${x(pk[0])}" cy="${y(pk[1])}" r="4" fill="var(--serie)" stroke="#fff" stroke-width="2"/>
+    <text x="${x(pk[0]) + 8}" y="${y(pk[1]) - 8}" font-size="12" fill="var(--ink)">S<tspan font-size="9" dy="3">a,máx</tspan><tspan dy="-3"> = ${fmt(pk[1], 3)} g (T = ${fmt(pk[0], 2)} s)</tspan></text>
+    <g id="cross" class="hidden">
+      <line id="cxl" y1="${mt}" y2="${H - mb}" stroke="#1d2330" stroke-width="1" stroke-dasharray="3 3"/>
+      <circle id="cxp" r="4.5" fill="var(--serie)" stroke="#fff" stroke-width="2"/>
+    </g>
+    <rect id="hit" x="${ml}" y="${mt}" width="${W - ml - mr}" height="${H - mt - mb}" fill="transparent"/>
+  </svg>`;
+  estado = { pts, x, y, W, ml, mr, Tmax };
+  const svg = $("svgWrap").querySelector("svg");
+  const hit = $("hit"), tip = $("tip"), cross = $("cross");
+  const mover = (ev) => {
+    const r = svg.getBoundingClientRect();
+    const px = (ev.clientX - r.left) * W / r.width;
+    const T = Math.min(Tmax, Math.max(0, (px - ml) / (W - ml - mr) * Tmax));
+    const i = pts.reduce((b, p, k) => (Math.abs(p[0] - T) < Math.abs(pts[b][0] - T) ? k : b), 0);
+    const [Ti, Si] = pts[i];
+    $("cxl").setAttribute("x1", x(Ti)); $("cxl").setAttribute("x2", x(Ti));
+    $("cxp").setAttribute("cx", x(Ti)); $("cxp").setAttribute("cy", y(Si));
+    cross.classList.remove("hidden");
+    tip.classList.remove("hidden");
+    tip.innerHTML = `T = ${fmt(Ti, 2)} s · S<sub>a</sub> = ${fmt(Si, 4)} g`;
+    const wrap = $("graf").getBoundingClientRect();
+    tip.style.left = `${r.left - wrap.left + x(Ti) * r.width / W}px`;
+    tip.style.top = `${r.top - wrap.top + y(Si) * r.height / H - 6}px`;
+  };
+  hit.addEventListener("mousemove", mover);
+  hit.addEventListener("mouseleave", () => { tip.classList.add("hidden"); cross.classList.add("hidden"); });
+  return pk;
+}
+
+// ---------------------------------------------------------------------------
+// Interfaz
+// ---------------------------------------------------------------------------
+let actual = null;
+
+function poblarSelectores(norma, conservar) {
+  const N = NORMAS[norma];
+  const cat0 = conservar ? $("cat").value : null, s0 = conservar ? $("suelo").value : null;
+  $("cat").innerHTML = Object.entries(N.cat).map(([k, v]) => `<option value="${k}">${k} (I = ${fmt(v, 1)})</option>`).join("");
+  $("suelo").innerHTML = Object.keys(N.suelos).map(k => `<option>${k}</option>`).join("");
+  $("cat").value = N.cat[cat0] !== undefined ? cat0 : N.catDef;
+  $("suelo").value = N.suelos[s0] ? s0 : N.sueloDef;
+  $("gXi").classList.toggle("hidden", norma !== "2369-2025");
+  $("gR").classList.toggle("hidden", norma !== "2369-2025");
+  $("gR0").classList.toggle("hidden", norma === "2369-2025");
+  $("notaNorma").innerHTML = N.nota;
+}
+
+function calcular() {
+  const d = leer();
+  const N = NORMAS[d.norma];
+  const { M, pts } = serie(d);
+  actual = { d, pts };
+  $("titulo").textContent = `Espectro elástico — ${N.nombre}`;
+  $("gTitulo").textContent = `${N.nombre} · Categoría ${d.cat} · Zona ${d.zona} · Suelo ${d.suelo}${d.norma === "2369-2025" ? ` · ξ = ${fmt(d.xi, 3)}` : ""}`;
+  const pk = graficar(pts, d.Tmax);
+  $("tiles").innerHTML = [
+    ["S<sub>a</sub>(T = 0)", `${fmt(pts[0][1], 3)} g`, `${fmt(pts[0][1] * 9.81, 3)} m/s²`],
+    ["S<sub>a,máx</sub>", `${fmt(pk[1], 3)} g`, `en T = ${fmt(pk[0], 2)} s`],
+    ["Puntos", `${pts.length}`, `ΔT = ${fmt(d.dT, 3)} s · T ≤ ${fmt(d.Tmax, 2)} s`],
+  ].map(([t, v, s]) => `<div class="tile"><div class="t">${t}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join("");
+  $("tablaPar").innerHTML = `<tr><th>Parámetro</th><th style="text-align:right">Valor</th><th>Referencia</th></tr>` +
+    M.par.map(([k, v, r]) => `<tr><td>${k}</td><td class="num">${typeof v === "number" ? fmt(v, v % 1 ? 3 : 0) : v}</td><td>${N.nombre}, ${r}</td></tr>`).join("");
+  $("formula").innerHTML = M.formula;
+
+  // Factores de reducción en X e Y
+  const es2369 = d.norma === "2369-2025";
+  const fila = (dir, Ts) => {
+    const { Rs, txt } = factorR(d, Ts);
+    const SaT = M.Sa(Ts);
+    return `<tr><td><b>R*<sub>${dir}</sub></b> (T*<sub>${dir}</sub> = ${fmt(Ts, 3)} s)</td><td class="num"><b>${fmt(Rs, 3)}</b></td><td>${txt}</td></tr>
+      <tr><td>Factor de escala ETABS, dirección ${dir}</td><td class="num">${fmt(9.81 / Rs, 4)}</td><td>g/R*<sub>${dir}</sub> = 9,81/${fmt(Rs, 3)} m/s² · S<sub>a</sub>(T*<sub>${dir}</sub>) = ${fmt(SaT, 3)} g → S<sub>a</sub>/R* = ${fmt(SaT / Rs, 4)} g</td></tr>`;
+  };
+  $("tablaR").innerHTML = `<tr><th>Dirección</th><th style="text-align:right">Valor</th><th>Cálculo</th></tr>` + fila("x", d.Tx) + fila("y", d.Ty);
+  const s = N.suelos[d.suelo];
+  $("formulaR").innerHTML = es2369
+    ? `R* = R si T* ≥ C<sub>r</sub>·T<sub>1</sub> ; R* = 1,5 + (R − 1,5)·T*/(C<sub>r</sub>·T<sub>1</sub>) si T* &lt; C<sub>r</sub>·T<sub>1</sub> ; C<sub>r</sub> = 0,16·R = ${fmt(0.16 * d.R, 2)} ; T<sub>1</sub> = ${fmt(s.T1, 2)} s`
+    : `R* = 1 + T* / (0,1·T<sub>0</sub> + T*/R<sub>0</sub>) ; T<sub>0</sub> = ${fmt(s.T0, 2)} s (suelo ${d.suelo}) ; R<sub>0</sub> = ${fmt(d.R0, 1)}`;
+  $("sumTabla").textContent = `Tabla de valores (${pts.length} puntos)`;
+  $("tablaVal").innerHTML = `<tr><th>T [s]</th><th>S<sub>a</sub> [g]</th></tr>` +
+    pts.map(([T, S]) => `<tr><td>${fmt(T, 2)}</td><td>${fmt(S, 5)}</td></tr>`).join("");
+  history.replaceState(null, "", `?norma=${d.norma}`);
+}
+
+function descargarTxt() {
+  if (!actual) return;
+  const { d, pts } = actual;
+  const txt = pts.map(([T, S]) => `${+T.toFixed(4)}\t${+S.toPrecision(10)}`).join("\r\n") + "\r\n";
+  const nombre = `espectro_${NORMAS[d.norma].nombre.replace(/[^\w]+/g, "")}_Cat${d.cat}_Z${d.zona}_S${d.suelo}.txt`;
+  const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = nombre;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function init() {
+  const q = new URLSearchParams(location.search).get("norma");
+  if (NORMAS[q]) $("norma").value = q;
+  poblarSelectores($("norma").value, false);
+  $("norma").addEventListener("change", () => { poblarSelectores($("norma").value, true); calcular(); });
+  ["cat", "zona", "suelo"].forEach(id => $(id).addEventListener("change", calcular));
+  ["xi", "dT", "Tmax", "Tx", "Ty", "R0", "R"].forEach(id => $(id).addEventListener("input", calcular));
+  $("btnTxt").addEventListener("click", descargarTxt);
+  calcular();
+}
+init();
+</script>
+<script>
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+</script>
+</body>
+</html>

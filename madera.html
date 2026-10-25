@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#3d4450">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="AURA">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<style>
+  /* PWA: sin zoom automÃ¡tico de iOS al enfocar campos y texto estable al rotar */
+  html { -webkit-text-size-adjust: 100%; }
+  @media (max-width: 900px) { input, select, textarea { font-size: 16px !important; } }
+  main > *, .row2 > *, .row3 > *, fieldset { min-width: 0; }
+  input, select { min-width: 0; max-width: 100%; }
+  .memo, .tablaWrap { overflow-x: auto; }
+  svg { max-width: 100%; }
+</style>
+<title>Verificación Madera</title>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --panel: #ffffff;
+    --ink: #1d2330;
+    --muted: #5f6b7a;
+    --line: #dde1e7;
+    --accent: #8a5a2b;
+    --head: #3d4450;
+    --ok: #1f8a4c;
+    --ok-bg: #e6f4ec;
+    --bad: #c62828;
+    --bad-bg: #fbe9e9;
+    --warn: #9a6400;
+    --warn-bg: #fff4dc;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 "Segoe UI", system-ui, -apple-system, sans-serif; }
+  header { background: var(--head); color: #fff; padding: 14px 24px; display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+  header h1 { margin: 0; font-size: 19px; font-weight: 600; }
+  header span { color: #c9ced6; font-size: 13px; }
+  header a.home { color: #fff; text-decoration: none; font-size: 13px; border: 1px solid #6b7380; border-radius: 4px; padding: 3px 9px; }
+  header a.home:hover { background: #4d5562; }
+  main { display: grid; grid-template-columns: 370px 1fr; gap: 20px; padding: 20px 24px; max-width: 1400px; margin: 0 auto; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; padding: 16px; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+  .panel > h2 { margin: 0; padding: 10px 16px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); border-bottom: 1px solid var(--line); }
+  .body { padding: 14px 16px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
+  select, input[type=number] { width: 100%; padding: 7px 9px; border: 1px solid var(--line); border-radius: 5px; font: inherit; background: #fff; color: var(--ink); }
+  select:focus, input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .unit { color: var(--muted); font-size: 11px; }
+  fieldset { border: 1px solid var(--line); border-radius: 6px; margin: 12px 0 0; padding: 4px 12px 12px; }
+  legend { font-size: 12px; font-weight: 600; color: var(--head); padding: 0 4px; }
+  .chk { display: flex; gap: 8px; align-items: center; margin-top: 10px; font-size: 13px; color: var(--ink); }
+  .hidden { display: none !important; }
+
+  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; padding: 14px 16px; }
+  .card { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; }
+  .card .t { font-size: 12px; color: var(--muted); }
+  .card .v { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .card .s { font-size: 12px; color: var(--muted); }
+  .bar { height: 6px; background: #eceef1; border-radius: 3px; margin-top: 6px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; background: var(--ok); }
+  .bar.bad > i { background: var(--bad); }
+  .verdict { margin: 0 16px 14px; padding: 12px 14px; border-radius: 6px; font-weight: 600; font-size: 15px; }
+  .verdict.ok { background: var(--ok-bg); color: var(--ok); }
+  .verdict.bad { background: var(--bad-bg); color: var(--bad); }
+  .note { margin: 8px 0; padding: 8px 10px; border-radius: 5px; background: var(--warn-bg); color: var(--warn); font-size: 12.5px; }
+  .memo { padding: 4px 16px 16px; }
+  .memo h3 { font-size: 14px; margin: 18px 0 6px; padding-bottom: 4px; border-bottom: 2px solid var(--accent); color: var(--head); }
+  table.calc { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.calc td { padding: 4px 8px; border-bottom: 1px solid #eef0f3; vertical-align: top; }
+  table.calc td.v { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+  table.prop { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.prop th { text-align: left; font-size: 11.5px; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); padding: 5px 8px; }
+  table.prop td { padding: 5px 8px; border-bottom: 1px solid #eef0f3; font-variant-numeric: tabular-nums; }
+  table.prop td.num { text-align: right; }
+  table.prop th:nth-child(n+3) { text-align: right; }
+  .ref { display: inline-block; font-size: 10.5px; color: var(--accent); border: 1px solid #dcc3a6; border-radius: 3px; padding: 0 4px; margin-left: 6px; font-weight: 500; }
+  .tag { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 11.5px; font-weight: 600; }
+  .tag.ok { background: var(--ok-bg); color: var(--ok); }
+  .tag.bad { background: var(--bad-bg); color: var(--bad); }
+  .toolbar { display: flex; justify-content: flex-end; padding: 0 16px; gap: 8px; }
+  .btn { padding: 7px 14px; border-radius: 5px; border: 1px solid var(--head); background: var(--head); color: #fff; font: inherit; font-size: 13px; cursor: pointer; }
+  .btn.sec { background: #fff; color: var(--head); }
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 10px 0 24px; }
+  @media print {
+    body { background: #fff; }
+    header a.home, #inputs, .toolbar, footer { display: none; }
+    main { display: block; padding: 0; }
+    .panel { border: 0; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <a class="home" href="index.html">← Inicio</a>
+  <h1>Verificación de envigados de madera</h1>
+  <span>NCh 1198:2024 · tensiones admisibles · pino radiata · unidades kgf – cm</span>
+</header>
+
+<main>
+  <section class="panel" id="inputs">
+    <h2>Datos de entrada</h2>
+    <div class="body">
+      <fieldset>
+        <legend>Material y sección</legend>
+        <div class="row2">
+          <div><label for="grado">Grado (pino radiata)</label>
+            <select id="grado"><option>GS</option><option>G1+</option><option selected>G1</option><option>G2</option><option>C24</option><option>C16</option><option>MGP10</option><option>MGP12</option></select></div>
+          <div><label for="H">Humedad H <span class="unit">[%]</span></label><input id="H" type="number" step="1" min="12" max="40" value="12"></div>
+        </div>
+        <label for="esc">Escuadría (cepillada)</label>
+        <select id="esc"></select>
+        <div class="row2" id="gCustom">
+          <div><label for="b">b <span class="unit">[mm]</span></label><input id="b" type="number" step="1" min="20" value="41"></div>
+          <div><label for="h">h <span class="unit">[mm]</span></label><input id="h" type="number" step="1" min="40" value="138"></div>
+        </div>
+        <label for="tipoViga">Tipo de viga</label>
+        <select id="tipoViga">
+          <option value="simple">Viga del envigado (E<sub>f</sub>)</option>
+          <option value="maestra">Viga maestra (0,60·E<sub>f</sub>, percentil 5 %)</option>
+        </select>
+        <label class="chk"><input type="checkbox" id="kc" checked> Trabajo conjunto: ≥ 3 vigas a ≤ 610 mm (K<sub>c</sub> = 1,15)</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Geometría y apoyo lateral</legend>
+        <div class="row2">
+          <div><label for="L">Luz L <span class="unit">[m]</span></label><input id="L" type="number" step="0.01" min="0.3" value="2.6"></div>
+          <div><label for="la">Dist. apoyos laterales l<sub>a</sub> <span class="unit">[cm]</span></label><input id="la" type="number" step="1" min="0" value="80"></div>
+        </div>
+        <label for="apoyoLat">Apoyo lateral del canto comprimido</label>
+        <select id="apoyoLat">
+          <option value="anc">No continuo (cadenetas cada l<sub>a</sub>)</option>
+          <option value="ac">Continuo (tablero clavado al canto comprimido)</option>
+        </select>
+      </fieldset>
+
+      <fieldset>
+        <legend>Cargas de servicio</legend>
+        <label for="modoCarga">Ingreso de cargas</label>
+        <select id="modoCarga">
+          <option value="area">Por m² y separación entre vigas</option>
+          <option value="lineal">Cargas lineales directas</option>
+        </select>
+        <div id="gArea">
+          <div class="row3">
+            <div><label for="Dm2">Muerta <span class="unit">[kgf/m²]</span></label><input id="Dm2" type="number" step="any" min="0" value="19"></div>
+            <div><label for="Lm2">Uso <span class="unit">[kgf/m²]</span></label><input id="Lm2" type="number" step="any" min="0" value="200"></div>
+            <div><label for="di">Separación / ancho trib. <span class="unit">[m]</span></label><input id="di" type="number" step="0.01" min="0.1" value="0.4"></div>
+          </div>
+          <div class="row2">
+            <div><label for="rho">Densidad madera <span class="unit">[kg/m³]</span></label><input id="rho" type="number" step="10" min="300" value="500"></div>
+            <div><label for="qExtra">Otra muerta lineal <span class="unit">[kgf/m]</span></label><input id="qExtra" type="number" step="any" min="0" value="0"></div>
+          </div>
+          <div class="unit" style="margin-top:6px">Muerta: tablero, cielo, etc. El peso propio de la viga (b·h·ρ) se agrega automáticamente.</div>
+        </div>
+        <div id="gLineal" class="hidden">
+          <div class="row2">
+            <div><label for="qPP">q<sub>PP</sub> <span class="unit">[kgf/m]</span></label><input id="qPP" type="number" step="any" min="0" value="13.221"></div>
+            <div><label for="qSC">q<sub>SC</sub> <span class="unit">[kgf/m]</span></label><input id="qSC" type="number" step="any" min="0" value="80"></div>
+          </div>
+        </div>
+        <label for="P">Carga puntual centrada P (opcional) <span class="unit">[kgf]</span></label>
+        <input id="P" type="number" step="any" min="0" value="0">
+        <label for="kd">Duración de la carga que controla (K<sub>D</sub>, 7.1.2)</label>
+        <select id="kd">
+          <option value="1.577e9">Permanente (50 años)</option>
+          <option value="3.154e8" selected>Normal — sobrecarga de uso (10 años)</option>
+          <option value="5.256e6">2 meses (nieve)</option>
+          <option value="6.048e5">7 días</option>
+          <option value="600">Viento o sismo (10 min)</option>
+          <option value="1">Impacto (1 s)</option>
+        </select>
+      </fieldset>
+
+      <fieldset>
+        <legend>Apoyos (cizalle y compresión normal)</legend>
+        <div class="row2">
+          <div><label for="Lap">Longitud de apoyo <span class="unit">[mm]</span></label><input id="Lap" type="number" step="1" min="5" value="32"></div>
+          <div><label for="Kcn">K<sub>cn</sub> (8.5)</label><input id="Kcn" type="number" step="0.05" min="0.5" max="2" value="0.8"></div>
+        </div>
+        <label class="chk"><input type="checkbox" id="rebaje"> Rebaje en el apoyo</label>
+        <div id="gRebaje" class="hidden">
+          <div class="row2">
+            <div><label for="hr">Altura remanente h<sub>r</sub> <span class="unit">[mm]</span></label><input id="hr" type="number" step="1" min="10" value="100"></div>
+            <div><label for="ladoReb">Lado del rebaje</label><select id="ladoReb"><option value="apoyo">Canto del apoyo (traccionado)</option><option value="opuesto">Canto opuesto</option></select></div>
+            <div><label for="xReb">Distancia x <span class="unit">[mm]</span></label><input id="xReb" type="number" step="1" min="0" value="0"></div>
+            <div><label for="beta">Ángulo del chaflán β <span class="unit">[°]</span></label><input id="beta" type="number" step="1" min="1" max="90" value="90"></div>
+          </div>
+          <div class="unit" style="margin-top:6px">β = 90° es un rebaje recto (sin chaflán).</div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Deformación y vibraciones</legend>
+        <label for="uso">Uso (Tabla 6)</label>
+        <select id="uso"></select>
+        <label class="chk"><input type="checkbox" id="vib" checked> Verificar vibraciones de piso (8.2.4.13)</label>
+        <div id="gVib">
+          <div class="row2">
+            <div><label for="dlong">s (separación entre vigas) <span class="unit">[m]</span></label><input id="dlong" type="number" step="0.01" min="0.1" value="0.4"></div>
+            <div><label for="pviga">p<sub>viga</sub> (hombre 100 kg) <span class="unit">[kgf/m]</span></label><input id="pviga" type="number" step="any" min="0" placeholder="auto: b·h·ρ"></div>
+          </div>
+          <label class="chk"><input type="checkbox" id="aglom"> Existe posibilidad de aglomeración de personas (50 % de la SC)</label>
+          <div class="unit" style="margin-top:6px">Se verifica f<sub>1</sub> ≥ 9 Hz y la flecha bajo un hombre de 100 kg al centro más el peso propio de la viga (≤ 1 mm). Si p<sub>viga</sub> queda vacío se usa b·h·ρ.</div>
+        </div>
+      </fieldset>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 id="resTitle">Resultados</h2>
+    <div class="summary" id="summary"></div>
+    <div id="verdict"></div>
+    <div class="toolbar">
+      <button class="btn sec" type="button" onclick="window.print()">Imprimir</button>
+      <button class="btn" type="button" id="btnTex">Descargar memoria (.tex)</button>
+    </div>
+    <div class="memo" id="memo"></div>
+  </section>
+</main>
+<footer>Herramienta de apoyo académico basada en NCh 1198:2024 y en la planilla «FULL MADERA». Verifique siempre los resultados.</footer>
+
+<script>
+"use strict";
+// ---------------------------------------------------------------------------
+// Datos normativos — NCh 1198:2024
+// ---------------------------------------------------------------------------
+const MPA = 10;                       // kgf/cm² por MPa (criterio de cálculo: 1 MPa = 10 kgf/cm²)
+// Tabla U.1 — Pino radiata seco (H = 12 %), en MPa: Ff, Fcp, Ftp, Fcn, Fcz, Ef
+const U1 = {
+  "GS": [11.0, 8.5, 6.0, 2.5, 1.1, 10500], "G1+": [9.5, 7.8, 5.5, 2.5, 1.1, 10100],
+  "G1": [7.5, 7.5, 5.0, 2.5, 1.1, 10000], "G2": [5.4, 6.5, 4.0, 2.5, 1.1, 8900],
+  "C24": [9.3, 8.0, 4.7, 2.5, 1.1, 10200], "C16": [5.2, 7.5, 3.5, 2.5, 1.1, 7900],
+  "MGP10": [8.4, 10, 4.0, 2.5, 1.3, 10000], "MGP12": [13.5, 15.5, 6.0, 2.5, 1.3, 12700],
+};
+// Factor de humedad: ΔR por punto de humedad (H ≤ 20 %) y factor verde (H > 20 %) — pino radiata
+const DR = { Ff: 0.025, Fcz: 0.015, Fcn: 0, Ef: 0.017 };
+const VERDE = { Ff: 0.75, Fcz: 0.85, Fcn: 0.67, Ef: 0.83 };
+const ESCUADRIAS = { '2x3"': [41, 65], '2x4"': [41, 90], '2x5"': [41, 114], '2x6"': [41, 138], '2x8"': [41, 185],
+  '3x3"': [65, 65], '3x4"': [65, 90], '3x6"': [65, 138], '3x8"': [65, 185] };
+// Tabla 6 — deformaciones máximas admisibles: [divisor SC, divisor SC+PP, máx SC (mm), máx SC+PP (mm)]
+const TABLA6 = {
+  "Vigas de piso — uso habitual": [360, 300, null, 15],
+  "Vigas de techo — industrial sin cielos": [180, 120, null, null],
+  "Vigas de techo — sin cielos enyesados": [240, 180, null, null],
+  "Vigas de techo — con cielos enyesados": [360, 240, null, null],
+  "Construcciones agropecuarias": [null, 180, null, null],
+  "Invernaderos": [null, 120, null, null],
+  "Pasarelas peatonales": [null, 425, null, null],
+};
+
+// ---------------------------------------------------------------------------
+// Utilidades
+// ---------------------------------------------------------------------------
+const $ = (id) => document.getElementById(id);
+const num = (id) => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : 0; };
+const fmt = (x, d = 2) => Number.isFinite(x) ? x.toLocaleString("es-CL", { minimumFractionDigits: d, maximumFractionDigits: d }) : "—";
+const L = String.raw;
+const tn = (x, d = 2) => Number.isFinite(x) ? fmt(x, d).replace(/,/g, "{,}").replace(/\./g, "\\,") : "\\infty";
+const LE = L`\le`;
+const cmp = (a, b) => (a <= b ? LE : ">");
+const tag = (ok, t) => `<span class="tag ${ok ? "ok" : "bad"}">${t}</span>`;
+const okTxt = (ok) => tag(ok, ok ? "CUMPLE" : "NO CUMPLE");
+
+class Memo {
+  constructor() { this.out = []; this.tex = []; this.n = 0; }
+  h(t) { this.n++; this.out.push(`<h3>${this.n}. ${t}</h3>`); this.tex.push(`\\section{${t.replace(/—/g, "---")}}`); }
+  row(k, v, ref) { this.out.push({ k, v, ref }); }
+  note(t, tt) { this.out.push(`<div class="note">${t}</div>`); this.tex.push(`\\textit{${tt || t}}\n`); }
+  eq(s, ref) { this.tex.push(`\\[\n${s}${ref ? `\\tag*{(${ref})}` : ""}\n\\]`); }
+  p(s) { this.tex.push(s + "\n"); }
+  html() {
+    let s = "", open = false;
+    for (const it of this.out) {
+      if (typeof it === "string") { if (open) { s += "</table>"; open = false; } s += it; }
+      else {
+        if (!open) { s += '<table class="calc">'; open = true; }
+        s += `<tr><td>${it.k}${it.ref ? `<span class="ref">${it.ref}</span>` : ""}</td><td class="v">${it.v}</td></tr>`;
+      }
+    }
+    return s + (open ? "</table>" : "");
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Cálculo
+// ---------------------------------------------------------------------------
+function leer() {
+  const esc = $("esc").value;
+  const [b, h] = esc === "custom" ? [num("b"), num("h")] : ESCUADRIAS[esc];
+  return {
+    grado: $("grado").value, H: Math.max(12, num("H")), esc, b, h,
+    maestra: $("tipoViga").value === "maestra", kc: $("kc").checked,
+    Lm: num("L"), la: num("la"), apoyoLat: $("apoyoLat").value,
+    modoCarga: $("modoCarga").value, Dm2: num("Dm2"), Lm2: num("Lm2"), di: num("di"), rho: num("rho"), qExtra: num("qExtra"),
+    qPPin: num("qPP"), qSCin: num("qSC"), P: num("P"), tKD: +$("kd").value, kdTxt: $("kd").selectedOptions[0].text,
+    Lap: num("Lap"), Kcn: num("Kcn"),
+    rebaje: $("rebaje").checked, hr: num("hr"), ladoReb: $("ladoReb").value, xReb: num("xReb"), beta: num("beta"),
+    uso: $("uso").value, vib: $("vib").checked, s: num("dlong"), aglom: $("aglom").checked,
+    pviga: $("pviga").value.trim() === "" ? null : num("pviga"),
+  };
+}
+
+function calcular(d, m) {
+  const r = {};
+  const bc = d.b / 10, hc = d.h / 10, Lc = d.Lm * 100;          // cm
+  const A = bc * hc, I = bc * hc ** 3 / 12, W = bc * hc ** 2 / 6;
+  const [FfM, , , FcnM, FczM, EfM] = U1[d.grado];
+  const Ff = FfM * MPA, Fcn = FcnM * MPA, Fcz = FczM * MPA, Ef0 = EfM * MPA * (d.maestra ? 0.6 : 1);
+  const mgp = d.grado.startsWith("MGP");
+
+  // Cargas
+  let qPP, qSC, pp = 0;
+  if (d.modoCarga === "area") {
+    pp = bc / 100 * hc / 100 * d.rho;
+    qPP = d.Dm2 * d.di + pp + d.qExtra;
+    qSC = d.Lm2 * d.di;
+  } else { qPP = d.qPPin; qSC = d.qSCin; }
+  const q = qPP + qSC;
+  m.h("Cargas y solicitaciones");
+  if (d.modoCarga === "area") {
+    m.row("q<sub>PP</sub> = D·d<sub>i</sub> + b·h·ρ + otra ; q<sub>SC</sub> = L·d<sub>i</sub>", `${fmt(qPP, 3)} ; ${fmt(qSC, 2)} kgf/m`);
+    m.eq(L`q_{PP} = ${tn(d.Dm2, 1)}\cdot ${tn(d.di)} + ${tn(bc / 100, 3)}\cdot ${tn(hc / 100, 3)}\cdot ${tn(d.rho, 0)}${d.qExtra ? L` + ${tn(d.qExtra)}` : ""} = ${tn(qPP, 3)}\ \mathrm{kgf/m} \qquad q_{SC} = ${tn(d.Lm2, 0)}\cdot ${tn(d.di)} = ${tn(qSC, 2)}\ \mathrm{kgf/m}`);
+  } else {
+    m.row("q<sub>PP</sub> ; q<sub>SC</sub> (ingresadas)", `${fmt(qPP, 3)} ; ${fmt(qSC, 2)} kgf/m`);
+    m.eq(L`q_{PP} = ${tn(qPP, 3)}\ \mathrm{kgf/m} \qquad q_{SC} = ${tn(qSC, 2)}\ \mathrm{kgf/m}`);
+  }
+  const M = q * d.Lm ** 2 / 8 + d.P * d.Lm / 4;                  // kgf·m
+  const V = q * d.Lm / 2 + d.P / 2;                              // kgf
+  m.row("M = qL²/8 + PL/4 ; V = qL/2 + P/2", `${fmt(M, 2)} kgf·m ; ${fmt(V, 2)} kgf`);
+  m.eq(L`M = \frac{q L^2}{8}${d.P ? L` + \frac{P L}{4}` : ""} = \frac{${tn(q, 3)}\cdot ${tn(d.Lm)}^2}{8}${d.P ? L` + \frac{${tn(d.P, 1)}\cdot ${tn(d.Lm)}}{4}` : ""} = ${tn(M, 3)}\ \mathrm{kgf\cdot m} \qquad V = ${tn(V, 3)}\ \mathrm{kgf}`);
+
+  // Factores de modificación
+  const KH = (k) => (d.H <= 20 ? 1 - (d.H - 12) * DR[k] : VERDE[k]);
+  const KD = 1.747 / d.tKD ** 0.0464 + 0.295;
+  const Kc = d.kc ? 1.15 : 1.0;
+  const Khf = mgp ? (d.h > 160 ? (160 / d.h) ** (d.grado === "MGP10" ? 1 / 3 : 1 / 2) : 1) : (d.h > 90 ? (90 / d.h) ** 0.2 : 1);
+  const KhE = !mgp && d.h < 180 ? Math.max((d.h / 180) ** 0.25, 0.67) : 1;
+  const Edis = Ef0 * KH("Ef") * KhE;
+  // Propiedades mecánicas admisibles de la norma
+  m.h("Propiedades mecánicas admisibles — Tabla U.1");
+  const [, FcpM, FtpM] = U1[d.grado];
+  const props = [
+    ["Tensión admisible en flexión", "F<sub>f</sub>", L`$F_f$`, FfM],
+    ["Tensión admisible en compresión paralela", "F<sub>cp</sub>", L`$F_{cp}$`, FcpM],
+    ["Tensión admisible en tracción paralela", "F<sub>tp</sub>", L`$F_{tp}$`, FtpM],
+    ["Tensión admisible en compresión normal", "F<sub>cn</sub>", L`$F_{cn}$`, FcnM],
+    ["Tensión admisible en cizalle", "F<sub>cz</sub>", L`$F_{cz}$`, FczM],
+    ["Módulo de elasticidad en flexión", "E<sub>f</sub>", L`$E_f$`, EfM],
+  ];
+  if (d.maestra) props.push(["Módulo de elasticidad percentil 5 % (viga maestra)", "0,60·E<sub>f</sub>", L`$0{,}60\,E_f$`, 0.6 * EfM]);
+  m.out.push(`<table class="prop"><tr><th>Propiedad (pino radiata ${d.grado}, H = 12 %)</th><th>Símbolo</th><th>MPa</th><th>kgf/cm²</th></tr>` +
+    props.map(([n, s, , v]) => `<tr><td>${n}</td><td>${s}</td><td class="num">${fmt(v, v >= 1000 ? 0 : 1)}</td><td class="num">${fmt(v * MPA, 0)}</td></tr>`).join("") +
+    `<tr><td>Índice de aplastamiento en compresión normal</td><td>E<sub>cn,h</sub></td><td class="num">5,65 MPa/mm</td><td class="num">56,5 kgf/cm²/mm</td></tr></table>
+    <div class="unit" style="margin-top:4px">Valores base para madera seca (H = 12 %). Conversión: 1 MPa = 10 kgf/cm².</div>`);
+  m.tex.push(L`\begin{table}[H]
+\centering
+\caption{Propiedades mecánicas admisibles, pino radiata ${d.grado} seco ($H = 12\,\%$), Tabla U.1 de la NCh 1198:2024.}
+\begin{tabular}{llrr}
+\toprule
+Propiedad & Símbolo & MPa & kgf/cm$^2$\\
+\midrule
+${props.map(([n, , st, v]) => `${n} & ${st} & ${tn(v, v >= 1000 ? 0 : 1)} & ${tn(v * MPA, 0)}\\\\`).join("\n")}
+Índice de aplastamiento en compresión normal & $E_{cn,h}$ & 5{,}65 MPa/mm & 56{,}5 kgf/cm$^2$/mm\\
+\bottomrule
+\end{tabular}
+\end{table}
+Se adopta la conversión 1 MPa $= 10$ kgf/cm$^2$.
+`);
+
+  m.h("Factores de modificación y propiedades de diseño");
+  m.row("K<sub>H</sub> (flexión ; cizalle ; c. normal ; E)", `${fmt(KH("Ff"), 3)} ; ${fmt(KH("Fcz"), 3)} ; ${fmt(KH("Fcn"), 3)} ; ${fmt(KH("Ef"), 3)}`, "7.1.1");
+  m.row(`K<sub>D</sub> (${d.kdTxt})`, fmt(KD, 3), "7.1.2");
+  m.row("K<sub>c</sub> ; K<sub>hf</sub> ; K<sub>hE</sub>", `${fmt(Kc, 2)} ; ${fmt(Khf, 3)} ; ${fmt(KhE, 3)}`, "7.1.3 / 8.2.2.3");
+  m.row("E<sub>f,dis</sub> = E<sub>f</sub>·K<sub>H</sub>·K<sub>hE</sub>", `${fmt(Edis, 0)} kgf/cm²`);
+  m.p(L`Pino radiata grado ${d.grado} (Tabla U.1), con $F_f = ${tn(FfM, 1)}$, $F_{cz} = ${tn(FczM, 1)}$, $F_{cn} = ${tn(FcnM, 1)}$ y $E_f = ${tn(EfM, 0)}$ MPa${d.maestra ? L` (viga maestra: $0{,}60\,E_f$)` : ""}; se usa 1 MPa $= 10$ kgf/cm$^2$.`);
+  m.eq(L`K_H = 1 - (H - 12)\Delta R\ (H \le 20\,\%) \qquad K_D = \frac{1{,}747}{t^{0{,}0464}} + 0{,}295 = ${tn(KD, 3)} \qquad K_c = ${tn(Kc, 2)}`, "7.1.1, 7.1.2, 7.1.3");
+  m.eq(L`K_{hf} = ${mgp ? L`\left(\frac{160}{h}\right)^{${d.grado === "MGP10" ? "1/3" : "1/2"}}` : L`\left(\frac{90}{h}\right)^{1/5}`} = ${tn(Khf, 3)} \qquad K_{hE} = ${!mgp && d.h < 180 ? L`\left(\frac{h}{180}\right)^{1/4} = ${tn(KhE, 3)}` : "1"} \qquad E_{f,dis} = ${tn(Ef0, 0)}\cdot ${tn(KH("Ef"), 3)}\cdot ${tn(KhE, 3)} = ${tn(Edis, 0)}\ \mathrm{kgf/cm^2}`, "8.2.2.3");
+
+  // Flexión
+  m.h("Flexión — 8.2.2");
+  const ff = M * 100 / W;
+  const Fft = Ff * KH("Ff") * KD * Kc * Khf;
+  const Fstar = Ff * KH("Ff") * KD * Kc;
+  let Klv = 1, lv = null, lamv = null, FfE = null;
+  const necesitaKlv = d.apoyoLat === "anc" && d.h / d.b > 2;
+  if (necesitaKlv) {
+    const conc = q === 0 && d.P > 0;
+    const rel = d.la / hc;
+    lv = rel < 7 ? (conc ? 1.80 : 2.06) * d.la : (conc ? 1.37 : 1.63) * d.la + 3 * hc;
+    lamv = Math.sqrt(lv * hc / bc ** 2);
+    FfE = 0.439 * Edis / lamv ** 2;
+    const rr = FfE / Fstar;
+    Klv = (1 + rr) / 1.9 - Math.sqrt(((1 + rr) / 1.9) ** 2 - rr / 0.95);
+  }
+  const Ffv = Fstar * Klv;
+  const Fdis = Math.min(Fft, Ffv);
+  r.flex = ff / Fdis;
+  m.row("W = b·h²/6 ; f<sub>f</sub> = M/W", `${fmt(W, 2)} cm³ ; ${fmt(ff, 2)} kgf/cm²`);
+  m.row("F<sub>ft,dis</sub> = F<sub>f</sub>·K<sub>H</sub>·K<sub>D</sub>·K<sub>c</sub>·K<sub>hf</sub>", `${fmt(Fft, 2)} kgf/cm²`);
+  if (necesitaKlv) m.row(`l<sub>v</sub> (Tabla 5) ; λ<sub>v</sub> ; F<sub>fE</sub> ; K<sub>λv</sub>`, `${fmt(lv, 1)} cm ; ${fmt(lamv, 2)} ; ${fmt(FfE, 1)} ; ${fmt(Klv, 3)}`, "8.2.2.4");
+  else m.row("K<sub>λv</sub>", `1 (${d.apoyoLat === "ac" ? "apoyo lateral continuo" : "h/b ≤ 2"})`, "8.2.2.4");
+  m.row("F<sub>fv,dis</sub> = F<sub>f</sub>·K<sub>H</sub>·K<sub>D</sub>·K<sub>c</sub>·K<sub>λv</sub>", `${fmt(Ffv, 2)} kgf/cm²`);
+  m.row("<b>f<sub>f</sub> / F<sub>f,dis</sub></b> (F<sub>f,dis</sub> = mín)", `<b>${fmt(r.flex, 3)}</b> ${okTxt(r.flex <= 1)}`);
+  m.eq(L`f_f = \frac{M}{W} = \frac{${tn(M * 100, 1)}}{${tn(W, 2)}} = ${tn(ff, 2)} \qquad F_{ft,dis} = ${tn(Ff, 1)}\cdot ${tn(KH("Ff"), 3)}\cdot ${tn(KD, 3)}\cdot ${tn(Kc, 2)}\cdot ${tn(Khf, 3)} = ${tn(Fft, 2)}\ \mathrm{kgf/cm^2}`, "8.2.2.2");
+  if (necesitaKlv) {
+    m.eq(L`l_v = ${d.la / hc < 7 ? L`2{,}06\,l_a` : L`1{,}63\,l_a + 3h`} = ${tn(lv, 1)}\ \mathrm{cm} \quad \lambda_v = \sqrt{\frac{l_v h}{b^2}} = ${tn(lamv, 2)} \quad F_{fE} = \frac{0{,}439\,E_{f,dis}}{\lambda_v^2} = ${tn(FfE, 1)} \quad K_{\lambda v} = ${tn(Klv, 3)}`, "Tabla 5, 8.2.2.4");
+  }
+  m.eq(L`F_{f,dis} = \min(F_{ft,dis},\ F_{f}K_HK_DK_cK_{\lambda v}) = \min(${tn(Fft, 2)},\ ${tn(Ffv, 2)}) = ${tn(Fdis, 2)} \qquad \frac{f_f}{F_{f,dis}} = ${tn(r.flex, 3)} ${cmp(r.flex, 1)} 1`);
+
+  // Cizalle
+  m.h("Cizalle — 8.2.3");
+  const hEf = d.rebaje ? d.hr / 10 : hc;
+  const fcz = 1.5 * V / (bc * hEf);
+  let Kr = 1;
+  if (d.rebaje) {
+    if (d.ladoReb === "opuesto") Kr = d.xReb < d.hr ? Math.min(1, (d.h / d.hr) * (1 - (d.h - d.hr) * d.xReb / (d.h * d.hr))) : 1;
+    else {
+      const a = d.hr / d.h, i = 1 / Math.tan(d.beta * Math.PI / 180), Kn = 5;
+      Kr = Math.min(1, Kn * (1 + 1.1 * Math.max(0, i) ** 1.5 / Math.sqrt(d.h)) / (Math.sqrt(d.h) * (Math.sqrt(a * (1 - a)) + 0.8 * d.xReb / d.h * Math.sqrt(1 / a - a * a))));
+    }
+  }
+  const Fczd = Fcz * KH("Fcz") * KD * Kr;
+  r.ciz = fcz / Fczd;
+  m.row(`f<sub>cz</sub> = 1,5·V/(b·${d.rebaje ? "h<sub>r</sub>" : "h"})`, `${fmt(fcz, 3)} kgf/cm²`);
+  m.row("K<sub>r</sub> ; F<sub>cz,dis</sub> = F<sub>cz</sub>·K<sub>H</sub>·K<sub>D</sub>·K<sub>r</sub>", `${fmt(Kr, 3)} ; ${fmt(Fczd, 2)} kgf/cm²`, "8.2.3 / 8.7");
+  m.row("<b>f<sub>cz</sub> / F<sub>cz,dis</sub></b>", `<b>${fmt(r.ciz, 3)}</b> ${okTxt(r.ciz <= 1)}`);
+  m.eq(L`f_{cz} = \frac{1{,}5\,V}{b\,${d.rebaje ? "h_r" : "h"}} = \frac{1{,}5\cdot ${tn(V, 2)}}{${tn(bc, 1)}\cdot ${tn(hEf, 1)}} = ${tn(fcz, 3)} \qquad F_{cz,dis} = ${tn(Fcz, 2)}\cdot ${tn(KH("Fcz"), 3)}\cdot ${tn(KD, 3)}\cdot ${tn(Kr, 3)} = ${tn(Fczd, 2)}\ \mathrm{kgf/cm^2} \qquad ${tn(r.ciz, 3)} ${cmp(r.ciz, 1)} 1`, "8.2.3");
+
+  // Compresión normal
+  m.h("Compresión normal a la fibra en apoyos — 8.5");
+  const An = bc * d.Lap / 10;
+  const fcn = V / An;
+  const Fcnd = Fcn * KH("Fcn") * d.Kcn;
+  r.cn = fcn / Fcnd;
+  m.row("A<sub>n</sub> = b·l<sub>ap</sub> ; f<sub>cn</sub> = V/A<sub>n</sub>", `${fmt(An, 2)} cm² ; ${fmt(fcn, 2)} kgf/cm²`);
+  m.row("F<sub>cn,dis</sub> = F<sub>cn</sub>·K<sub>H</sub>·K<sub>cn</sub>", `${fmt(Fcnd, 2)} kgf/cm²`, "8.5");
+  m.row("<b>f<sub>cn</sub> / F<sub>cn,dis</sub></b>", `<b>${fmt(r.cn, 3)}</b> ${okTxt(r.cn <= 1)}`);
+  m.eq(L`f_{cn} = \frac{V}{b\,l_{ap}} = \frac{${tn(V, 2)}}{${tn(An, 2)}} = ${tn(fcn, 2)} \qquad F_{cn,dis} = ${tn(Fcn, 2)}\cdot ${tn(KH("Fcn"), 3)}\cdot ${tn(d.Kcn, 2)} = ${tn(Fcnd, 2)}\ \mathrm{kgf/cm^2} \qquad ${tn(r.cn, 3)} ${cmp(r.cn, 1)} 1`, "8.5");
+
+  // Deformaciones
+  m.h("Deformaciones — 8.2.4");
+  const EI = Edis * I;                                     // kgf·cm²
+  const fl = (qq, PP) => (5 * (qq / 100) * Lc ** 4 / (384 * EI) + PP * Lc ** 3 / (48 * EI)) * 10;   // mm
+  const g_q = q > 0 ? qPP / q : 0;
+  const kdel = d.H < 15 ? 1.5 - g_q : 5 / 3 - 4 / 3 * g_q;
+  const creep = g_q > 0.5;
+  const rho = creep ? 1 / kdel - 1 : 0;
+  const G = 0.065 * Edis;
+  const corte = Lc / hc < 20;
+  const fQ = (MM) => corte ? 1.2 * MM * 100 / (G * A) * 10 : 0;     // mm
+  const dT = fl(q, d.P) * (1 + rho * g_q) + fQ(M) * (1 + 2 * rho * g_q);
+  const MSC = qSC * d.Lm ** 2 / 8 + d.P * d.Lm / 4;
+  const dSC = fl(qSC, d.P) + fQ(MSC);
+  const [divSC, divT, , maxT] = TABLA6[d.uso];
+  const limT = divT ? Math.min(Lc * 10 / divT, maxT ?? Infinity) : Infinity;
+  const limSC = divSC ? Lc * 10 / divSC : Infinity;
+  r.defT = dT / limT; r.defSC = divSC ? dSC / limSC : 0;
+  m.row("g/q ; creep (g/q > 0,5) ; ρ", `${fmt(g_q, 3)} ; ${creep ? "aplica" : "no aplica"} ; ${fmt(rho, 3)}`, "8.2.4.11");
+  m.row("Deformación por corte (L/h < 20) ; G = 0,065·E<sub>f,dis</sub>", `${corte ? "aplica" : "no aplica"} (L/h = ${fmt(Lc / hc, 1)}) ; ${fmt(G, 0)} kgf/cm²`, "8.2.4.12");
+  m.row(`δ<sub>SC+PP</sub> ≤ L/${divT}${maxT ? ` y ${maxT} mm` : ""}`, `${fmt(dT, 2)} ≤ ${fmt(limT, 2)} mm ${okTxt(dT <= limT)}`, "Tabla 6");
+  if (divSC) m.row(`δ<sub>SC</sub> ≤ L/${divSC}`, `${fmt(dSC, 2)} ≤ ${fmt(limSC, 2)} mm ${okTxt(dSC <= limSC)}`, "Tabla 6");
+  m.eq(L`\delta_{SC+PP} = \frac{5\,q\,L^4}{384\,E_{f,dis} I}\left(1 + \rho\frac{g}{q}\right)${corte ? L` + \frac{1{,}2\,M}{G\,A}\left(1 + 2\rho\frac{g}{q}\right)` : ""}${d.P ? L` \ (+\ \tfrac{PL^3}{48EI})` : ""} = ${tn(dT, 2)}\ \mathrm{mm} \;${cmp(dT, limT)}\; ${tn(limT, 2)}\ \mathrm{mm}`, "8.2.4");
+  if (divSC) m.eq(L`\delta_{SC} = ${tn(dSC, 2)}\ \mathrm{mm} \;${cmp(dSC, limSC)}\; \frac{L}{${divSC}} = ${tn(limSC, 2)}\ \mathrm{mm} \qquad I = \frac{b h^3}{12} = ${tn(I, 1)}\ \mathrm{cm^4},\ \rho = ${tn(rho, 3)}`);
+
+  // Vibraciones
+  if (d.vib) {
+    m.h("Vibraciones de piso — 8.2.4.13");
+    const EIn = Edis / MPA * I * 1e4 * 1e-6;                            // N·m²
+    const EIlong = EIn / d.s;
+    const masa = qPP / d.s + (d.aglom ? 0.5 : 0.25) * qSC / d.s;          // kg/m²
+    const f1 = Math.PI / (2 * d.Lm ** 2) * Math.sqrt(EIlong / masa);
+    // Verificación hombre de 100 kg al centro + peso propio de la viga (límite 1 mm)
+    const Ph = 100;
+    const pv = d.pviga ?? bc / 100 * hc / 100 * d.rho;                     // kgf/m
+    const dP = Ph * Lc ** 3 / (48 * EI) * 10, dpv = 5 * (pv / 100) * Lc ** 4 / (384 * EI) * 10;   // mm
+    const d1 = dP + dpv;
+    r.f1 = 9 / f1; r.d1 = d1 / 1;
+    m.row("m = (q<sub>PP</sub> + ψ·q<sub>SC</sub>)/s ; (EI)<sub>long</sub>", `${fmt(masa, 1)} kg/m² ; ${fmt(EIlong, 0)} N·m²/m`);
+    m.row("<b>f<sub>1</sub> ≥ 9 Hz</b>", `<b>${fmt(f1, 2)} Hz</b> ${okTxt(f1 >= 9)}`, "8.2.4.13");
+    m.row(`Hombre 100 kg al centro + peso viga (p<sub>viga</sub> = ${fmt(pv, 2)} kgf/m): δ<sub>P</sub> + δ<sub>pp</sub>`, `${fmt(dP, 3)} + ${fmt(dpv, 3)} mm`);
+    m.row("<b>δ<sub>HH+PP</sub> ≤ 1 mm</b>", `<b>${fmt(d1, 3)} mm</b> ${okTxt(d1 <= 1)}`);
+    m.eq(L`m = \frac{q_{PP} + ${d.aglom ? "0{,}50" : "0{,}25"}\,q_{SC}}{s} = ${tn(masa, 1)}\ \mathrm{kg/m^2} \qquad (EI)_{long} = \frac{E_{f,dis} I}{s} = ${tn(EIlong, 0)}\ \mathrm{N\,m^2/m}`);
+    m.eq(L`f_1 = \frac{\pi}{2L^2}\sqrt{\frac{(EI)_{long}}{m}} = \frac{\pi}{2\cdot ${tn(d.Lm)}^2}\sqrt{\frac{${tn(EIlong, 0)}}{${tn(masa, 1)}}} = ${tn(f1, 2)}\ \mathrm{Hz} \;${f1 >= 9 ? L`\ge` : "<"}\; 9\ \mathrm{Hz}`, "8.2.4.13");
+    m.p(L`\textbf{Verificación del hombre de 100 kg:} carga puntual $P = 100$ kgf al centro de la viga más su peso propio $p_{viga} = ${tn(pv, 2)}$ kgf/m; límite 1 mm.`);
+    m.eq(L`\delta_{HH+PP} = \frac{P L^3}{48\,E_{f,dis} I} + \frac{5\,p_{viga} L^4}{384\,E_{f,dis} I} = \frac{100\cdot ${tn(Lc, 0)}^3}{48\cdot ${tn(Edis, 0)}\cdot ${tn(I, 1)}} + \frac{5\cdot ${tn(pv / 100, 4)}\cdot ${tn(Lc, 0)}^4}{384\cdot ${tn(Edis, 0)}\cdot ${tn(I, 1)}} = ${tn(d1, 3)}\ \mathrm{mm} \;${cmp(d1, 1)}\; 1\ \mathrm{mm}`);
+    Object.assign(r, { f1v: f1, d1v: d1 });
+  }
+  Object.assign(r, { qPP, qSC, M, V, ff, Fdis, fcz, Fczd, fcn, Fcnd, dT, limT, dSC, limSC, divSC });
+  return r;
+}
+
+// ---------------------------------------------------------------------------
+// Interfaz y memoria
+// ---------------------------------------------------------------------------
+let ultimoTex = "", ultimoNombre = "memoria_envigado.tex";
+
+function actualizar() {
+  $("gCustom").classList.toggle("hidden", $("esc").value !== "custom");
+  $("gArea").classList.toggle("hidden", $("modoCarga").value !== "area");
+  $("gLineal").classList.toggle("hidden", $("modoCarga").value !== "lineal");
+  $("gRebaje").classList.toggle("hidden", !$("rebaje").checked);
+  $("gVib").classList.toggle("hidden", !$("vib").checked);
+  const d = leer();
+  const m = new Memo();
+  const r = calcular(d, m);
+  const items = [
+    ["Flexión f<sub>f</sub>/F<sub>f,dis</sub>", r.flex, `${fmt(r.ff, 1)} / ${fmt(r.Fdis, 1)} kgf/cm²`],
+    ["Cizalle f<sub>cz</sub>/F<sub>cz,dis</sub>", r.ciz, `${fmt(r.fcz, 2)} / ${fmt(r.Fczd, 2)} kgf/cm²`],
+    ["Compresión normal", r.cn, `${fmt(r.fcn, 2)} / ${fmt(r.Fcnd, 2)} kgf/cm²`],
+    ["Deformación SC+PP", r.defT, `${fmt(r.dT, 2)} / ${fmt(r.limT, 2)} mm`],
+  ];
+  if (r.divSC) items.push(["Deformación SC", r.defSC, `${fmt(r.dSC, 2)} / ${fmt(r.limSC, 2)} mm`]);
+  if (d.vib) {
+    items.push(["Vibración 9 Hz/f<sub>1</sub>", r.f1, `f<sub>1</sub> = ${fmt(r.f1v, 2)} Hz`]);
+    items.push(["Hombre 100 kg δ/1 mm", r.d1, `δ<sub>HH+PP</sub> = ${fmt(r.d1v, 3)} mm`]);
+  }
+  $("summary").innerHTML = items.map(([t, v, s]) => `<div class="card"><div class="t">${t}</div><div class="v">${fmt(v, 3)}</div>
+    <div class="bar ${v > 1 ? "bad" : ""}"><i style="width:${Math.min(100, v * 100)}%"></i></div><div class="s">${s}</div></div>`).join("");
+  const dc = Math.max(...items.map(i => i[1]));
+  const ok = dc <= 1;
+  const nombre = d.esc === "custom" ? `${d.b}×${d.h} mm` : `${d.esc} (${d.b}×${d.h} mm)`;
+  $("resTitle").textContent = `Resultados — ${nombre} · ${d.grado} · L = ${fmt(d.Lm, 2)} m`;
+  $("verdict").innerHTML = `<div class="verdict ${ok ? "ok" : "bad"}">${ok ? "✔ La viga CUMPLE" : "✘ La viga NO CUMPLE"} — razón máxima = ${fmt(dc, 3)}</div>`;
+  $("memo").innerHTML = m.html();
+
+  const fecha = new Date().toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
+  const filas = items.map(([t, v, s]) => `${t.replace(/<sub>/g, "$_{").replace(/<\/sub>/g, "}$").replace(/\$\$/g, "")} & ${s.replace(/<sub>/g, "$_{").replace(/<\/sub>/g, "}$").replace(/,/g, "{,}").replace(/\./g, "\\,").replace(/²/g, "$^2$")} & ${tn(v, 3)} & ${v <= 1 ? "Cumple" : "No cumple"}\\\\`).join("\n");
+  ultimoTex = L`\documentclass[11pt,letterpaper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla,es-noshorthands]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{geometry}
+\geometry{margin=2.2cm}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\chead{Diseño en Madera}
+\lfoot{Memoria de cálculo --- NCh 1198:2024}
+\rfoot{\thepage}
+\allowdisplaybreaks
+
+\begin{document}
+\begin{center}
+{\Large\bfseries Memoria de Cálculo --- Envigado}\\[3pt]
+Pino radiata ${d.grado}, escuadría ${nombre.replace(/×/g, L`$\times$`)}, luz $L = ${tn(d.Lm)}$ m --- NCh 1198:2024\\[2pt]
+{\small ${fecha}}
+\end{center}
+
+\begin{table}[H]
+\centering
+\caption{Datos de diseño.}
+\begin{tabular}{lr}
+\toprule
+Parámetro & Valor\\
+\midrule
+Grado ; humedad $H$ & ${d.grado} ; ${tn(d.H, 0)}\,\%\\
+Sección $b\times h$ & ${tn(d.b, 0)} $\times$ ${tn(d.h, 0)} mm\\
+Tipo de viga & ${d.maestra ? "maestra" : "del envigado"}${d.kc ? ", trabajo conjunto" : ""}\\
+Luz $L$ ; $l_a$ & ${tn(d.Lm)} m ; ${tn(d.la, 0)} cm (${d.apoyoLat === "ac" ? "apoyo lateral continuo" : "apoyo lateral discontinuo"})\\
+$q_{PP}$ ; $q_{SC}$ ; $P$ & ${tn(r.qPP, 2)} ; ${tn(r.qSC, 2)} kgf/m ; ${tn(d.P, 0)} kgf\\
+Uso (Tabla 6) & ${d.uso.replace(/—/g, "---")}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+${m.tex.join("\n")}
+
+\section{Resumen}
+\begin{table}[H]
+\centering
+\begin{tabular}{llcc}
+\toprule
+Verificación & Solicitación / capacidad & Razón & Estado\\
+\midrule
+${filas}
+\bottomrule
+\end{tabular}
+\end{table}
+Con una razón máxima de ${tn(dc, 3)}, la viga \textbf{${ok ? "cumple" : "no cumple"}} con las verificaciones de la NCh 1198:2024.
+\end{document}
+`;
+  ultimoNombre = `memoria_envigado_${d.grado}_${d.b}x${d.h}.tex`;
+}
+
+function descargarTex() {
+  const blob = new Blob([ultimoTex], { type: "application/x-tex;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = ultimoNombre;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function init() {
+  $("esc").innerHTML = Object.entries(ESCUADRIAS).map(([k, [b, h]]) => `<option value='${k}'>${k} — ${b} × ${h} mm</option>`).join("") + `<option value="custom">Personalizada</option>`;
+  $("esc").value = '2x6"';
+  $("uso").innerHTML = Object.keys(TABLA6).map(k => `<option>${k}</option>`).join("");
+  const panel = $("inputs");
+  panel.addEventListener("input", actualizar);
+  panel.addEventListener("change", actualizar);
+  $("btnTex").addEventListener("click", descargarTex);
+  actualizar();
+}
+init();
+</script>
+<script>
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+</script>
+</body>
+</html>
