@@ -365,6 +365,7 @@
 </main>
 <footer>Herramienta de apoyo académico. Las solicitaciones deben corresponder a la envolvente de combinaciones mayoradas. Verifique siempre los resultados.</footer>
 
+<script src="memo.js"></script>
 <script>
 "use strict";
 // ---------------------------------------------------------------------------
@@ -404,22 +405,9 @@ class Memo {
   sub(t) { this.out.push(`<h4>${t}</h4>`); this.tex.push(`\\subsection*{${texTxt(t)}}`); }
   row(k, v, ref) { this.out.push({ k, v, ref }); }
   note(t, tt) { this.out.push(`<div class="note">${t}</div>`); this.tex.push(`\\textit{${tt || t}}\n`); }
-  eq(s, ref) { this.tex.push(`\\[\n${s}${ref ? `\\tag*{(${ref})}` : ""}\n\\]`); }
-  p(s) { this.tex.push(s + "\n"); }
-  html() {
-    let s = "", open = false;
-    for (const it of this.out) {
-      if (typeof it === "string") {
-        if (open) { s += "</table>"; open = false; }
-        s += it;
-      } else {
-        if (!open) { s += '<table class="calc">'; open = true; }
-        s += `<tr><td class="k">${it.k}${it.ref ? `<span class="ref">${it.ref}</span>` : ""}</td><td class="v">${it.v}</td></tr>`;
-      }
-    }
-    if (open) s += "</table>";
-    return s;
-  }
+  eq(s, ref) { const x = `\\[\n${s}${ref ? `\\tag*{(${ref})}` : ""}\n\\]`; this.tex.push(x); this.out.push({ tex: s + (ref ? `\\tag*{(${ref})}` : ""), eq: true }); }
+  p(s) { this.tex.push(s + "\n"); this.out.push({ tex: s }); }
+  html() { return memoHTML(this.out); }
 }
 
 // Memo nulo para evaluar alternativas sin generar texto.

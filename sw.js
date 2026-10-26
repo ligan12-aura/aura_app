@@ -1,6 +1,6 @@
 // Service worker de AURA: guarda la app completa para uso sin conexión.
 // Al publicar cambios, incremente VERSION para que los dispositivos descarguen la nueva versión.
-const VERSION = "aura-v2";
+const VERSION = "aura-v3";
 const ARCHIVOS = [
   "./",
   "./index.html",
@@ -8,6 +8,7 @@ const ARCHIVOS = [
   "./hormigon.html",
   "./madera.html",
   "./espectros.html",
+  "./memo.js",
   "./manifest.webmanifest",
   "./icons/apple-touch-icon.png",
   "./icons/icon-192.png",
@@ -30,7 +31,9 @@ self.addEventListener("activate", (e) => {
 // Red primero (para recibir actualizaciones) y caché como respaldo sin conexión.
 self.addEventListener("fetch", (e) => {
   const req = e.request;
-  if (req.method !== "GET" || new URL(req.url).origin !== self.location.origin) return;
+  // Propios y KaTeX (cdnjs) para que las ecuaciones también se vean sin conexión.
+  const url = new URL(req.url);
+  if (req.method !== "GET" || (url.origin !== self.location.origin && url.hostname !== "cdnjs.cloudflare.com")) return;
   e.respondWith(
     fetch(req)
       .then((resp) => {
