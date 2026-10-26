@@ -319,15 +319,15 @@ function calcular(d, m) {
   const q = qPP + qSC;
   m.h("Cargas y solicitaciones");
   if (d.modoCarga === "area") {
-    m.row("q<sub>PP</sub> = D·d<sub>i</sub> + b·h·ρ + otra ; q<sub>SC</sub> = L·d<sub>i</sub>", `${fmt(qPP, 3)} ; ${fmt(qSC, 2)} kgf/m`);
+    m.row("Carga de peso propio ; sobrecarga: q<sub>PP</sub> ; q<sub>SC</sub>", `${fmt(qPP, 3)} ; ${fmt(qSC, 2)} kgf/m`);
     m.eq(L`q_{PP} = ${tn(d.Dm2, 1)}\cdot ${tn(d.di)} + ${tn(bc / 100, 3)}\cdot ${tn(hc / 100, 3)}\cdot ${tn(d.rho, 0)}${d.qExtra ? L` + ${tn(d.qExtra)}` : ""} = ${tn(qPP, 3)}\ \mathrm{kgf/m} \qquad q_{SC} = ${tn(d.Lm2, 0)}\cdot ${tn(d.di)} = ${tn(qSC, 2)}\ \mathrm{kgf/m}`);
   } else {
-    m.row("q<sub>PP</sub> ; q<sub>SC</sub> (ingresadas)", `${fmt(qPP, 3)} ; ${fmt(qSC, 2)} kgf/m`);
+    m.row("Carga de peso propio ; sobrecarga (ingresadas): q<sub>PP</sub> ; q<sub>SC</sub>", `${fmt(qPP, 3)} ; ${fmt(qSC, 2)} kgf/m`);
     m.eq(L`q_{PP} = ${tn(qPP, 3)}\ \mathrm{kgf/m} \qquad q_{SC} = ${tn(qSC, 2)}\ \mathrm{kgf/m}`);
   }
   const M = q * d.Lm ** 2 / 8 + d.P * d.Lm / 4;                  // kgf·m
   const V = q * d.Lm / 2 + d.P / 2;                              // kgf
-  m.row("M = qL²/8 + PL/4 ; V = qL/2 + P/2", `${fmt(M, 2)} kgf·m ; ${fmt(V, 2)} kgf`);
+  m.row("Momento máximo ; corte máximo: M ; V", `${fmt(M, 2)} kgf·m ; ${fmt(V, 2)} kgf`);
   m.eq(L`M = \frac{q L^2}{8}${d.P ? L` + \frac{P L}{4}` : ""} = \frac{${tn(q, 3)}\cdot ${tn(d.Lm)}^2}{8}${d.P ? L` + \frac{${tn(d.P, 1)}\cdot ${tn(d.Lm)}}{4}` : ""} = ${tn(M, 3)}\ \mathrm{kgf\cdot m} \qquad V = ${tn(V, 3)}\ \mathrm{kgf}`);
 
   // Factores de modificación
@@ -369,10 +369,10 @@ Se adopta la conversión 1 MPa $= 10$ kgf/cm$^2$.
 `);
 
   m.h("Factores de modificación y propiedades de diseño");
-  m.row("K<sub>H</sub> (flexión ; cizalle ; c. normal ; E)", `${fmt(KH("Ff"), 3)} ; ${fmt(KH("Fcz"), 3)} ; ${fmt(KH("Fcn"), 3)} ; ${fmt(KH("Ef"), 3)}`, "7.1.1");
-  m.row(`K<sub>D</sub> (${d.kdTxt})`, fmt(KD, 3), "7.1.2");
-  m.row("K<sub>c</sub> ; K<sub>hf</sub> ; K<sub>hE</sub>", `${fmt(Kc, 2)} ; ${fmt(Khf, 3)} ; ${fmt(KhE, 3)}`, "7.1.3 / 8.2.2.3");
-  m.row("E<sub>f,dis</sub> = E<sub>f</sub>·K<sub>H</sub>·K<sub>hE</sub>", `${fmt(Edis, 0)} kgf/cm²`);
+  m.row("Factor de modificación por humedad (flexión ; cizalle ; c. normal ; E): K<sub>H</sub>", `${fmt(KH("Ff"), 3)} ; ${fmt(KH("Fcz"), 3)} ; ${fmt(KH("Fcn"), 3)} ; ${fmt(KH("Ef"), 3)}`, "7.1.1");
+  m.row(`Factor de modificación por duración de la carga (${d.kdTxt}): K<sub>D</sub>`, fmt(KD, 3), "7.1.2");
+  m.row("Factores por trabajo conjunto ; altura en flexión ; altura en E: K<sub>c</sub> ; K<sub>hf</sub> ; K<sub>hE</sub>", `${fmt(Kc, 2)} ; ${fmt(Khf, 3)} ; ${fmt(KhE, 3)}`, "7.1.3 / 8.2.2.3");
+  m.row("Módulo de elasticidad de diseño: E<sub>f,dis</sub>", `${fmt(Edis, 0)} kgf/cm²`);
   m.p(L`Pino radiata grado ${d.grado} (Tabla U.1), con $F_f = ${tn(FfM, 1)}$, $F_{cz} = ${tn(FczM, 1)}$, $F_{cn} = ${tn(FcnM, 1)}$ y $E_f = ${tn(EfM, 0)}$ MPa${d.maestra ? L` (viga maestra: $0{,}60\,E_f$)` : ""}; se usa 1 MPa $= 10$ kgf/cm$^2$.`);
   m.eq(L`K_H = 1 - (H - 12)\Delta R\ (H \le 20\,\%) \qquad K_D = \frac{1{,}747}{t^{0{,}0464}} + 0{,}295 = ${tn(KD, 3)} \qquad K_c = ${tn(Kc, 2)}`, "7.1.1, 7.1.2, 7.1.3");
   m.eq(L`K_{hf} = ${mgp ? L`\left(\frac{160}{h}\right)^{${d.grado === "MGP10" ? "1/3" : "1/2"}}` : L`\left(\frac{90}{h}\right)^{1/5}`} = ${tn(Khf, 3)} \qquad K_{hE} = ${!mgp && d.h < 180 ? L`\left(\frac{h}{180}\right)^{1/4} = ${tn(KhE, 3)}` : "1"} \qquad E_{f,dis} = ${tn(Ef0, 0)}\cdot ${tn(KH("Ef"), 3)}\cdot ${tn(KhE, 3)} = ${tn(Edis, 0)}\ \mathrm{kgf/cm^2}`, "8.2.2.3");
@@ -396,12 +396,12 @@ Se adopta la conversión 1 MPa $= 10$ kgf/cm$^2$.
   const Ffv = Fstar * Klv;
   const Fdis = Math.min(Fft, Ffv);
   r.flex = ff / Fdis;
-  m.row("W = b·h²/6 ; f<sub>f</sub> = M/W", `${fmt(W, 2)} cm³ ; ${fmt(ff, 2)} kgf/cm²`);
-  m.row("F<sub>ft,dis</sub> = F<sub>f</sub>·K<sub>H</sub>·K<sub>D</sub>·K<sub>c</sub>·K<sub>hf</sub>", `${fmt(Fft, 2)} kgf/cm²`);
-  if (necesitaKlv) m.row(`l<sub>v</sub> (Tabla 5) ; λ<sub>v</sub> ; F<sub>fE</sub> ; K<sub>λv</sub>`, `${fmt(lv, 1)} cm ; ${fmt(lamv, 2)} ; ${fmt(FfE, 1)} ; ${fmt(Klv, 3)}`, "8.2.2.4");
-  else m.row("K<sub>λv</sub>", `1 (${d.apoyoLat === "ac" ? "apoyo lateral continuo" : "h/b ≤ 2"})`, "8.2.2.4");
-  m.row("F<sub>fv,dis</sub> = F<sub>f</sub>·K<sub>H</sub>·K<sub>D</sub>·K<sub>c</sub>·K<sub>λv</sub>", `${fmt(Ffv, 2)} kgf/cm²`);
-  m.row("<b>f<sub>f</sub> / F<sub>f,dis</sub></b> (F<sub>f,dis</sub> = mín)", `<b>${fmt(r.flex, 3)}</b> ${okTxt(r.flex <= 1)}`);
+  m.row("Módulo resistente ; tensión de trabajo en flexión: W ; f<sub>f</sub>", `${fmt(W, 2)} cm³ ; ${fmt(ff, 2)} kgf/cm²`);
+  m.row("Tensión de diseño en flexión (borde traccionado): F<sub>ft,dis</sub>", `${fmt(Fft, 2)} kgf/cm²`);
+  if (necesitaKlv) m.row("Longitud efectiva ; esbeltez ; tensión crítica ; factor de volcamiento: l<sub>v</sub> ; λ<sub>v</sub> ; F<sub>fE</sub> ; K<sub>λv</sub>", `${fmt(lv, 1)} cm ; ${fmt(lamv, 2)} ; ${fmt(FfE, 1)} ; ${fmt(Klv, 3)}`, "8.2.2.4");
+  else m.row("Factor de modificación por volcamiento: K<sub>λv</sub>", `1 (${d.apoyoLat === "ac" ? "apoyo lateral continuo" : "h/b ≤ 2"})`, "8.2.2.4");
+  m.row("Tensión de diseño en flexión (borde comprimido): F<sub>fv,dis</sub>", `${fmt(Ffv, 2)} kgf/cm²`);
+  m.row("<b>Razón de flexión: f<sub>f</sub> / F<sub>f,dis</sub></b>", `<b>${fmt(r.flex, 3)}</b> ${okTxt(r.flex <= 1)}`);
   m.eq(L`f_f = \frac{M}{W} = \frac{${tn(M * 100, 1)}}{${tn(W, 2)}} = ${tn(ff, 2)} \qquad F_{ft,dis} = ${tn(Ff, 1)}\cdot ${tn(KH("Ff"), 3)}\cdot ${tn(KD, 3)}\cdot ${tn(Kc, 2)}\cdot ${tn(Khf, 3)} = ${tn(Fft, 2)}\ \mathrm{kgf/cm^2}`, "8.2.2.2");
   if (necesitaKlv) {
     m.eq(L`l_v = ${d.la / hc < 7 ? L`2{,}06\,l_a` : L`1{,}63\,l_a + 3h`} = ${tn(lv, 1)}\ \mathrm{cm} \quad \lambda_v = \sqrt{\frac{l_v h}{b^2}} = ${tn(lamv, 2)} \quad F_{fE} = \frac{0{,}439\,E_{f,dis}}{\lambda_v^2} = ${tn(FfE, 1)} \quad K_{\lambda v} = ${tn(Klv, 3)}`, "Tabla 5, 8.2.2.4");
@@ -422,9 +422,9 @@ Se adopta la conversión 1 MPa $= 10$ kgf/cm$^2$.
   }
   const Fczd = Fcz * KH("Fcz") * KD * Kr;
   r.ciz = fcz / Fczd;
-  m.row(`f<sub>cz</sub> = 1,5·V/(b·${d.rebaje ? "h<sub>r</sub>" : "h"})`, `${fmt(fcz, 3)} kgf/cm²`);
-  m.row("K<sub>r</sub> ; F<sub>cz,dis</sub> = F<sub>cz</sub>·K<sub>H</sub>·K<sub>D</sub>·K<sub>r</sub>", `${fmt(Kr, 3)} ; ${fmt(Fczd, 2)} kgf/cm²`, "8.2.3 / 8.7");
-  m.row("<b>f<sub>cz</sub> / F<sub>cz,dis</sub></b>", `<b>${fmt(r.ciz, 3)}</b> ${okTxt(r.ciz <= 1)}`);
+  m.row("Tensión de trabajo en cizalle: f<sub>cz</sub>", `${fmt(fcz, 3)} kgf/cm²`);
+  m.row("Factor por rebaje ; tensión de diseño en cizalle: K<sub>r</sub> ; F<sub>cz,dis</sub>", `${fmt(Kr, 3)} ; ${fmt(Fczd, 2)} kgf/cm²`, "8.2.3 / 8.7");
+  m.row("<b>Razón de cizalle: f<sub>cz</sub> / F<sub>cz,dis</sub></b>", `<b>${fmt(r.ciz, 3)}</b> ${okTxt(r.ciz <= 1)}`);
   m.eq(L`f_{cz} = \frac{1{,}5\,V}{b\,${d.rebaje ? "h_r" : "h"}} = \frac{1{,}5\cdot ${tn(V, 2)}}{${tn(bc, 1)}\cdot ${tn(hEf, 1)}} = ${tn(fcz, 3)} \qquad F_{cz,dis} = ${tn(Fcz, 2)}\cdot ${tn(KH("Fcz"), 3)}\cdot ${tn(KD, 3)}\cdot ${tn(Kr, 3)} = ${tn(Fczd, 2)}\ \mathrm{kgf/cm^2} \qquad ${tn(r.ciz, 3)} ${cmp(r.ciz, 1)} 1`, "8.2.3");
 
   // Compresión normal
@@ -433,9 +433,9 @@ Se adopta la conversión 1 MPa $= 10$ kgf/cm$^2$.
   const fcn = V / An;
   const Fcnd = Fcn * KH("Fcn") * d.Kcn;
   r.cn = fcn / Fcnd;
-  m.row("A<sub>n</sub> = b·l<sub>ap</sub> ; f<sub>cn</sub> = V/A<sub>n</sub>", `${fmt(An, 2)} cm² ; ${fmt(fcn, 2)} kgf/cm²`);
-  m.row("F<sub>cn,dis</sub> = F<sub>cn</sub>·K<sub>H</sub>·K<sub>cn</sub>", `${fmt(Fcnd, 2)} kgf/cm²`, "8.5");
-  m.row("<b>f<sub>cn</sub> / F<sub>cn,dis</sub></b>", `<b>${fmt(r.cn, 3)}</b> ${okTxt(r.cn <= 1)}`);
+  m.row("Área de apoyo ; tensión de trabajo en compresión normal: A<sub>n</sub> ; f<sub>cn</sub>", `${fmt(An, 2)} cm² ; ${fmt(fcn, 2)} kgf/cm²`);
+  m.row("Tensión de diseño en compresión normal: F<sub>cn,dis</sub>", `${fmt(Fcnd, 2)} kgf/cm²`, "8.5");
+  m.row("<b>Razón de compresión normal: f<sub>cn</sub> / F<sub>cn,dis</sub></b>", `<b>${fmt(r.cn, 3)}</b> ${okTxt(r.cn <= 1)}`);
   m.eq(L`f_{cn} = \frac{V}{b\,l_{ap}} = \frac{${tn(V, 2)}}{${tn(An, 2)}} = ${tn(fcn, 2)} \qquad F_{cn,dis} = ${tn(Fcn, 2)}\cdot ${tn(KH("Fcn"), 3)}\cdot ${tn(d.Kcn, 2)} = ${tn(Fcnd, 2)}\ \mathrm{kgf/cm^2} \qquad ${tn(r.cn, 3)} ${cmp(r.cn, 1)} 1`, "8.5");
 
   // Deformaciones
@@ -456,10 +456,10 @@ Se adopta la conversión 1 MPa $= 10$ kgf/cm$^2$.
   const limT = divT ? Math.min(Lc * 10 / divT, maxT ?? Infinity) : Infinity;
   const limSC = divSC ? Lc * 10 / divSC : Infinity;
   r.defT = dT / limT; r.defSC = divSC ? dSC / limSC : 0;
-  m.row("g/q ; creep (g/q > 0,5) ; ρ", `${fmt(g_q, 3)} ; ${creep ? "aplica" : "no aplica"} ; ${fmt(rho, 3)}`, "8.2.4.11");
-  m.row("Deformación por corte (L/h < 20) ; G = 0,065·E<sub>f,dis</sub>", `${corte ? "aplica" : "no aplica"} (L/h = ${fmt(Lc / hc, 1)}) ; ${fmt(G, 0)} kgf/cm²`, "8.2.4.12");
-  m.row(`δ<sub>SC+PP</sub> ≤ L/${divT}${maxT ? ` y ${maxT} mm` : ""}`, `${fmt(dT, 2)} ≤ ${fmt(limT, 2)} mm ${okTxt(dT <= limT)}`, "Tabla 6");
-  if (divSC) m.row(`δ<sub>SC</sub> ≤ L/${divSC}`, `${fmt(dSC, 2)} ≤ ${fmt(limSC, 2)} mm ${okTxt(dSC <= limSC)}`, "Tabla 6");
+  m.row("Razón carga permanente/total ; creep ; factor de creep: g/q ; ρ", `${fmt(g_q, 3)} ; ${creep ? "aplica" : "no aplica"} ; ${fmt(rho, 3)}`, "8.2.4.11");
+  m.row("Deformación por corte ; módulo de corte: G", `${corte ? "aplica" : "no aplica"} (L/h = ${fmt(Lc / hc, 1)}) ; ${fmt(G, 0)} kgf/cm²`, "8.2.4.12");
+  m.row("Deformación total: δ<sub>SC+PP</sub> ≤ δ<sub>adm</sub>", `${fmt(dT, 2)} ≤ ${fmt(limT, 2)} mm ${okTxt(dT <= limT)}`, "Tabla 6");
+  if (divSC) m.row("Deformación por sobrecarga: δ<sub>SC</sub> ≤ δ<sub>adm</sub>", `${fmt(dSC, 2)} ≤ ${fmt(limSC, 2)} mm ${okTxt(dSC <= limSC)}`, "Tabla 6");
   m.eq(L`\delta_{SC+PP} = \frac{5\,q\,L^4}{384\,E_{f,dis} I}\left(1 + \rho\frac{g}{q}\right)${corte ? L` + \frac{1{,}2\,M}{G\,A}\left(1 + 2\rho\frac{g}{q}\right)` : ""}${d.P ? L` \ (+\ \tfrac{PL^3}{48EI})` : ""} = ${tn(dT, 2)}\ \mathrm{mm} \;${cmp(dT, limT)}\; ${tn(limT, 2)}\ \mathrm{mm}`, "8.2.4");
   if (divSC) m.eq(L`\delta_{SC} = ${tn(dSC, 2)}\ \mathrm{mm} \;${cmp(dSC, limSC)}\; \frac{L}{${divSC}} = ${tn(limSC, 2)}\ \mathrm{mm} \qquad I = \frac{b h^3}{12} = ${tn(I, 1)}\ \mathrm{cm^4},\ \rho = ${tn(rho, 3)}`);
 
@@ -476,10 +476,10 @@ Se adopta la conversión 1 MPa $= 10$ kgf/cm$^2$.
     const dP = Ph * Lc ** 3 / (48 * EI) * 10, dpv = 5 * (pv / 100) * Lc ** 4 / (384 * EI) * 10;   // mm
     const d1 = dP + dpv;
     r.f1 = 9 / f1; r.d1 = d1 / 1;
-    m.row("m = (q<sub>PP</sub> + ψ·q<sub>SC</sub>)/s ; (EI)<sub>long</sub>", `${fmt(masa, 1)} kg/m² ; ${fmt(EIlong, 0)} N·m²/m`);
-    m.row("<b>f<sub>1</sub> ≥ 9 Hz</b>", `<b>${fmt(f1, 2)} Hz</b> ${okTxt(f1 >= 9)}`, "8.2.4.13");
-    m.row(`Hombre 100 kg al centro + peso viga (p<sub>viga</sub> = ${fmt(pv, 2)} kgf/m): δ<sub>P</sub> + δ<sub>pp</sub>`, `${fmt(dP, 3)} + ${fmt(dpv, 3)} mm`);
-    m.row("<b>δ<sub>HH+PP</sub> ≤ 1 mm</b>", `<b>${fmt(d1, 3)} mm</b> ${okTxt(d1 <= 1)}`);
+    m.row("Masa por unidad de área ; rigidez longitudinal: m ; (EI)<sub>long</sub>", `${fmt(masa, 1)} kg/m² ; ${fmt(EIlong, 0)} N·m²/m`);
+    m.row("<b>Frecuencia fundamental: f<sub>1</sub> ≥ 9 Hz</b>", `<b>${fmt(f1, 2)} Hz</b> ${okTxt(f1 >= 9)}`, "8.2.4.13");
+    m.row("Deformación por hombre de 100 kg ; por peso de la viga: δ<sub>P</sub> ; δ<sub>pp</sub>", `${fmt(dP, 3)} + ${fmt(dpv, 3)} mm`);
+    m.row("<b>Deformación por hombre de 100 kg: δ<sub>HH+PP</sub> ≤ 1 mm</b>", `<b>${fmt(d1, 3)} mm</b> ${okTxt(d1 <= 1)}`);
     m.eq(L`m = \frac{q_{PP} + ${d.aglom ? "0{,}50" : "0{,}25"}\,q_{SC}}{s} = ${tn(masa, 1)}\ \mathrm{kg/m^2} \qquad (EI)_{long} = \frac{E_{f,dis} I}{s} = ${tn(EIlong, 0)}\ \mathrm{N\,m^2/m}`);
     m.eq(L`f_1 = \frac{\pi}{2L^2}\sqrt{\frac{(EI)_{long}}{m}} = \frac{\pi}{2\cdot ${tn(d.Lm)}^2}\sqrt{\frac{${tn(EIlong, 0)}}{${tn(masa, 1)}}} = ${tn(f1, 2)}\ \mathrm{Hz} \;${f1 >= 9 ? L`\ge` : "<"}\; 9\ \mathrm{Hz}`, "8.2.4.13");
     m.p(L`\textbf{Verificación del hombre de 100 kg:} carga puntual $P = 100$ kgf al centro de la viga más su peso propio $p_{viga} = ${tn(pv, 2)}$ kgf/m; límite 1 mm.`);

@@ -260,7 +260,7 @@ function modelo(norma, cat, zona, suelo, xi) {
     const Ar = 1.4 * A0, fxi = (0.05 / xi) ** 0.4;
     return {
       par: [["I", I, N.refCat], ["A<sub>0</sub> ; A<sub>r</sub> = 1,4A<sub>0</sub> [g]", `${fmt(A0, 2)} ; ${fmt(Ar, 2)}`, N.refA0], ["S", s.S, N.refSuelo], ["r", s.r, N.refSuelo],
-        ["T<sub>0</sub> [s]", s.T0, N.refSuelo], ["p ; q", `${fmt(s.p, 2)} ; ${fmt(s.q, 2)}`, N.refSuelo], ["(0,05/ξ)<sup>0,4</sup>", fxi, `ξ = ${fmt(xi, 3)}`]],
+        ["T<sub>0</sub> [s]", s.T0, N.refSuelo], ["p ; q", `${fmt(s.p, 2)} ; ${fmt(s.q, 2)}`, N.refSuelo], ["Factor de amortiguamiento: (0,05/ξ)<sup>0,4</sup>", fxi, `ξ = ${fmt(xi, 3)}`]],
       formula: "S<sub>a</sub> = I·A<sub>r</sub>·S·(1 + r(T/T<sub>0</sub>)<sup>p</sup>) / (1 + (T/T<sub>0</sub>)<sup>q</sup>)·(0,05/ξ)<sup>0,4</sup>",
       Sa: (T) => I * Ar * s.S * (1 + s.r * (T / s.T0) ** s.p) / (1 + (T / s.T0) ** s.q) * fxi,
     };
@@ -456,8 +456,8 @@ function calcular() {
   const pasoR = (dir, Ts) => {
     const { Rs, txt } = factorR(d, Ts);
     const SaT = M.Sa(Ts);
-    return paso(`<tr><td>${chev}<b>R*<sub>${dir}</sub></b> (T*<sub>${dir}</sub> = ${fmt(Ts, 3)} s)</td><td class="num"><b>${fmt(Rs, 3)}</b></td></tr>
-      <tr><td>Factor de escala ETABS, dirección ${dir}</td><td class="num">${fmt(9.81 / Rs, 4)}</td></tr>`, eqR,
+    return paso(`<tr><td>${chev}<b>Factor de reducción, dirección ${dir}: R*<sub>${dir}</sub></b></td><td class="num"><b>${fmt(Rs, 3)}</b></td></tr>
+      <tr><td>Factor de escala ETABS, dirección ${dir}: g/R*<sub>${dir}</sub></td><td class="num">${fmt(9.81 / Rs, 4)}</td></tr>`, eqR,
       [`R*<sub>${dir}</sub> = ${txt}`, `g/R*<sub>${dir}</sub> = 9,81/${fmt(Rs, 3)} = ${fmt(9.81 / Rs, 4)} m/s² ; S<sub>a</sub>(T*<sub>${dir}</sub>) = ${fmt(SaT, 3)} g → S<sub>a</sub>/R* = ${fmt(SaT / Rs, 4)} g`]);
   };
   $("pasosR").innerHTML = pasoR("x", d.Tx) + pasoR("y", d.Ty);
@@ -472,7 +472,7 @@ function calcular() {
       ? "u<sub>máx</sub> = S<sub>a</sub>(T*)·g/ω² ; ω = 2π/T* ; g = 981 cm/s² (sin dividir por R*)"
       : "u<sub>máx</sub> = S<sub>a</sub>(T*)·(1/R*)·g/ω² ; ω = 2π/T* ; g = 981 cm/s²";
   $("pasosU").innerHTML = [["x", ux], ["y", uy]].map(([dir, r]) =>
-    paso(`<tr><td>${chev}<b>${sim},${dir}</sub></b> (T*<sub>${dir}</sub> = ${fmt(dir === "x" ? d.Tx : d.Ty, 3)} s)</td><td class="num"><b>${fmt(r.u, 3)} cm</b></td></tr>`, eqU, r.txt.split(" ; "))).join("");
+    paso(`<tr><td>${chev}<b>Desplazamiento máximo, dirección ${dir}: ${sim},${dir}</sub></b></td><td class="num"><b>${fmt(r.u, 3)} cm</b></td></tr>`, eqU, r.txt.split(" ; "))).join("");
   $("tiles").insertAdjacentHTML("beforeend", [["x", ux], ["y", uy]].map(([dir, r]) =>
     `<div class="tile"><div class="t">${sim},${dir},máx</sub></div><div class="v">${fmt(r.u, 3)} cm</div><div class="s">T*<sub>${dir}</sub> = ${fmt(dir === "x" ? d.Tx : d.Ty, 3)} s</div></div>`).join(""));
   $("sumTabla").textContent = `Tabla de valores (${pts.length} puntos)`;

@@ -442,10 +442,10 @@ function flexion(cara, Mu, db, g, m) {
   const resuelve = 2 * mu < 1;
   const alpha = resuelve ? 1 - Math.sqrt(1 - 2 * mu) : NaN;
   const rho = resuelve ? 0.85 * fc * alpha / fy : Infinity;
-  m.row("Altura útil d", `${fmt(d, 2)} cm`);
-  m.row(`M<sub>u</sub> ; M<sub>n</sub> = M<sub>u</sub>/0,9`, `${fmt(Mu / 100, 1)} ; ${fmt(Mn / 100, 1)} kgf·m`, "9.3.2.1");
-  m.row("μ = M<sub>n</sub>/(0,85 f'c b d²) ; α = 1 − √(1 − 2μ)", `${fmt(mu, 4)} ; ${fmt(alpha, 4)}`);
-  m.row("ρ requerida = 0,85 f'c α / f<sub>y</sub>", fmt(rho, 5));
+  m.row("Altura útil: d", `${fmt(d, 2)} cm`);
+  m.row("Momento último ; momento nominal requerido: M<sub>u</sub> ; M<sub>n</sub>", `${fmt(Mu / 100, 1)} ; ${fmt(Mn / 100, 1)} kgf·m`, "9.3.2.1");
+  m.row("Momento reducido ; profundidad relativa del bloque: μ ; α", `${fmt(mu, 4)} ; ${fmt(alpha, 4)}`);
+  m.row("Cuantía requerida: ρ", fmt(rho, 5));
   m.p(L`Se supone sección controlada por tracción ($\phi = 0{,}90$, se verifica más adelante):`);
   m.eq(L`M_n = \frac{${Msym}}{\phi} = \frac{${tn(Mu, 0)}}{0{,}9} = ${tn(Mn, 0)}${KGCM}`, "9.3.2.1");
   m.eq(L`\mu = \frac{M_n}{0{,}85\,f'_c\,b\,d^2} = \frac{${tn(Mn, 0)}}{0{,}85\cdot ${tn(fc, 0)}\cdot ${tn(b, 1)}\cdot ${tn(d)}^2} = ${tn(mu, 4)}`);
@@ -460,8 +460,8 @@ function flexion(cara, Mu, db, g, m) {
   const rmin = Math.max(0.8 * Math.sqrt(fc) / fy, 14 / fy);
   const rb = 0.85 * b1 * fc / fy * (ECU * ES / (ECU * ES + fy));
   const rmax = 0.85 * b1 * fc / fy * (ECU / (ECU + 0.004));
-  m.row("ρ<sub>mín</sub> = máx(0,8√f'c/f<sub>y</sub> ; 14/f<sub>y</sub>)", fmt(rmin, 5), "10.5.1");
-  m.row("ρ<sub>máx</sub> (ε<sub>t</sub> = 0,004) ; referencia 0,75ρ<sub>b</sub>", `${fmt(rmax, 5)} ; ${fmt(0.75 * rb, 5)}`, "10.3.5");
+  m.row("Cuantía mínima: ρ<sub>mín</sub>", fmt(rmin, 5), "10.5.1");
+  m.row("Cuantía máxima ; referencia 0,75 cuantía balanceada: ρ<sub>máx</sub> ; 0,75ρ<sub>b</sub>", `${fmt(rmax, 5)} ; ${fmt(0.75 * rb, 5)}`, "10.3.5");
   m.p(L`\textbf{Cuantías límite.} Con $\beta_1 = ${tn(b1, 3)}$ (10.2.7.3):`);
   m.eq(L`\rho_{\min} = \max\left(\frac{0{,}8\sqrt{f'_c}}{f_y},\ \frac{14}{f_y}\right) = \max\left(\frac{0{,}8\sqrt{${tn(fc, 0)}}}{${tn(fy, 0)}},\ \frac{14}{${tn(fy, 0)}}\right) = ${tn(rmin, 5)}`, "10.5.1");
   m.eq(L`\rho_{\max} = 0{,}85\,\beta_1\frac{f'_c}{f_y}\cdot\frac{\varepsilon_{cu}}{\varepsilon_{cu} + 0{,}004} = 0{,}85\cdot ${tn(b1, 3)}\cdot\frac{${tn(fc, 0)}}{${tn(fy, 0)}}\cdot\frac{0{,}003}{0{,}007} = ${tn(rmax, 5)}`, "10.3.5");
@@ -470,8 +470,8 @@ function flexion(cara, Mu, db, g, m) {
   const rhoD = Math.max(rho, rmin);
   const okRho = rho <= rmax;
   const Asreq = rhoD * b * d;
-  m.row("ρ de diseño ; A<sub>s</sub> requerida", `${fmt(rhoD, 5)} ; ${fmt(Asreq, 3)} cm²`);
-  m.row("ρ ≤ ρ<sub>máx</sub>", tag(okRho, okRho ? "cumple" : "requiere armadura doble o mayor sección"));
+  m.row("Cuantía de diseño ; armadura requerida: ρ ; A<sub>s,req</sub>", `${fmt(rhoD, 5)} ; ${fmt(Asreq, 3)} cm²`);
+  m.row("Control de cuantía máxima: ρ ≤ ρ<sub>máx</sub>", tag(okRho, okRho ? "cumple" : "requiere armadura doble o mayor sección"));
   m.p(L`Como $\rho = ${tn(rho, 5)}$ ${rho >= rmin ? L`$\ge$` : L`$<$`} $\rho_{\min} = ${tn(rmin, 5)}$, ${rho >= rmin ? "rige la cuantía por solicitación" : L`\textbf{rige la cuantía mínima}`}${okRho ? L` y $\rho \le \rho_{\max}$.` : L`, pero $\rho > \rho_{\max}$: \textbf{la sección requiere armadura doble o mayores dimensiones}.`}`);
   m.eq(L`A_s = \rho\,b\,d = ${tn(rhoD, 5)}\cdot ${tn(b, 1)}\cdot ${tn(d)} = ${tn(Asreq, 3)}${CM2}`);
 
@@ -487,10 +487,10 @@ function flexion(cara, Mu, db, g, m) {
   const sMax = Math.min(38 * 2800 / fs - 2.5 * cc, 30 * 2800 / fs);
   const sCC = (anchoUtil - db / 10) / (Nb - 1);
   const okSmin = sLibre >= sMin, okSmax = sCC <= sMax;
-  m.row(`A<sub>b</sub> (φ${db}) ; N<sub>b</sub> = ⌈A<sub>s</sub>/A<sub>b</sub>⌉`, `${fmt(Ab, 3)} cm² ; ${Nb}φ${db}`);
-  m.row("A<sub>s</sub> dispuesta", `${fmt(As, 3)} cm²`);
-  m.row("Espaciamiento libre s ≥ s<sub>mín</sub> = máx(2,5 cm ; d<sub>b</sub>)", `${fmt(sLibre, 2)} ≥ ${fmt(sMin, 2)} cm ${tag(okSmin, okSmin ? "cumple" : "no cabe en una capa")}`, "7.6.1");
-  m.row("Espaciamiento entre ejes ≤ s<sub>máx</sub> (control de fisuración)", `${fmt(sCC, 2)} ≤ ${fmt(sMax, 2)} cm ${tag(okSmax, okSmax ? "cumple" : "no cumple")}`, "10.6.4");
+  m.row(`Área de una barra φ${db} ; número de barras: A<sub>b</sub> ; N<sub>b</sub>`, `${fmt(Ab, 3)} cm² ; ${Nb}φ${db}`);
+  m.row("Armadura dispuesta: A<sub>s</sub>", `${fmt(As, 3)} cm²`);
+  m.row("Espaciamiento libre entre barras: s ≥ s<sub>mín</sub>", `${fmt(sLibre, 2)} ≥ ${fmt(sMin, 2)} cm ${tag(okSmin, okSmin ? "cumple" : "no cabe en una capa")}`, "7.6.1");
+  m.row("Espaciamiento entre ejes (control de fisuración): s ≤ s<sub>máx</sub>", `${fmt(sCC, 2)} ≤ ${fmt(sMax, 2)} cm ${tag(okSmax, okSmax ? "cumple" : "no cumple")}`, "10.6.4");
   m.p(L`\textbf{Disposición de barras.} Con $\phi${db}$ ($A_b = ${tn(Ab, 3)}$ cm$^2$):`);
   m.eq(L`N_b = \left\lceil\frac{A_s}{A_b}\right\rceil = \left\lceil\frac{${tn(Asreq, 3)}}{${tn(Ab, 3)}}\right\rceil = ${Nb} \;\Rightarrow\; ${Nb}\phi${db},\quad A_{s,\text{disp}} = ${tn(As, 3)}${CM2}`);
   m.eq(L`s = \frac{b - 2(r_{ec} + \phi_e) - N_b\,d_b}{N_b - 1} = \frac{${tn(b, 1)} - 2(${tn(rec, 1)} + ${tn(de / 10, 1)}) - ${Nb}\cdot ${tn(db / 10, 1)}}{${Nb - 1}} = ${tn(sLibre)}${CM} \;${okSmin ? GE : "<"}\; s_{\min} = \max(2{,}5;\ d_b) = ${tn(sMin)}${CM}`, "7.6.1");
@@ -507,10 +507,10 @@ function flexion(cara, Mu, db, g, m) {
   const phiMn = phi * MnP;
   const okEt = et >= 0.004;
   const dc = Mu / phiMn;
-  m.row("a ; c = a/β<sub>1</sub>", `${fmt(a, 2)} ; ${fmt(c, 2)} cm`, "10.2.7");
-  m.row("ε<sub>t</sub> ≥ 0,004 ; φ", `${fmt(et, 4)} ${tag(okEt, okEt ? "cumple" : "no cumple")} ; ${fmt(phi, 3)}`, "10.3.5 / 9.3.2");
-  m.row("<b>φM<sub>n</sub></b> con armadura dispuesta", `<b>${fmt(phiMn / 100, 1)} kgf·m</b>`);
-  m.row("<b>D/C</b> = M<sub>u</sub>/φM<sub>n</sub>", `<b>${fmt(dc, 3)}</b> ${okTxt(dc <= 1)}`);
+  m.row("Profundidad del bloque de compresión ; eje neutro: a ; c", `${fmt(a, 2)} ; ${fmt(c, 2)} cm`, "10.2.7");
+  m.row("Deformación del acero en tracción ; factor de reducción: ε<sub>t</sub> ; φ", `${fmt(et, 4)} ${tag(okEt, okEt ? "cumple" : "no cumple")} ; ${fmt(phi, 3)}`, "10.3.5 / 9.3.2");
+  m.row("<b>Resistencia de diseño a flexión: φM<sub>n</sub></b>", `<b>${fmt(phiMn / 100, 1)} kgf·m</b>`);
+  m.row("<b>Razón demanda/capacidad en flexión: D/C</b>", `<b>${fmt(dc, 3)}</b> ${okTxt(dc <= 1)}`);
   m.p(L`\textbf{Verificación de la capacidad} con $A_s = ${tn(As, 3)}$ cm$^2$:`);
   m.eq(L`a = \frac{A_s f_y}{0{,}85\,f'_c\,b} = \frac{${tn(As, 3)}\cdot ${tn(fy, 0)}}{0{,}85\cdot ${tn(fc, 0)}\cdot ${tn(b, 1)}} = ${tn(a, 3)}${CM} \qquad c = \frac{a}{\beta_1} = ${tn(c, 3)}${CM}`, "10.2.7");
   m.eq(L`\varepsilon_t = \varepsilon_{cu}\frac{d - c}{c} = 0{,}003\cdot\frac{${tn(d)} - ${tn(c, 3)}}{${tn(c, 3)}} = ${tn(et, 4)} \;${okEt ? GE : "<"}\; 0{,}004 \;\Rightarrow\; \phi = ${tn(phi, 3)}`, "10.3.5");
@@ -534,10 +534,10 @@ function corte(Vu, g, d, dbMin, criterio, m) {
   const Vs = Math.max(0, VsCalc);
   const VsMax = 2.12 * rf * b * d;
   const okVs = Vs <= VsMax;
-  m.row("d (armadura inferior) ; φ", `${fmt(d, 2)} cm ; 0,75`, "9.3.2.3");
-  m.row("V<sub>c</sub> = 0,53√f'c b<sub>w</sub> d ; φV<sub>c</sub>", `${fmt(Vc, 0)} ; ${fmt(phiVc, 0)} kgf`, "11.2.1.1");
-  m.row("V<sub>s</sub> = V<sub>u</sub>/φ − V<sub>c</sub>", `${fmt(VsCalc, 0)} kgf`, "11.4.7.1");
-  m.row("V<sub>s</sub> ≤ 2,12√f'c b<sub>w</sub> d", `${fmt(Vs, 0)} ≤ ${fmt(VsMax, 0)} kgf ${tag(okVs, okVs ? "cumple" : "aumentar sección")}`, "11.4.7.9");
+  m.row("Altura útil ; factor de reducción por corte: d ; φ", `${fmt(d, 2)} cm ; 0,75`, "9.3.2.3");
+  m.row("Resistencia al corte del hormigón: V<sub>c</sub> ; φV<sub>c</sub>", `${fmt(Vc, 0)} ; ${fmt(phiVc, 0)} kgf`, "11.2.1.1");
+  m.row("Corte requerido al acero: V<sub>s</sub>", `${fmt(VsCalc, 0)} kgf`, "11.4.7.1");
+  m.row("Límite del corte resistido por el acero: V<sub>s</sub> ≤ V<sub>s,máx</sub>", `${fmt(Vs, 0)} ≤ ${fmt(VsMax, 0)} kgf ${tag(okVs, okVs ? "cumple" : "aumentar sección")}`, "11.4.7.9");
   m.p(L`Factor de reducción $\phi = 0{,}75$ (9.3.2.3) y altura útil $d = ${tn(d)}$ cm.`);
   m.eq(L`V_c = 0{,}53\sqrt{f'_c}\,b_w\,d = 0{,}53\sqrt{${tn(fc, 0)}}\cdot ${tn(b, 1)}\cdot ${tn(d)} = ${tn(Vc, 0)}${KG} \qquad \phi V_c = ${tn(phiVc, 0)}${KG}`, "11-3");
   m.eq(L`V_s = \frac{V_u}{\phi} - V_c = \frac{${tn(Vu, 0)}}{0{,}75} - ${tn(Vc, 0)} = ${tn(VsCalc, 0)}${KG}`, "11-2");
@@ -575,13 +575,13 @@ function corte(Vu, g, d, dbMin, criterio, m) {
   const VsP = ramas * Abe * fy * d / s;
   const phiVn = phi * (Vc + VsP);
   const dc = Vu / phiVn;
-  m.row("A<sub>v</sub>/s requerida = V<sub>s</sub>/(f<sub>yt</sub> d)", `${fmt(AvsReq, 4)} cm²/cm`, "11-15");
-  m.row("A<sub>v</sub>/s mínima = máx(0,2√f'c ; 3,5) b<sub>w</sub>/f<sub>yt</sub>", `${fmt(AvsMin, 4)} cm²/cm`, "11.4.6.3");
-  m.row(`Estribo φ${de}, ${ramas} ramas: s = n·A<sub>b</sub>/(A<sub>v</sub>/s)`, `${fmt(sCalc, 2)} cm`);
-  m.row("s<sub>máx</sub>", `${fmt(sMax, 2)} cm`, sMaxRef || "d/4");
+  m.row("Armadura de corte requerida: A<sub>v</sub>/s", `${fmt(AvsReq, 4)} cm²/cm`, "11-15");
+  m.row("Armadura de corte mínima: (A<sub>v</sub>/s)<sub>mín</sub>", `${fmt(AvsMin, 4)} cm²/cm`, "11.4.6.3");
+  m.row(`Espaciamiento calculado, estribo φ${de} de ${ramas} ramas: s`, `${fmt(sCalc, 2)} cm`);
+  m.row("Espaciamiento máximo: s<sub>máx</sub>", `${fmt(sMax, 2)} cm`, sMaxRef || "d/4");
   m.row("<b>Estribos adoptados</b>", `<b>E φ${de} @ ${s} cm</b>`);
-  m.row("<b>φV<sub>n</sub></b> = φ(V<sub>c</sub> + V<sub>s,disp</sub>)", `<b>${fmt(phiVn, 0)} kgf</b>`);
-  m.row("<b>D/C</b> = V<sub>u</sub>/φV<sub>n</sub>", `<b>${fmt(dc, 3)}</b> ${okTxt(dc <= 1 && okVs)}`);
+  m.row("<b>Resistencia de diseño a corte: φV<sub>n</sub></b>", `<b>${fmt(phiVn, 0)} kgf</b>`);
+  m.row("<b>Razón demanda/capacidad en corte: D/C</b>", `<b>${fmt(dc, 3)}</b> ${okTxt(dc <= 1 && okVs)}`);
   m.p(L`\textbf{Armadura transversal.} Se dispone al menos la armadura mínima ${requiereMin ? L`(exigida por 11.4.6.1, pues $V_u > 0{,}5\phi V_c = ${tn(0.5 * phiVc, 0)}$ kgf)` : L`(como $V_u \le 0{,}5\phi V_c = ${tn(0.5 * phiVc, 0)}$ kgf no es exigida por 11.4.6.1; se dispone como armadura constructiva)`}:`);
   m.eq(L`\frac{A_v}{s} = \frac{V_s}{f_{yt}\,d} = \frac{${tn(Vs, 0)}}{${tn(fy, 0)}\cdot ${tn(d)}} = ${tn(AvsReq, 4)}${CM2CM}`, "11-15");
   m.eq(L`\left(\frac{A_v}{s}\right)_{\min} = \max\left(0{,}2\sqrt{f'_c},\ 3{,}5\right)\frac{b_w}{f_{yt}} = \max\left(${tn(0.2 * rf, 3)},\ 3{,}5\right)\cdot\frac{${tn(b, 1)}}{${tn(fy, 0)}} = ${tn(AvsMin, 4)}${CM2CM}`, "11-13");
@@ -612,10 +612,10 @@ function ganchos(g, m) {
   const pesoMl = peso * 100 / s;                           // kg por metro de viga
   const tipo = gancho === "sismico" ? "sísmico" : "estándar";
   m.sub("Detalle de ganchos y largo del estribo");
-  m.row(`Diámetro interior de doblado D (φ${de} ${de <= 16 ? "≤" : ">"} φ16)`, `${fmt(D, 2)} cm`, "7.2.2");
-  m.row(`Extensión del gancho 135° ${tipo}`, `${fmt(ext, 2)} cm`, gancho === "sismico" ? "21.1" : "7.1.3(c)");
-  m.row("Largo de cada gancho = doblez 135° + extensión", `${fmt(Lg, 2)} cm`);
-  m.row("Largo total del estribo (eje) ; peso", `${fmt(Lt, 1)} cm ; ${fmt(peso, 3)} kg`);
+  m.row("Diámetro interior de doblado: D", `${fmt(D, 2)} cm`, "7.2.2");
+  m.row(`Extensión del gancho 135° ${tipo}: l<sub>ext</sub>`, `${fmt(ext, 2)} cm`, gancho === "sismico" ? "21.1" : "7.1.3(c)");
+  m.row("Largo de cada gancho: L<sub>g</sub>", `${fmt(Lg, 2)} cm`);
+  m.row("Largo total del estribo (eje) ; peso: L<sub>t</sub> ; W", `${fmt(Lt, 1)} cm ; ${fmt(peso, 3)} kg`);
   m.row(`Peso de estribos por metro de viga (@ ${s} cm)`, `${fmt(pesoMl, 2)} kg/m`);
   m.p(L`Los estribos cerrados se anclan con ganchos de 135° en sus extremos (7.11.3). Para el estribo $\phi${de}$ ($d_b = ${tn(dbe, 1)}$ cm):`);
   m.eq(L`D = ${de <= 16 ? 4 : 6}\,d_b = ${de <= 16 ? 4 : 6}\cdot ${tn(dbe, 1)} = ${tn(D)}${CM}`, "7.2.2");
@@ -1033,9 +1033,9 @@ function solicitacionesLosa(g, m) {
   if (g.modo === "manual") {
     m.p(L`Los momentos últimos por metro de ancho fueron ingresados directamente (por ejemplo, desde el modelo ETABS):`);
     m.eq(L`M_X^{+} = ${tn(g.man.MXp, 1)} \qquad M_Y^{+} = ${tn(g.man.MYp, 1)} \qquad M_X^{-} = ${tn(g.man.MXn, 1)} \qquad M_Y^{-} = ${tn(g.man.MYn, 1)}\ \mathrm{kgf\cdot m/m}`);
-    m.row("Momentos ingresados M<sub>X</sub><sup>+</sup> ; M<sub>Y</sub><sup>+</sup>", `${fmt(g.man.MXp, 1)} ; ${fmt(g.man.MYp, 1)} kgf·m/m`);
-    m.row("Momentos ingresados M<sub>X</sub><sup>−</sup> ; M<sub>Y</sub><sup>−</sup>", `${fmt(g.man.MXn, 1)} ; ${fmt(g.man.MYn, 1)} kgf·m/m`);
-    m.row("ε = l<sub>y</sub>/l<sub>x</sub> (clasificación)", `${fmt(eps, 3)} — ${dosDir ? "losa en dos direcciones" : "losa en una dirección"}`);
+    m.row("Momentos positivos ingresados: M<sub>X</sub><sup>+</sup> ; M<sub>Y</sub><sup>+</sup>", `${fmt(g.man.MXp, 1)} ; ${fmt(g.man.MYp, 1)} kgf·m/m`);
+    m.row("Momentos negativos ingresados: M<sub>X</sub><sup>−</sup> ; M<sub>Y</sub><sup>−</sup>", `${fmt(g.man.MXn, 1)} ; ${fmt(g.man.MYn, 1)} kgf·m/m`);
+    m.row("Relación de luces (clasificación): ε", `${fmt(eps, 3)} — ${dosDir ? "losa en dos direcciones" : "losa en una dirección"}`);
     return { ...res, MXp: g.man.MXp, MYp: g.man.MYp, MXn: g.man.MXn, MYn: g.man.MYn };
   }
 
@@ -1043,16 +1043,16 @@ function solicitacionesLosa(g, m) {
   const DL = g.D + g.e / 100 * g.gam;
   const q12 = 1.2 * DL + 1.6 * g.L, q14 = 1.4 * DL;
   const q = Math.max(q12, q14);
-  m.row("Carga muerta total D = SC + e·γ", `${fmt(DL, 1)} kgf/m²`);
-  m.row("Carga última q = máx(1,4D ; 1,2D + 1,6L)", `${fmt(q, 1)} kgf/m²`, "9.2.1");
+  m.row("Carga muerta total: D", `${fmt(DL, 1)} kgf/m²`);
+  m.row("Carga última: q", `${fmt(q, 1)} kgf/m²`, "9.2.1");
   m.eq(L`D = SC_{D} + e\,\gamma = ${tn(g.D, 0)} + ${tn(g.e / 100, 2)}\cdot ${tn(g.gam, 0)} = ${tn(DL, 1)}\ \mathrm{kgf/m^2}`);
   m.eq(L`q = \max(1{,}4D,\ 1{,}2D + 1{,}6L) = \max(${tn(q14, 1)},\ 1{,}2\cdot ${tn(DL, 1)} + 1{,}6\cdot ${tn(g.L, 0)}) = ${tn(q, 1)}\ \mathrm{kgf/m^2}`, "9-1, 9-2");
 
   m.sub("Coeficientes de Czerny");
   const t = CZERNY[caso];
   const lado = (v) => (v ? "empotrado" : "apoyado");
-  m.row("Luz corta l<sub>x</sub> ; luz larga l<sub>y</sub>", `${fmt(lx, 2)} ; ${fmt(ly, 2)} m (dir. corta = ${corta})`);
-  m.row("ε = l<sub>y</sub>/l<sub>x</sub>", fmt(eps, 4));
+  m.row("Luz corta ; luz larga: l<sub>x</sub> ; l<sub>y</sub>", `${fmt(lx, 2)} ; ${fmt(ly, 2)} m (dir. corta = ${corta})`);
+  m.row("Relación de luces: ε", fmt(eps, 4));
   m.row("Bordes mayores ; bordes menores empotrados", `${nM} ; ${nm} → ${t.nombre}`);
   m.p(L`La luz corta $l_x = ${tn(lx, 2)}$ m corresponde a la dirección ${corta} del plano y la luz larga $l_y = ${tn(ly, 2)}$ m a la dirección ${corta === "X" ? "Y" : "X"}. Los bordes mayores (longitud $l_y$) son ${corta === "X" ? "izquierdo y derecho" : "superior e inferior"}: ${lado(mayores[0])} y ${lado(mayores[1])}; los menores: ${lado(menores[0])} y ${lado(menores[1])}. Corresponde la \textbf{${t.nombre.replace(/—/g, "---")}} de Czerny.`);
   m.eq(L`\varepsilon = \frac{l_y}{l_x} = \frac{${tn(ly, 2)}}{${tn(lx, 2)}} = ${tn(eps, 4)}`);
@@ -1070,13 +1070,13 @@ function solicitacionesLosa(g, m) {
       m.eq(L`${sym} = ${tn(c.v0, 1)} + (${tn(c.v1, 1)} - ${tn(c.v0, 1)})\frac{${tn(eps, 4)} - ${tn(c.e0, 2)}}{${tn(c.e1, 2)} - ${tn(c.e0, 2)}} = ${tn(c.val, 2)}`);
     }
   }
-  m.row("Coeficientes m<sub>x</sub> ; m<sub>y</sub> ; m<sub>ex</sub> ; m<sub>ey</sub>",
+  m.row("Coeficientes de Czerny: m<sub>x</sub> ; m<sub>y</sub> ; m<sub>ex</sub> ; m<sub>ey</sub>",
     `${fmt(coef.mx, 2)} ; ${fmt(coef.my, 2)} ; ${coef.mex ? fmt(coef.mex, 2) : "—"} ; ${coef.mey ? fmt(coef.mey, 2) : "—"}`);
   const K = q * lx * ly;
   const Mx = K / coef.mx, My = K / coef.my;
   const Mex = coef.mex ? K / coef.mex : 0, Mey = coef.mey ? K / coef.mey : 0;
-  m.row("K = q·l<sub>x</sub>·l<sub>y</sub>", `${fmt(K, 1)} kgf·m/m`);
-  m.row("M<sub>x</sub> ; M<sub>y</sub> ; M<sub>ex</sub> ; M<sub>ey</sub> = K/m", `${fmt(Mx, 1)} ; ${fmt(My, 1)} ; ${fmt(Mex, 1)} ; ${fmt(Mey, 1)} kgf·m/m`);
+  m.row("Carga total sobre el paño: K", `${fmt(K, 1)} kgf·m/m`);
+  m.row("Momentos de diseño: M<sub>x</sub> ; M<sub>y</sub> ; M<sub>ex</sub> ; M<sub>ey</sub>", `${fmt(Mx, 1)} ; ${fmt(My, 1)} ; ${fmt(Mex, 1)} ; ${fmt(Mey, 1)} kgf·m/m`);
   m.eq(L`K = q\,l_x\,l_y = ${tn(q, 1)}\cdot ${tn(lx, 2)}\cdot ${tn(ly, 2)} = ${tn(K, 1)}\ \mathrm{kgf\cdot m/m}`);
   m.eq(L`M_x = \frac{K}{m_x} = \frac{${tn(K, 1)}}{${tn(coef.mx, 2)}} = ${tn(Mx, 1)} \qquad M_y = \frac{K}{m_y} = \frac{${tn(K, 1)}}{${tn(coef.my, 2)}} = ${tn(My, 1)}\ \mathrm{kgf\cdot m/m}`);
   if (coef.mex || coef.mey) {
@@ -1117,12 +1117,12 @@ function disenoFaja(t, Mu, db, d, g, dosDir, m) {
   const et = ECU * (d - c) / c, phi = phiEt(et), okEt = et >= 0.004;
   const phiMn = phi * AsP * fy * (d - a / 2);
   const dc = MuC / phiMn;
-  m.row("M<sub>u</sub> ; d", `${fmt(Mu, 1)} kgf·m/m ; ${fmt(d, 2)} cm`);
-  m.row("μ ; α ; ρ", `${fmt(mu, 4)} ; ${fmt(alpha, 4)} ; ${fmt(rho, 5)}`);
-  m.row("A<sub>s</sub> = máx(ρ b d ; ρ<sub>mín</sub> b h)", `máx(${fmt(AsCalc, 3)} ; ${fmt(AsMin, 3)}) = ${fmt(As, 3)} cm²/m`, "7.12.2.1");
-  m.row(`φ${db}: s = b·A<sub>b</sub>/A<sub>s</sub> ; s<sub>máx</sub>`, `${fmt(sCalc, 2)} ; ${fmt(sMax, 1)} cm`, dosDir ? "13.3.2" : "7.6.5");
+  m.row("Momento último ; altura útil: M<sub>u</sub> ; d", `${fmt(Mu, 1)} kgf·m/m ; ${fmt(d, 2)} cm`);
+  m.row("Momento reducido ; profundidad relativa ; cuantía: μ ; α ; ρ", `${fmt(mu, 4)} ; ${fmt(alpha, 4)} ; ${fmt(rho, 5)}`);
+  m.row("Armadura requerida: A<sub>s</sub>", `máx(${fmt(AsCalc, 3)} ; ${fmt(AsMin, 3)}) = ${fmt(As, 3)} cm²/m`, "7.12.2.1");
+  m.row(`Espaciamiento calculado φ${db} ; espaciamiento máximo: s ; s<sub>máx</sub>`, `${fmt(sCalc, 2)} ; ${fmt(sMax, 1)} cm`, dosDir ? "13.3.2" : "7.6.5");
   m.row(`<b>Armadura adoptada</b>`, `<b>φ${db} @ ${s} cm</b> (${fmt(AsP, 2)} cm²/m)`);
-  m.row("ε<sub>t</sub> ; φM<sub>n</sub> ; D/C", `${fmt(et, 4)} ; ${fmt(phiMn / 100, 1)} kgf·m/m ; <b>${fmt(dc, 3)}</b> ${okTxt(dc <= 1 && okEt)}`);
+  m.row("Deformación del acero ; resistencia de diseño ; razón D/C: ε<sub>t</sub> ; φM<sub>n</sub> ; D/C", `${fmt(et, 4)} ; ${fmt(phiMn / 100, 1)} kgf·m/m ; <b>${fmt(dc, 3)}</b> ${okTxt(dc <= 1 && okEt)}`);
   m.eq(L`d = ${t.dTex} = ${tn(d, 2)}${CM}`);
   m.eq(L`\mu = \frac{M_u/\phi}{0{,}85\,f'_c\,b\,d^2} = \frac{${tn(MuC, 0)}/0{,}9}{0{,}85\cdot ${tn(fc, 0)}\cdot 100\cdot ${tn(d, 2)}^2} = ${tn(mu, 4)} \qquad \alpha = 1 - \sqrt{1 - 2\mu} = ${tn(alpha, 4)}`);
   m.eq(L`\rho = \frac{0{,}85\,f'_c\,\alpha}{f_y} = \frac{0{,}85\cdot ${tn(fc, 0)}\cdot ${tn(alpha, 4)}}{${tn(fy, 0)}} = ${tn(rho, 5)} \qquad \rho_{\min} = ${tn(rmin, 4)}\ \text{(sobre } b\,h\text{)}`, "7.12.2.1");
@@ -1191,11 +1191,11 @@ function ganchosLosa(g, R, m) {
     r.hk = { ...h, Lrecta, Ltot, peso, cabe };
     lista.push({ ...h, nombre: nombres[k] });
     m.sub(`${nombres[k]} — φ${r.db} con gancho de ${h.tipo}°`);
-    m.row(`D = ${h.fD}d<sub>b</sub> ; l<sub>ext</sub> estándar`, `${fmt(h.D, 2)} ; ${fmt(std.ext, 2)} cm`, "Manual ICH T.1");
-    if (sup) m.row("Altura de la pata estándar vs. espacio disponible e − 2r<sub>ec</sub>", `${fmt(std.alto, 2)} ${cabe ? "≤" : ">"} ${fmt(disp, 2)} cm ${tag(cabe, cabe ? "cabe" : "no cabe → se recorta")}`);
-    if (h.recortada) m.row("<b>Pata recortada (constructiva)</b>: l<sub>ext</sub> = e − 2r<sub>ec</sub> − D/2 − d<sub>b</sub>", `<b>${fmt(h.ext, 2)} cm</b> (altura ${fmt(h.alto, 2)} cm)`);
-    m.row(`Largo de cada gancho = doblez ${h.tipo}° + l<sub>ext</sub>`, `${fmt(h.Lg, 2)} cm`);
-    m.row(`Largo total de corte = ${sup ? "largo del suple" : "luz"} + 2 ganchos ; peso por barra`, `${fmt(Ltot, 1)} cm ; ${fmt(peso, 3)} kg`);
+    m.row("Diámetro de doblado ; extensión estándar: D ; l<sub>ext</sub>", `${fmt(h.D, 2)} ; ${fmt(std.ext, 2)} cm`, "Manual ICH T.1");
+    if (sup) m.row("Altura de la pata estándar vs. espacio disponible", `${fmt(std.alto, 2)} ${cabe ? "≤" : ">"} ${fmt(disp, 2)} cm ${tag(cabe, cabe ? "cabe" : "no cabe → se recorta")}`);
+    if (h.recortada) m.row("<b>Pata recortada (constructiva): l<sub>ext</sub></b>", `<b>${fmt(h.ext, 2)} cm</b> (altura ${fmt(h.alto, 2)} cm)`);
+    m.row(`Largo de cada gancho ${h.tipo}°: L<sub>g</sub>`, `${fmt(h.Lg, 2)} cm`);
+    m.row("Largo total de corte ; peso por barra: L<sub>tot</sub> ; W", `${fmt(Ltot, 1)} cm ; ${fmt(peso, 3)} kg`);
     m.eq(L`D = ${h.fD}\,d_b = ${h.fD}\cdot ${tn(dbc, 1)} = ${tn(h.D, 2)}${CM} \qquad \ell_{ext} = ${h.tipo === 90 ? L`12\,d_b = 12\cdot ${tn(dbc, 1)}` : L`\max(4\,d_b;\ ${r.db <= 8 ? "4{,}0" : "6{,}5"}\ \mathrm{cm}) = \max(${tn(4 * dbc, 2)};\ ${r.db <= 8 ? "4{,}0" : "6{,}5"})`} = ${tn(std.ext, 2)}${CM}`, "Manual ICH, Tabla 1");
     if (sup) {
       m.eq(L`h_{pata} = \frac{D}{2} + d_b + \ell_{ext} = ${tn(h.D / 2, 2)} + ${tn(dbc, 1)} + ${tn(std.ext, 2)} = ${tn(std.alto, 2)}${CM} \;${cabe ? LE : ">"}\; e - 2r_{ec} = ${tn(g.e, 1)} - 2\cdot ${tn(g.rec, 1)} = ${tn(disp, 2)}${CM}`);
