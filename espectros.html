@@ -128,6 +128,10 @@
           <div id="gR" class="hidden"><label for="R">R</label><input id="R" type="number" step="0.5" min="1" value="5"></div>
         </div>
         <div class="nota">T*: periodo con mayor masa traslacional equivalente en cada dirección (por ejemplo, desde ETABS).</div>
+        <div id="gDS" class="row2 hidden">
+          <div><label for="kAg">k<sub>agriet</sub> (T<sub>ag</sub> = k·T*)</label><input id="kAg" type="number" step="0.05" min="1" value="1.5"></div>
+          <div><label for="kDu">k<sub>δu</sub> (δ<sub>u</sub> = k·S<sub>de</sub>)</label><input id="kDu" type="number" step="0.05" min="1" value="1.3"></div>
+        </div>
       </fieldset>
 
       <fieldset>
@@ -156,6 +160,9 @@
       <h3 class="sec">Factores de reducción de la respuesta</h3>
       <table class="par" id="tablaR"></table>
       <div class="formula" id="formulaR"></div>
+      <h3 class="sec">Desplazamiento máximo</h3>
+      <table class="par" id="tablaU"></table>
+      <div class="formula" id="formulaU"></div>
       <h3 class="sec">Parámetros del espectro</h3>
       <table class="par" id="tablaPar"></table>
       <div class="formula" id="formula"></div>
@@ -272,6 +279,7 @@ function modelo(norma, cat, zona, suelo, xi) {
       ["Z·α<sub>A</sub>A [cm/s²]", aA, N.refSuelo], ["Z·α<sub>V</sub>V [cm/s]", aV, N.refSuelo], ["Z·α<sub>D</sub>D [cm]", aD, N.refSuelo], ["p", s.p, N.refSuelo]],
     formula: "S<sub>a</sub> = I·S<sub>ae</sub>(T)/g ; S<sub>ae</sub>: A<sub>0</sub>g → lineal hasta Zα<sub>A</sub>A en T<sub>b</sub> ; Zα<sub>A</sub>A hasta T<sub>c</sub> ; 2π·Zα<sub>V</sub>V/T<sup>p</sup> hasta T<sub>d</sub> ; 4π²·Zα<sub>D</sub>D/T²",
     Sa: (T) => I * Sae(T) / g,
+    Sae,
   };
 }
 
@@ -293,10 +301,31 @@ function factorR(d, Ts) {
   return { Rs, txt: `1 + ${fmt(Ts, 3)}/(0,1·${fmt(T0, 2)} + ${fmt(Ts, 3)}/${fmt(R0, 1)}) = ${fmt(Rs, 3)}` };
 }
 
+// ---------------------------------------------------------------------------
+// Desplazamiento máximo por dirección [cm] (planilla «Espectros Chile»)
+//   NCh 433-1996 / 433:2026: u = Sa(T*)/R*·g/ω² ; NCh 2369:2025: u = Sa(T*)·g/ω²
+//   DS 117 Art. 9: Tag = k_agriet·T* ; Sde = Tag²/(4π²)·Sae(Tag) ; δu = k_δu·Sde
+// ---------------------------------------------------------------------------
+function desplazamiento(d, M, Ts, Rs) {
+  if (!(Ts > 0)) return { u: 0, txt: "T* = 0 → u = 0" };
+  if (d.norma === "ds117") {
+    const Tag = d.kAg * Ts, Sae = M.Sae(Tag), Sde = Tag ** 2 / (4 * Math.PI ** 2) * Sae, u = d.kDu * Sde;
+    return { u, txt: `T<sub>ag</sub> = ${fmt(d.kAg, 2)}·${fmt(Ts, 3)} = ${fmt(Tag, 3)} s ; S<sub>ae</sub> = ${fmt(Sae, 2)} cm/s² ; S<sub>de</sub> = ${fmt(Tag, 3)}²/(4π²)·${fmt(Sae, 2)} = ${fmt(Sde, 3)} cm ; δ<sub>u</sub> = ${fmt(d.kDu, 2)}·${fmt(Sde, 3)} = ${fmt(u, 3)} cm` };
+  }
+  const w = 2 * Math.PI / Ts, Sa = M.Sa(Ts);
+  if (d.norma === "2369-2025") {
+    const u = Sa * 981 / w ** 2;
+    return { u, txt: `ω = 2π/${fmt(Ts, 3)} = ${fmt(w, 3)} rad/s ; u = ${fmt(Sa, 4)}·981/${fmt(w, 3)}² = ${fmt(u, 3)} cm` };
+  }
+  const u = Sa / Rs * 981 / w ** 2;
+  return { u, txt: `ω = 2π/${fmt(Ts, 3)} = ${fmt(w, 3)} rad/s ; u = ${fmt(Sa, 4)}/${fmt(Rs, 3)}·981/${fmt(w, 3)}² = ${fmt(u, 3)} cm` };
+}
+
 function leer() {
   return { norma: $("norma").value, cat: $("cat").value, zona: +$("zona").value, suelo: $("suelo").value,
     xi: Math.max(0.005, num("xi")), dT: Math.max(0.001, num("dT")), Tmax: Math.max(0.1, num("Tmax")),
-    Tx: Math.max(0, num("Tx")), Ty: Math.max(0, num("Ty")), R0: Math.max(1, num("R0")), R: Math.max(1, num("R")) };
+    Tx: Math.max(0, num("Tx")), Ty: Math.max(0, num("Ty")), R0: Math.max(1, num("R0")), R: Math.max(1, num("R")),
+    kAg: Math.max(1, num("kAg")), kDu: Math.max(1, num("kDu")) };
 }
 
 function serie(d) {
@@ -393,6 +422,7 @@ function poblarSelectores(norma, conservar) {
   $("gXi").classList.toggle("hidden", norma !== "2369-2025");
   $("gR").classList.toggle("hidden", norma !== "2369-2025");
   $("gR0").classList.toggle("hidden", norma === "2369-2025");
+  $("gDS").classList.toggle("hidden", norma !== "ds117");
   $("notaNorma").innerHTML = N.nota;
 }
 
@@ -426,6 +456,20 @@ function calcular() {
   $("formulaR").innerHTML = es2369
     ? `R* = R si T* ≥ C<sub>r</sub>·T<sub>1</sub> ; R* = 1,5 + (R − 1,5)·T*/(C<sub>r</sub>·T<sub>1</sub>) si T* &lt; C<sub>r</sub>·T<sub>1</sub> ; C<sub>r</sub> = 0,16·R = ${fmt(0.16 * d.R, 2)} ; T<sub>1</sub> = ${fmt(s.T1, 2)} s`
     : `R* = 1 + T* / (0,1·T<sub>0</sub> + T*/R<sub>0</sub>) ; T<sub>0</sub> = ${fmt(s.T0, 2)} s (suelo ${d.suelo}) ; R<sub>0</sub> = ${fmt(d.R0, 1)}`;
+
+  // Desplazamiento máximo en X e Y
+  const esDS = d.norma === "ds117";
+  const ux = desplazamiento(d, M, d.Tx, factorR(d, d.Tx).Rs), uy = desplazamiento(d, M, d.Ty, factorR(d, d.Ty).Rs);
+  const sim = esDS ? "δ<sub>u" : "u<sub>";
+  $("tablaU").innerHTML = `<tr><th>Dirección</th><th style="text-align:right">Valor [cm]</th><th>Cálculo</th></tr>` +
+    [["x", ux], ["y", uy]].map(([dir, r]) => `<tr><td><b>${sim},${dir}</sub></b></td><td class="num"><b>${fmt(r.u, 3)}</b></td><td>${r.txt}</td></tr>`).join("");
+  $("formulaU").innerHTML = esDS
+    ? "DS 117, Art. 9: T<sub>ag</sub> = k<sub>agriet</sub>·T* ; S<sub>de</sub>(T<sub>ag</sub>) = T<sub>ag</sub>²/(4π²)·S<sub>ae</sub>(T<sub>ag</sub>) (sin I) ; δ<sub>u</sub> = k<sub>δu</sub>·S<sub>de</sub>"
+    : es2369
+      ? "u<sub>máx</sub> = S<sub>a</sub>(T*)·g/ω² ; ω = 2π/T* ; g = 981 cm/s² (sin dividir por R*)"
+      : "u<sub>máx</sub> = S<sub>a</sub>(T*)·(1/R*)·g/ω² ; ω = 2π/T* ; g = 981 cm/s²";
+  $("tiles").insertAdjacentHTML("beforeend", [["x", ux], ["y", uy]].map(([dir, r]) =>
+    `<div class="tile"><div class="t">${sim},${dir},máx</sub></div><div class="v">${fmt(r.u, 3)} cm</div><div class="s">T*<sub>${dir}</sub> = ${fmt(dir === "x" ? d.Tx : d.Ty, 3)} s</div></div>`).join(""));
   $("sumTabla").textContent = `Tabla de valores (${pts.length} puntos)`;
   $("tablaVal").innerHTML = `<tr><th>T [s]</th><th>S<sub>a</sub> [g]</th></tr>` +
     pts.map(([T, S]) => `<tr><td>${fmt(T, 2)}</td><td>${fmt(S, 5)}</td></tr>`).join("");
@@ -453,7 +497,7 @@ function init() {
   poblarSelectores($("norma").value, false);
   $("norma").addEventListener("change", () => { poblarSelectores($("norma").value, true); calcular(); });
   ["cat", "zona", "suelo"].forEach(id => $(id).addEventListener("change", calcular));
-  ["xi", "dT", "Tmax", "Tx", "Ty", "R0", "R"].forEach(id => $(id).addEventListener("input", calcular));
+  ["xi", "dT", "Tmax", "Tx", "Ty", "R0", "R", "kAg", "kDu"].forEach(id => $(id).addEventListener("input", calcular));
   $("btnTxt").addEventListener("click", descargarTxt);
   calcular();
 }
