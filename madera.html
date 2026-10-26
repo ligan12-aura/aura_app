@@ -57,6 +57,9 @@
   .unit { color: var(--muted); font-size: 11px; }
   fieldset { border: 1px solid var(--line); border-radius: 6px; margin: 12px 0 0; padding: 4px 12px 12px; }
   legend { font-size: 12px; font-weight: 600; color: var(--head); padding: 0 4px; }
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--accent); border-radius: 6px; overflow: hidden; margin-bottom: 4px; }
+  .tabs button { border: 0; background: #fff; color: var(--accent); padding: 9px; font: inherit; font-weight: 600; cursor: pointer; }
+  .tabs button.on { background: var(--accent); color: #fff; }
   .chk { display: flex; gap: 8px; align-items: center; margin-top: 10px; font-size: 13px; color: var(--ink); }
   .hidden { display: none !important; }
 
@@ -101,7 +104,7 @@
 <body>
 <header>
   <a class="home" href="index.html">← Inicio</a>
-  <h1>Verificación de envigados de madera</h1>
+  <h1>Verificación de madera</h1>
   <span>NCh 1198:2024 · tensiones admisibles · pino radiata · unidades kgf – cm</span>
 </header>
 
@@ -109,6 +112,11 @@
   <section class="panel" id="inputs">
     <h2>Datos de entrada</h2>
     <div class="body">
+      <div class="tabs">
+        <button id="tabEnv" class="on" type="button">Envigado</button>
+        <button id="tabTab" type="button">Pie derecho (tabique)</button>
+      </div>
+      <div id="inEnv">
       <fieldset>
         <legend>Material y sección</legend>
         <div class="row2">
@@ -213,6 +221,69 @@
           <div class="unit" style="margin-top:6px">Se verifica f<sub>1</sub> ≥ 9 Hz y la flecha bajo un hombre de 100 kg al centro más el peso propio de la viga (≤ 1 mm). Si p<sub>viga</sub> queda vacío se usa b·h·ρ.</div>
         </div>
       </fieldset>
+      </div>
+
+      <!-- Pie derecho de tabique (planilla FULL MADERA, hoja Tabique) -->
+      <div id="inTab" class="hidden">
+      <fieldset>
+        <legend>Material y sección</legend>
+        <div class="row2">
+          <div><label for="tGrado">Grado (pino radiata)</label>
+            <select id="tGrado"><option>GS</option><option>G1+</option><option selected>G1</option><option>G2</option><option>C24</option><option>C16</option><option>MGP10</option><option>MGP12</option></select></div>
+          <div><label for="tH">Humedad H <span class="unit">[%]</span></label><input id="tH" type="number" step="1" min="12" max="40" value="18"></div>
+        </div>
+        <label for="tEsc">Escuadría</label>
+        <select id="tEsc"></select>
+        <div class="row2" id="tgCustom">
+          <div><label for="tb">b (en el plano del tabique) <span class="unit">[mm]</span></label><input id="tb" type="number" step="1" min="20" value="45"></div>
+          <div><label for="th">h (espesor del tabique) <span class="unit">[mm]</span></label><input id="th" type="number" step="1" min="20" value="70"></div>
+        </div>
+        <label class="chk"><input type="checkbox" id="tKc" checked> Trabajo conjunto: ≥ 3 pies derechos a ≤ 610 mm (K<sub>c</sub> = 1,15)</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Geometría y pandeo</legend>
+        <div class="row2">
+          <div><label for="tL">Altura del pie derecho L <span class="unit">[cm]</span></label><input id="tL" type="number" step="0.5" min="10" value="228.5"></div>
+          <div><label for="tS">Separación (ancho tributario) <span class="unit">[m]</span></label><input id="tS" type="number" step="0.01" min="0.1" value="0.35"></div>
+          <div><label for="tLpx">L<sub>p,x</sub> pandeo fuera del plano <span class="unit">[cm]</span></label><input id="tLpx" type="number" step="0.5" min="0" placeholder="auto: L"></div>
+          <div><label for="tLpy">L<sub>p,y</sub> entre cadenetas <span class="unit">[cm]</span></label><input id="tLpy" type="number" step="0.5" min="0" value="115"></div>
+        </div>
+        <label for="tKp">Condición de apoyo (factor de longitud efectiva K<sub>p</sub>)</label>
+        <select id="tKp"></select>
+        <label for="tKpTipo">Valores de K<sub>p</sub></label>
+        <select id="tKpTipo"><option value="1">Teóricos</option><option value="2">Recomendados de diseño</option></select>
+        <div class="row2">
+          <div><label for="tla">Dist. apoyos laterales l<sub>a</sub> <span class="unit">[cm]</span></label><input id="tla" type="number" step="1" min="0" value="120"></div>
+          <div><label for="tApoyo">Canto comprimido (flexión)</label>
+            <select id="tApoyo"><option value="anc">Apoyo no continuo</option><option value="ac">Apoyo continuo</option></select></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Cargas de servicio (por metro de tabique)</legend>
+        <div class="row3">
+          <div><label for="tPP">q<sub>PP</sub> <span class="unit">[kgf/m]</span></label><input id="tPP" type="number" step="any" min="0" value="196.76"></div>
+          <div><label for="tSCp">q<sub>SC,piso</sub> <span class="unit">[kgf/m]</span></label><input id="tSCp" type="number" step="any" min="0" value="277.5"></div>
+          <div><label for="tSCt">q<sub>SC,techo</sub> <span class="unit">[kgf/m]</span></label><input id="tSCt" type="number" step="any" min="0" value="41.55"></div>
+        </div>
+        <label for="tqv">Presión de viento q<sub>v</sub> <span class="unit">[kgf/m²]</span></label>
+        <input id="tqv" type="number" step="any" min="0" value="84">
+        <div class="unit" style="margin-top:6px">Cargas verticales que llegan al tabique por metro lineal; cada pie derecho recibe q·s. El viento actúa perpendicular al tabique: w = q<sub>v</sub>·s.</div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Duración de la carga (K<sub>D</sub>) y solera</legend>
+        <div class="row3">
+          <div><label for="tKDsc">SC de piso</label><input id="tKDsc" type="number" step="0.05" min="0.5" value="1"></div>
+          <div><label for="tKDt">SC de techo</label><input id="tKDt" type="number" step="0.05" min="0.5" value="1.25"></div>
+          <div><label for="tKDv">Viento</label><input id="tKDv" type="number" step="0.05" min="0.5" value="1.6"></div>
+        </div>
+        <label for="tKcn">K<sub>cn</sub> solera inferior (8.5)</label>
+        <input id="tKcn" type="number" step="0.05" min="0.5" max="2" value="0.8">
+        <div class="unit" style="margin-top:6px">Cada combinación usa el K<sub>D</sub> de su carga de menor duración; la combinación con viento usa K<sub>D</sub> de viento también en compresión paralela.</div>
+      </fieldset>
+      </div>
     </div>
   </section>
 
@@ -244,8 +315,18 @@ const U1 = {
   "MGP10": [8.4, 10, 4.0, 2.5, 1.3, 10000], "MGP12": [13.5, 15.5, 6.0, 2.5, 1.3, 12700],
 };
 // Factor de humedad: ΔR por punto de humedad (H ≤ 20 %) y factor verde (H > 20 %) — pino radiata
-const DR = { Ff: 0.025, Fcz: 0.015, Fcn: 0, Ef: 0.017 };
-const VERDE = { Ff: 0.75, Fcz: 0.85, Fcn: 0.67, Ef: 0.83 };
+const DR = { Ff: 0.025, Fcp: 0.048, Fcz: 0.015, Fcn: 0, Ef: 0.017 };
+const VERDE = { Ff: 0.75, Fcp: 0.52, Fcz: 0.85, Fcn: 0.67, Ef: 0.83 };
+const factorKH = (H, k) => (H <= 20 ? 1 - (H - 12) * DR[k] : VERDE[k]);
+// Factor de longitud efectiva de pandeo K_p: [condición, teórico, recomendado]
+const KP = {
+  C1: ["Empotrado – empotrado", 0.5, 0.65],
+  C2: ["Empotrado – articulado", 0.7, 0.8],
+  C3: ["Empotrado – giro impedido con desplazamiento", 1.0, 1.2],
+  C4: ["Articulado – articulado", 1.0, 1.0],
+  C5: ["Empotrado – libre", 2.0, 2.1],
+  C6: ["Articulado – giro impedido con desplazamiento", 2.0, 2.4],
+};
 const ESCUADRIAS = { '2x3"': [41, 65], '2x4"': [41, 90], '2x5"': [41, 114], '2x6"': [41, 138], '2x8"': [41, 185],
   '3x3"': [65, 65], '3x4"': [65, 90], '3x6"': [65, 138], '3x8"': [65, 185] };
 // Tabla 6 — deformaciones máximas admisibles: [divisor SC, divisor SC+PP, máx SC (mm), máx SC+PP (mm)]
@@ -282,8 +363,215 @@ class Memo {
   html() { return memoHTML(this.out); }
 }
 
+// Tabla de propiedades mecánicas admisibles (Tabla U.1), en pantalla y en el .tex
+function tablaProps(m, grado, maestra) {
+  m.h("Propiedades mecánicas admisibles — Tabla U.1");
+  const [FfM, FcpM, FtpM, FcnM, FczM, EfM] = U1[grado];
+  const props = [
+    ["Tensión admisible en flexión", "F<sub>f</sub>", L`$F_f$`, FfM],
+    ["Tensión admisible en compresión paralela", "F<sub>cp</sub>", L`$F_{cp}$`, FcpM],
+    ["Tensión admisible en tracción paralela", "F<sub>tp</sub>", L`$F_{tp}$`, FtpM],
+    ["Tensión admisible en compresión normal", "F<sub>cn</sub>", L`$F_{cn}$`, FcnM],
+    ["Tensión admisible en cizalle", "F<sub>cz</sub>", L`$F_{cz}$`, FczM],
+    ["Módulo de elasticidad en flexión", "E<sub>f</sub>", L`$E_f$`, EfM],
+  ];
+  if (maestra) props.push(["Módulo de elasticidad percentil 5 % (viga maestra)", "0,60·E<sub>f</sub>", L`$0{,}60\,E_f$`, 0.6 * EfM]);
+  m.out.push(`<table class="prop"><tr><th>Propiedad (pino radiata ${grado}, H = 12 %)</th><th>Símbolo</th><th>MPa</th><th>kgf/cm²</th></tr>` +
+    props.map(([n, s, , v]) => `<tr><td>${n}</td><td>${s}</td><td class="num">${fmt(v, v >= 1000 ? 0 : 1)}</td><td class="num">${fmt(v * MPA, 0)}</td></tr>`).join("") +
+    `<tr><td>Índice de aplastamiento en compresión normal</td><td>E<sub>cn,h</sub></td><td class="num">5,65 MPa/mm</td><td class="num">56,5 kgf/cm²/mm</td></tr></table>
+    <div class="unit" style="margin-top:4px">Valores base para madera seca (H = 12 %). Conversión: 1 MPa = 10 kgf/cm².</div>`);
+  m.tex.push(L`\begin{table}[H]
+\centering
+\caption{Propiedades mecánicas admisibles, pino radiata ${grado} seco ($H = 12\,\%$), Tabla U.1 de la NCh 1198:2024.}
+\begin{tabular}{llrr}
+\toprule
+Propiedad & Símbolo & MPa & kgf/cm$^2$\\
+\midrule
+${props.map(([n, , st, v]) => `${n} & ${st} & ${tn(v, v >= 1000 ? 0 : 1)} & ${tn(v * MPA, 0)}\\\\`).join("\n")}
+Índice de aplastamiento en compresión normal & $E_{cn,h}$ & 5{,}65 MPa/mm & 56{,}5 kgf/cm$^2$/mm\\
+\bottomrule
+\end{tabular}
+\end{table}
+Se adopta la conversión 1 MPa $= 10$ kgf/cm$^2$.
+`);
+}
+
+// K_H por propiedad: ΔR de cada una (H ≤ 20 %) o factor verde (H > 20 %)
+const NOMK = { Ff: "F_f", Fcp: "F_{cp}", Fcz: "F_{cz}", Fcn: "F_{cn}", Ef: "E_f" };
+function bloqueKH(m, H, claves) {
+  if (H <= 20) {
+    m.p(L`Factor de humedad para $H = ${tn(H, 1)}\,\%$ ($\le 20\,\%$): $K_H = 1 - (H - 12)\,\Delta R$, con $\Delta R$ propio de cada propiedad:`);
+    m.eq(L`\begin{aligned}
+${claves.map(k => L`\Delta R_{${NOMK[k]}} &= ${tn(DR[k], 3)} & \quad K_{H,${NOMK[k]}} &= 1 - (${tn(H, 1)} - 12)\cdot ${tn(DR[k], 3)} = ${tn(factorKH(H, k), 3)}`).join(" \\\\\n")}
+\end{aligned}`, "7.1.1");
+  } else {
+    m.p(L`Factor de humedad para $H = ${tn(H, 1)}\,\% > 20\,\%$ (madera verde): $K_H$ propio de cada propiedad:`);
+    m.eq(claves.map(k => L`K_{H,${NOMK[k]}} = ${tn(VERDE[k], 2)}`).join(L` \qquad `), "7.1.1");
+  }
+}
+
 // ---------------------------------------------------------------------------
-// Cálculo
+// Pie derecho de tabique (planilla FULL MADERA, hoja Tabique)
+// ---------------------------------------------------------------------------
+function leerTabique() {
+  const esc = $("tEsc").value;
+  const [b, h] = esc === "custom" ? [num("tb"), num("th")] : ESCUADRIAS[esc];
+  const kp = KP[$("tKp").value], tipo = +$("tKpTipo").value;
+  return {
+    grado: $("tGrado").value, H: Math.max(12, num("tH")), esc, b, h, kc: $("tKc").checked,
+    L: num("tL"), s: num("tS"), Lpx: $("tLpx").value.trim() === "" ? num("tL") : num("tLpx"), Lpy: num("tLpy"),
+    Kp: kp[tipo], kpTxt: `${kp[0]} (${tipo === 1 ? "teórico" : "recomendado"})`,
+    la: num("tla"), apoyoLat: $("tApoyo").value,
+    qPP: num("tPP"), qSCp: num("tSCp"), qSCt: num("tSCt"), qv: num("tqv"),
+    KDsc: num("tKDsc"), KDt: num("tKDt"), KDv: num("tKDv"), Kcn: num("tKcn"),
+  };
+}
+
+function calcularTabique(d, m) {
+  const r = {};
+  const bc = d.b / 10, hc = d.h / 10, A = bc * hc, W = bc * hc ** 2 / 6;   // cm
+  const [FfM, FcpM, , FcnM, FczM, EfM] = U1[d.grado];
+  const Ff = FfM * MPA, Fcp = FcpM * MPA, Fcn = FcnM * MPA, Fcz = FczM * MPA, Ef = EfM * MPA;
+  const mgp = d.grado.startsWith("MGP");
+  const KH = (k) => factorKH(d.H, k);
+
+  // Cargas por pie derecho
+  m.h("Cargas y solicitaciones");
+  const w = d.qv * d.s;                                   // viento, kgf/m
+  const combos = [
+    { n: "C1", txt: "PP + SC<sub>techo</sub> + SC<sub>piso</sub>", tex: L`PP + SC_{techo} + SC_{piso}`, q: d.qPP + d.qSCt + d.qSCp, KD: d.KDt, kdTxt: "SC de techo", viento: false },
+    { n: "C2", txt: "PP + SC<sub>piso</sub>", tex: L`PP + SC_{piso}`, q: d.qPP + d.qSCp, KD: d.KDsc, kdTxt: "SC de piso", viento: false },
+    { n: "C3", txt: "PP + SC<sub>techo</sub> + SC<sub>piso</sub> + V", tex: L`PP + SC_{techo} + SC_{piso} + V`, q: d.qPP + d.qSCt + d.qSCp, KD: d.KDv, kdTxt: "viento", viento: true },
+  ];
+  combos.forEach(c => { c.P = c.q * d.s; });
+  const Lm = d.L / 100;
+  const MV = w * Lm ** 2 / 8 * 100, VV = w * Lm / 2;    // kgf·cm ; kgf
+  combos.forEach(c => m.row(`Carga axial, combinación ${c.n} (${c.txt}): P`, `${fmt(c.P, 2)} kgf`));
+  m.row("Carga de viento por pie derecho ; momento ; corte: w ; M<sub>V</sub> ; V<sub>V</sub>", `${fmt(w, 2)} kgf/m ; ${fmt(MV, 1)} kgf·cm ; ${fmt(VV, 2)} kgf`);
+  m.eq(L`P = (q_{PP} + q_{SC,techo} + q_{SC,piso})\,s = (${tn(d.qPP, 2)} + ${tn(d.qSCt, 2)} + ${tn(d.qSCp, 2)})\cdot ${tn(d.s)} = ${tn(combos[0].P, 2)}\ \mathrm{kgf}`);
+  m.eq(L`P_{C2} = (q_{PP} + q_{SC,piso})\,s = (${tn(d.qPP, 2)} + ${tn(d.qSCp, 2)})\cdot ${tn(d.s)} = ${tn(combos[1].P, 2)}\ \mathrm{kgf}`);
+  m.eq(L`w = q_v\,s = ${tn(d.qv, 1)}\cdot ${tn(d.s)} = ${tn(w, 2)}\ \mathrm{kgf/m} \qquad M_V = \frac{w L^2}{8} = \frac{${tn(w, 2)}\cdot ${tn(Lm, 3)}^2}{8} = ${tn(MV, 1)}\ \mathrm{kgf\cdot cm} \qquad V_V = \frac{w L}{2} = ${tn(VV, 2)}\ \mathrm{kgf}`);
+
+  tablaProps(m, d.grado, false);
+
+  // Factores de modificación
+  const Kc = d.kc ? 1.15 : 1.0;
+  const Khf = mgp ? (d.h > 160 ? (160 / d.h) ** (d.grado === "MGP10" ? 1 / 3 : 1 / 2) : 1) : (d.h > 90 ? (90 / d.h) ** 0.2 : 1);
+  const KhE = (dim) => !mgp && dim < 180 ? Math.max((dim / 180) ** 0.25, 0.67) : 1;
+  const KhEx = KhE(d.h), KhEy = KhE(d.b);
+  const Ex = Ef * KH("Ef") * KhEx, Ey = Ef * KH("Ef") * KhEy;
+  m.h("Factores de modificación y propiedades de diseño");
+  m.row("Factor de modificación por humedad (flexión ; c. paralela ; cizalle ; c. normal ; E): K<sub>H</sub>",
+    ["Ff", "Fcp", "Fcz", "Fcn", "Ef"].map(k => fmt(KH(k), 3)).join(" ; "), "7.1.1");
+  m.row("Factor de modificación por duración de la carga (SC piso ; SC techo ; viento): K<sub>D</sub>", `${fmt(d.KDsc, 2)} ; ${fmt(d.KDt, 2)} ; ${fmt(d.KDv, 2)}`, "7.1.2");
+  m.row("Factores por trabajo conjunto ; altura en flexión: K<sub>c</sub> ; K<sub>hf</sub>", `${fmt(Kc, 2)} ; ${fmt(Khf, 3)}`, "7.1.3 / 8.2.2.3");
+  m.row("Factor de altura en E según h ; según b: K<sub>hE,x</sub> ; K<sub>hE,y</sub>", `${fmt(KhEx, 3)} ; ${fmt(KhEy, 3)}`);
+  m.row("Módulos de elasticidad de diseño: E<sub>x,dis</sub> ; E<sub>y,dis</sub>", `${fmt(Ex, 0)} ; ${fmt(Ey, 0)} kgf/cm²`);
+  m.p(L`Pino radiata grado ${d.grado} (Tabla U.1), con $F_f = ${tn(FfM, 1)}$, $F_{cp} = ${tn(FcpM, 1)}$, $F_{cz} = ${tn(FczM, 1)}$, $F_{cn} = ${tn(FcnM, 1)}$ y $E_f = ${tn(EfM, 0)}$ MPa; se usa 1 MPa $= 10$ kgf/cm$^2$.`);
+  bloqueKH(m, d.H, ["Ff", "Fcp", "Fcz", "Fcn", "Ef"]);
+  m.p(L`Factor de duración de la carga: cada combinación usa el $K_D$ de su carga de menor duración ($K_D = ${tn(d.KDsc, 2)}$ sobrecarga de piso, $${tn(d.KDt, 2)}$ sobrecarga de techo y $${tn(d.KDv, 2)}$ viento). La combinación con viento usa $K_D = ${tn(d.KDv, 2)}$ en todas las verificaciones, incluida la compresión paralela.`);
+  m.eq(L`K_c = ${tn(Kc, 2)} \qquad K_{hf} = ${d.h > (mgp ? 160 : 90) ? (mgp ? L`\left(\frac{160}{h}\right)^{${d.grado === "MGP10" ? "1/3" : "1/2"}}` : L`\left(\frac{90}{${tn(d.h, 0)}}\right)^{1/5}`) + " = " : ""}${tn(Khf, 3)}`, "7.1.3, 8.2.2.3");
+  m.eq(L`K_{hE,x} = ${KhEx < 1 ? L`\left(\frac{${tn(d.h, 0)}}{180}\right)^{1/4} = ` : ""}${tn(KhEx, 3)} \qquad K_{hE,y} = ${KhEy < 1 ? L`\left(\frac{${tn(d.b, 0)}}{180}\right)^{1/4} = ` : ""}${tn(KhEy, 3)}`);
+  m.eq(L`E_{x,dis} = E_f K_H K_{hE,x} = ${tn(Ef, 0)}\cdot ${tn(KH("Ef"), 3)}\cdot ${tn(KhEx, 3)} = ${tn(Ex, 0)} \qquad E_{y,dis} = ${tn(Ef, 0)}\cdot ${tn(KH("Ef"), 3)}\cdot ${tn(KhEy, 3)} = ${tn(Ey, 0)}\ \mathrm{kgf/cm^2}`);
+
+  // Compresión paralela
+  m.h("Compresión paralela — 8.3");
+  const lx = d.Kp * d.Lpx / (0.29 * hc), ly = d.Kp * d.Lpy / (0.29 * bc);
+  const lam = Math.max(lx, ly), ejeY = ly > lx, Ec = ejeY ? Ey : Ex;
+  const FcE = 3.6 * Ec / lam ** 2;
+  const cc = ["G2", "C16"].includes(d.grado) ? 0.80 : 0.85;
+  r.lam = lam;
+  m.row("Factor de longitud efectiva: K<sub>p</sub>", `${fmt(d.Kp, 2)} — ${d.kpTxt}`);
+  m.row("Esbeltez fuera del plano ; en el plano: λ<sub>x</sub> ; λ<sub>y</sub>", `${fmt(lx, 2)} ; ${fmt(ly, 2)}`);
+  m.row("Esbeltez controlante: λ ≤ 170", `${fmt(lam, 2)} ${okTxt(lam <= 170)}`);
+  m.row(`Tensión crítica de pandeo (eje ${ejeY ? "y" : "x"}) ; coeficiente de proporcionalidad: F<sub>cE</sub> ; c`, `${fmt(FcE, 2)} kgf/cm² ; ${fmt(cc, 2)}`);
+  m.eq(L`\lambda_x = \frac{K_p L_{p,x}}{0{,}29\,h} = \frac{${tn(d.Kp, 2)}\cdot ${tn(d.Lpx, 1)}}{0{,}29\cdot ${tn(hc, 1)}} = ${tn(lx, 2)} \qquad \lambda_y = \frac{K_p L_{p,y}}{0{,}29\,b} = \frac{${tn(d.Kp, 2)}\cdot ${tn(d.Lpy, 1)}}{0{,}29\cdot ${tn(bc, 1)}} = ${tn(ly, 2)}`);
+  m.eq(L`F_{cE} = \frac{3{,}6\,E_{${ejeY ? "y" : "x"},dis}}{\lambda^2} = \frac{3{,}6\cdot ${tn(Ec, 0)}}{${tn(lam, 2)}^2} = ${tn(FcE, 3)}\ \mathrm{kgf/cm^2} \qquad c = ${tn(cc, 2)}`);
+  const fcp = (P) => P / A;
+  for (const c of combos) {
+    c.fcp = fcp(c.P);
+    c.Fcpd = Fcp * KH("Fcp") * c.KD;
+    if (lam < 10) { c.Kl = 1; }
+    else {
+      c.Ac = ((FcE / c.Fcpd) * (1 + lam / 200) + 1) / (2 * cc);
+      c.Bc = FcE / (cc * c.Fcpd);
+      c.Kl = c.Ac - Math.sqrt(c.Ac ** 2 - c.Bc);
+    }
+    c.Fcpl = c.Fcpd * c.Kl;
+    c.ratio = c.fcp / c.Fcpl;
+    m.row(`<b>Combinación ${c.n} (K<sub>D</sub> = ${fmt(c.KD, 2)}, ${c.kdTxt}): f<sub>cp</sub> / F<sub>cp,λ,dis</sub></b>`, `<b>${fmt(c.fcp, 3)} / ${fmt(c.Fcpl, 2)} = ${fmt(c.ratio, 3)}</b> ${okTxt(c.ratio <= 1)}`);
+    m.p(L`\textbf{Combinación ${c.n}} ($${c.tex}$, $K_D = ${tn(c.KD, 2)}$):`);
+    m.eq(L`f_{cp} = \frac{P}{b\,h} = \frac{${tn(c.P, 2)}}{${tn(bc, 1)}\cdot ${tn(hc, 1)}} = ${tn(c.fcp, 3)} \qquad F_{cp,dis} = F_{cp} K_H K_D = ${tn(Fcp, 1)}\cdot ${tn(KH("Fcp"), 3)}\cdot ${tn(c.KD, 2)} = ${tn(c.Fcpd, 2)}\ \mathrm{kgf/cm^2}`);
+    if (lam >= 10) m.eq(L`A = \frac{\frac{F_{cE}}{F_{cp,dis}}\left(1 + \frac{\lambda}{200}\right) + 1}{2c} = ${tn(c.Ac, 4)} \qquad B = \frac{F_{cE}}{c\,F_{cp,dis}} = ${tn(c.Bc, 4)} \qquad K_\lambda = A - \sqrt{A^2 - B} = ${tn(c.Kl, 4)}`, "8.3");
+    m.eq(L`F_{cp,\lambda,dis} = F_{cp,dis} K_\lambda = ${tn(c.Fcpd, 2)}\cdot ${tn(c.Kl, 4)} = ${tn(c.Fcpl, 2)}\ \mathrm{kgf/cm^2} \qquad \frac{f_{cp}}{F_{cp,\lambda,dis}} = ${tn(c.ratio, 3)} ${cmp(c.ratio, 1)} 1`);
+  }
+  const cMax = combos.reduce((a, c) => (c.ratio > a.ratio ? c : a));
+  r.comp = cMax.ratio; r.compN = cMax.n;
+
+  // Flexión por viento
+  m.h("Flexión por viento — 8.2.2");
+  const ff = MV / W;
+  const Fft = Ff * KH("Ff") * d.KDv * Kc * Khf;
+  const Fstar = Ff * KH("Ff") * d.KDv * Kc;
+  let Klv = 1, lv = null, lamv = null, FfE = null;
+  const necesitaKlv = d.apoyoLat === "anc" && d.h / d.b > 2;
+  if (necesitaKlv) {
+    lv = d.la / hc < 7 ? 2.06 * d.la : 1.63 * d.la + 3 * hc;
+    lamv = Math.sqrt(lv * hc / bc ** 2);
+    FfE = 0.439 * Ex / lamv ** 2;
+    const rr = FfE / Fstar;
+    Klv = (1 + rr) / 1.9 - Math.sqrt(((1 + rr) / 1.9) ** 2 - rr / 0.95);
+  }
+  const Ffv = Fstar * Klv, Fdis = Math.min(Fft, Ffv);
+  r.flex = ff / Fdis;
+  m.row("Módulo resistente ; tensión de trabajo en flexión: W ; f<sub>f</sub>", `${fmt(W, 2)} cm³ ; ${fmt(ff, 2)} kgf/cm²`);
+  m.row("Tensión de diseño en flexión (borde traccionado): F<sub>ft,dis</sub>", `${fmt(Fft, 2)} kgf/cm²`);
+  if (necesitaKlv) m.row("Longitud efectiva ; esbeltez ; tensión crítica ; factor de volcamiento: l<sub>v</sub> ; λ<sub>v</sub> ; F<sub>fE</sub> ; K<sub>λv</sub>", `${fmt(lv, 1)} cm ; ${fmt(lamv, 2)} ; ${fmt(FfE, 1)} ; ${fmt(Klv, 3)}`, "8.2.2.4");
+  else m.row("Factor de modificación por volcamiento: K<sub>λv</sub>", `1 (${d.apoyoLat === "ac" ? "apoyo lateral continuo" : "h/b ≤ 2"})`, "8.2.2.4");
+  m.row("Tensión de diseño en flexión (borde comprimido): F<sub>fv,dis</sub>", `${fmt(Ffv, 2)} kgf/cm²`);
+  m.row("<b>Razón de flexión: f<sub>f</sub> / F<sub>f,dis</sub></b>", `<b>${fmt(r.flex, 3)}</b> ${okTxt(r.flex <= 1)}`);
+  m.eq(L`f_f = \frac{M_V}{W} = \frac{${tn(MV, 1)}}{${tn(W, 2)}} = ${tn(ff, 2)} \qquad F_{ft,dis} = F_f K_H K_D K_c K_{hf} = ${tn(Ff, 1)}\cdot ${tn(KH("Ff"), 3)}\cdot ${tn(d.KDv, 2)}\cdot ${tn(Kc, 2)}\cdot ${tn(Khf, 3)} = ${tn(Fft, 2)}\ \mathrm{kgf/cm^2}`, "8.2.2.2");
+  if (necesitaKlv) m.eq(L`l_v = ${d.la / hc < 7 ? L`2{,}06\,l_a` : L`1{,}63\,l_a + 3h`} = ${tn(lv, 1)}\ \mathrm{cm} \quad \lambda_v = \sqrt{\frac{l_v h}{b^2}} = ${tn(lamv, 2)} \quad F_{fE} = \frac{0{,}439\,E_{x,dis}}{\lambda_v^2} = ${tn(FfE, 1)} \quad K_{\lambda v} = ${tn(Klv, 3)}`, "Tabla 5, 8.2.2.4");
+  m.eq(L`F_{f,dis} = \min(F_{ft,dis},\ F_{f}K_HK_DK_cK_{\lambda v}) = \min(${tn(Fft, 2)},\ ${tn(Ffv, 2)}) = ${tn(Fdis, 2)} \qquad \frac{f_f}{F_{f,dis}} = ${tn(r.flex, 3)} ${cmp(r.flex, 1)} 1`);
+
+  // Cizalle por viento (sin rebaje)
+  m.h("Cizalle por viento — 8.2.3");
+  const fcz = 1.5 * VV / A;
+  const Fczd = Fcz * KH("Fcz") * d.KDv;
+  r.ciz = fcz / Fczd;
+  m.row("Tensión de trabajo en cizalle: f<sub>cz</sub>", `${fmt(fcz, 3)} kgf/cm²`);
+  m.row("Tensión de diseño en cizalle: F<sub>cz,dis</sub>", `${fmt(Fczd, 2)} kgf/cm²`, "8.2.3");
+  m.row("<b>Razón de cizalle: f<sub>cz</sub> / F<sub>cz,dis</sub></b>", `<b>${fmt(r.ciz, 3)}</b> ${okTxt(r.ciz <= 1)}`);
+  m.eq(L`f_{cz} = \frac{1{,}5\,V_V}{b\,h} = \frac{1{,}5\cdot ${tn(VV, 2)}}{${tn(bc, 1)}\cdot ${tn(hc, 1)}} = ${tn(fcz, 3)} \qquad F_{cz,dis} = F_{cz} K_H K_D = ${tn(Fcz, 1)}\cdot ${tn(KH("Fcz"), 3)}\cdot ${tn(d.KDv, 2)} = ${tn(Fczd, 2)}\ \mathrm{kgf/cm^2} \qquad ${tn(r.ciz, 3)} ${cmp(r.ciz, 1)} 1`, "8.2.3");
+
+  // Flexocompresión (combinación con viento)
+  m.h("Flexión y compresión combinadas — combinación C3");
+  const c3 = combos[2];
+  const FcEx = 3.6 * Ex / lx ** 2;
+  const amp = 1 - c3.fcp / FcEx;
+  r.fc = (c3.fcp / c3.Fcpl) ** 2 + ff / (amp * Fdis);
+  m.row("Tensión crítica de pandeo fuera del plano: F<sub>cE,x</sub>", `${fmt(FcEx, 2)} kgf/cm²`);
+  m.row("Tensión de compresión ; tensión de diseño con pandeo (K<sub>D</sub> viento): f<sub>cp</sub> ; F<sub>cp,λ,dis</sub>", `${fmt(c3.fcp, 3)} ; ${fmt(c3.Fcpl, 2)} kgf/cm²`);
+  m.row("<b>Interacción flexocompresión</b>", `<b>${fmt(r.fc, 3)}</b> ${okTxt(r.fc <= 1 && amp > 0)}`);
+  m.eq(L`F_{cE,x} = \frac{3{,}6\,E_{x,dis}}{\lambda_x^2} = \frac{3{,}6\cdot ${tn(Ex, 0)}}{${tn(lx, 2)}^2} = ${tn(FcEx, 3)}\ \mathrm{kgf/cm^2}`);
+  m.eq(L`\left(\frac{f_{cp}}{F_{cp,\lambda,dis}}\right)^2 + \frac{f_f}{\left(1 - \frac{f_{cp}}{F_{cE,x}}\right)F_{f,dis}} = \left(\frac{${tn(c3.fcp, 3)}}{${tn(c3.Fcpl, 2)}}\right)^2 + \frac{${tn(ff, 2)}}{\left(1 - \frac{${tn(c3.fcp, 3)}}{${tn(FcEx, 2)}}\right)\cdot ${tn(Fdis, 2)}} = ${tn(r.fc, 3)} ${cmp(r.fc, 1)} 1`);
+
+  // Compresión normal en la solera inferior
+  m.h("Compresión normal en la solera inferior — 8.5");
+  const Pmax = Math.max(...combos.map(c => c.P));
+  const fcn = Pmax / A, Fcnd = Fcn * KH("Fcn") * d.Kcn;
+  r.cn = fcn / Fcnd;
+  m.row("Área de contacto ; tensión de trabajo en compresión normal: A<sub>n</sub> ; f<sub>cn</sub>", `${fmt(A, 2)} cm² ; ${fmt(fcn, 3)} kgf/cm²`);
+  m.row("Tensión de diseño en compresión normal: F<sub>cn,dis</sub>", `${fmt(Fcnd, 2)} kgf/cm²`, "8.5");
+  m.row("<b>Razón de compresión normal: f<sub>cn</sub> / F<sub>cn,dis</sub></b>", `<b>${fmt(r.cn, 3)}</b> ${okTxt(r.cn <= 1)}`);
+  m.eq(L`f_{cn} = \frac{P_{m\acute{a}x}}{b\,h} = \frac{${tn(Pmax, 2)}}{${tn(A, 2)}} = ${tn(fcn, 3)} \qquad F_{cn,dis} = F_{cn} K_H K_{cn} = ${tn(Fcn, 1)}\cdot ${tn(KH("Fcn"), 3)}\cdot ${tn(d.Kcn, 2)} = ${tn(Fcnd, 2)}\ \mathrm{kgf/cm^2} \qquad ${tn(r.cn, 3)} ${cmp(r.cn, 1)} 1`, "8.5");
+
+  Object.assign(r, { combos, cMax, ff, Fdis, fcz, Fczd, fcn, Fcnd, w });
+  return r;
+}
+
+// ---------------------------------------------------------------------------
+// Cálculo — envigado
 // ---------------------------------------------------------------------------
 function leer() {
   const esc = $("esc").value;
@@ -337,36 +625,7 @@ function calcular(d, m) {
   const Khf = mgp ? (d.h > 160 ? (160 / d.h) ** (d.grado === "MGP10" ? 1 / 3 : 1 / 2) : 1) : (d.h > 90 ? (90 / d.h) ** 0.2 : 1);
   const KhE = !mgp && d.h < 180 ? Math.max((d.h / 180) ** 0.25, 0.67) : 1;
   const Edis = Ef0 * KH("Ef") * KhE;
-  // Propiedades mecánicas admisibles de la norma
-  m.h("Propiedades mecánicas admisibles — Tabla U.1");
-  const [, FcpM, FtpM] = U1[d.grado];
-  const props = [
-    ["Tensión admisible en flexión", "F<sub>f</sub>", L`$F_f$`, FfM],
-    ["Tensión admisible en compresión paralela", "F<sub>cp</sub>", L`$F_{cp}$`, FcpM],
-    ["Tensión admisible en tracción paralela", "F<sub>tp</sub>", L`$F_{tp}$`, FtpM],
-    ["Tensión admisible en compresión normal", "F<sub>cn</sub>", L`$F_{cn}$`, FcnM],
-    ["Tensión admisible en cizalle", "F<sub>cz</sub>", L`$F_{cz}$`, FczM],
-    ["Módulo de elasticidad en flexión", "E<sub>f</sub>", L`$E_f$`, EfM],
-  ];
-  if (d.maestra) props.push(["Módulo de elasticidad percentil 5 % (viga maestra)", "0,60·E<sub>f</sub>", L`$0{,}60\,E_f$`, 0.6 * EfM]);
-  m.out.push(`<table class="prop"><tr><th>Propiedad (pino radiata ${d.grado}, H = 12 %)</th><th>Símbolo</th><th>MPa</th><th>kgf/cm²</th></tr>` +
-    props.map(([n, s, , v]) => `<tr><td>${n}</td><td>${s}</td><td class="num">${fmt(v, v >= 1000 ? 0 : 1)}</td><td class="num">${fmt(v * MPA, 0)}</td></tr>`).join("") +
-    `<tr><td>Índice de aplastamiento en compresión normal</td><td>E<sub>cn,h</sub></td><td class="num">5,65 MPa/mm</td><td class="num">56,5 kgf/cm²/mm</td></tr></table>
-    <div class="unit" style="margin-top:4px">Valores base para madera seca (H = 12 %). Conversión: 1 MPa = 10 kgf/cm².</div>`);
-  m.tex.push(L`\begin{table}[H]
-\centering
-\caption{Propiedades mecánicas admisibles, pino radiata ${d.grado} seco ($H = 12\,\%$), Tabla U.1 de la NCh 1198:2024.}
-\begin{tabular}{llrr}
-\toprule
-Propiedad & Símbolo & MPa & kgf/cm$^2$\\
-\midrule
-${props.map(([n, , st, v]) => `${n} & ${st} & ${tn(v, v >= 1000 ? 0 : 1)} & ${tn(v * MPA, 0)}\\\\`).join("\n")}
-Índice de aplastamiento en compresión normal & $E_{cn,h}$ & 5{,}65 MPa/mm & 56{,}5 kgf/cm$^2$/mm\\
-\bottomrule
-\end{tabular}
-\end{table}
-Se adopta la conversión 1 MPa $= 10$ kgf/cm$^2$.
-`);
+  tablaProps(m, d.grado, d.maestra);
 
   m.h("Factores de modificación y propiedades de diseño");
   m.row("Factor de modificación por humedad (flexión ; cizalle ; c. normal ; E): K<sub>H</sub>", `${fmt(KH("Ff"), 3)} ; ${fmt(KH("Fcz"), 3)} ; ${fmt(KH("Fcn"), 3)} ; ${fmt(KH("Ef"), 3)}`, "7.1.1");
@@ -374,17 +633,7 @@ Se adopta la conversión 1 MPa $= 10$ kgf/cm$^2$.
   m.row("Factores por trabajo conjunto ; altura en flexión ; altura en E: K<sub>c</sub> ; K<sub>hf</sub> ; K<sub>hE</sub>", `${fmt(Kc, 2)} ; ${fmt(Khf, 3)} ; ${fmt(KhE, 3)}`, "7.1.3 / 8.2.2.3");
   m.row("Módulo de elasticidad de diseño: E<sub>f,dis</sub>", `${fmt(Edis, 0)} kgf/cm²`);
   m.p(L`Pino radiata grado ${d.grado} (Tabla U.1), con $F_f = ${tn(FfM, 1)}$, $F_{cz} = ${tn(FczM, 1)}$, $F_{cn} = ${tn(FcnM, 1)}$ y $E_f = ${tn(EfM, 0)}$ MPa${d.maestra ? L` (viga maestra: $0{,}60\,E_f$)` : ""}; se usa 1 MPa $= 10$ kgf/cm$^2$.`);
-  // K_H por propiedad: ΔR de cada una (H ≤ 20 %) o factor verde (H > 20 %)
-  const nomK = { Ff: "F_f", Fcz: "F_{cz}", Fcn: "F_{cn}", Ef: "E_f" };
-  if (d.H <= 20) {
-    m.p(L`Factor de humedad para $H = ${tn(d.H, 1)}\,\%$ ($\le 20\,\%$): $K_H = 1 - (H - 12)\,\Delta R$, con $\Delta R$ propio de cada propiedad:`);
-    m.eq(L`\begin{aligned}
-${["Ff", "Fcz", "Fcn", "Ef"].map(k => L`\Delta R_{${nomK[k]}} &= ${tn(DR[k], 3)} & \quad K_{H,${nomK[k]}} &= 1 - (${tn(d.H, 1)} - 12)\cdot ${tn(DR[k], 3)} = ${tn(KH(k), 3)}`).join(" \\\\\n")}
-\end{aligned}`, "7.1.1");
-  } else {
-    m.p(L`Factor de humedad para $H = ${tn(d.H, 1)}\,\% > 20\,\%$ (madera verde): $K_H$ propio de cada propiedad:`);
-    m.eq(L`K_{H,F_f} = ${tn(VERDE.Ff, 2)} \qquad K_{H,F_{cz}} = ${tn(VERDE.Fcz, 2)} \qquad K_{H,F_{cn}} = ${tn(VERDE.Fcn, 2)} \qquad K_{H,E_f} = ${tn(VERDE.Ef, 2)}`, "7.1.1");
-  }
+  bloqueKH(m, d.H, ["Ff", "Fcz", "Fcn", "Ef"]);
   m.eq(L`K_D = \frac{1{,}747}{t^{0{,}0464}} + 0{,}295 = ${tn(KD, 3)} \qquad K_c = ${tn(Kc, 2)}`, "7.1.2, 7.1.3");
   m.eq(L`K_{hf} = ${mgp ? L`\left(\frac{160}{h}\right)^{${d.grado === "MGP10" ? "1/3" : "1/2"}}` : L`\left(\frac{90}{h}\right)^{1/5}`} = ${tn(Khf, 3)} \qquad K_{hE} = ${!mgp && d.h < 180 ? L`\left(\frac{h}{180}\right)^{1/4} = ${tn(KhE, 3)}` : "1"} \qquad E_{f,dis} = ${tn(Ef0, 0)}\cdot ${tn(KH("Ef"), 3)}\cdot ${tn(KhE, 3)} = ${tn(Edis, 0)}\ \mathrm{kgf/cm^2}`, "8.2.2.3");
 
@@ -505,8 +754,115 @@ ${["Ff", "Fcz", "Fcn", "Ef"].map(k => L`\Delta R_{${nomK[k]}} &= ${tn(DR[k], 3)}
 // Interfaz y memoria
 // ---------------------------------------------------------------------------
 let ultimoTex = "", ultimoNombre = "memoria_envigado.tex";
+let modo = "env";
 
 function actualizar() {
+  $("inEnv").classList.toggle("hidden", modo !== "env");
+  $("inTab").classList.toggle("hidden", modo !== "tab");
+  $("tabEnv").classList.toggle("on", modo === "env");
+  $("tabTab").classList.toggle("on", modo === "tab");
+  if (modo === "env") actualizarEnv(); else actualizarTab();
+}
+
+// Tarjetas de resumen: [título, razón, detalle]
+function tarjetas(items) {
+  $("summary").innerHTML = items.map(([t, v, s]) => `<div class="card"><div class="t">${t}</div><div class="v">${fmt(v, 3)}</div>
+    <div class="bar ${v > 1 ? "bad" : ""}"><i style="width:${Math.min(100, v * 100)}%"></i></div><div class="s">${s}</div></div>`).join("");
+}
+const texCelda = (s) => s.replace(/<sub>/g, "$_{").replace(/<\/sub>/g, "}$").replace(/\$\$/g, "").replace(/<[^>]+>/g, "").replace(/λ/g, "$\\lambda$");
+
+// Documento .tex común: encabezado, tabla de datos, memoria y resumen
+function documentoTex(titulo, subtitulo, datos, cuerpo, items, dc, ok, sujeto) {
+  const fecha = new Date().toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
+  const filas = items.map(([t, v, s]) => `${texCelda(t)} & ${texCelda(s).replace(/,/g, "{,}").replace(/\./g, "\\,").replace(/²/g, "$^2$")} & ${tn(v, 3)} & ${v <= 1 ? "Cumple" : "No cumple"}\\\\`).join("\n");
+  return L`\documentclass[11pt,letterpaper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla,es-noshorthands]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{geometry}
+\geometry{margin=2.2cm}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\chead{Diseño en Madera}
+\lfoot{Memoria de cálculo --- NCh 1198:2024}
+\rfoot{\thepage}
+\allowdisplaybreaks
+
+\begin{document}
+\begin{center}
+{\Large\bfseries Memoria de Cálculo --- ${titulo}}\\[3pt]
+${subtitulo} --- NCh 1198:2024\\[2pt]
+{\small ${fecha}}
+\end{center}
+
+\begin{table}[H]
+\centering
+\caption{Datos de diseño.}
+\begin{tabular}{lr}
+\toprule
+Parámetro & Valor\\
+\midrule
+${datos.join("\\\\\n")}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+${cuerpo}
+
+\section{Resumen}
+\begin{table}[H]
+\centering
+\begin{tabular}{llcc}
+\toprule
+Verificación & Solicitación / capacidad & Razón & Estado\\
+\midrule
+${filas}
+\bottomrule
+\end{tabular}
+\end{table}
+Con una razón máxima de ${tn(dc, 3)}, ${sujeto} \textbf{${ok ? "cumple" : "no cumple"}} con las verificaciones de la NCh 1198:2024.
+\end{document}
+`;
+}
+
+function actualizarTab() {
+  $("tgCustom").classList.toggle("hidden", $("tEsc").value !== "custom");
+  const d = leerTabique();
+  const m = new Memo();
+  const r = calcularTabique(d, m);
+  const items = [
+    [`Compresión paralela (${r.compN})`, r.comp, `${fmt(r.cMax.fcp, 2)} / ${fmt(r.cMax.Fcpl, 2)} kgf/cm²`],
+    ["Flexión por viento f<sub>f</sub>/F<sub>f,dis</sub>", r.flex, `${fmt(r.ff, 1)} / ${fmt(r.Fdis, 1)} kgf/cm²`],
+    ["Cizalle por viento f<sub>cz</sub>/F<sub>cz,dis</sub>", r.ciz, `${fmt(r.fcz, 2)} / ${fmt(r.Fczd, 2)} kgf/cm²`],
+    ["Flexocompresión (C3)", r.fc, "interacción con K<sub>D</sub> de viento"],
+    ["Compresión normal solera", r.cn, `${fmt(r.fcn, 2)} / ${fmt(r.Fcnd, 2)} kgf/cm²`],
+    ["Esbeltez λ/170", r.lam / 170, `λ = ${fmt(r.lam, 1)}`],
+  ];
+  tarjetas(items);
+  const dc = Math.max(...items.map(i => i[1]));
+  const ok = dc <= 1;
+  const nombre = d.esc === "custom" ? `${d.b}×${d.h} mm` : `${d.esc} (${d.b}×${d.h} mm)`;
+  $("resTitle").textContent = `Resultados — pie derecho ${nombre} · ${d.grado} · L = ${fmt(d.L, 1)} cm`;
+  $("verdict").innerHTML = `<div class="verdict ${ok ? "ok" : "bad"}">${ok ? "✔ El pie derecho CUMPLE" : "✘ El pie derecho NO CUMPLE"} — razón máxima = ${fmt(dc, 3)}</div>`;
+  $("memo").innerHTML = m.html();
+  const datos = [
+    L`Grado ; humedad $H$ & ${d.grado} ; ${tn(d.H, 0)}\,\%`,
+    L`Sección $b\times h$ & ${tn(d.b, 0)} $\times$ ${tn(d.h, 0)} mm`,
+    L`Altura $L$ ; separación $s$ & ${tn(d.L, 1)} cm ; ${tn(d.s)} m`,
+    L`$L_{p,x}$ ; $L_{p,y}$ ; $K_p$ & ${tn(d.Lpx, 1)} ; ${tn(d.Lpy, 1)} cm ; ${tn(d.Kp, 2)}`,
+    L`$q_{PP}$ ; $q_{SC,piso}$ ; $q_{SC,techo}$ & ${tn(d.qPP, 2)} ; ${tn(d.qSCp, 2)} ; ${tn(d.qSCt, 2)} kgf/m`,
+    L`Viento $q_v$ & ${tn(d.qv, 1)} kgf/m$^2$`,
+  ];
+  ultimoTex = documentoTex("Pie derecho de tabique", `Pino radiata ${d.grado}, escuadría ${nombre.replace(/×/g, L`$\times$`)}, altura $L = ${tn(d.L, 1)}$ cm`,
+    datos, m.tex.join("\n"), items, dc, ok, "el pie derecho");
+  ultimoNombre = `memoria_tabique_${d.grado}_${d.b}x${d.h}.tex`;
+}
+
+function actualizarEnv() {
   $("gCustom").classList.toggle("hidden", $("esc").value !== "custom");
   $("gArea").classList.toggle("hidden", $("modoCarga").value !== "area");
   $("gLineal").classList.toggle("hidden", $("modoCarga").value !== "lineal");
@@ -608,6 +964,13 @@ function descargarTex() {
 function init() {
   $("esc").innerHTML = Object.entries(ESCUADRIAS).map(([k, [b, h]]) => `<option value='${k}'>${k} — ${b} × ${h} mm</option>`).join("") + `<option value="custom">Personalizada</option>`;
   $("esc").value = '2x6"';
+  $("tEsc").innerHTML = $("esc").innerHTML;
+  $("tEsc").value = "custom";
+  $("tKp").innerHTML = Object.entries(KP).map(([k, [n, t, rec]]) => `<option value="${k}">${n} (${fmt(t, 2)} / ${fmt(rec, 2)})</option>`).join("");
+  $("tKp").value = "C4";
+  $("tabEnv").addEventListener("click", () => { modo = "env"; actualizar(); });
+  $("tabTab").addEventListener("click", () => { modo = "tab"; actualizar(); });
+  if (new URLSearchParams(location.search).get("elemento") === "tabique") modo = "tab";
   $("uso").innerHTML = Object.keys(TABLA6).map(k => `<option>${k}</option>`).join("");
   const panel = $("inputs");
   panel.addEventListener("input", actualizar);
