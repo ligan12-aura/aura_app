@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <style>
-  /* PWA: sin zoom automÃ¡tico de iOS al enfocar campos y texto estable al rotar */
+  /* PWA: sin zoom automático de iOS al enfocar campos y texto estable al rotar */
   html { -webkit-text-size-adjust: 100%; }
   @media (max-width: 900px) { input, select, textarea { font-size: 16px !important; } }
   main > *, .row2 > *, .row3 > *, fieldset { min-width: 0; }
@@ -113,6 +113,7 @@
         <div id="gXi" class="hidden">
           <label for="xi">Razón de amortiguamiento ξ</label>
           <input id="xi" type="number" step="0.005" min="0.01" max="0.2" value="0.05">
+          <div class="nota">Use la razón de amortiguamiento que NCh 2369 asigna al tipo de estructura (tabla de amortiguamientos).</div>
         </div>
         <div class="nota" id="notaNorma"></div>
       </fieldset>
@@ -290,9 +291,10 @@ function factorR(d, Ts) {
   if (d.norma === "2369-2025") {
     const R = d.R, Cr = 0.16 * R, lim = Cr * s.T1;
     let Rs, txt;
-    if (R === 1) { Rs = 1; txt = "R = 1 → R* = 1"; }
+    // R* nunca puede superar a R: con R ≤ 1,5 la interpolación desde 1,5 daría R* > R (no conservador)
+    if (R <= 1.5) { Rs = R; txt = `R = ${fmt(R, 2)} ≤ 1,5 → R* = R = ${fmt(R, 2)}`; }
     else if (Ts >= lim) { Rs = R; txt = `T* = ${fmt(Ts, 3)} ≥ C<sub>r</sub>T<sub>1</sub> = ${fmt(lim, 3)} → R* = R = ${fmt(R, 2)}`; }
-    else { Rs = 1.5 + (R - 1.5) * Ts / lim; txt = `1,5 + (${fmt(R, 2)} − 1,5)·${fmt(Ts, 3)}/${fmt(lim, 3)} = ${fmt(Rs, 3)}`; }
+    else { Rs = Math.min(R, 1.5 + (R - 1.5) * Ts / lim); txt = `1,5 + (${fmt(R, 2)} − 1,5)·${fmt(Ts, 3)}/${fmt(lim, 3)} = ${fmt(Rs, 3)}`; }
     return { Rs, txt };
   }
   const T0 = s.T0, R0 = d.R0;
@@ -401,8 +403,11 @@ function graficar(pts, Tmax) {
     tip.style.left = `${r.left - wrap.left + x(Ti) * r.width / W}px`;
     tip.style.top = `${r.top - wrap.top + y(Si) * r.height / H - 6}px`;
   };
-  hit.addEventListener("mousemove", mover);
-  hit.addEventListener("mouseleave", () => { tip.classList.add("hidden"); cross.classList.add("hidden"); });
+  // pointer*: también responde al tacto en el móvil
+  hit.style.touchAction = "pan-y";
+  hit.addEventListener("pointermove", mover);
+  hit.addEventListener("pointerdown", mover);
+  hit.addEventListener("pointerleave", () => { tip.classList.add("hidden"); cross.classList.add("hidden"); });
   return pk;
 }
 
@@ -425,7 +430,27 @@ function poblarSelectores(norma, conservar) {
   $("notaNorma").innerHTML = N.nota;
 }
 
+const MAX_PUNTOS = 20000;   // más filas bloquean la página
+
 function calcular() {
+  const norma = $("norma").value;
+  limpiarInvalidos();
+  const reglas = [["Tx", 0], ["Ty", 0], ["dT", 0, true], ["Tmax", 0, true]];
+  if (norma === "2369-2025") reglas.push(["R", 1], ["xi", 0.01]); else reglas.push(["R0", 1]);
+  if (norma === "ds117") reglas.push(["kAg", 1], ["kDu", 1]);
+  const malos = datosInvalidos(reglas);
+  if (norma === "2369-2025" && num("xi") > 0.2) { $("xi").classList.add("invalido"); malos.push("Razón de amortiguamiento ξ (máx. 0,2)"); }
+  if (!malos.length && num("Tmax") / num("dT") > MAX_PUNTOS) {
+    $("dT").classList.add("invalido");
+    malos.push(`ΔT demasiado pequeño para T máx (más de ${MAX_PUNTOS.toLocaleString("es-CL")} puntos)`);
+  }
+  if (malos.length) {
+    actual = null;
+    $("tiles").innerHTML = avisoInvalidos(malos);
+    ["svgWrap", "pasosR", "pasosU", "tablaPar", "tablaVal"].forEach(id => { $(id).innerHTML = ""; });
+    $("tip").classList.add("hidden");
+    return;
+  }
   const d = leer();
   const N = NORMAS[d.norma];
   const { M, pts } = serie(d);
@@ -451,7 +476,7 @@ function calcular() {
   const es2369 = d.norma === "2369-2025";
   const s = N.suelos[d.suelo];
   const eqR = es2369
-    ? `R* = R si T* ≥ C<sub>r</sub>·T<sub>1</sub> ; R* = 1,5 + (R − 1,5)·T*/(C<sub>r</sub>·T<sub>1</sub>) si T* &lt; C<sub>r</sub>·T<sub>1</sub> ; C<sub>r</sub> = 0,16·R = ${fmt(0.16 * d.R, 2)} ; T<sub>1</sub> = ${fmt(s.T1, 2)} s`
+    ? `R* = R si R ≤ 1,5 o T* ≥ C<sub>r</sub>·T<sub>1</sub> ; R* = 1,5 + (R − 1,5)·T*/(C<sub>r</sub>·T<sub>1</sub>) si T* &lt; C<sub>r</sub>·T<sub>1</sub> ; C<sub>r</sub> = 0,16·R = ${fmt(0.16 * d.R, 2)} ; T<sub>1</sub> = ${fmt(s.T1, 2)} s`
     : `R* = 1 + T* / (0,1·T<sub>0</sub> + T*/R<sub>0</sub>) ; T<sub>0</sub> = ${fmt(s.T0, 2)} s (suelo ${d.suelo}) ; R<sub>0</sub> = ${fmt(d.R0, 1)}`;
   const pasoR = (dir, Ts) => {
     const { Rs, txt } = factorR(d, Ts);

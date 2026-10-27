@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <style>
-  /* PWA: sin zoom automÃ¡tico de iOS al enfocar campos y texto estable al rotar */
+  /* PWA: sin zoom automático de iOS al enfocar campos y texto estable al rotar */
   html { -webkit-text-size-adjust: 100%; }
   @media (max-width: 900px) { input, select, textarea { font-size: 16px !important; } }
   main > *, .row2 > *, .row3 > *, fieldset { min-width: 0; }
@@ -265,8 +265,10 @@
           <button class="mini" type="button" data-k="cKy">Usar como K<sub>y</sub></button>
           <div id="kOut" class="unit" style="margin-top:6px"></div>
         </details>
-        <label for="cPu">Carga axial última P<sub>u</sub> (compresión) <span class="unit u-f"></span></label>
-        <input id="cPu" type="number" step="any" min="0" value="73793.14">
+        <div class="row2">
+          <div><label for="cPu">Carga axial última P<sub>u</sub> (compresión) <span class="unit u-f"></span></label><input id="cPu" type="number" step="any" min="0" value="73793.14"></div>
+          <div><label for="cVu">Corte último V<sub>u</sub> (eje fuerte) <span class="unit u-f"></span></label><input id="cVu" type="number" step="any" min="0" value="0"></div>
+        </div>
         <div class="row2">
           <div><label for="cMux">M<sub>ux</sub> <span class="unit u-m"></span></label><input id="cMux" type="number" step="any" min="0" value="464.011"></div>
           <div><label for="cMuy">M<sub>uy</sub> <span class="unit u-m"></span></label><input id="cMuy" type="number" step="any" min="0" value="3290.402"></div>
@@ -431,12 +433,14 @@ const texTxt = (t) => t.replace(/—/g, "---").replace(/%/g, "\\%");
 // Memoria de cálculo: registra a la vez la versión HTML (pantalla) y LaTeX (.tex).
 class Memo {
   constructor() { this.out = []; this.tex = []; this.n = 0; }
-  h(t) { this.n++; this.out.push(`<h3>${this.n}. ${t}</h3>`); this.tex.push(`\\section{${texTxt(t)}}`); }
-  sub(t) { this.out.push(`<h4>${t}</h4>`); this.tex.push(`\\subsection*{${texTxt(t)}}`); }
+  h(t) { memoTexCerrar(this); this.n++; this.out.push(`<h3>${this.n}. ${t}</h3>`); this.tex.push(`\\section{${texTxt(t)}}`); }
+  sub(t) { memoTexCerrar(this); this.out.push(`<h4>${t}</h4>`); this.tex.push(`\\subsection{${texTxt(t)}}`); }
   row(k, v, ref) { this.out.push({ k, v, ref }); }
   note(t, tt) { this.out.push(`<div class="note">${t}</div>`); if (tt) this.tex.push(`\\textit{${tt}}\n`); }
-  eq(s, ref) { const x = `\\[\n${s}${ref ? `\\tag*{(${ref})}` : ""}\n\\]`; this.tex.push(x); this.out.push({ tex: s + (ref ? `\\tag*{(${ref})}` : ""), eq: true }); }
-  p(s) { this.tex.push(s + "\n"); this.out.push({ tex: s }); }
+  eq(s, ref) { this.tex.push(texDisplay(s, ref)); this.out.push({ tex: s + (ref ? `\\tag*{(${ref})}` : ""), eq: true }); }
+  // soloTex: comentario del paso a paso que va solo en la memoria .tex
+  p(s, soloTex) { memoTexP(this, s); if (!soloTex) this.out.push({ tex: s }); }
+  texto() { memoTexCerrar(this); return this.tex.join("\n"); }
   html() { return memoHTML(this.out); }
 }
 // Memo nulo para la búsqueda de alternativas (no genera texto).
@@ -553,6 +557,7 @@ function flexionX(s, Fy, Lb, Cb, m, cbM) {
   const claseAlma = lw <= lpw ? "compacta" : lw <= lrw ? "no compacta" : "esbelta";
 
   m.sub("Clasificación de esbeltez en flexión — Tabla B4.1b");
+  m.p(L`Según la Tabla B4.1b del AISC 360-16, en flexión cada elemento es \textit{compacto} si $\lambda \le \lambda_p$, \textit{no compacto} si $\lambda_p < \lambda \le \lambda_r$ y \textit{esbelto} si $\lambda > \lambda_r$. Esta clasificación define qué sección del Capítulo F se debe aplicar.`, true);
   m.row("Esbeltez del ala (caso 10): λ<sub>f</sub>", fmt(lf, 3));
   m.row("Límites de esbeltez del ala: λ<sub>pf</sub> ; λ<sub>rf</sub>", `${fmt(lpf, 3)} ; ${fmt(lrf, 3)}`);
   m.row("Clasificación ala", tag(claseAla === "compacta", claseAla));
@@ -578,7 +583,7 @@ function flexionX(s, Fy, Lb, Cb, m, cbM) {
 
   const Mp = Fy * s.Zx;
   m.row("Momento plástico (fluencia): M<sub>p</sub>", `${fmt(Mp / 100, 1)} kgf·m`, "F2-1");
-  m.p(L`\textbf{Fluencia:}`);
+  m.p(L`\textbf{Fluencia:} el momento nominal máximo que puede desarrollar la sección es el momento plástico:`);
   m.eq(L`M_p = F_y\,Z_x = ${tn(Fy, 0)}\cdot ${tn(s.Zx, 1)} = ${tn(Mp, 0)}${KGCM} = ${tn(Mp / 100, 1)}${KGM}`, "F2-1");
 
   // Pandeo lateral-torsional
@@ -590,7 +595,7 @@ function flexionX(s, Fy, Lb, Cb, m, cbM) {
   m.row("Radio de giro efectivo ; distancia entre centroides de alas: r<sub>ts</sub> ; h<sub>o</sub>", `${fmt(rts, 3)} cm ; ${fmt(s.ho, 2)} cm`, "F2-7");
   m.row("Longitud límite para pandeo lateral-torsional inelástico: L<sub>r</sub>", `${fmt(Lr, 1)} cm`, "F2-6");
   m.row("Longitud no arriostrada ; factor de modificación: L<sub>b</sub> ; C<sub>b</sub>", `${fmt(Lb, 1)} cm ; ${fmt(Cb, 3)}`);
-  m.p(L`\textbf{Pandeo lateral-torsional.} Longitudes límite:`);
+  m.p(L`\textbf{Pandeo lateral-torsional.} Se comparan la longitud no arriostrada $L_b$ con las longitudes límite $L_p$ (bajo la cual no hay pandeo lateral-torsional) y $L_r$ (sobre la cual el pandeo es elástico). Longitudes límite:`);
   m.eq(L`L_p = 1{,}76\,r_y\sqrt{\frac{E}{F_y}} = 1{,}76\cdot ${tn(s.ry, 3)}\cdot ${tn(rEF, 3)} = ${tn(Lp, 1)}${CM}`, "F2-5");
   m.p(L`Considerando $c = 1$ (sección doblemente simétrica) y $h_o = h - t_f = ${tn(s.h, 1)} - ${tn(s.tf)} = ${tn(s.ho)}$ cm:`);
   m.eq(L`r_{ts} = \sqrt{\frac{\sqrt{I_y\,C_w}}{S_x}} = \sqrt{\frac{\sqrt{${tn(s.Iy, 1)}\cdot ${tn(s.Cw, 0)}}}{${tn(s.Sx, 1)}}} = ${tn(rts, 3)}${CM}`, "F2-7");
@@ -675,8 +680,10 @@ function flexionY(s, Fy, m) {
   const MpZ = Fy * s.Zy, MpS = 1.6 * Fy * s.Sy;
   const Mp = Math.min(MpZ, MpS);
   m.row("Momento plástico (fluencia): M<sub>p</sub>", `${fmt(Mp / 100, 1)} kgf·m`, "F6-1");
-  m.p(L`\textbf{Fluencia:}`);
-  m.eq(L`M_p = F_yZ_y = ${tn(Fy, 0)}\cdot ${tn(s.Zy, 1)} = ${tn(MpZ / 100, 1)}${KGM} \;${cmp(MpZ, MpS)}\; 1{,}6F_yS_y = 1{,}6\cdot ${tn(Fy, 0)}\cdot ${tn(s.Sy, 1)} = ${tn(MpS / 100, 1)}${KGM}`, "F6-1");
+  m.p(L`\textbf{Fluencia:} en el eje débil el momento plástico se limita a $1{,}6F_yS_y$ (ec. F6-1):`);
+  m.eq(L`M_p = F_yZ_y = ${tn(Fy, 0)}\cdot ${tn(s.Zy, 1)} = ${tn(MpZ / 100, 1)}${KGM}`);
+  m.eq(L`1{,}6F_yS_y = 1{,}6\cdot ${tn(Fy, 0)}\cdot ${tn(s.Sy, 1)} = ${tn(MpS / 100, 1)}${KGM}`);
+  m.p(L`Como $F_yZ_y = ${tn(MpZ / 100, 1)} ${cmp(MpZ, MpS)} 1{,}6F_yS_y = ${tn(MpS / 100, 1)}$ kgf$\cdot$m, se adopta $M_p = ${tn(Mp / 100, 1)}$ kgf$\cdot$m.`, true);
   let Mn = Mp;
   if (lf <= lpf) {
     m.row("Pandeo local de ala", "no aplica (ala compacta)");
@@ -708,7 +715,10 @@ function corte(s, Fy, m) {
   const Aw = s.h * s.tw;
   const ht = s.hw / s.tw;
   const lim = 2.24 * Math.sqrt(E / Fy);
+  m.p(L`La resistencia a corte se evalúa según la sección G2.1 del AISC 360-16, considerando que el corte en el eje fuerte lo resiste el alma del perfil.`, true);
+  m.p(L`\textbf{Área del alma:} se toma la altura total del perfil por el espesor del alma:`, true);
   m.eq(L`A_w = d\,t_w = ${tn(s.h, 1)}\cdot ${tn(s.tw)} = ${tn(Aw)}${CM2}`);
+  m.p(L`\textbf{Esbeltez del alma} y límite de la sección G2.1(a):`, true);
   m.eq(L`\frac{h}{t_w} = \frac{${tn(s.hw)}}{${tn(s.tw)}} = ${tn(ht, 3)} \qquad 2{,}24\sqrt{\frac{E}{F_y}} = 2{,}24\sqrt{\frac{${tn(E, 0)}}{${tn(Fy, 0)}}} = ${tn(lim, 3)}`);
   let phi, Cv1;
   if (ht <= lim) {
@@ -730,6 +740,7 @@ function corte(s, Fy, m) {
   m.row("Factor de resistencia ; coeficiente de corte del alma: φ<sub>v</sub> ; C<sub>v1</sub>", `${fmt(phi, 2)} ; ${fmt(Cv1, 3)}`, "G2.1");
   m.row("Resistencia nominal a corte: V<sub>n</sub>", `${fmt(Vn, 0)} kgf`, "G2-1");
   m.row("<b>Resistencia de diseño a corte: φ<sub>v</sub>V<sub>n</sub></b>", `<b>${fmt(phiVn, 0)} kgf</b>`);
+  m.p(L`\textbf{Resistencia nominal y de diseño a corte:}`, true);
   m.eq(L`V_n = 0{,}6\,F_y\,A_w\,C_{v1} = 0{,}6\cdot ${tn(Fy, 0)}\cdot ${tn(Aw)}\cdot ${tn(Cv1, 3)} = ${tn(Vn, 0)}${KG}`, "G2-1");
   m.eq(L`\phi_v V_n = ${tn(phi)}\cdot ${tn(Vn, 0)} = ${tn(phiVn, 0)}${KG}`);
   return { Vn, phiVn, phi };
@@ -744,6 +755,7 @@ function compresion(s, Fy, Lc, Kx, Ky, Kz, m) {
   const lf = s.b / (2 * s.tf), lrf = 0.56 * rEF;
   const lw = s.hw / s.tw, lrw = 1.49 * rEF;
   m.sub("Clasificación de esbeltez en compresión — Tabla B4.1a");
+  m.p(L`Según la Tabla B4.1a del AISC 360-16, cada elemento de la sección se clasifica comparando su relación ancho-espesor $\lambda$ con el límite $\lambda_r$: si $\lambda \le \lambda_r$ el elemento es no esbelto y puede alcanzar la fluencia antes de pandearse localmente.`, true);
   m.row("Esbeltez del ala (caso 1) ; límite: λ<sub>f</sub> ; λ<sub>r</sub>", `${fmt(lf, 3)} ; ${fmt(lrf, 3)}`);
   m.row("Clasificación ala", tag(lf <= lrf, lf <= lrf ? "no esbelta" : "esbelta"));
   m.row("Esbeltez del alma (caso 5) ; límite: λ<sub>w</sub> ; λ<sub>r</sub>", `${fmt(lw, 3)} ; ${fmt(lrw, 3)}`);
@@ -761,6 +773,7 @@ function compresion(s, Fy, Lc, Kx, Ky, Kz, m) {
   const Fez = (PI2 * E * s.Cw / (Lcz * Lcz) + G * s.J) / (s.Ix + s.Iy);
   m.row("Esbeltez eje x: K<sub>x</sub>L/r<sub>x</sub>", fmt(slx, 3));
   m.row("Esbeltez eje y: K<sub>y</sub>L/r<sub>y</sub>", fmt(sly, 3));
+  m.p(L`La longitud efectiva de pandeo de cada eje se obtiene como $L_c = K\,L$, con los factores $K_x = ${tn(Kx, 3)}$, $K_y = ${tn(Ky, 3)}$ y $K_z = ${tn(Kz, 3)}$ (torsión) y la longitud no arriostrada $L = ${tn(Lc, 1)}$ cm. La esbeltez de cada eje se calcula con su radio de giro:`, true);
   m.p(L`\textbf{Relaciones de esbeltez} (longitud no arriostrada $L = ${tn(Lc, 1)}$ cm):`);
   m.eq(L`\frac{L_{cx}}{r_x} = \frac{K_x L}{r_x} = \frac{${tn(Kx, 3)}\cdot ${tn(Lc, 1)}}{${tn(s.rx, 3)}} = ${tn(slx, 3)} \qquad \frac{L_{cy}}{r_y} = \frac{K_y L}{r_y} = \frac{${tn(Ky, 3)}\cdot ${tn(Lc, 1)}}{${tn(s.ry, 3)}} = ${tn(sly, 3)}`);
   if (Math.max(slx, sly) > 200) m.note("Esbeltez L<sub>c</sub>/r mayor que 200 (límite recomendado, nota de usuario E2).",
@@ -782,15 +795,17 @@ F_{ez} &= \left(\frac{\pi^2 E C_w}{L_{cz}^2} + G J\right)\frac{1}{I_x + I_y}\\
   const lim = 4.71 * rEF;
   let Fcr;
   m.p(L`\textbf{Tensión crítica de pandeo por flexión:}`);
+  m.p(L`Según la sección E3, la tensión crítica depende de la razón $F_y/F_e$: si $F_y/F_e \le 2{,}25$ el pandeo es inelástico (ec. E3-2); en caso contrario es elástico (ec. E3-3).`, true);
   if (Fy / Fe <= 2.25) {
     Fcr = Math.pow(0.658, Fy / Fe) * Fy;
     m.row("Tensión crítica de pandeo inelástico: F<sub>cr</sub>", `${fmt(Fcr, 1)} kgf/cm²`, "E3-2");
-    m.eq(L`\frac{F_y}{F_e} = \frac{${tn(Fy, 0)}}{${tn(Fe, 1)}} = ${tn(Fy / Fe, 3)} \le 2{,}25 \quad \left(\text{equivalente a } \frac{L_c}{r} \le 4{,}71\sqrt{\frac{E}{F_y}} = ${tn(lim, 3)}\right)`);
+    // La equivalencia con L_c/r solo vale cuando controla el pandeo por flexión
+    m.eq(L`\frac{F_y}{F_e} = \frac{${tn(Fy, 0)}}{${tn(Fe, 1)}} = ${tn(Fy / Fe, 3)} \le 2{,}25${Fe === Fez ? "" : L` \quad \left(\text{equivalente a } \frac{L_c}{r} \le 4{,}71\sqrt{\frac{E}{F_y}} = ${tn(lim, 3)}\right)`}`);
     m.eq(L`F_{cr} = \left(0{,}658^{F_y/F_e}\right)F_y = 0{,}658^{${tn(Fy / Fe, 3)}}\cdot ${tn(Fy, 0)} = ${tn(Fcr, 1)}${KGCM2}`, "E3-2");
   } else {
     Fcr = 0.877 * Fe;
     m.row("Tensión crítica de pandeo elástico: F<sub>cr</sub>", `${fmt(Fcr, 1)} kgf/cm²`, "E3-3");
-    m.eq(L`\frac{F_y}{F_e} = \frac{${tn(Fy, 0)}}{${tn(Fe, 1)}} = ${tn(Fy / Fe, 3)} > 2{,}25 \quad \left(\frac{L_c}{r} > 4{,}71\sqrt{\frac{E}{F_y}} = ${tn(lim, 3)}\right)`);
+    m.eq(L`\frac{F_y}{F_e} = \frac{${tn(Fy, 0)}}{${tn(Fe, 1)}} = ${tn(Fy / Fe, 3)} > 2{,}25${Fe === Fez ? "" : L` \quad \left(\frac{L_c}{r} > 4{,}71\sqrt{\frac{E}{F_y}} = ${tn(lim, 3)}\right)`}`);
     m.eq(L`F_{cr} = 0{,}877\,F_e = 0{,}877\cdot ${tn(Fe, 1)} = ${tn(Fcr, 1)}${KGCM2}`, "E3-3");
   }
 
@@ -850,6 +865,7 @@ function verificarViga(s, Fy, d, m) {
   m.p(L`Considerando los momentos últimos solicitantes $M_{ux} = ${tn(d.Mux / 100, 1)}$ kgf$\cdot$m y $M_{uy} = ${tn(d.Muy / 100, 1)}$ kgf$\cdot$m:`);
   m.eq(L`\frac{M_{ux}}{\phi_bM_{nx}} = \frac{${tn(d.Mux / 100, 1)}}{${tn(fx.phiMn / 100, 1)}} = ${tn(rx, 3)} \qquad \frac{M_{uy}}{\phi_bM_{ny}} = \frac{${tn(d.Muy / 100, 1)}}{${tn(fy.phiMn / 100, 1)}} = ${tn(ry, 3)}`);
   m.eq(L`\frac{D}{C} = \frac{M_{ux}}{\phi_bM_{nx}} + \frac{M_{uy}}{\phi_bM_{ny}} = ${tn(rx, 3)} + ${tn(ry, 3)} = ${tn(dcM, 3)} ${cmp(dcM, 1)} 1{,}0`, "H1-1b");
+  m.p(L`Por lo tanto, como la relación demanda-capacidad en flexión ${dcM <= 1 ? "es menor o igual a" : "supera"} 1{,}0, la sección \textbf{${dcM <= 1 ? "cumple" : "no cumple"}} a flexión.`, true);
 
   m.h("Verificación a corte — Capítulo G");
   const v = corte(s, Fy, m);
@@ -857,6 +873,7 @@ function verificarViga(s, Fy, d, m) {
   m.row("<b>Razón demanda/capacidad en corte: D/C</b>", `<b>${fmt(dcV, 3)}</b> ${tag(dcV <= 1, dcV <= 1 ? "CUMPLE" : "NO CUMPLE")}`);
   m.p(L`Considerando el corte último solicitante $V_u = ${tn(d.Vu, 0)}$ kgf:`);
   m.eq(L`\frac{D}{C} = \frac{V_u}{\phi_vV_n} = \frac{${tn(d.Vu, 0)}}{${tn(v.phiVn, 0)}} = ${tn(dcV, 3)} ${cmp(dcV, 1)} 1{,}0`);
+  m.p(L`Por lo tanto, la sección \textbf{${dcV <= 1 ? "cumple" : "no cumple"}} a corte.`, true);
 
   const dc = Math.max(dcM, dcV);
   return {
@@ -881,26 +898,37 @@ function verificarColumna(s, Fy, d, m) {
   const rP = d.Pu / c.phiPn;
   m.row("Razón de carga axial: P<sub>u</sub>/φP<sub>n</sub>", fmt(rP, 3));
   m.p(L`\textbf{Relación demanda-capacidad} para la carga axial última $P_u = ${tn(d.Pu, 0)}$ kgf:`);
-  m.eq(L`\frac{P_u}{\phi_cP_n} = \frac{${tn(d.Pu, 0)}}{${tn(c.phiPn, 0)}} = ${tn(rP, 3)}`);
+  m.eq(L`\frac{P_u}{\phi_cP_n} = \frac{${tn(d.Pu, 0)}}{${tn(c.phiPn, 0)}} = ${tn(rP, 3)} \;\rightarrow\; ${tn(rP * 100, 1)}\,\%`);
+  m.p(L`La carga axial por sí sola utiliza el ${tn(rP * 100, 1)}\,\% de la capacidad a compresión del perfil; esta razón se combina con la flexión en la ecuación de interacción de la sección H1.`, true);
 
   m.h("Verificación a flexión — Capítulo F");
   const fx = flexionX(s, Fy, d.Lb, d.Cb, m, d.cbM);
   const fy = flexionY(s, Fy, m);
 
-  let Mux = d.Mux, Muy = d.Muy;
+  let Mux = d.Mux, Muy = d.Muy, inestable = false;
   if (d.B1) {
     m.h("Amplificación por efectos P-δ — Anexo 8.2.1");
     m.p(L`Se amplifican los momentos de primer orden mediante $B_1$, con $K_1 = 1{,}0$ y $\alpha = 1{,}0$ (LRFD):`);
     const amp = (I, Cm, eje) => {
       const Pe1 = PI2 * E * I / (d.L * d.L);   // K1 = 1
+      m.eq(L`P_{e1,${eje}} = \frac{\pi^2EI_${eje}}{(K_1L)^2} = \frac{\pi^2\cdot ${tn(E, 0)}\cdot ${tn(I, 0)}}{${tn(d.L, 1)}^2} = ${tn(Pe1, 0)}${KG}`, "A-8-5");
+      if (d.Pu >= Pe1) {
+        // Sin solución: el miembro es inestable por segundo orden en este eje
+        m.row(`Carga crítica elástica ; factor de amplificación, eje ${eje}: P<sub>e1</sub> ; B<sub>1</sub>`, `${fmt(Pe1, 0)} kgf ; ∞ ${tag(false, "INESTABLE")}`, "A-8-3");
+        m.note(`P<sub>u</sub> ≥ P<sub>e1,${eje}</sub>: el miembro es inestable (B<sub>1</sub> → ∞). Aumente la sección o reduzca la longitud.`,
+          L`$P_u \ge P_{e1,${eje}}$: el miembro es inestable ($B_1 \to \infty$). Aumente la sección o reduzca la longitud.`);
+        return Infinity;
+      }
       const B1 = Math.max(1, Cm / (1 - d.Pu / Pe1));
       m.row(`Carga crítica elástica ; factor de amplificación, eje ${eje}: P<sub>e1</sub> ; B<sub>1</sub>`, `${fmt(Pe1, 0)} kgf ; ${fmt(B1, 3)}`, "A-8-3");
-      m.eq(L`P_{e1,${eje}} = \frac{\pi^2EI_${eje}}{(K_1L)^2} = \frac{\pi^2\cdot ${tn(E, 0)}\cdot ${tn(I, 0)}}{${tn(d.L, 1)}^2} = ${tn(Pe1, 0)}${KG}`, "A-8-5");
       m.eq(L`B_{1${eje}} = \frac{C_m}{1 - \alpha P_u/P_{e1,${eje}}} = \frac{${tn(Cm)}}{1 - ${tn(d.Pu, 0)}/${tn(Pe1, 0)}} = ${tn(B1, 3)} \ge 1`, "A-8-3");
-      return d.Pu >= Pe1 ? Infinity : B1;
+      return B1;
     };
     const B1x = amp(s.Ix, d.Cmx, "x"), B1y = amp(s.Iy, d.Cmy, "y");
-    Mux *= B1x; Muy *= B1y;
+    inestable = !Number.isFinite(B1x) || !Number.isFinite(B1y);
+    // M·∞ con M = 0 daría NaN: la inestabilidad se reporta como D/C = ∞
+    Mux = Number.isFinite(B1x) ? Mux * B1x : Infinity;
+    Muy = Number.isFinite(B1y) ? Muy * B1y : Infinity;
     m.row("Momentos amplificados: M<sub>ux</sub> ; M<sub>uy</sub>", `${fmt(Mux / 100, 1)} ; ${fmt(Muy / 100, 1)} kgf·m`);
     m.eq(L`M_{ux} = B_{1x}M_{ux,1} = ${tn(Mux / 100, 1)}${KGM} \qquad M_{uy} = B_{1y}M_{uy,1} = ${tn(Muy / 100, 1)}${KGM}`);
   }
@@ -908,6 +936,7 @@ function verificarColumna(s, Fy, d, m) {
   m.h("Interacción flexocompresión — Sección H1.1");
   const rx = Mux / fx.phiMn, ry = Muy / fy.phiMn;
   let dc;
+  m.p(L`Según la sección H1.1 del AISC 360-16, la interacción entre carga axial y flexión se evalúa con la ecuación H1-1a si $P_u/\phi_cP_n \ge 0{,}2$, o con la ecuación H1-1b en caso contrario.`, true);
   m.p(L`Momentos últimos solicitantes: $M_{ux} = ${tn(Mux / 100, 1)}$ kgf$\cdot$m y $M_{uy} = ${tn(Muy / 100, 1)}$ kgf$\cdot$m.`);
   m.eq(L`\frac{M_{ux}}{\phi_bM_{nx}} = \frac{${tn(Mux / 100, 1)}}{${tn(fx.phiMn / 100, 1)}} = ${tn(rx, 3)} \qquad \frac{M_{uy}}{\phi_bM_{ny}} = \frac{${tn(Muy / 100, 1)}}{${tn(fy.phiMn / 100, 1)}} = ${tn(ry, 3)}`);
   if (rP >= 0.2) {
@@ -919,24 +948,35 @@ function verificarColumna(s, Fy, d, m) {
     m.p(L`Como $P_u/\phi_cP_n = ${tn(rP, 3)} < 0{,}2$, se utiliza la ecuación H1-1b:`);
     m.eq(L`\frac{D}{C} = \frac{P_u}{2\phi_cP_n} + \left(\frac{M_{ux}}{\phi_bM_{nx}} + \frac{M_{uy}}{\phi_bM_{ny}}\right) = \frac{${tn(rP, 3)}}{2} + \left(${tn(rx, 3)} + ${tn(ry, 3)}\right) = ${tn(dc, 3)} ${cmp(dc, 1)} 1{,}0`, "H1-1b");
   }
+  m.p(L`Por lo tanto, como la relación demanda-capacidad ${dc <= 1 ? L`$D/C = ${tn(dc, 3)}$ es menor o igual a 1{,}0, la sección \textbf{cumple}` : L`$D/C = ${tn(dc, 3)}$ es mayor que 1{,}0, la sección \textbf{no cumple}`} a flexocompresión.`, true);
   m.row("Razón de carga axial: P<sub>u</sub>/φP<sub>n</sub>", fmt(rP, 3));
   m.row("Razón de flexión, eje x: M<sub>ux</sub>/φM<sub>nx</sub>", fmt(rx, 3));
   m.row("Razón de flexión, eje y: M<sub>uy</sub>/φM<sub>ny</sub>", fmt(ry, 3));
   m.row(`<b>Interacción flexo-compresión (${rP >= 0.2 ? "P<sub>r</sub>/P<sub>c</sub> ≥ 0,2" : "P<sub>r</sub>/P<sub>c</sub> < 0,2"}): D/C</b>`, `<b>${fmt(dc, 3)}</b> ${tag(dc <= 1, dc <= 1 ? "CUMPLE" : "NO CUMPLE")}`, rP >= 0.2 ? "H1-1a" : "H1-1b");
 
+  m.h("Verificación a corte — Capítulo G");
+  const v = corte(s, Fy, m);
+  const dcV = d.Vu / v.phiVn;
+  m.row("<b>Razón demanda/capacidad en corte: D/C</b>", `<b>${fmt(dcV, 3)}</b> ${tag(dcV <= 1, dcV <= 1 ? "CUMPLE" : "NO CUMPLE")}`);
+  m.p(L`Considerando el corte último solicitante $V_u = ${tn(d.Vu, 0)}$ kgf (eje fuerte):`);
+  m.eq(L`\frac{D}{C} = \frac{V_u}{\phi_vV_n} = \frac{${tn(d.Vu, 0)}}{${tn(v.phiVn, 0)}} = ${tn(dcV, 3)} ${cmp(dcV, 1)} 1{,}0`);
+  m.p(L`Por lo tanto, la sección \textbf{${dcV <= 1 ? "cumple" : "no cumple"}} a corte.`, true);
+
   return {
-    dc, fuera: fx.fuera,
+    dc: inestable ? Infinity : Math.max(dc, dcV), fuera: fx.fuera, inestable,
     cards: [
       { t: "Compresión P<sub>u</sub>/φP<sub>n</sub>", v: fmt(rP, 3), s: `φP<sub>n</sub> = ${fmt(c.phiPn, 0)} kgf`, r: rP },
       { t: "M<sub>ux</sub>/φM<sub>nx</sub>", v: fmt(rx, 3), s: `φM<sub>nx</sub> = ${fmt(fx.phiMn / 100, 1)} kgf·m`, r: rx },
       { t: "M<sub>uy</sub>/φM<sub>ny</sub>", v: fmt(ry, 3), s: `φM<sub>ny</sub> = ${fmt(fy.phiMn / 100, 1)} kgf·m`, r: ry },
       { t: "Interacción H1", v: fmt(dc, 3), s: rP >= 0.2 ? "Ec. H1-1a" : "Ec. H1-1b", r: dc },
+      { t: "Corte", v: fmt(dcV, 3), s: `φV<sub>n</sub> = ${fmt(v.phiVn, 0)} kgf`, r: dcV },
     ],
     resumen: [
       { k: "Compresión", dem: L`$P_u = ${tn(d.Pu, 0)}$ kgf`, cap: L`$\phi_cP_n = ${tn(c.phiPn, 0)}$ kgf`, dc: rP, ref: "E3" },
       { k: "Flexión eje fuerte", dem: L`$M_{ux} = ${tn(Mux / 100, 1)}$ kgf$\cdot$m`, cap: L`$\phi_bM_{nx} = ${tn(fx.phiMn / 100, 1)}$ kgf$\cdot$m`, dc: rx, ref: "F2/F3" },
       { k: "Flexión eje débil", dem: L`$M_{uy} = ${tn(Muy / 100, 1)}$ kgf$\cdot$m`, cap: L`$\phi_bM_{ny} = ${tn(fy.phiMn / 100, 1)}$ kgf$\cdot$m`, dc: ry, ref: "F6" },
       { k: "Interacción flexocompresión", dem: rP >= 0.2 ? "Ec. H1-1a" : "Ec. H1-1b", cap: "1{,}0", dc, ref: "H1.1" },
+      { k: "Corte", dem: L`$V_u = ${tn(d.Vu, 0)}$ kgf`, cap: L`$\phi_vV_n = ${tn(v.phiVn, 0)}$ kgf`, dc: dcV, ref: "G2.1" },
     ],
   };
 }
@@ -987,10 +1027,11 @@ function documentoTex(s, acero, Fy, Fu, d, cuerpo, res) {
   return L`\documentclass[11pt,letterpaper]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[spanish,es-tabla,es-noshorthands]{babel}
+\usepackage[spanish,es-tabla,es-noshorthands,es-nolists]{babel}
 \usepackage{amsmath,amssymb}
 \usepackage{geometry}
 \geometry{margin=2.5cm}
+${TEX_ESTILO}
 \usepackage{booktabs}
 \usepackage{float}
 \usepackage{tikz}
@@ -1017,7 +1058,12 @@ Perfil ${s.nombre} --- Acero ${acero} --- ANSI/AISC 360-16\\[2pt]
 \section{Parámetros de diseño general}
 A continuación se definen las propiedades del material base (acero ${acero}) utilizado:
 \[
-E = ${tn(E, 0)}${KGCM2} \qquad F_y = ${tn(Fy, 0)}${KGCM2} \qquad F_u = ${tn(Fu, 0)}${KGCM2} \qquad G = ${tn(G, 0)}${KGCM2}
+\begin{aligned}
+E &= ${tn(E, 0)}${KGCM2}\\
+F_y &= ${tn(Fy, 0)}${KGCM2}\\
+F_u &= ${tn(Fu, 0)}${KGCM2}\\
+G &= ${tn(G, 0)}${KGCM2}
+\end{aligned}
 \]
 El diseño se realiza por el método de factores de carga y resistencia (LRFD), con $\phi_b = 0{,}90$, $\phi_c = 0{,}90$ y $\phi_v$ según la sección G2.1. Las solicitaciones${unidades === "tf" ? " (ingresadas en tf y tf$\\cdot$m)" : ""} se expresan en kgf y kgf$\cdot$m.
 
@@ -1080,6 +1126,15 @@ function calcular() {
   const acero = $("acero").value;
   const { Fy, Fu } = ACEROS[acero];
   const s = seccion(row, serie);
+  limpiarInvalidos($("inputs"));
+  const malos = datosInvalidos(reglasDatos());
+  if (malos.length) {
+    $("resTitle").textContent = "Resultados";
+    $("summary").innerHTML = ""; $("memo").innerHTML = ""; $("alt").innerHTML = "";
+    $("verdict").innerHTML = avisoInvalidos(malos);
+    ultimoTex = "";
+    return;
+  }
   const d = leerDatos();
 
   const m = new Memo();
@@ -1105,10 +1160,10 @@ function calcular() {
       <div class="bar ${c.r > 1 ? "bad" : ""}"><i style="width:${w}%"></i></div><div class="s">${c.s}</div></div>`;
   }).join("");
   const ok = res.dc <= 1 && !res.fuera;
-  $("verdict").innerHTML = `<div class="verdict ${ok ? "ok" : "bad"}">${ok ? "✔ El perfil CUMPLE" : "✘ El perfil NO CUMPLE"} — D/C máximo = ${fmt(res.dc, 3)} (${fmt(res.dc * 100, 1)} %)${res.fuera ? " · alma no compacta (fuera de alcance)" : ""}</div>`;
+  $("verdict").innerHTML = `<div class="verdict ${ok ? "ok" : "bad"}">${ok ? "✔ El perfil CUMPLE" : "✘ El perfil NO CUMPLE"} — D/C máximo = ${res.inestable ? "∞ (P<sub>u</sub> ≥ P<sub>e1</sub>: inestable)" : `${fmt(res.dc, 3)} (${fmt(res.dc * 100, 1)} %)`}${res.fuera ? " · alma no compacta (fuera de alcance)" : ""}${d.cbAviso ? ` · ⚠ ${d.cbAviso}` : ""}</div>`;
   $("memo").innerHTML = m.html();
 
-  ultimoTex = documentoTex(s, acero, Fy, Fu, d, m.tex.join("\n"), res);
+  ultimoTex = documentoTex(s, acero, Fy, Fu, d, m.texto(), res);
   ultimoNombre = `memoria_${modo}_${s.nombre.replace(/\s+/g, "")}_${acero}.tex`;
 
   // Alternativas más livianas
@@ -1130,7 +1185,8 @@ function calcular() {
 }
 
 function descargarTex() {
-  const blob = new Blob([ultimoTex], { type: "application/x-tex;charset=utf-8" });
+  if (!ultimoTex) { alert("Corrija los datos inválidos antes de descargar la memoria."); return; }
+  const blob = new Blob([texUnicode(ultimoTex)],{ type: "application/x-tex;charset=utf-8" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = ultimoNombre;
@@ -1151,8 +1207,11 @@ function factorCb(p, f) {
   const A = Math.abs(num(p + "MA")) * f, B = Math.abs(num(p + "MB")) * f, C = Math.abs(num(p + "MC")) * f;
   const den = 2.5 * Mm + 3 * A + 4 * B + 3 * C;
   const Cb = Mm > 0 && den > 0 ? Math.max(1, 12.5 * Mm / den) : 1;
-  $(p + "CbOut").textContent = fmt(Cb, 3);
-  return { Cb, cbM: { Mm, A, B, C } };
+  // M_máx debe ser el mayor momento del tramo; si no, C_b sale < 1 y el Math.max lo ocultaría
+  const cbAviso = Mm > 0 && Mm < Math.max(A, B, C) ? "M_máx es menor que M_A, M_B o M_C: revise los momentos del tramo." : "";
+  $(p + "CbOut").textContent = fmt(Cb, 3) + (cbAviso ? " ⚠" : "");
+  $(p + "CbOut").title = cbAviso;
+  return { Cb, cbM: { Mm, A, B, C }, cbAviso };
 }
 
 function leerDatos() {
@@ -1166,9 +1225,19 @@ function leerDatos() {
   return {
     L: num("cL") * 100, Kx: num("cKx"), Ky: num("cKy"), Kz: num("cKz") || 1,
     Lb: num("cLb") * 100, ...factorCb("c", f),
-    Pu: num("cPu") * f, Mux: num("cMux") * f * 100, Muy: num("cMuy") * f * 100,
+    Pu: num("cPu") * f, Mux: num("cMux") * f * 100, Muy: num("cMuy") * f * 100, Vu: num("cVu") * f,
     B1: $("cB1").checked, Cmx: num("cCmx"), Cmy: num("cCmy"),
   };
+}
+
+// Campos obligatorios de cada modo: [id, mínimo, estricto]. M_máx y K_z pueden quedar vacíos.
+function reglasDatos() {
+  if (modo === "viga") return [["vLb", 0], ["vMux", 0], ["vMuy", 0], ["vVu", 0], ["vMA", -Infinity], ["vMB", -Infinity], ["vMC", -Infinity]];
+  const r = [["cL", 0, true], ["cKx", 0, true], ["cKy", 0, true], ["cLb", 0], ["cPu", 0], ["cMux", 0], ["cMuy", 0], ["cVu", 0],
+    ["cMA", -Infinity], ["cMB", -Infinity], ["cMC", -Infinity]];
+  if ($("cKz").value.trim() !== "") r.push(["cKz", 0, true]);
+  if ($("cB1").checked) r.push(["cCmx", 0, true], ["cCmy", 0, true]);
+  return r;
 }
 
 function verificar(s, Fy, d, m) {
@@ -1189,8 +1258,10 @@ function setModo(m) {
   $("tabCol").classList.toggle("on", m === "columna");
   $("fsViga").classList.toggle("hidden", m !== "viga");
   $("fsCol").classList.toggle("hidden", m !== "columna");
-  // Valores por defecto de los ejemplos del informe (HEB 140 viga / HEB 240 columna)
-  $("perfil").value = m === "viga" ? "HEB 140" : "HEB 240";
+  // Valores por defecto de los ejemplos del informe (HEB 140 viga / HEB 240 columna), solo en la
+  // serie HEB; en otra serie se conserva el perfil elegido.
+  if ($("serie").value === "HEB") $("perfil").value = m === "viga" ? "HEB 140" : "HEB 240";
+  if ($("perfil").selectedIndex < 0) $("perfil").selectedIndex = 0;
   calcular();
 }
 
@@ -1210,7 +1281,7 @@ function init() {
   $("unidad").addEventListener("change", () => {
     // Convierte los valores ya ingresados para no alterar la solicitación
     const toTf = $("unidad").value === "tf";
-    ["vMux", "vMuy", "vVu", "cPu", "cMux", "cMuy", "vMmax", "vMA", "vMB", "vMC", "cMmax", "cMA", "cMB", "cMC"].forEach(id => {
+    ["vMux", "vMuy", "vVu", "cPu", "cVu", "cMux", "cMuy", "vMmax", "vMA", "vMB", "vMC", "cMmax", "cMA", "cMB", "cMC"].forEach(id => {
       const v = parseFloat($(id).value);
       if (Number.isFinite(v)) $(id).value = +(toTf ? v / 1000 : v * 1000).toPrecision(8);
     });

@@ -7,18 +7,129 @@ const KATEX = "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/";
 let katexListo = null;
 function cargarKatex() {
   if (katexListo) return katexListo;
+  // crossOrigin: la respuesta debe ser CORS (no opaca) para que el service worker la guarde.
   katexListo = new Promise((ok) => {
-    const css = document.createElement("link");
-    css.rel = "stylesheet"; css.href = KATEX + "katex.min.css";
-    document.head.appendChild(css);
+    if (!document.querySelector("link[data-katex]")) {
+      const css = document.createElement("link");
+      css.rel = "stylesheet"; css.href = KATEX + "katex.min.css"; css.crossOrigin = "anonymous";
+      css.dataset.katex = "1";
+      document.head.appendChild(css);
+    }
     const js = document.createElement("script");
-    js.src = KATEX + "katex.min.js";
+    js.src = KATEX + "katex.min.js"; js.crossOrigin = "anonymous";
     js.onload = () => ok(true);
-    js.onerror = () => ok(false);
+    js.onerror = () => { js.remove(); katexListo = null; ok(false); }; // se reintenta en el próximo uso
     document.head.appendChild(js);
   });
   return katexListo;
 }
+
+// Datos obligatorios: reglas [id, mínimo, estricto]. Un campo vacío, no numérico o bajo el
+// mínimo se marca en rojo y se devuelve su nombre; la página no calcula (evita un "CUMPLE" falso).
+function datosInvalidos(reglas) {
+  const malos = [];
+  for (const [id, min = 0, estricto = false] of reglas) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    const v = parseFloat(el.value);
+    const bad = el.value.trim() === "" || !Number.isFinite(v) || (estricto ? v <= min : v < min);
+    el.classList.toggle("invalido", bad);
+    if (bad) malos.push((el.labels && el.labels[0] ? el.labels[0].textContent : id).replace(/\s+/g, " ").trim());
+  }
+  return malos;
+}
+// Limpia la marca de los campos que ya no se validan (p. ej. al cambiar de pestaña).
+function limpiarInvalidos(raiz = document) {
+  raiz.querySelectorAll(".invalido").forEach((el) => el.classList.remove("invalido"));
+}
+const avisoInvalidos = (malos) =>
+  `<div class="verdict bad" style="margin:10px 0;padding:10px 14px;border-radius:6px;background:#fdecea;color:#8e2a1e;font-weight:600">✘ Datos inválidos — revise: ${malos.join(" · ")}. No se calcula hasta corregirlos.</div>`;
+
+// pdflatex con inputenc utf8 no trae definidos los griegos ni varios símbolos matemáticos:
+// se declaran en el preámbulo los que aparecen en el documento.
+const TEX_UNICODE = {
+  "03B1": "\\alpha", "03B2": "\\beta", "03B3": "\\gamma", "03B4": "\\delta", "03B5": "\\varepsilon",
+  "03B6": "\\zeta", "03B7": "\\eta", "03B8": "\\theta", "03BB": "\\lambda", "03BC": "\\mu",
+  "03BD": "\\nu", "03BE": "\\xi", "03C0": "\\pi", "03C1": "\\rho", "03C3": "\\sigma", "03C4": "\\tau",
+  "03C6": "\\phi", "03D5": "\\phi", "03C8": "\\psi", "03C9": "\\omega", "0394": "\\Delta",
+  "03A3": "\\Sigma", "03A6": "\\Phi", "2264": "\\le", "2265": "\\ge", "2260": "\\ne", "2248": "\\approx",
+  "2192": "\\rightarrow", "21D2": "\\Rightarrow", "221E": "\\infty", "221A": "\\surd", "2212": "-",
+  "2211": "\\sum", "2202": "\\partial", "2074": "^{4}", "2076": "^{6}", "2080": "_{0}", "2081": "_{1}",
+  "2082": "_{2}", "2033": "''", "2032": "'",
+};
+function texUnicode(doc) {
+  const usados = Object.keys(TEX_UNICODE).filter((c) => doc.includes(String.fromCodePoint(parseInt(c, 16))));
+  if (!usados.length) return doc;
+  const decl = "\\ifdefined\\DeclareUnicodeCharacter\n"
+    + usados.map((c) => `\\DeclareUnicodeCharacter{${c}}{\\ensuremath{${TEX_UNICODE[c]}}}`).join("\n") + "\n\\fi\n";
+  return doc.replace(/(\\usepackage\[T1\]\{fontenc\}\r?\n)/, `$1${decl}`);
+}
+
+// ---------------------------------------------------------------------------
+// Formato de la memoria .tex, al estilo de una memoria hecha a mano: una ecuación por
+// línea, la expresión general sobre el reemplazo numérico, los pasos encabezados en
+// negrita como viñetas y "¡CUMPLE!" al cerrar cada verificación.
+// ---------------------------------------------------------------------------
+// Posiciones de los "=" de nivel superior (fuera de llaves y de \left ... \right)
+function igualdadesTop(s) {
+  const pos = []; let nivel = 0, lr = 0;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (c === "\\") {
+      if (s.startsWith("\\left", i) && !/[a-zA-Z]/.test(s[i + 5] || "")) { lr++; i += 4; continue; }
+      if (s.startsWith("\\right", i) && !/[a-zA-Z]/.test(s[i + 6] || "")) { lr--; i += 5; continue; }
+      i++;   // salta el carácter siguiente: \{ \, \; no cuentan como llaves ni signos
+      continue;
+    }
+    if (c === "{") nivel++;
+    else if (c === "}") nivel--;
+    else if (c === "=" && nivel === 0 && lr === 0) pos.push(i);
+  }
+  return pos;
+}
+// "X = fórmula = valores = resultado" (larga) → fórmula en la primera línea y valores en la segunda
+function partirEcuacion(s) {
+  if (s.length < 60 || /\\begin|&/.test(s)) return s;
+  const p = igualdadesTop(s);
+  if (p.length < 2) return s;
+  const gen = s.slice(p[0] + 1, p[1]);
+  const letras = gen.replace(/\\[a-zA-Z]+/g, "").replace(/\\./g, "");
+  if (!/[A-Za-z]/.test(letras)) return s;   // la primera igualdad ya es numérica
+  // "V_s = 0 \le V_{s,max} = ...": el primer tramo ya compara; partirlo cambiaría el sentido
+  if (/\\(le|leq|ge|geq)(?![a-zA-Z])|\\Rightarrow|\\rightarrow|<|>/.test(gen)) return s;
+  return `\\begin{aligned}\n${s.slice(0, p[0]).trim()} &= ${gen.trim()}\\\\\n&= ${s.slice(p[1] + 1).trim()}\n\\end{aligned}`;
+}
+// Comparación final contra 1 (razón demanda/capacidad) → "¡CUMPLE!" o "¡NO CUMPLE!"
+function marcaVerificacion(s) {
+  const m = s.match(/(\\le|\\leq|<|>|\\ge|\\geq)\s*(?:\\;)?\s*1(?:\{,\}0)?\s*$/);
+  if (!m) return s;
+  const ok = ["\\le", "\\leq", "<"].includes(m[1]);
+  return s + (ok ? "\\hspace{2em}\\textbf{¡CUMPLE!}" : "\\hspace{2em}\\textbf{¡NO CUMPLE!}");
+}
+// Ecuación del .tex: cada igualdad unida por \qquad o \quad va en su propia línea
+function texDisplay(s, ref) {
+  const piezas = separarQquad(s);
+  return piezas.map((p, i) => {
+    const tag = ref && i === piezas.length - 1 ? `\\tag*{(${ref})}` : "";
+    return `\\[\n${partirEcuacion(marcaVerificacion(p.trim()))}${tag}\n\\]`;
+  }).join("\n");
+}
+// Párrafos que empiezan en negrita ("\textbf{Fluencia:} ...") se vuelven viñetas; el texto y
+// las ecuaciones que les siguen quedan dentro de la viñeta hasta el próximo título.
+function memoTexP(m, s) {
+  if (/^\s*\\textbf\{/.test(s)) {
+    if (!m.lista) { m.tex.push("\\begin{itemize}"); m.lista = true; }
+    m.tex.push("\\item " + s.trim() + "\n");
+  } else m.tex.push(s + "\n");
+}
+function memoTexCerrar(m) {
+  if (m.lista) { m.tex.push("\\end{itemize}"); m.lista = false; }
+}
+// Preámbulo común: sin sangría, párrafos separados y viñetas cuadradas
+const TEX_ESTILO = String.raw`\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\renewcommand{\labelitemi}{\tiny$\blacksquare$}
+\renewcommand{\labelitemii}{\textbullet}`;
 
 // Texto LaTeX de un párrafo → HTML; las fórmulas $...$ quedan marcadas para KaTeX.
 function texParrafo(s) {
@@ -162,6 +273,7 @@ document.addEventListener("click", (ev) => {
   .kd .katex-display > .katex { text-align: left; }
   .eqs .katex { font-size: 1.08em; }
   .kref { color: var(--muted, #5f6b7a); font-size: 12px; white-space: nowrap; }
+  input.invalido, select.invalido { border-color: #c0392b !important; background: #fdecea !important; }
   .km.crudo { font-family: Consolas, monospace; font-size: 12px; white-space: pre-wrap; }
   .vereq, .todasEq { font: inherit; font-size: 12.5px; padding: 4px 10px; border: 1px solid var(--accent, #2f7d6d); color: var(--accent, #2f7d6d); background: #fff; border-radius: 4px; cursor: pointer; }
   .todasEq { margin: 10px 16px 0; }
