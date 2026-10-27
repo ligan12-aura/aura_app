@@ -31,6 +31,7 @@
     --head: #3d4450;
     --calc: #e8711c;
     --esp: #2f7d6d;
+    --vial: #6b4fa0;
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 "Segoe UI", system-ui, -apple-system, sans-serif; min-height: 100vh; }
@@ -54,6 +55,7 @@
   .mat.open .chev { transform: rotate(180deg); }
   .calculo { --c: var(--calc); }
   .espectros { --c: var(--esp); }
+  .vial { --c: var(--vial); }
 
   .opts { display: none; border-top: 1px solid var(--line); padding: 8px; }
   .mat.open .opts { display: block; }
@@ -69,7 +71,7 @@
 <body>
 <header>
   <h1>Ingeniería estructural</h1>
-  <span>Cálculo de elementos y espectros de diseño sísmico</span>
+  <span>Cálculo de elementos, espectros de diseño sísmico y diseño vial</span>
 </header>
 
 <main>
@@ -109,6 +111,25 @@
         <a href="espectros.html?norma=ds117"><span class="dot"></span><span><b>DS 117 (2011)</b><small>Espectro elástico Sae, Art. 14</small></span><span class="arr">→</span></a>
         <a href="espectros.html?norma=433-2026"><span class="dot"></span><span><b>NCh 433:2026</b><small>Diseño sísmico de edificios</small></span><span class="arr">→</span></a>
         <a href="espectros.html?norma=2369-2025"><span class="dot"></span><span><b>NCh 2369:2025</b><small>Estructuras e instalaciones industriales</small></span><span class="arr">→</span></a>
+      </div>
+    </section>
+
+    <section class="mat vial">
+      <button type="button" aria-expanded="false" aria-controls="optVial">
+        <svg class="ico" viewBox="0 0 64 64" aria-hidden="true">
+          <rect x="8" y="14" width="48" height="8" fill="#3f3f46"/>
+          <rect x="8" y="22" width="48" height="10" fill="#e3cf9f" stroke="#6b4fa0" stroke-width="1"/>
+          <rect x="8" y="32" width="48" height="12" fill="#efe2c3" stroke="#6b4fa0" stroke-width="1"/>
+          <rect x="8" y="44" width="48" height="8" fill="#c9a77f"/>
+          <line x1="14" y1="18" x2="22" y2="18" stroke="#fff" stroke-width="1.5"/>
+          <line x1="30" y1="18" x2="38" y2="18" stroke="#fff" stroke-width="1.5"/>
+          <line x1="46" y1="18" x2="54" y2="18" stroke="#fff" stroke-width="1.5"/>
+        </svg>
+        <span class="tt"><h2>Diseño vial</h2><p>Pavimentos · Manual de Carreteras Vol. 3</p></span>
+        <span class="chev">▾</span>
+      </button>
+      <div class="opts" id="optVial">
+        <a href="vial.html"><span class="dot"></span><span><b>Pavimento flexible</b><small>Paquete estructural · Capítulo 3.600 (AASHTO 93)</small></span><span class="arr">→</span></a>
       </div>
     </section>
 

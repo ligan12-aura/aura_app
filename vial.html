@@ -1,0 +1,962 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#3d4450">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="AURA">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<style>
+  /* PWA: sin zoom automático de iOS al enfocar campos y texto estable al rotar */
+  html { -webkit-text-size-adjust: 100%; }
+  @media (max-width: 900px) { input, select, textarea { font-size: 16px !important; } }
+  main > *, .row2 > *, .row3 > *, fieldset { min-width: 0; }
+  input, select { min-width: 0; max-width: 100%; }
+  .memo, .tablaWrap { overflow-x: auto; }
+  svg { max-width: 100%; }
+</style>
+<title>Pavimento Flexible</title>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --panel: #ffffff;
+    --ink: #1d2330;
+    --muted: #5f6b7a;
+    --line: #dde1e7;
+    --accent: #6b4fa0;
+    --head: #3d4450;
+    --ok: #1f8a4c;
+    --ok-bg: #e6f4ec;
+    --bad: #c62828;
+    --bad-bg: #fbe9e9;
+    --warn: #9a6400;
+    --warn-bg: #fff4dc;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 "Segoe UI", system-ui, -apple-system, sans-serif; }
+  header { background: var(--head); color: #fff; padding: 14px 24px; display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+  header h1 { margin: 0; font-size: 19px; font-weight: 600; }
+  header span { color: #c9ced6; font-size: 13px; }
+  header a.home { color: #fff; text-decoration: none; font-size: 13px; border: 1px solid #6b7380; border-radius: 4px; padding: 3px 9px; }
+  header a.home:hover { background: #4d5562; }
+  main { display: grid; grid-template-columns: 380px 1fr; gap: 20px; padding: 20px 24px; max-width: 1400px; margin: 0 auto; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; padding: 16px; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+  .panel > h2 { margin: 0; padding: 10px 16px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); border-bottom: 1px solid var(--line); }
+  .body { padding: 14px 16px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
+  select, input[type=number] { width: 100%; padding: 7px 9px; border: 1px solid var(--line); border-radius: 5px; font: inherit; background: #fff; color: var(--ink); }
+  input[type=number]:disabled { background: #f2f3f5; color: var(--muted); }
+  select:focus, input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .row4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .unit { color: var(--muted); font-size: 11px; }
+  fieldset { border: 1px solid var(--line); border-radius: 6px; margin: 12px 0 0; padding: 4px 12px 12px; }
+  legend { font-size: 12px; font-weight: 600; color: var(--head); padding: 0 4px; }
+  .chk { display: flex; gap: 8px; align-items: center; margin-top: 10px; font-size: 13px; color: var(--ink); }
+  .hidden { display: none !important; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  table.veh { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+  table.veh th { text-align: left; color: var(--muted); font-weight: 600; padding: 3px 2px; }
+  table.veh td { padding: 2px; }
+  table.veh input { padding: 5px 6px; }
+  .capa { border-left: 3px solid var(--line); padding-left: 8px; margin-top: 10px; }
+  .capa.asf { border-color: #4a4a4a; }
+  .capa.gran { border-color: #c9a96b; }
+
+  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; padding: 14px 16px; }
+  .card { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; }
+  .card .t { font-size: 12px; color: var(--muted); }
+  .card .v { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .card .s { font-size: 12px; color: var(--muted); }
+  .bar { height: 6px; background: #eceef1; border-radius: 3px; margin-top: 6px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; background: var(--ok); }
+  .bar.bad > i { background: var(--bad); }
+  .verdict { margin: 0 16px 14px; padding: 12px 14px; border-radius: 6px; font-weight: 600; font-size: 15px; }
+  .verdict.ok { background: var(--ok-bg); color: var(--ok); }
+  .verdict.bad { background: var(--bad-bg); color: var(--bad); }
+  .avisos { margin: 0 16px; }
+  .note { margin: 8px 0; padding: 8px 10px; border-radius: 5px; background: var(--warn-bg); color: var(--warn); font-size: 12.5px; }
+  .dibujo { margin: 0 16px 10px; border: 1px solid var(--line); border-radius: 6px; padding: 10px; }
+  .dibujo h3 { margin: 0 0 6px; font-size: 14px; color: var(--head); }
+  .dibujo svg { display: block; width: 100%; height: auto; }
+  .memo { padding: 4px 16px 16px; }
+  .memo h3 { font-size: 14px; margin: 18px 0 6px; padding-bottom: 4px; border-bottom: 2px solid var(--accent); color: var(--head); }
+  table.calc { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.calc td { padding: 4px 8px; border-bottom: 1px solid #eef0f3; vertical-align: top; }
+  table.calc td.v { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+  table.prop { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
+  table.prop th { text-align: left; font-size: 11.5px; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); padding: 5px 8px; }
+  table.prop td { padding: 5px 8px; border-bottom: 1px solid #eef0f3; font-variant-numeric: tabular-nums; }
+  table.prop td.num, table.prop th.num { text-align: right; }
+  .ref { display: inline-block; font-size: 10.5px; color: var(--accent); border: 1px solid #cbbfe0; border-radius: 3px; padding: 0 4px; margin-left: 6px; font-weight: 500; }
+  .tag { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 11.5px; font-weight: 600; }
+  .tag.ok { background: var(--ok-bg); color: var(--ok); }
+  .tag.bad { background: var(--bad-bg); color: var(--bad); }
+  .toolbar { display: flex; justify-content: flex-end; padding: 0 16px 10px; gap: 8px; }
+  .btn { padding: 7px 14px; border-radius: 5px; border: 1px solid var(--head); background: var(--head); color: #fff; font: inherit; font-size: 13px; cursor: pointer; }
+  .btn.sec { background: #fff; color: var(--head); }
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 10px 0 24px; }
+  @media print {
+    body { background: #fff; }
+    header a.home, #inputs, .toolbar, footer { display: none; }
+    main { display: block; padding: 0; }
+    .panel { border: 0; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <a class="home" href="index.html">← Inicio</a>
+  <h1>Diseño de pavimento flexible</h1>
+  <span>Manual de Carreteras Vol. 3 · Capítulo 3.600 (método AASHTO 93 adaptado) · NE en mm</span>
+</header>
+
+<main>
+  <section class="panel" id="inputs">
+    <h2>Datos de entrada</h2>
+    <div class="body">
+      <fieldset>
+        <legend>Solicitaciones — EE (3.603.202)</legend>
+        <label for="modoEE">Ejes equivalentes de 80 kN</label>
+        <select id="modoEE">
+          <option value="directo">Ingresar EE de diseño</option>
+          <option value="tmda">Calcular desde el TMDA</option>
+        </select>
+        <div id="gDirecto">
+          <label for="EEd">EE acumulados en la pista de diseño <span class="unit">[millones]</span></label>
+          <input id="EEd" type="number" step="0.1" min="0.01" value="10">
+        </div>
+        <div id="gTmda" class="hidden">
+          <div class="row3">
+            <div><label for="tmda">TMDA año base</label><input id="tmda" type="number" step="1" min="1" value="8000"></div>
+            <div><label for="mProy">m <span class="unit">[años a servicio]</span></label><input id="mProy" type="number" step="1" min="0" value="2"></div>
+            <div><label for="N">Vida N <span class="unit">[años]</span></label><input id="N" type="number" step="1" min="1" value="20"></div>
+          </div>
+          <div class="row2">
+            <div><label for="calzada">Calzada</label>
+              <select id="calzada">
+                <option value="bi">Bidireccional (FP = 1,0)</option>
+                <option value="u2">Unidireccional, 2 pistas por sentido</option>
+                <option value="u3">Unidireccional, 3 o más pistas</option>
+              </select></div>
+            <div><label for="FD">Factor direccional</label><input id="FD" type="number" step="0.05" min="0.1" max="1" value="0.5"></div>
+          </div>
+          <div class="row2" id="gFP">
+            <div><label for="iTot">Crecimiento TMDA total <span class="unit">[%]</span></label><input id="iTot" type="number" step="0.1" value="3"></div>
+            <div><label for="FPman">Factor de pista <span class="unit">(vacío = Tabla D)</span></label><input id="FPman" type="number" step="0.01" min="0.3" max="1" placeholder="auto"></div>
+          </div>
+          <label for="plaza">FEE por vehículo (Lámina 3.603.202.C)</label>
+          <select id="plaza"></select>
+          <table class="veh">
+            <tr><th>Vehículo</th><th>C<sub>j</sub> [%]</th><th>i<sub>j</sub> [%]</th><th>FEE<sub>j</sub></th></tr>
+            <tr><td>C2E</td><td><input id="c1" type="number" step="0.1" value="6"></td><td><input id="i1" type="number" step="0.1" value="3"></td><td><input id="f1" type="number" step="0.01" value="0.97"></td></tr>
+            <tr><td>C+2E</td><td><input id="c2" type="number" step="0.1" value="9"></td><td><input id="i2" type="number" step="0.1" value="3.5"></td><td><input id="f2" type="number" step="0.01" value="2.82"></td></tr>
+            <tr><td>BTB</td><td><input id="c3" type="number" step="0.1" value="3"></td><td><input id="i3" type="number" step="0.1" value="2"></td><td><input id="f3" type="number" step="0.01" value="1.74"></td></tr>
+          </table>
+          <div class="hint">C<sub>j</sub>: fracción del TMDA de cada tipo de vehículo pesado. Los livianos no se consideran.</div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Serviciabilidad y confiabilidad</legend>
+        <div class="row2">
+          <div><label for="pi">p<sub>i</sub> (Tabla 3.604.102.A)</label><input id="pi" type="number" step="0.1" value="4.2"></div>
+          <div><label for="pf">p<sub>f</sub></label><input id="pf" type="number" step="0.1" value="2.0"></div>
+        </div>
+        <div class="row2">
+          <div><label for="conf">Confiabilidad R</label>
+            <select id="conf">
+              <option value="auto">Máx. del rango Tabla 3.604.104.A</option>
+              <option>50</option><option>60</option><option>70</option><option>75</option><option>80</option><option>85</option><option>90</option><option>95</option>
+            </select></div>
+          <div><label for="cv">Coef. de variación suelos</label>
+            <select id="cv"><option value="0">15 %</option><option value="1" selected>20 %</option><option value="2">30 %</option><option value="3">40 %</option><option value="4">50 %</option></select></div>
+        </div>
+        <label for="S0man">S<sub>0</sub> <span class="unit">(vacío = Tabla 3.604.104.A)</span></label>
+        <input id="S0man" type="number" step="0.01" min="0.3" max="0.6" placeholder="auto">
+      </fieldset>
+
+      <fieldset>
+        <legend>Subrasante (3.604.105)</legend>
+        <div class="row2">
+          <div><label for="modoMR">Módulo resiliente</label>
+            <select id="modoMR"><option value="cbr">Desde CBR (TRRL)</option><option value="mr">Ingresar M<sub>R</sub></option></select></div>
+          <div id="gCBR"><label for="cbr">CBR subrasante <span class="unit">[%]</span></label><input id="cbr" type="number" step="0.5" min="1" max="79" value="8"></div>
+          <div id="gMR" class="hidden"><label for="MRin">M<sub>R</sub> <span class="unit">[MPa]</span></label><input id="MRin" type="number" step="1" min="10" value="60"></div>
+        </div>
+        <label class="chk"><input type="checkbox" id="mej" checked> Capa de mejoramiento sobre la subrasante</label>
+        <div class="row2" id="gMej">
+          <div><label for="hMej">Espesor <span class="unit">[mm]</span></label><input id="hMej" type="number" step="10" min="100" value="300"></div>
+          <div><label for="cbrMej">CBR mejoramiento <span class="unit">[%]</span></label><input id="cbrMej" type="number" step="1" min="3" max="79" value="20"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Clima — TMAPA (3.604.108(2))</legend>
+        <label for="modoT">Temperatura media anual ponderada del aire</label>
+        <select id="modoT"><option value="dir">Ingresar TMAPA</option><option value="tmma">Calcular desde las 12 TMMA</option></select>
+        <div id="gTdir"><label for="tmapa">TMAPA <span class="unit">[°C]</span></label><input id="tmapa" type="number" step="0.1" value="14"></div>
+        <div id="gTmma" class="hidden">
+          <div class="row4" id="tmmaBox"></div>
+          <div class="hint">Valores por defecto: ejemplo de la Tabla 3.604.108.B (TMAPA ≈ 19,5 °C).</div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Drenaje — m<sub>i</sub> (Tabla 3.604.106.B)</legend>
+        <div class="row2">
+          <div><label for="region">Región</label>
+            <select id="region"><option value="IV">IV</option><option value="V-VI">V a VI</option><option value="VII-IX" selected>VII a IX</option><option value="X">X</option><option value="XI-XII">XI y XII</option></select></div>
+          <div><label for="precip">Precipitación anual</label><select id="precip"></select></div>
+        </div>
+        <label for="condDren">Base y subrasante</label>
+        <select id="condDren">
+          <option value="0">Base permeable</option>
+          <option value="1" selected>Base ≤ 10 % finos, subrasante granular</option>
+          <option value="2">Base ≤ 10 % finos, subrasante fina</option>
+          <option value="3">Base &gt; 10 % finos, subrasante granular</option>
+          <option value="4">Base &gt; 10 % finos, subrasante fina</option>
+        </select>
+        <div class="row2">
+          <div><label for="critM">Valor adoptado del rango</label>
+            <select id="critM"><option value="min">Mínimo</option><option value="med">Promedio</option><option value="max">Máximo</option><option value="man">Manual</option></select></div>
+          <div class="row2">
+            <div><label for="m2">m<sub>2</sub> base</label><input id="m2" type="number" step="0.05" min="0.4" max="1.4" value="1"></div>
+            <div><label for="m3">m<sub>3</sub> subbase</label><input id="m3" type="number" step="0.05" min="0.4" max="1.4" value="1"></div>
+          </div>
+        </div>
+        <div class="hint" id="rangoM"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Estructuración de capas (3.604.107 y 3.604.108)</legend>
+        <div class="capa asf">
+          <label for="rod">Capa de rodadura</label>
+          <select id="rod">
+            <option value="0.43">Concreto asfáltico de superficie (9.000 N) — a = 0,43</option>
+            <option value="0.43s">Mezcla SMA — a = 0,43</option>
+            <option value="0.40">Microaglomerado discontinuo en caliente — a = 0,40</option>
+            <option value="0.32">Mezcla drenante — a = 0,32</option>
+          </select>
+          <label for="hRod">Espesor <span class="unit">[mm]</span></label><input id="hRod" type="number" step="5" min="20" value="50">
+        </div>
+        <div class="capa asf">
+          <label class="chk"><input type="checkbox" id="usaInt" checked> Capa intermedia de concreto asfáltico (8.000 N) — a = 0,41</label>
+          <label for="hInt">Espesor <span class="unit">[mm]</span></label><input id="hInt" type="number" step="5" min="40" value="50">
+        </div>
+        <div class="capa asf">
+          <label class="chk"><input type="checkbox" id="usaBA"> Base asfáltica</label>
+          <div id="gBA">
+            <select id="tipoBA">
+              <option value="0.33">Graduación gruesa (6.000 N) — a = 0,33</option>
+              <option value="0.28">Graduación abierta — a = 0,28</option>
+              <option value="0.30">Grava-emulsión — a = 0,30</option>
+            </select>
+            <label for="hBA">Espesor <span class="unit">[mm]</span></label><input id="hBA" type="number" step="5" min="40" value="60">
+          </div>
+        </div>
+        <div class="hint">La capa asfáltica más profunda se dimensiona para cumplir el NE<sub>A</sub>; las superiores usan el espesor ingresado.</div>
+        <div class="capa gran">
+          <div class="row2">
+            <div><label for="cbrBase">CBR base granular <span class="unit">[%]</span></label><input id="cbrBase" type="number" step="5" min="20" max="100" value="80"></div>
+            <div><label for="hBase">Espesor base <span class="unit">[mm]</span></label><input id="hBase" type="number" step="10" min="150" value="150"></div>
+          </div>
+        </div>
+        <div class="capa gran">
+          <label class="chk"><input type="checkbox" id="usaSB" checked> Subbase granular</label>
+          <div id="gSB"><label for="cbrSB">CBR subbase <span class="unit">[%]</span></label><input id="cbrSB" type="number" step="5" min="10" max="100" value="40"></div>
+        </div>
+        <div class="hint">La capa granular más profunda se dimensiona para cumplir NE<sub>T</sub>. Redondeo: capas asfálticas a 5 mm y granulares a 10 mm (Tabla 3.604.108.A: mínimos 50 y 150 mm).</div>
+      </fieldset>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 id="resTitle">Resultados</h2>
+    <div class="summary" id="summary"></div>
+    <div id="verdict"></div>
+    <div class="avisos" id="avisos"></div>
+    <div class="dibujo"><h3>Paquete estructural</h3><div id="svgPaq"></div></div>
+    <div class="toolbar">
+      <button class="btn sec" type="button" onclick="window.print()">Imprimir</button>
+      <button class="btn" type="button" id="btnTex">Descargar memoria (.tex)</button>
+    </div>
+    <div class="memo" id="memo"></div>
+  </section>
+</main>
+<footer>Herramienta de apoyo académico basada en el Manual de Carreteras, Volumen N° 3 (Edición 2025), Capítulo 3.600. Verifique siempre los resultados.</footer>
+
+<script src="memo.js"></script>
+<script>
+"use strict";
+// ---------------------------------------------------------------------------
+// Datos normativos — Manual de Carreteras Vol. 3, Capítulo 3.600
+// ---------------------------------------------------------------------------
+// Tabla 3.603.204.A — Z_R según nivel de confianza
+const ZR = { 50: 0, 60: -0.253, 70: -0.524, 75: -0.674, 80: -0.841, 85: -1.037, 90: -1.282, 95: -1.645 };
+// Tabla 3.604.104.A — por rango de EE (millones): [EE máx, R mín, R máx, S0 para CV 15/20/30/40/50 %]
+const T104 = [
+  [5, 60, 60, [0.45, 0.46, 0.47, 0.49, 0.50]],
+  [15, 60, 70, [0.45, 0.46, 0.47, 0.49, 0.50]],
+  [30, 60, 75, [0.45, 0.46, 0.47, 0.49, 0.50]],
+  [50, 70, 80, [0.44, 0.45, 0.46, 0.48, 0.49]],
+  [70, 70, 85, [0.42, 0.43, 0.44, 0.47, 0.48]],
+  [Infinity, 70, 90, [0.40, 0.41, 0.42, 0.45, 0.46]],
+];
+const CV_TXT = ["15 %", "20 %", "30 %", "40 %", "50 %"];
+// Tabla 3.603.202.D — factor de pista, calzadas unidireccionales: [TMDA por dirección, 2 pistas, 3 o más]
+const T202D = [[2000, 0.94, 0.82], [4000, 0.88, 0.76], [6000, 0.85, 0.72], [8000, 0.82, 0.70], [10000, 0.81, 0.68],
+  [15000, 0.77, 0.65], [20000, 0.75, 0.63], [25000, 0.73, 0.61], [30000, 0.72, 0.59], [35000, 0.70, 0.58],
+  [40000, 0.69, 0.57], [50000, 0.67, 0.55], [60000, 0.66, 0.53], [70000, 0.66, 0.52], [80000, 0.66, 0.51], [100000, 0.66, 0.49]];
+// Lámina 3.603.202.C — FEE pavimentos flexibles (2024): plaza, movimiento, [C2E, C+2E, BTB] para pf = 2,0 y pf = 2,5
+const PLAZAS = [
+  ["Chungará (Ruta 11 CH)", "12", [2.42, 2.82, 0.97], [2.23, 2.71, 1.02]], ["Chungará (Ruta 11 CH)", "34", [0.89, 2.73, 1.59], [0.85, 2.66, 1.56]],
+  ["Chacalluta (Ruta 5 Norte)", "12", [0.14, 1.71, 2.45], [0.14, 1.65, 2.28]], ["Chacalluta (Ruta 5 Norte)", "34", [0.09, 1.75, 1.47], [0.09, 1.73, 1.41]],
+  ["Huara (Ruta 5 Norte)", "12", [1.36, 2.58, 1.61], [1.26, 2.49, 1.60]], ["Huara (Ruta 5 Norte)", "34", [0.71, 1.71, 1.46], [0.70, 1.69, 1.47]],
+  ["La Negra (Ruta 5 Norte)", "12", [0.20, 1.82, 1.39], [0.17, 1.76, 1.38]], ["La Negra (Ruta 5 Norte)", "34", [0.23, 1.27, 1.30], [0.23, 1.27, 1.30]],
+  ["Lampa (Ruta 5 Norte)", "12", [0.56, 2.83, 1.47], [0.52, 2.62, 1.41]], ["Lampa (Ruta 5 Norte)", "34", [0.97, 2.82, 1.74], [0.84, 2.55, 1.61]],
+  ["Curacaví (Ruta 68)", "12", [0.29, 1.30, 1.53], [0.29, 1.30, 1.52]], ["Curacaví (Ruta 68)", "34", [0.44, 1.33, 1.32], [0.43, 1.34, 1.32]],
+  ["El Monte (Ruta 78)", "12", [0.61, 1.35, 2.52], [0.59, 1.34, 2.35]], ["El Monte (Ruta 78)", "34", [0.54, 1.83, 1.98], [0.52, 1.79, 1.88]],
+  ["San Francisco (Ruta 5 Sur)", "12", [0.66, 2.20, 1.55], [0.63, 2.11, 1.53]], ["San Francisco (Ruta 5 Sur)", "34", [0.55, 2.69, 0.87], [0.52, 2.54, 0.84]],
+  ["Los Ángeles (Ruta 5 Sur)", "12", [1.09, 3.70, 1.89], [1.01, 3.38, 1.84]], ["Los Ángeles (Ruta 5 Sur)", "34", [0.91, 3.79, 2.34], [0.80, 3.48, 2.26]],
+  ["Curali (Ruta 156)", "34", [0.38, 3.72, 2.90], [0.37, 3.57, 2.67]], ["Nicodahue (Ruta 156)", "12", [0.36, 2.01, 2.03], [0.36, 1.99, 1.92]],
+  ["Tijeral (Ruta 180)", "34", [0.43, 2.35, 1.79], [0.43, 2.27, 1.72]],
+  ["Kon Aiken (Ruta 9)", "12", [0.75, 1.30, 1.69], [0.74, 1.31, 1.61]], ["Kon Aiken (Ruta 9)", "34", [1.57, 1.26, 1.75], [1.49, 1.27, 1.69]],
+  ["Monte Aymond (Ruta 255 CH)", "12", [1.99, 3.18, 0.85], [1.75, 3.01, 0.89]],
+];
+// Tabla 3.604.106.B — coeficientes de drenaje [máx, mín] por región y precipitación;
+// columnas: base permeable | base ≤10 % finos (subr. granular, subr. fina) | base >10 % finos (subr. granular, subr. fina)
+const DREN = {
+  "IV": { lim: 100, le: [[1.40, 1.35], [1.35, 1.25], [1.35, 1.25], [1.25, 1.15], [1.05, 1.05]], gt: [[1.40, 1.35], [1.35, 1.25], [1.35, 1.25], [1.15, 1.00], [1.05, 0.80]] },
+  "V-VI": { lim: 150, le: [[1.40, 1.35], [1.35, 1.25], [1.35, 1.25], [1.15, 1.00], [1.00, 1.00]], gt: [[1.40, 1.35], [1.35, 1.25], [1.25, 1.15], [1.00, 1.00], [1.00, 0.80]] },
+  "VII-IX": { lim: 350, le: [[1.40, 1.35], [1.35, 1.25], [1.35, 1.25], [1.00, 1.00], [0.80, 0.80]], gt: [[1.40, 1.35], [1.25, 1.15], [1.25, 1.15], [1.00, 0.80], [0.80, 0.80]] },
+  "X": { lim: 1500, le: [[1.40, 1.35], [1.25, 1.15], [1.15, 1.15], [1.00, 0.80], [0.80, 0.60]], gt: [[1.35, 1.30], [1.15, 1.00], [1.15, 1.00], [0.80, 0.80], [0.60, 0.60]] },
+  "XI-XII": { lim: 500, le: [[1.40, 1.35], [1.35, 1.25], [1.25, 1.15], [1.00, 1.00], [1.00, 0.80]], gt: [[1.40, 1.35], [1.25, 1.15], [1.15, 1.15], [0.80, 0.80], [0.80, 0.80]] },
+};
+const DREN_TXT = ["base permeable", "base con ≤ 10 % de finos y subrasante granular", "base con ≤ 10 % de finos y subrasante fina",
+  "base con > 10 % de finos y subrasante granular", "base con > 10 % de finos y subrasante fina"];
+// Láminas 3.604.108.B1, B2 y B3 — NE mínimo de capas asfálticas (mm), digitalizadas.
+// Para cada TMAPA: EE (millones, ya afectados por FR) y NE de las curvas de M_R = 36, 50, 60, 80, 100, 120, 140 y 200 MPa.
+const MR_CURVAS = [36, 50, 60, 80, 100, 120, 140, 200];
+const NEA_GRAF = {
+  6: { ee: [1, 1.5, 2, 3, 4, 5, 7, 10, 12, 15, 30, 40, 50, 60, 70, 85, 100], ne: [
+    [36.7, 34.2, 33.1, 30.4, 28.3, 26.8, 24.5, 22.6], [39.2, 36.7, 35.5, 32.9, 30.8, 29.1, 26.8, 23.5], [41.0, 38.5, 37.3, 34.6, 32.4, 30.8, 28.5, 24.2],
+    [43.6, 41.0, 39.8, 37.1, 34.9, 33.2, 30.9, 25.1], [45.5, 42.9, 41.6, 39.0, 36.7, 34.9, 32.7, 26.0], [47.0, 44.3, 43.0, 40.4, 38.2, 36.3, 34.1, 27.0],
+    [49.4, 46.7, 45.4, 42.8, 40.6, 38.7, 36.5, 30.0], [52.2, 49.5, 48.2, 45.7, 43.5, 41.4, 39.3, 35.4], [53.7, 51.1, 49.6, 47.3, 45.0, 42.9, 40.9, 37.7],
+    [55.6, 53.0, 51.6, 49.2, 46.9, 44.8, 42.8, 40.3], [61.9, 59.4, 57.9, 55.8, 53.6, 51.2, 49.6, 45.9], [64.7, 62.3, 60.7, 58.7, 56.6, 54.1, 52.7, 48.4],
+    [66.9, 64.5, 62.9, 61.1, 58.9, 56.4, 55.0, 50.3], [68.7, 66.3, 64.7, 62.9, 60.8, 58.3, 57.0, 51.9], [70.4, 68.1, 66.4, 64.7, 62.7, 60.1, 58.9, 53.6],
+    [72.5, 70.2, 68.5, 66.9, 64.9, 62.3, 61.3, 55.3], [74.2, 72.0, 70.3, 68.8, 66.8, 64.1, 63.3, 56.9]] },
+  14: { ee: [1, 1.5, 2, 3, 4, 5, 7, 10.2, 12, 30, 40, 50, 60, 70, 85, 100], ne: [
+    [45.5, 41.2, 39.0, 35.8, 31.8, 26.7, 24.9, 22.5], [48.5, 44.3, 42.0, 38.7, 34.7, 29.7, 27.7, 22.3], [50.8, 46.5, 44.2, 40.8, 36.8, 31.9, 29.9, 22.0],
+    [53.9, 49.6, 47.3, 43.6, 39.8, 34.8, 32.7, 21.7], [56.2, 51.9, 49.5, 45.8, 41.9, 37.0, 34.8, 21.9], [58.0, 53.7, 51.3, 47.5, 43.6, 38.9, 36.6, 22.6],
+    [61.0, 56.7, 54.2, 50.3, 46.5, 41.9, 39.5, 26.1], [64.6, 60.4, 58.0, 53.9, 50.3, 45.9, 43.4, 34.1], [66.2, 62.1, 59.5, 55.5, 52.0, 47.6, 45.1, 36.6],
+    [76.3, 72.5, 69.9, 65.4, 62.6, 59.5, 56.6, 47.6], [79.7, 76.0, 73.4, 68.8, 66.3, 63.6, 60.7, 51.1], [82.3, 78.8, 76.1, 71.4, 69.1, 66.8, 63.8, 54.0],
+    [84.5, 81.1, 78.4, 73.6, 71.6, 69.5, 66.5, 56.3], [86.6, 83.1, 80.5, 75.6, 73.8, 72.0, 68.9, 58.6], [89.1, 85.9, 83.2, 78.3, 76.7, 75.4, 72.3, 61.6],
+    [91.2, 88.0, 85.5, 80.5, 79.1, 78.2, 75.0, 64.0]] },
+  19: { ee: [1, 1.2, 1.5, 2, 3, 4, 5, 7, 10, 12, 15, 20.17, 31.8, 40, 50, 60, 70, 85, 100], ne: [
+    [52.6, 47.1, 43.0, 35.9, 31.1, 28.4, 28.4, 21.4], [54.1, 48.6, 44.4, 37.5, 32.5, 29.0, 28.3, 21.5], [56.2, 50.5, 46.4, 39.3, 34.3, 29.6, 28.0, 21.5],
+    [58.7, 53.0, 48.8, 41.8, 36.6, 30.2, 27.6, 21.4], [62.3, 56.5, 52.3, 45.2, 39.9, 31.4, 27.2, 21.4], [65.1, 59.1, 54.9, 47.8, 42.4, 32.7, 27.4, 21.4],
+    [67.1, 61.2, 56.9, 49.9, 44.3, 34.2, 28.4, 21.4], [70.6, 64.5, 60.2, 53.2, 47.6, 39.8, 33.8, 21.4], [74.7, 68.5, 64.3, 57.4, 51.7, 49.6, 44.7, 21.4],
+    [76.7, 70.5, 66.4, 59.6, 53.7, 51.8, 47.1, 21.4], [79.5, 73.2, 69.1, 62.3, 56.4, 53.4, 48.4, 21.4], [83.1, 76.8, 72.7, 66.2, 60.3, 56.4, 51.5, 23.9],
+    [89.3, 82.9, 79.0, 73.5, 67.1, 61.7, 56.7, 34.0], [92.4, 86.1, 82.3, 76.5, 70.5, 64.3, 59.4, 40.5], [95.6, 89.2, 85.4, 79.8, 73.9, 67.0, 62.1, 46.6],
+    [98.1, 91.8, 88.1, 82.7, 76.7, 69.2, 64.3, 50.9], [100.4, 94.1, 90.4, 85.2, 79.3, 71.1, 66.3, 53.3], [103.5, 97.2, 93.7, 88.7, 82.8, 73.8, 69.0, 54.3],
+    [106.0, 99.6, 96.3, 91.6, 85.7, 76.0, 71.2, 54.7]] },
+};
+// Tabla 3.604.108.B — ejemplo de TMMA (°C), enero a diciembre
+const TMMA_EJ = [28, 26, 22, 19, 16, 8, 8, 6, 12, 12, 19, 22];
+const MESES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
+// ---------------------------------------------------------------------------
+// Utilidades
+// ---------------------------------------------------------------------------
+const $ = (id) => document.getElementById(id);
+const num = (id) => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : 0; };
+const vacio = (id) => $(id).value.trim() === "";
+const fmt = (x, d = 2) => Number.isFinite(x) ? x.toLocaleString("es-CL", { minimumFractionDigits: d, maximumFractionDigits: d }) : "—";
+const L = String.raw;
+const tn = (x, d = 2) => Number.isFinite(x) ? fmt(x, d).replace(/,/g, "{,}").replace(/\./g, "\\,") : "\\infty";
+const GE = L`\ge`;
+const tag = (ok, t) => `<span class="tag ${ok ? "ok" : "bad"}">${t}</span>`;
+const okTxt = (ok) => tag(ok, ok ? "CUMPLE" : "NO CUMPLE");
+const arriba = (x, paso) => Math.ceil(x / paso - 1e-9) * paso;
+const log10 = Math.log10;
+
+class Memo {
+  constructor() { this.out = []; this.tex = []; this.n = 0; }
+  h(t) { this.n++; this.out.push(`<h3>${this.n}. ${t}</h3>`); this.tex.push(`\\section{${t.replace(/—/g, "---").replace(/<sub>(.*?)<\/sub>/g, "$_{$1}$")}}`); }
+  row(k, v, ref) { this.out.push({ k, v, ref }); }
+  note(t, tt) { this.out.push(`<div class="note">${t}</div>`); this.tex.push(`\\textit{${tt || t}}\n`); }
+  eq(s, ref) { this.tex.push(`\\[\n${s}${ref ? `\\tag*{(${ref})}` : ""}\n\\]`); this.out.push({ tex: s + (ref ? `\\tag*{(${ref})}` : ""), eq: true }); }
+  p(s) { this.tex.push(s + "\n"); this.out.push({ tex: s }); }
+  html() { return memoHTML(this.out); }
+}
+
+// Interpolación lineal en una tabla [x, y] ordenada (con extrapolación acotada a los extremos)
+function interp(xs, ys, x) {
+  if (x <= xs[0]) return ys[0];
+  if (x >= xs[xs.length - 1]) return ys[ys.length - 1];
+  let i = 1; while (xs[i] < x) i++;
+  return ys[i - 1] + (ys[i] - ys[i - 1]) * (x - xs[i - 1]) / (xs[i] - xs[i - 1]);
+}
+
+// ---------------------------------------------------------------------------
+// Ecuación de diseño (ec. 3.604.101.1 y .2)
+// log EE = 9,36 log(NE + 25,4) − 16,40 + Z_R·S0 + 2,32 log M_R + (1/β) log[(pi − pf)/(pi − 1,5)]
+// ---------------------------------------------------------------------------
+const beta = (NE) => 0.40 + (97.81 / (NE + 25.4)) ** 5.19;
+function logEEadm(NE, d) {
+  return 9.36 * log10(NE + 25.4) - 16.40 + d.ZR * d.S0 + 2.32 * log10(d.MR) + log10((d.pi - d.pf) / (d.pi - 1.5)) / beta(NE);
+}
+function resolverNE(EE, d) {                 // EE en ejes (no millones); bisección
+  let a = 1, b = 1500;
+  const obj = log10(EE);
+  for (let k = 0; k < 200; k++) {
+    const c = (a + b) / 2;
+    if (logEEadm(c, d) < obj) a = c; else b = c;
+  }
+  return (a + b) / 2;
+}
+
+// NE mínimo de capas asfálticas desde las láminas (interpolación en log EE, en M_R y en TMAPA)
+function neaGrafico(T, EEm, MR) {
+  const g = NEA_GRAF[T];
+  const lx = g.ee.map(log10), x = log10(EEm);
+  const porCurva = MR_CURVAS.map((_, j) => interp(lx, g.ne.map(f => f[j]), x));
+  return interp(MR_CURVAS, porCurva, MR);
+}
+function neaTMAPA(T, EEm, MR) {
+  const Ts = [6, 14, 19];
+  const Tc = Math.min(19, Math.max(6, T));
+  const lo = Tc <= 14 ? 6 : 14, hi = Tc <= 14 ? 14 : 19;
+  const a = neaGrafico(lo, EEm, MR), b = neaGrafico(hi, EEm, MR);
+  return { lo, hi, a, b, Tc, NEA: a + (b - a) * (Tc - lo) / (hi - lo), Ts };
+}
+
+// ---------------------------------------------------------------------------
+// Lectura de datos
+// ---------------------------------------------------------------------------
+function leer() {
+  const rodV = $("rod").value;
+  return {
+    modoEE: $("modoEE").value, EEd: num("EEd"),
+    tmda: num("tmda"), m: num("mProy"), N: num("N"), calzada: $("calzada").value, FD: num("FD"), iTot: num("iTot") / 100,
+    FPman: vacio("FPman") ? null : num("FPman"), plaza: $("plaza").value,
+    veh: [1, 2, 3].map(k => ({ C: num("c" + k) / 100, i: num("i" + k) / 100, FEE: num("f" + k) })),
+    pi: num("pi"), pf: num("pf"), conf: $("conf").value, cv: +$("cv").value, S0man: vacio("S0man") ? null : num("S0man"),
+    modoMR: $("modoMR").value, cbr: num("cbr"), MRin: num("MRin"),
+    mej: $("mej").checked, hMej: num("hMej"), cbrMej: num("cbrMej"),
+    modoT: $("modoT").value, tmapa: num("tmapa"), tmma: MESES.map((_, k) => num("t" + k)),
+    region: $("region").value, precip: $("precip").value, condDren: +$("condDren").value, critM: $("critM").value, m2in: num("m2"), m3in: num("m3"),
+    rodNom: $("rod").selectedOptions[0].text.split(" — ")[0].split(" (")[0], aRod: parseFloat(rodV), especial: rodV !== "0.43",
+    hRod: num("hRod"), usaInt: $("usaInt").checked, hInt: num("hInt"),
+    usaBA: $("usaBA").checked, aBA: parseFloat($("tipoBA").value), baNom: $("tipoBA").selectedOptions[0].text.split(" — ")[0].split(" (")[0], hBA: num("hBA"),
+    cbrBase: num("cbrBase"), hBase: num("hBase"), usaSB: $("usaSB").checked, cbrSB: num("cbrSB"),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Cálculo y memoria
+// ---------------------------------------------------------------------------
+function calcular(d, m) {
+  const r = { avisos: [] };
+
+  // 1. Solicitaciones
+  m.h("Solicitaciones — ejes equivalentes (3.603.202)");
+  let EE;
+  if (d.modoEE === "directo") {
+    EE = d.EEd * 1e6;
+    m.row("Ejes equivalentes de 80 kN en la pista de diseño (ingresados): EE", `${fmt(d.EEd, 3)} millones`);
+    m.p(L`Se adoptan los ejes equivalentes acumulados durante la vida de diseño indicados por el proyectista: $EE = ${tn(d.EEd, 3)}\times 10^6$.`);
+  } else {
+    // Factor de pista (Tabla 3.603.202.D) con el TMDA por dirección a la mitad de la vida de diseño
+    const tmdaMed = d.tmda * (1 + d.iTot) ** (d.m + d.N / 2) * d.FD;
+    let FP = 1, fpTxt = "calzada bidireccional";
+    if (d.calzada !== "bi") {
+      FP = interp(T202D.map(f => f[0]), T202D.map(f => f[d.calzada === "u2" ? 1 : 2]), tmdaMed);
+      fpTxt = `Tabla 3.603.202.D, ${d.calzada === "u2" ? "2 pistas" : "3 o más pistas"} por dirección, TMDA por dirección ≈ ${fmt(tmdaMed, 0)}`;
+    }
+    if (d.FPman !== null) { FP = d.FPman; fpTxt = "valor ingresado"; }
+    const nombres = ["C2E", "C+2E", "BTB"];
+    let tot = 0;
+    const det = d.veh.map((v, k) => {
+      const t = d.tmda * v.C * (1 + v.i) ** d.m * d.FD * FP;
+      const fac = v.i > 0 ? ((1 + v.i) ** d.N - 1) / v.i : d.N;
+      const T = fac * 365 * t, ee = T * v.FEE;
+      tot += ee;
+      return { n: nombres[k], ...v, t, fac, T, ee };
+    });
+    EE = tot;
+    m.row("Factor direccional ; factor de pista: FD ; FP", `${fmt(d.FD, 2)} ; ${fmt(FP, 3)}`, "3.603.202(5)(6)");
+    det.forEach(x => m.row(`Vehículo ${x.n}: vehículos en el año de puesta en servicio ; en la vida de diseño ; EE`, `${fmt(x.t, 1)} ; ${fmt(x.T / 1e6, 3)}·10⁶ ; ${fmt(x.ee / 1e6, 3)}·10⁶`));
+    m.row("<b>Ejes equivalentes acumulados: EE</b>", `<b>${fmt(EE / 1e6, 3)} millones</b>`);
+    m.p(L`Factor de pista: ${fpTxt.replace(/≈/g, L`$\approx$`)}. Para cada tipo de vehículo $j$ se calcula:`);
+    m.eq(L`t_j = TMDA\cdot C_j\cdot (1 + i_j)^m\cdot FD\cdot FP \qquad T_j = \frac{(1 + i_j)^N - 1}{i_j}\cdot 365\cdot t_j \qquad EE = \sum T_j\cdot FEE_j`, "3.603.202(1)");
+    det.forEach(x => {
+      m.p(L`\textbf{${x.n}}:`);
+      m.eq(L`t_j = ${tn(d.tmda, 0)}\cdot ${tn(x.C, 3)}\cdot ${tn(1 + x.i, 3)}^{${tn(d.m, 0)}}\cdot ${tn(d.FD, 2)}\cdot ${tn(FP, 3)} = ${tn(x.t, 1)}`);
+      m.eq(L`T_j = ${tn(x.fac, 3)}\cdot 365\cdot ${tn(x.t, 1)} = ${tn(x.T, 0)} \qquad EE_j = ${tn(x.T, 0)}\cdot ${tn(x.FEE, 2)} = ${tn(x.ee, 0)}`);
+    });
+    m.eq(L`EE = ${det.map(x => tn(x.ee, 0)).join(" + ")} = ${tn(EE, 0)} = ${tn(EE / 1e6, 3)}\times 10^6`);
+    Object.assign(r, { FP, det });
+  }
+  const EEm = EE / 1e6;
+  r.EE = EE;
+
+  // 2. Serviciabilidad y confiabilidad
+  m.h("Serviciabilidad y confiabilidad (3.604.102 y 3.604.104)");
+  const fila = T104.find(f => EEm <= f[0]);
+  const R = d.conf === "auto" ? fila[2] : +d.conf;
+  const ZRv = ZR[R];
+  const S0 = d.S0man ?? fila[3][d.cv];
+  const FR = 10 ** (-ZRv * S0);
+  const dPSI = d.pi - d.pf;
+  m.row("Índices de serviciabilidad inicial ; final ; pérdida: p<sub>i</sub> ; p<sub>f</sub> ; ΔPSI", `${fmt(d.pi, 1)} ; ${fmt(d.pf, 1)} ; ${fmt(dPSI, 1)}`, "Tabla 3.604.102.A");
+  m.row("Nivel de confianza ; coeficiente estadístico: R ; Z<sub>R</sub>", `${R} % ; ${fmt(ZRv, 3)}`, "Tabla 3.603.204.A");
+  m.row("Desviación estándar del error combinado: S<sub>0</sub>", `${fmt(S0, 2)}${d.S0man === null ? ` (CV = ${CV_TXT[d.cv]})` : " (ingresado)"}`, "Tabla 3.604.104.A");
+  m.row("Factor de confiabilidad: F<sub>R</sub>", fmt(FR, 3), "3.603.204(1)");
+  m.p(L`Según la Tabla 3.604.104.A, para $EE = ${tn(EEm, 2)}$ millones se recomienda una confiabilidad de ${fila[1] === fila[2] ? `${fila[1]}\\,\\%` : `${fila[1]} a ${fila[2]}\\,\\%`}; se adopta $R = ${R}$\,\% ($Z_R = ${tn(ZRv, 3)}$) y $S_0 = ${tn(S0, 2)}$.`);
+  m.eq(L`F_R = 10^{-Z_R\,S_0} = 10^{-(${tn(ZRv, 3)})(${tn(S0, 2)})} = ${tn(FR, 3)}`, "3.603.204(1).1");
+  if (R < fila[1] || R > fila[2]) r.avisos.push(`La confiabilidad adoptada (${R} %) está fuera del rango recomendado por la Tabla 3.604.104.A para ${fmt(EEm, 1)} millones de EE (${fila[1]}–${fila[2]} %).`);
+  if (dPSI <= 0 || d.pi <= 1.5) r.avisos.push("Revise los índices de serviciabilidad: se requiere p<sub>i</sub> > p<sub>f</sub> y p<sub>i</sub> > 1,5.");
+
+  // 3. Subrasante
+  m.h("Módulo resiliente de la subrasante (3.604.105)");
+  const mrCBR = (c) => c < 12 ? 17.6 * c ** 0.64 : 22.1 * c ** 0.55;
+  const eqCBR = (c, nom) => c < 12 ? L`${nom} = 17{,}6\,(CBR)^{0{,}64} = 17{,}6\cdot ${tn(c, 1)}^{0{,}64} = ${tn(mrCBR(c), 1)}\ \mathrm{MPa}` : L`${nom} = 22{,}1\,(CBR)^{0{,}55} = 22{,}1\cdot ${tn(c, 1)}^{0{,}55} = ${tn(mrCBR(c), 1)}\ \mathrm{MPa}`;
+  const MR0 = d.modoMR === "cbr" ? mrCBR(d.cbr) : d.MRin;
+  m.row("Módulo resiliente de la subrasante: M<sub>R0</sub>", `${fmt(MR0, 1)} MPa${d.modoMR === "cbr" ? ` (CBR = ${fmt(d.cbr, 1)} %)` : ""}`, "3.604.105(1)");
+  if (d.modoMR === "cbr") m.eq(eqCBR(d.cbr, "M_{R0}"), d.cbr < 12 ? "3.604.105(1).1" : "3.604.105(1).2");
+  else m.p(L`Módulo resiliente de la subrasante ingresado: $M_{R0} = ${tn(MR0, 1)}$ MPa.`);
+  let MR = MR0;
+  if (d.mej) {
+    const MR1 = mrCBR(d.cbrMej), h = d.hMej / 1000;
+    const k = MR0 / MR1;
+    const invF = 0.125 / Math.sqrt(0.0156 + h ** 2 * (MR1 / MR0) ** (2 / 3)) * (1 - k) + k;
+    const F = 1 / invF;
+    MR = F * MR0;
+    Object.assign(r, { MR1, F });
+    m.row("Módulo de la capa de mejoramiento: M<sub>R1</sub>", `${fmt(MR1, 1)} MPa (CBR = ${fmt(d.cbrMej, 0)} %, h = ${fmt(d.hMej, 0)} mm)`, "3.604.105(2)");
+    m.row("Factor del sistema bicapa: F", fmt(F, 3), "3.604.105(2).3");
+    m.eq(eqCBR(d.cbrMej, "M_{R1}"));
+    m.eq(L`\frac{1}{F} = \frac{0{,}125}{\left[0{,}0156 + h^2\left(\frac{M_{R1}}{M_{R0}}\right)^{2/3}\right]^{1/2}}\left(1 - \frac{M_{R0}}{M_{R1}}\right) + \frac{M_{R0}}{M_{R1}}`, "3.604.105(2).3");
+    m.eq(L`\frac{1}{F} = \frac{0{,}125}{\left[0{,}0156 + ${tn(h, 3)}^2\left(\frac{${tn(MR1, 1)}}{${tn(MR0, 1)}}\right)^{2/3}\right]^{1/2}}\left(1 - ${tn(k, 3)}\right) + ${tn(k, 3)} = ${tn(invF, 4)}`);
+    m.eq(L`M_{R} = F\cdot M_{R0} = ${tn(F, 3)}\cdot ${tn(MR0, 1)} = ${tn(MR, 1)}\ \mathrm{MPa}`, "3.604.105(2).2");
+    if (d.hMej < 300) r.avisos.push("El Manual recomienda una capa de mejoramiento de espesor no inferior a 300 mm (3.604.105(2)).");
+    if (d.cbrMej < 15) r.avisos.push("El Manual recomienda que la capa de mejoramiento tenga CBR ≥ 15 % (3.604.105(2)).");
+  } else if (d.modoMR === "cbr" ? d.cbr <= 10 : MR0 <= 77) {
+    r.avisos.push("Subrasante con CBR ≤ 10 % (M<sub>R</sub> ≤ 77 MPa): el Manual recomienda una capa de mejoramiento de al menos 300 mm con CBR ≥ 15 % o un geotextil (3.604.105(2)).");
+  }
+  if (d.modoMR === "cbr" && d.cbr < 3) r.avisos.push("CBR < 3 %: se recomienda no dejar suelos de tan baja capacidad de soporte hasta 1,5 m bajo la rasante sin un estudio o tratamiento especial (3.604.105(4)).");
+  m.row("<b>Módulo resiliente de diseño: M<sub>R</sub></b>", `<b>${fmt(MR, 1)} MPa</b>`);
+  r.MR = MR;
+
+  // 4. Número estructural total
+  m.h("Número estructural total requerido — NE<sub>T</sub> (3.604.101)");
+  const prm = { ZR: ZRv, S0, MR, pi: d.pi, pf: d.pf };
+  const NET = resolverNE(EE, prm);
+  const bT = beta(NET);
+  r.NET = NET;
+  m.row("Factor de la pérdida de serviciabilidad: β", fmt(bT, 4), "3.604.101.2");
+  m.row("<b>Número estructural total requerido: NE<sub>T</sub></b>", `<b>${fmt(NET, 1)} mm</b>`, "3.604.101.1");
+  m.p(L`Se resuelve por iteraciones la ecuación de diseño para $EE = ${tn(EE, 0)}$, $M_R = ${tn(MR, 1)}$ MPa, $Z_R = ${tn(ZRv, 3)}$, $S_0 = ${tn(S0, 2)}$, $p_i = ${tn(d.pi, 1)}$ y $p_f = ${tn(d.pf, 1)}$:`);
+  m.eq(L`EE = (NE + 25{,}4)^{9{,}36}\cdot 10^{(-16{,}40 + Z_R\,S_0)}\cdot M_R^{2{,}32}\cdot\left[\frac{p_i - p_f}{p_i - 1{,}5}\right]^{1/\beta}`, "3.604.101.1");
+  m.eq(L`\beta = 0{,}40 + \left[\frac{97{,}81}{NE + 25{,}4}\right]^{5{,}19} = 0{,}40 + \left[\frac{97{,}81}{${tn(NET, 1)} + 25{,}4}\right]^{5{,}19} = ${tn(bT, 4)}`, "3.604.101.2");
+  m.eq(L`(${tn(NET, 1)} + 25{,}4)^{9{,}36}\cdot 10^{(-16{,}40 + (${tn(ZRv, 3)})(${tn(S0, 2)}))}\cdot ${tn(MR, 1)}^{2{,}32}\cdot\left[\frac{${tn(dPSI, 1)}}{${tn(d.pi - 1.5, 1)}}\right]^{1/${tn(bT, 4)}} = ${tn(10 ** logEEadm(NET, prm), 0)} \approx EE`);
+
+  // 5. TMAPA y NEA
+  m.h("NE mínimo de las capas asfálticas — NE<sub>A</sub> (3.604.108(2))");
+  let T = d.tmapa;
+  if (d.modoT === "tmma") {
+    const W = d.tmma.map(t => 10 ** ((t - 20.348) / 17.5683));
+    const Wp = W.reduce((a, b) => a + b, 0) / 12;
+    T = 20.348 + 17.5683 * log10(Wp);
+    m.out.push(`<table class="prop"><tr><th>Mes</th>${MESES.map(x => `<th class="num">${x}</th>`).join("")}</tr>
+      <tr><td>TMMA [°C]</td>${d.tmma.map(t => `<td class="num">${fmt(t, 1)}</td>`).join("")}</tr>
+      <tr><td>W<sub>i</sub></td>${W.map(w => `<td class="num">${fmt(w, 2)}</td>`).join("")}</tr></table>`);
+    m.row("Factor de ponderación promedio: W<sub>ip</sub>", fmt(Wp, 3), "3.604.108(2).1");
+    m.eq(L`TMMA = 20{,}348 + 17{,}5683\,\log W_i \;\Rightarrow\; W_i = 10^{(TMMA - 20{,}348)/17{,}5683}`, "3.604.108(2).1");
+    m.eq(L`W_{ip} = \frac{\sum W_i}{12} = \frac{${tn(W.reduce((a, b) => a + b, 0), 2)}}{12} = ${tn(Wp, 3)}`);
+    m.eq(L`TMAPA = 20{,}348 + 17{,}5683\,\log W_{ip} = 20{,}348 + 17{,}5683\,\log ${tn(Wp, 3)} = ${tn(T, 1)}\ ^\circ\mathrm{C}`);
+  }
+  r.T = T;
+  const EEgraf = EEm * FR;
+  const ne = neaTMAPA(T, EEgraf, MR);
+  const NEA = ne.NEA;
+  r.NEA = NEA;
+  m.row("Temperatura media anual ponderada del aire: TMAPA", `${fmt(T, 1)} °C`);
+  m.row("Ejes equivalentes afectados por la confiabilidad: EE·F<sub>R</sub>", `${fmt(EEgraf, 2)} millones`);
+  m.row(`NE en las láminas de ${ne.lo} °C ; ${ne.hi} °C`, `${fmt(ne.a, 1)} ; ${fmt(ne.b, 1)} mm`, `Láminas 3.604.108.B${ne.lo === 6 ? "1/B2" : "2/B3"}`);
+  m.row("<b>Número estructural mínimo de capas asfálticas: NE<sub>A</sub></b>", `<b>${fmt(NEA, 1)} mm</b>`);
+  m.p(L`Los gráficos se calcularon con un nivel de confianza de 50\,\%, por lo que se ingresa con $EE\cdot F_R$. Se interpola linealmente en $\log EE$, en $M_R$ entre las curvas de ${MR_CURVAS.join(", ")} MPa, y en TMAPA entre los gráficos de ${ne.lo} y ${ne.hi}\,$^\circ$C.`);
+  m.eq(L`EE\cdot F_R = ${tn(EEm, 3)}\cdot ${tn(FR, 3)} = ${tn(EEgraf, 2)}\times 10^6 \qquad NE_A = ${tn(ne.a, 1)} + (${tn(ne.b, 1)} - ${tn(ne.a, 1)})\,\frac{${tn(ne.Tc, 1)} - ${ne.lo}}{${ne.hi} - ${ne.lo}} = ${tn(NEA, 1)}\ \mathrm{mm}`, "3.604.108(2)");
+  if (EEgraf < 1 || EEgraf > 100) r.avisos.push(`EE·F<sub>R</sub> = ${fmt(EEgraf, 2)} millones está fuera del rango de las láminas (1 a 100 millones); se usa el valor del extremo.`);
+  if (MR < 36 || MR > 200) r.avisos.push(`M<sub>R</sub> = ${fmt(MR, 1)} MPa está fuera del rango de curvas de las láminas (36 a 200 MPa); se usa la curva extrema.`);
+  if (T < 6 || T > 19) r.avisos.push(`TMAPA = ${fmt(T, 1)} °C está fuera del rango de las láminas (6 a 19 °C); se usa el gráfico extremo.`);
+
+  // 6. Coeficientes estructurales y de drenaje
+  m.h("Coeficientes estructurales y de drenaje (3.604.106 y 3.604.107)");
+  const a2 = 0.032 * d.cbrBase ** 0.32, a3 = 0.058 * d.cbrSB ** 0.19;
+  const dr = DREN[d.region][d.precip === "le" ? "le" : "gt"][d.condDren];
+  let m2 = d.m2in, m3 = d.m3in;
+  if (d.critM !== "man") { m2 = m3 = d.critM === "min" ? dr[1] : d.critM === "max" ? dr[0] : (dr[0] + dr[1]) / 2; }
+  r.m2 = m2; r.m3 = m3;
+  m.row("Coeficiente estructural de la base granular: a<sub>2</sub>", `${fmt(a2, 3)} (CBR = ${fmt(d.cbrBase, 0)} %)`, "3.604.107.3");
+  if (d.usaSB) m.row("Coeficiente estructural de la subbase granular: a<sub>3</sub>", `${fmt(a3, 3)} (CBR = ${fmt(d.cbrSB, 0)} %)`, "3.604.107.4");
+  m.row("Coeficientes de drenaje: m<sub>2</sub> ; m<sub>3</sub>", `${fmt(m2, 2)} ; ${fmt(m3, 2)}`, "Tabla 3.604.106.B");
+  m.eq(L`a_2 = 0{,}032\,(CBR)^{0{,}32} = 0{,}032\cdot ${tn(d.cbrBase, 0)}^{0{,}32} = ${tn(a2, 3)}${d.usaSB ? L` \qquad a_3 = 0{,}058\,(CBR)^{0{,}19} = 0{,}058\cdot ${tn(d.cbrSB, 0)}^{0{,}19} = ${tn(a3, 3)}` : ""}`, "3.604.107.3/4");
+  m.p(L`Coeficiente de drenaje según la Tabla 3.604.106.B, región ${d.region.replace("-", " a ")}, precipitación ${d.precip === "le" ? L`$\le$` : ">"} ${fmt(DREN[d.region].lim, 0)} mm, ${DREN_TXT[d.condDren].replace(/≤/g, L`$\le$`).replace(/>/g, "$>$").replace(/%/g, L`\%`)}: rango ${tn(dr[0], 2)} -- ${tn(dr[1], 2)}; se adopta $m_2 = ${tn(m2, 2)}$ y $m_3 = ${tn(m3, 2)}$${d.critM === "man" ? " (valores ingresados)" : ""}.`);
+  if (m2 > dr[0] + 1e-9 || m2 < dr[1] - 1e-9) r.avisos.push(`m<sub>2</sub> = ${fmt(m2, 2)} está fuera del rango de la Tabla 3.604.106.B (${fmt(dr[1], 2)}–${fmt(dr[0], 2)}).`);
+
+  // 7. Estructuración
+  m.h("Estructuración de las capas (3.604.108)");
+  const capas = [];
+  const asf = [{ nom: `Rodadura — ${d.rodNom}`, corto: "Rodadura", a: d.aRod, h: d.hRod, tipo: "asf", min: d.especial ? 0 : 50 }];
+  if (d.usaInt) asf.push({ nom: "Capa intermedia — concreto asfáltico", corto: "Intermedia", a: 0.41, h: d.hInt, tipo: "asf", min: 50 });
+  if (d.usaBA) asf.push({ nom: `Base asfáltica — ${d.baNom.toLowerCase()}`, corto: "Base asfáltica", a: d.aBA, h: d.hBA, tipo: "asf2", min: 50 });
+  // la capa asfáltica más profunda se dimensiona para cumplir NEA
+  const ult = asf[asf.length - 1];
+  const neSup = asf.slice(0, -1).reduce((s, c) => s + c.a * c.h, 0);
+  ult.req = Math.max(0, (NEA - neSup) / ult.a);
+  ult.h = Math.max(arriba(ult.req, 5), ult.min);
+  ult.calc = true;
+  const NEasf = asf.reduce((s, c) => s + c.a * c.h, 0);
+  r.NEasf = NEasf;
+  m.row("Número estructural de las capas asfálticas superiores (espesor ingresado)", `${fmt(neSup, 1)} mm`);
+  m.row(`Espesor requerido de la capa ${ult.corto.toLowerCase()} ; adoptado (múltiplo de 5 mm, mín. ${ult.min} mm)`, `${fmt(ult.req, 1)} ; <b>${fmt(ult.h, 0)} mm</b>`, "3.604.108(2).2");
+  m.row("<b>Número estructural asfáltico provisto: NE<sub>asf</sub> ≥ NE<sub>A</sub></b>", `<b>${fmt(NEasf, 1)} ≥ ${fmt(NEA, 1)} mm</b> ${okTxt(NEasf >= NEA - 1e-6)}`);
+  m.eq(L`h_{${ult.corto === "Rodadura" ? "rod" : ult.corto === "Intermedia" ? "int" : "BA"},req} = \frac{NE_A - \sum_{sup} a_i h_i}{a} = \frac{${tn(NEA, 1)} - ${tn(neSup, 1)}}{${tn(ult.a, 2)}} = ${tn(ult.req, 1)}\ \mathrm{mm} \;\Rightarrow\; ${tn(ult.h, 0)}\ \mathrm{mm}`, "3.604.108(2).2");
+  m.eq(L`NE_{asf} = \sum a_i h_i = ${asf.map(c => `${tn(c.a, 2)}\\cdot ${tn(c.h, 0)}`).join(" + ")} = ${tn(NEasf, 1)}\ \mathrm{mm} \;${GE}\; NE_A = ${tn(NEA, 1)}\ \mathrm{mm}`);
+
+  // granulares: la capa granular más profunda se dimensiona para cumplir NET
+  const NEgReq = NET - NEasf;
+  const base = { nom: "Base granular", corto: "Base", a: a2, mm: m2, h: d.hBase, tipo: "base", min: 150 };
+  const gran = [base];
+  let sb = null;
+  if (d.usaSB) {
+    sb = { nom: "Subbase granular", corto: "Subbase", a: a3, mm: m3, h: 0, tipo: "sb", min: 150 };
+    gran.push(sb);
+    sb.req = Math.max(0, (NEgReq - a2 * m2 * base.h) / (a3 * m3));
+    sb.h = Math.max(arriba(sb.req, 10), 150);
+    sb.calc = true;
+  } else {
+    base.req = Math.max(0, NEgReq / (a2 * m2));
+    base.h = Math.max(arriba(base.req, 10), 150);
+    base.calc = true;
+  }
+  const NEgran = gran.reduce((s, c) => s + c.a * c.mm * c.h, 0);
+  r.NEgReq = NEgReq; r.NEgran = NEgran;
+  m.row("Número estructural requerido a las capas granulares: NE<sub>T</sub> − NE<sub>asf</sub>", `${fmt(NEgReq, 1)} mm`, "3.604.108(2).3");
+  if (d.usaSB) m.row("Espesor requerido de la subbase ; adoptado (múltiplo de 10 mm, mín. 150 mm)", `${fmt(sb.req, 1)} ; <b>${fmt(sb.h, 0)} mm</b>`);
+  else m.row("Espesor requerido de la base ; adoptado (múltiplo de 10 mm, mín. 150 mm)", `${fmt(base.req, 1)} ; <b>${fmt(base.h, 0)} mm</b>`);
+  m.row("<b>Número estructural granular provisto</b>", `<b>${fmt(NEgran, 1)} ≥ ${fmt(NEgReq, 1)} mm</b> ${okTxt(NEgran >= NEgReq - 1e-6)}`);
+  m.eq(L`NE_T - NE_{asf} = ${tn(NET, 1)} - ${tn(NEasf, 1)} = ${tn(NEgReq, 1)}\ \mathrm{mm} = a_2 h_2 m_2${d.usaSB ? " + a_3 h_3 m_3" : ""}`, "3.604.108(2).3");
+  if (d.usaSB) m.eq(L`h_{3,req} = \frac{${tn(NEgReq, 1)} - ${tn(a2, 3)}\cdot ${tn(base.h, 0)}\cdot ${tn(m2, 2)}}{${tn(a3, 3)}\cdot ${tn(m3, 2)}} = ${tn(sb.req, 1)}\ \mathrm{mm} \;\Rightarrow\; h_3 = ${tn(sb.h, 0)}\ \mathrm{mm}`);
+  else m.eq(L`h_{2,req} = \frac{${tn(NEgReq, 1)}}{${tn(a2, 3)}\cdot ${tn(m2, 2)}} = ${tn(base.req, 1)}\ \mathrm{mm} \;\Rightarrow\; h_2 = ${tn(base.h, 0)}\ \mathrm{mm}`);
+
+  // 8. Verificación final
+  m.h("Verificación del paquete estructural");
+  const NEprov = NEasf + NEgran;
+  const logAdm = logEEadm(NEprov, prm);
+  r.NEprov = NEprov; r.EEadm = 10 ** logAdm;
+  capas.push(...asf, ...gran);
+  r.capas = capas;
+  const minOk = capas.every(c => c.h >= c.min - 1e-9);
+  r.minOk = minOk;
+  m.out.push(`<table class="prop"><tr><th>Capa</th><th class="num">a<sub>i</sub></th><th class="num">m<sub>i</sub></th><th class="num">h<sub>i</sub> [mm]</th><th class="num">a·m·h [mm]</th></tr>` +
+    capas.map(c => `<tr><td>${c.nom}${c.calc ? " (calculada)" : ""}</td><td class="num">${fmt(c.a, 3)}</td><td class="num">${c.mm ? fmt(c.mm, 2) : "—"}</td><td class="num">${fmt(c.h, 0)}</td><td class="num">${fmt(c.a * (c.mm ?? 1) * c.h, 1)}</td></tr>`).join("") +
+    `<tr><td><b>Total</b></td><td></td><td></td><td class="num"><b>${fmt(capas.reduce((s, c) => s + c.h, 0), 0)}</b></td><td class="num"><b>${fmt(NEprov, 1)}</b></td></tr></table>`);
+  m.tex.push(L`\begin{table}[H]
+\centering
+\caption{Estructuración adoptada.}
+\begin{tabular}{lrrrr}
+\toprule
+Capa & $a_i$ & $m_i$ & $h_i$ [mm] & $a_i m_i h_i$ [mm]\\
+\midrule
+${capas.map(c => `${c.nom.replace(/—/g, "---")}${c.calc ? " (calculada)" : ""} & ${tn(c.a, 3)} & ${c.mm ? tn(c.mm, 2) : "---"} & ${tn(c.h, 0)} & ${tn(c.a * (c.mm ?? 1) * c.h, 1)}\\\\`).join("\n")}
+\midrule
+Total & & & ${tn(capas.reduce((s, c) => s + c.h, 0), 0)} & ${tn(NEprov, 1)}\\
+\bottomrule
+\end{tabular}
+\end{table}`);
+  m.row("<b>Número estructural provisto: NE ≥ NE<sub>T</sub></b>", `<b>${fmt(NEprov, 1)} ≥ ${fmt(NET, 1)} mm</b> ${okTxt(NEprov >= NET - 1e-6)}`, "3.604.108(1).1");
+  m.row("Ejes equivalentes admisibles de la estructura provista", `${fmt(r.EEadm / 1e6, 2)} millones ${okTxt(r.EEadm >= EE * (1 - 1e-6))}`);
+  m.row("Espesores mínimos: capas asfálticas 50 mm ; granulares 150 mm", okTxt(minOk), "Tabla 3.604.108.A");
+  m.eq(L`NE = \sum a_i h_i + \sum a_i m_i h_i = ${tn(NEasf, 1)} + ${tn(NEgran, 1)} = ${tn(NEprov, 1)}\ \mathrm{mm} \;${NEprov >= NET - 1e-6 ? GE : "<"}\; NE_T = ${tn(NET, 1)}\ \mathrm{mm}`, "3.604.108(1).1");
+  m.eq(L`EE_{adm} = (${tn(NEprov, 1)} + 25{,}4)^{9{,}36}\cdot 10^{(-16{,}40 + (${tn(ZRv, 3)})(${tn(S0, 2)}))}\cdot ${tn(MR, 1)}^{2{,}32}\cdot\left[\frac{${tn(dPSI, 1)}}{${tn(d.pi - 1.5, 1)}}\right]^{1/${tn(beta(NEprov), 4)}} = ${tn(r.EEadm / 1e6, 2)}\times 10^6 \;${r.EEadm >= EE ? GE : "<"}\; ${tn(EEm, 2)}\times 10^6`);
+  if (d.especial) m.p(L`La capa de rodadura de mezcla especial no tiene restricción de espesor mínimo (Tabla 3.604.108.A).`);
+
+  Object.assign(r, { R, ZRv, S0, FR, EEm, EEgraf, ne, a2, a3, dr, asf, gran });
+  return r;
+}
+
+// ---------------------------------------------------------------------------
+// Dibujo del paquete estructural (SVG en pantalla y TikZ en el .tex)
+// ---------------------------------------------------------------------------
+const ESTILO = {
+  asf: { fill: "#3f3f46", pat: "pAsf", txt: "#fff" }, asf2: { fill: "#5b5b63", pat: "pAsf", txt: "#fff" },
+  base: { fill: "#e3cf9f", pat: "pBase", txt: "#1d2330" }, sb: { fill: "#efe2c3", pat: "pSB", txt: "#1d2330" },
+  mej: { fill: "#d6dfbf", pat: "pSB", txt: "#1d2330" }, sub: { fill: "#c9a77f", pat: "pSub", txt: "#1d2330" },
+};
+function listaDibujo(d, r) {
+  const l = r.capas.map(c => ({ ...c }));
+  if (d.mej) l.push({ nom: `Mejoramiento (CBR ${fmt(d.cbrMej, 0)} %)`, corto: "Mejoramiento", h: d.hMej, tipo: "mej" });
+  return l;
+}
+function dibujarSVG(d, r) {
+  const capas = listaDibujo(d, r);
+  const W = 820, x0 = 30, x1 = 330, yTop = 30, alto = 330;
+  const total = capas.reduce((s, c) => s + c.h, 0);
+  const minPx = 24;
+  // escala proporcional con altura mínima por capa para que todas sean legibles
+  let esc = alto / total;
+  const hs = capas.map(c => Math.max(minPx, c.h * esc));
+  const sum = hs.reduce((a, b) => a + b, 0);
+  const k = alto / sum; hs.forEach((_, i) => hs[i] *= k);
+  let y = yTop, g = "";
+  capas.forEach((c, i) => {
+    const e = ESTILO[c.tipo], h = hs[i];
+    g += `<rect x="${x0}" y="${y}" width="${x1 - x0}" height="${h}" fill="${e.fill}"/><rect x="${x0}" y="${y}" width="${x1 - x0}" height="${h}" fill="url(#${e.pat})"/>`;
+    g += `<line x1="${x0}" x2="${x1}" y1="${y}" y2="${y}" stroke="#1d2330" stroke-width="1.2"/>`;
+    // cota a la derecha
+    const xc = x1 + 22;
+    g += `<line x1="${x1}" x2="${xc + 6}" y1="${y}" y2="${y}" stroke="#8a93a0" stroke-width="0.8"/>`;
+    g += `<line x1="${xc}" x2="${xc}" y1="${y + 3}" y2="${y + h - 3}" stroke="#1d2330" stroke-width="1" marker-start="url(#fl)" marker-end="url(#fl)"/>`;
+    g += `<text x="${xc + 8}" y="${y + h / 2 + 4}" font-size="14" font-weight="600" fill="#1d2330">${fmt(c.h, 0)} mm</text>`;
+    // rótulo
+    const det = c.tipo === "mej" ? "" : c.mm ? `a = ${fmt(c.a, 3)} · m = ${fmt(c.mm, 2)}` : `a = ${fmt(c.a, 2)}`;
+    g += `<text x="${xc + 82}" y="${y + h / 2 - (det ? 2 : -4)}" font-size="14" fill="#1d2330">${c.nom}${c.calc ? " *" : ""}</text>`;
+    if (det) g += `<text x="${xc + 82}" y="${y + h / 2 + 14}" font-size="12.5" fill="#5f6b7a">${det}</text>`;
+    y += h;
+  });
+  // subrasante
+  const hSub = 46;
+  g += `<rect x="${x0}" y="${y}" width="${x1 - x0}" height="${hSub}" fill="${ESTILO.sub.fill}"/><rect x="${x0}" y="${y}" width="${x1 - x0}" height="${hSub}" fill="url(#pSub)"/>`;
+  g += `<line x1="${x0}" x2="${x1}" y1="${y}" y2="${y}" stroke="#1d2330" stroke-width="1.6"/>`;
+  g += `<text x="${x1 + 104}" y="${y + 27}" font-size="14" fill="#1d2330">Subrasante — M<tspan font-size="9" dy="3">R</tspan><tspan dy="-3"> = ${fmt(r.MR, 1)} MPa${d.mej ? " (con mejoramiento)" : ""}</tspan></text>`;
+  // cota total del pavimento (sin mejoramiento)
+  const hPav = capas.filter(c => c.tipo !== "mej").reduce((s, c) => s + c.h, 0);
+  const yPav = yTop + hs.slice(0, capas.filter(c => c.tipo !== "mej").length).reduce((a, b) => a + b, 0);
+  g += `<line x1="${x0 - 14}" x2="${x0 - 14}" y1="${yTop + 3}" y2="${yPav - 3}" stroke="#6b4fa0" stroke-width="1.2" marker-start="url(#fl2)" marker-end="url(#fl2)"/>`;
+  g += `<text x="${x0 - 20}" y="${(yTop + yPav) / 2}" font-size="12" font-weight="600" fill="#6b4fa0" text-anchor="middle" transform="rotate(-90 ${x0 - 20} ${(yTop + yPav) / 2})">${fmt(hPav, 0)} mm</text>`;
+  g += `<text x="${x0}" y="${yTop - 10}" font-size="12" fill="#5f6b7a">NE provisto = ${fmt(r.NEprov, 1)} mm ≥ NE<tspan font-size="9" dy="3">T</tspan><tspan dy="-3"> = ${fmt(r.NET, 1)} mm · * espesor calculado</tspan></text>`;
+  const H = y + hSub + 12;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Corte del paquete estructural del pavimento">
+  <defs>
+    <marker id="fl" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#1d2330"/></marker>
+    <marker id="fl2" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6b4fa0"/></marker>
+    <pattern id="pAsf" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="0.9" fill="#a1a1aa"/><circle cx="6.5" cy="6" r="0.7" fill="#71717a"/></pattern>
+    <pattern id="pBase" width="10" height="10" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1.6" fill="none" stroke="#8a6d3b" stroke-width="0.8"/><circle cx="8" cy="7.5" r="1" fill="#8a6d3b"/></pattern>
+    <pattern id="pSB" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r="2.2" fill="none" stroke="#a08350" stroke-width="0.8"/><circle cx="10" cy="10" r="0.9" fill="#a08350"/></pattern>
+    <pattern id="pSub" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="10" stroke="#7a5a37" stroke-width="1.2"/></pattern>
+  </defs>
+  ${g}
+  <rect x="${x0}" y="${yTop}" width="${x1 - x0}" height="${y + hSub - yTop}" fill="none" stroke="#1d2330" stroke-width="1.4"/>
+</svg>`;
+}
+function tikz(d, r) {
+  const capas = listaDibujo(d, r);
+  const total = capas.reduce((s, c) => s + c.h, 0);
+  const alto = 10;                                  // cm
+  const hs = capas.map(c => Math.max(1.0, c.h * alto / total));   // mínimo 1 cm para que los rótulos no se superpongan
+  const col = { asf: "black!75", asf2: "black!60", base: "brown!35", sb: "brown!20", mej: "olive!25", sub: "brown!55" };
+  const pat = { asf: "dots", asf2: "dots", base: "crosshatch dots", sb: "crosshatch dots", mej: "dots", sub: "north east lines" };
+  let y = 0, s = "";
+  capas.forEach((c, i) => {
+    const h = hs[i], y2 = y - h;
+    s += `\\fill[${col[c.tipo]}] (0,${y.toFixed(3)}) rectangle (6,${y2.toFixed(3)});\n`;
+    s += `\\fill[pattern=${pat[c.tipo]}, pattern color=${c.tipo.startsWith("asf") ? "white!60" : "brown!70"}] (0,${y.toFixed(3)}) rectangle (6,${y2.toFixed(3)});\n`;
+    s += `\\draw (0,${y.toFixed(3)}) -- (6,${y.toFixed(3)});\n`;
+    s += `\\draw[cota] (6.5,${y.toFixed(3)}) -- node[right, font=\\small] {${tn(c.h, 0)} mm} (6.5,${y2.toFixed(3)});\n`;
+    s += `\\node[right, align=left, font=\\small] at (8.3,${((y + y2) / 2).toFixed(3)}) {${c.nom.replace(/—/g, "---").replace(/%/g, "\\%")}${c.calc ? "$^{*}$" : ""}${c.mm ? `\\\\ \\footnotesize $a = ${tn(c.a, 3)}$, $m = ${tn(c.mm, 2)}$` : c.tipo === "mej" ? "" : `\\\\ \\footnotesize $a = ${tn(c.a, 2)}$`}};\n`;
+    y = y2;
+  });
+  s += `\\fill[${col.sub}] (0,${y.toFixed(3)}) rectangle (6,${(y - 1).toFixed(3)});\n\\fill[pattern=${pat.sub}, pattern color=brown!80!black] (0,${y.toFixed(3)}) rectangle (6,${(y - 1).toFixed(3)});\n`;
+  s += `\\draw[thick] (0,${y.toFixed(3)}) -- (6,${y.toFixed(3)});\n\\node[right, font=\\small] at (8.3,${(y - 0.5).toFixed(3)}) {Subrasante, $M_R = ${tn(r.MR, 1)}$ MPa};\n`;
+  s += `\\draw[thick] (0,0) rectangle (6,${(y - 1).toFixed(3)});\n`;
+  return L`\begin{figure}[H]
+\centering
+\begin{tikzpicture}[cota/.style={<->, >=stealth, thin}]
+${s}\end{tikzpicture}
+\caption{Paquete estructural adoptado ($NE = ${tn(r.NEprov, 1)}$ mm $\ge NE_T = ${tn(r.NET, 1)}$ mm). $^{*}$ Espesor calculado. Escala vertical aproximada.}
+\end{figure}`;
+}
+
+// ---------------------------------------------------------------------------
+// Interfaz
+// ---------------------------------------------------------------------------
+let ultimoTex = "", ultimoNombre = "memoria_pavimento_flexible.tex";
+
+function actualizar() {
+  const modoEE = $("modoEE").value;
+  $("gDirecto").classList.toggle("hidden", modoEE !== "directo");
+  $("gTmda").classList.toggle("hidden", modoEE !== "tmda");
+  $("gFP").classList.toggle("hidden", $("calzada").value === "bi");
+  $("gCBR").classList.toggle("hidden", $("modoMR").value !== "cbr");
+  $("gMR").classList.toggle("hidden", $("modoMR").value !== "mr");
+  $("gMej").classList.toggle("hidden", !$("mej").checked);
+  $("gTdir").classList.toggle("hidden", $("modoT").value !== "dir");
+  $("gTmma").classList.toggle("hidden", $("modoT").value !== "tmma");
+  $("gBA").classList.toggle("hidden", !$("usaBA").checked);
+  $("gSB").classList.toggle("hidden", !$("usaSB").checked);
+  // capa calculada: la asfáltica más profunda y la granular más profunda
+  // (el valor ingresado se guarda mientras el campo muestra el espesor calculado y se restaura al liberarlo)
+  const ultAsf = $("usaBA").checked ? "hBA" : $("usaInt").checked ? "hInt" : "hRod";
+  const bloquear = (id, calc) => {
+    const e = $(id);
+    if (calc && !e.disabled) e.dataset.usuario = e.value;
+    if (!calc && e.disabled && e.dataset.usuario) e.value = e.dataset.usuario;
+    e.disabled = calc;
+  };
+  ["hRod", "hInt", "hBA"].forEach(id => bloquear(id, id === ultAsf));
+  bloquear("hBase", !$("usaSB").checked);
+  $("hInt").closest(".capa").querySelector("label[for=hInt]").classList.toggle("hidden", !$("usaInt").checked);
+  $("hInt").classList.toggle("hidden", !$("usaInt").checked);
+  const dren = DREN[$("region").value];
+  const prev = $("precip").value;
+  $("precip").innerHTML = `<option value="le">≤ ${fmt(dren.lim, 0)} mm</option><option value="gt">&gt; ${fmt(dren.lim, 0)} mm</option>`;
+  $("precip").value = prev === "gt" ? "gt" : "le";
+  const man = $("critM").value === "man";
+  $("m2").disabled = !man; $("m3").disabled = !man;
+
+  const d = leer();
+  const m = new Memo();
+  const r = calcular(d, m);
+  if (!man) { $("m2").value = r.m2.toFixed(2); $("m3").value = r.m3.toFixed(2); }
+  $("rangoM").textContent = `Rango de la tabla: ${fmt(r.dr[1], 2)} – ${fmt(r.dr[0], 2)}.`;
+  // valores calculados mostrados en los campos deshabilitados
+  r.asf.forEach(c => { if (c.calc) $(c.corto === "Rodadura" ? "hRod" : c.corto === "Intermedia" ? "hInt" : "hBA").value = c.h; });
+  if (!d.usaSB) $("hBase").value = r.gran[0].h;
+
+  const items = [
+    ["NE<sub>T</sub>/NE provisto", r.NET / r.NEprov, `${fmt(r.NET, 1)} / ${fmt(r.NEprov, 1)} mm`],
+    ["NE<sub>A</sub>/NE asfáltico", r.NEA / r.NEasf, `${fmt(r.NEA, 1)} / ${fmt(r.NEasf, 1)} mm`],
+    ["NE granular req./provisto", r.NEgReq > 0 ? r.NEgReq / r.NEgran : 0, `${fmt(Math.max(0, r.NEgReq), 1)} / ${fmt(r.NEgran, 1)} mm`],
+    ["EE/EE admisibles", r.EE / r.EEadm, `${fmt(r.EEm, 2)} / ${fmt(r.EEadm / 1e6, 2)} millones`],
+  ];
+  $("summary").innerHTML = items.map(([t, v, s]) => `<div class="card"><div class="t">${t}</div><div class="v">${fmt(v, 3)}</div>
+    <div class="bar ${v > 1 ? "bad" : ""}"><i style="width:${Math.min(100, v * 100)}%"></i></div><div class="s">${s}</div></div>`).join("") +
+    `<div class="card"><div class="t">Espesor total del pavimento</div><div class="v">${fmt(r.capas.reduce((s, c) => s + c.h, 0), 0)} mm</div><div class="s">M<sub>R</sub> = ${fmt(r.MR, 1)} MPa · TMAPA = ${fmt(r.T, 1)} °C</div></div>`;
+  const dc = Math.max(...items.map(i => i[1]));
+  const ok = dc <= 1 + 1e-9 && r.minOk;
+  $("resTitle").textContent = `Resultados — EE = ${fmt(r.EEm, 2)} millones · NE_T = ${fmt(r.NET, 1)} mm`;
+  $("verdict").innerHTML = `<div class="verdict ${ok ? "ok" : "bad"}">${ok ? "✔ El paquete estructural CUMPLE" : "✘ El paquete estructural NO CUMPLE"} — ${r.capas.map(c => `${c.corto} ${fmt(c.h, 0)}`).join(" · ")} mm</div>`;
+  $("avisos").innerHTML = r.avisos.map(a => `<div class="note">${a}</div>`).join("");
+  $("svgPaq").innerHTML = dibujarSVG(d, r);
+  $("memo").innerHTML = m.html();
+
+  // Memoria .tex
+  const fecha = new Date().toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
+  const texTxt = (s) => s.replace(/<sub>/g, "$_{").replace(/<\/sub>/g, "}$").replace(/\$\$/g, "").replace(/<[^>]+>/g, "");
+  const filas = items.map(([t, v, s]) => `${texTxt(t)} & ${texTxt(s).replace(/,/g, "{,}").replace(/\./g, "\\,")} & ${tn(v, 3)} & ${v <= 1 + 1e-9 ? "Cumple" : "No cumple"}\\\\`).join("\n");
+  const avisosTex = r.avisos.length ? L`\paragraph{Observaciones.}
+\begin{itemize}
+${r.avisos.map(a => `\\item ${texTxt(a).replace(/≤/g, "$\\le$").replace(/≥/g, "$\\ge$").replace(/%/g, "\\%").replace(/·/g, "$\\cdot$").replace(/–/g, "--")}`).join("\n")}
+\end{itemize}` : "";
+  ultimoTex = L`\documentclass[11pt,letterpaper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla,es-noshorthands]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{geometry}
+\geometry{margin=2.2cm}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{patterns}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\chead{Diseño de Pavimentos}
+\lfoot{Memoria de cálculo --- Manual de Carreteras Vol. 3, 3.600}
+\rfoot{\thepage}
+\allowdisplaybreaks
+
+\begin{document}
+\begin{center}
+{\Large\bfseries Memoria de Cálculo --- Pavimento Flexible}\\[3pt]
+Diseño del paquete estructural según el Manual de Carreteras, Volumen N$^\circ$ 3, Capítulo 3.600 (método AASHTO 1993 adaptado)\\[2pt]
+{\small ${fecha}}
+\end{center}
+
+\begin{table}[H]
+\centering
+\caption{Datos de diseño.}
+\begin{tabular}{lr}
+\toprule
+Parámetro & Valor\\
+\midrule
+Ejes equivalentes $EE$ & ${tn(r.EEm, 3)} millones\\
+Serviciabilidad $p_i$ ; $p_f$ & ${tn(d.pi, 1)} ; ${tn(d.pf, 1)}\\
+Confiabilidad $R$ ; $S_0$ & ${r.R}\,\% ; ${tn(r.S0, 2)}\\
+Módulo resiliente de diseño $M_R$ & ${tn(r.MR, 1)} MPa\\
+TMAPA & ${tn(r.T, 1)} $^\circ$C\\
+Coeficientes de drenaje $m_2$ ; $m_3$ & ${tn(r.m2, 2)} ; ${tn(r.m3, 2)}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+${m.tex.join("\n")}
+
+${tikz(d, r)}
+
+\section{Resumen}
+\begin{table}[H]
+\centering
+\begin{tabular}{llcc}
+\toprule
+Verificación & Requerido / provisto & Razón & Estado\\
+\midrule
+${filas}
+\bottomrule
+\end{tabular}
+\end{table}
+El paquete estructural adoptado (${r.capas.map(c => `${c.corto.toLowerCase()} ${tn(c.h, 0)} mm`).join(", ")}) \textbf{${ok ? "cumple" : "no cumple"}} con los requisitos del Capítulo 3.600 del Manual de Carreteras.
+${avisosTex}
+\end{document}
+`;
+  ultimoNombre = `memoria_pavimento_flexible_NE${Math.round(r.NET)}.tex`;
+}
+
+function descargarTex() {
+  const blob = new Blob([ultimoTex], { type: "application/x-tex;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = ultimoNombre;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function init() {
+  $("plaza").innerHTML = `<option value="">— Ingresar FEE manualmente —</option>` +
+    PLAZAS.map((p, k) => `<option value="${k}">${p[0]} · mov. ${p[1]}</option>`).join("");
+  $("plaza").value = "8";
+  $("tmmaBox").innerHTML = MESES.map((mes, k) => `<div><label for="t${k}">${mes}</label><input id="t${k}" type="number" step="0.1" value="${TMMA_EJ[k]}"></div>`).join("");
+  const aplicarPlaza = () => {
+    const k = $("plaza").value;
+    if (k === "") return;
+    const p = PLAZAS[+k], v = num("pf") >= 2.25 ? p[3] : p[2];
+    v.forEach((f, j) => { $("f" + (j + 1)).value = f.toFixed(2); });
+  };
+  $("plaza").addEventListener("change", aplicarPlaza);
+  $("pf").addEventListener("change", aplicarPlaza);
+  ["f1", "f2", "f3"].forEach(id => $(id).addEventListener("input", () => { $("plaza").value = ""; }));
+  aplicarPlaza();
+  const panel = $("inputs");
+  panel.addEventListener("input", actualizar);
+  panel.addEventListener("change", actualizar);
+  $("btnTex").addEventListener("click", descargarTex);
+  actualizar();
+}
+init();
+</script>
+<script>
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+</script>
+</body>
+</html>
