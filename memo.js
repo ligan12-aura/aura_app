@@ -58,6 +58,9 @@ const TEX_UNICODE = {
   "2082": "_{2}", "2033": "''", "2032": "'",
 };
 function texUnicode(doc) {
+  // babel-spanish redefine \% y falla con el espacio fino previo ("\,\%" → Incompatible glue units);
+  // el propio babel ya agrega el espacio antes del signo
+  doc = doc.replace(/\\,\\%/g, "\\%");
   const usados = Object.keys(TEX_UNICODE).filter((c) => doc.includes(String.fromCodePoint(parseInt(c, 16))));
   if (!usados.length) return doc;
   const decl = "\\ifdefined\\DeclareUnicodeCharacter\n"
