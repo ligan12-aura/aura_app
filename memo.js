@@ -1,4 +1,4 @@
-// Memoria de cálculo desplegable (compartida por acero, hormigón, madera y espectros).
+// Memoria de cálculo desplegable (compartida por acero, hormigón, madera, espectros y diseño vial).
 // Cada paso muestra sus resultados; al pincharlo se despliegan las ecuaciones con
 // los valores reemplazados (las mismas del informe .tex), dibujadas con KaTeX.
 "use strict";
@@ -141,7 +141,8 @@ function texParrafo(s) {
     if (p.startsWith("$") && p.length > 1) return `<span class="km" data-tex="${encodeURIComponent(p.slice(1, -1))}"></span>`;
     return p.replace(/&/g, "&amp;").replace(/</g, "&lt;")
       .replace(/\\textbf\{([^}]*)\}/g, "<b>$1</b>").replace(/\\textit\{([^}]*)\}/g, "<i>$1</i>")
-      .replace(/\\%/g, "%").replace(/---/g, "—").replace(/--/g, "–").replace(/~/g, " ");
+      .replace(/\\%/g, "%").replace(/\{,\}/g, ",").replace(/\\,/g, " ").replace(/\\ /g, " ")
+      .replace(/---/g, "—").replace(/--/g, "–").replace(/~/g, " ");
   }).join("");
 }
 

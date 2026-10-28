@@ -390,11 +390,14 @@ const log10 = Math.log10;
 
 class Memo {
   constructor() { this.out = []; this.tex = []; this.n = 0; }
-  h(t) { this.n++; this.out.push(`<h3>${this.n}. ${t}</h3>`); this.tex.push(`\\section{${t.replace(/—/g, "---").replace(/<sub>(.*?)<\/sub>/g, "$_{$1}$")}}`); }
+  h(t) { memoTexCerrar(this); this.n++; this.out.push(`<h3>${this.n}. ${t}</h3>`); this.tex.push(`\\section{${t.replace(/—/g, "---").replace(/<sub>(.*?)<\/sub>/g, "$_{$1}$")}}`); }
   row(k, v, ref) { this.out.push({ k, v, ref }); }
   note(t, tt) { this.out.push(`<div class="note">${t}</div>`); this.tex.push(`\\textit{${tt || t}}\n`); }
-  eq(s, ref) { this.tex.push(`\\[\n${s}${ref ? `\\tag*{(${ref})}` : ""}\n\\]`); this.out.push({ tex: s + (ref ? `\\tag*{(${ref})}` : ""), eq: true }); }
-  p(s) { this.tex.push(s + "\n"); this.out.push({ tex: s }); }
+  eq(s, ref) { this.tex.push(texDisplay(s, ref)); this.out.push({ tex: s + (ref ? `\\tag*{(${ref})}` : ""), eq: true }); }
+  p(s) { memoTexP(this, s); this.out.push({ tex: s }); }
+  // tabla u otro bloque solo del .tex (cierra la lista de viñetas abierta)
+  bloque(s) { memoTexCerrar(this); this.tex.push(s); }
+  texto() { memoTexCerrar(this); return this.tex.join("\n"); }
   html() { return memoHTML(this.out); }
 }
 
@@ -482,7 +485,7 @@ function calcular(d, m) {
       FP = interp(T202D.map(f => f[0]), T202D.map(f => f[d.calzada === "u2" ? 1 : 2]), tmdaMed);
       fpTxt = `Tabla 3.603.202.D, ${d.calzada === "u2" ? "2 pistas" : "3 o más pistas"} por dirección, TMDA por dirección ≈ ${fmt(tmdaMed, 0)}`;
     }
-    if (d.FPman !== null) { FP = d.FPman; fpTxt = "valor ingresado"; }
+    if (d.calzada !== "bi" && d.FPman !== null) { FP = d.FPman; fpTxt = "valor ingresado"; }
     const nombres = ["C2E", "C+2E", "BTB"];
     let tot = 0;
     const det = d.veh.map((v, k) => {
@@ -524,6 +527,7 @@ function calcular(d, m) {
   m.p(L`Según la Tabla 3.604.104.A, para $EE = ${tn(EEm, 2)}$ millones se recomienda una confiabilidad de ${fila[1] === fila[2] ? `${fila[1]}\\,\\%` : `${fila[1]} a ${fila[2]}\\,\\%`}; se adopta $R = ${R}$\,\% ($Z_R = ${tn(ZRv, 3)}$) y $S_0 = ${tn(S0, 2)}$.`);
   m.eq(L`F_R = 10^{-Z_R\,S_0} = 10^{-(${tn(ZRv, 3)})(${tn(S0, 2)})} = ${tn(FR, 3)}`, "3.603.204(1).1");
   if (R < fila[1] || R > fila[2]) r.avisos.push(`La confiabilidad adoptada (${R} %) está fuera del rango recomendado por la Tabla 3.604.104.A para ${fmt(EEm, 1)} millones de EE (${fila[1]}–${fila[2]} %).`);
+  if (EEm > 90) r.avisos.push(`EE = ${fmt(EEm, 1)} millones supera el máximo de la Tabla 3.604.104.A (90 millones); se usan R y S<sub>0</sub> de la última fila.`);
   if (dPSI <= 0 || d.pi <= 1.5) r.avisos.push("Revise los índices de serviciabilidad: se requiere p<sub>i</sub> > p<sub>f</sub> y p<sub>i</sub> > 1,5.");
 
   // 3. Subrasante
@@ -612,7 +616,11 @@ function calcular(d, m) {
   m.row("Coeficientes de drenaje: m<sub>2</sub> ; m<sub>3</sub>", `${fmt(m2, 2)} ; ${fmt(m3, 2)}`, "Tabla 3.604.106.B");
   m.eq(L`a_2 = 0{,}032\,(CBR)^{0{,}32} = 0{,}032\cdot ${tn(d.cbrBase, 0)}^{0{,}32} = ${tn(a2, 3)}${d.usaSB ? L` \qquad a_3 = 0{,}058\,(CBR)^{0{,}19} = 0{,}058\cdot ${tn(d.cbrSB, 0)}^{0{,}19} = ${tn(a3, 3)}` : ""}`, "3.604.107.3/4");
   m.p(L`Coeficiente de drenaje según la Tabla 3.604.106.B, región ${d.region.replace("-", " a ")}, precipitación ${d.precip === "le" ? L`$\le$` : ">"} ${fmt(DREN[d.region].lim, 0)} mm, ${DREN_TXT[d.condDren].replace(/≤/g, L`$\le$`).replace(/>/g, "$>$").replace(/%/g, L`\%`)}: rango ${tn(dr[0], 2)} -- ${tn(dr[1], 2)}; se adopta $m_2 = ${tn(m2, 2)}$ y $m_3 = ${tn(m3, 2)}$${d.critM === "man" ? " (valores ingresados)" : ""}.`);
-  if (m2 > dr[0] + 1e-9 || m2 < dr[1] - 1e-9) r.avisos.push(`m<sub>2</sub> = ${fmt(m2, 2)} está fuera del rango de la Tabla 3.604.106.B (${fmt(dr[1], 2)}–${fmt(dr[0], 2)}).`);
+  [["2", m2], ["3", m3]].forEach(([i, mi]) => {
+    if (mi > dr[0] + 1e-9 || mi < dr[1] - 1e-9) r.avisos.push(`m<sub>${i}</sub> = ${fmt(mi, 2)} está fuera del rango de la Tabla 3.604.106.B (${fmt(dr[1], 2)}–${fmt(dr[0], 2)}).`);
+  });
+  if (d.cbrBase >= 80 || (d.usaSB && d.cbrSB >= 80) || (d.mej && d.cbrMej >= 80) || (d.modoMR === "cbr" && d.cbr >= 80))
+    r.avisos.push("Hay un CBR ≥ 80 %: está fuera del rango de las correlaciones del Manual (ec. 3.604.105(1).2 es válida para 12 ≤ CBR < 80 %).");
 
   // 7. Estructuración
   m.h("Estructuración de las capas (3.604.108)");
@@ -624,7 +632,7 @@ function calcular(d, m) {
   const ult = asf[asf.length - 1];
   const neSup = asf.slice(0, -1).reduce((s, c) => s + c.a * c.h, 0);
   ult.req = Math.max(0, (NEA - neSup) / ult.a);
-  ult.h = Math.max(arriba(ult.req, 5), ult.min);
+  ult.h = Math.max(arriba(ult.req, 5), ult.min, 20);      // mezclas especiales: sin mínimo normativo, pero la capa debe existir
   ult.calc = true;
   const NEasf = asf.reduce((s, c) => s + c.a * c.h, 0);
   r.NEasf = NEasf;
@@ -634,8 +642,9 @@ function calcular(d, m) {
   m.eq(L`h_{${ult.corto === "Rodadura" ? "rod" : ult.corto === "Intermedia" ? "int" : "BA"},req} = \frac{NE_A - \sum_{sup} a_i h_i}{a} = \frac{${tn(NEA, 1)} - ${tn(neSup, 1)}}{${tn(ult.a, 2)}} = ${tn(ult.req, 1)}\ \mathrm{mm} \;\Rightarrow\; ${tn(ult.h, 0)}\ \mathrm{mm}`, "3.604.108(2).2");
   m.eq(L`NE_{asf} = \sum a_i h_i = ${asf.map(c => `${tn(c.a, 2)}\\cdot ${tn(c.h, 0)}`).join(" + ")} = ${tn(NEasf, 1)}\ \mathrm{mm} \;${GE}\; NE_A = ${tn(NEA, 1)}\ \mathrm{mm}`);
 
-  // granulares: la capa granular más profunda se dimensiona para cumplir NET
-  const NEgReq = NET - NEasf;
+  // granulares: la capa granular más profunda se dimensiona con [NET − NEA] (ec. 3.604.108(2).3);
+  // el exceso de NE asfáltico sobre NEA queda como holgura y no reduce las capas no ligadas
+  const NEgReq = NET - NEA;
   const base = { nom: "Base granular", corto: "Base", a: a2, mm: m2, h: d.hBase, tipo: "base", min: 150 };
   const gran = [base];
   let sb = null;
@@ -652,11 +661,11 @@ function calcular(d, m) {
   }
   const NEgran = gran.reduce((s, c) => s + c.a * c.mm * c.h, 0);
   r.NEgReq = NEgReq; r.NEgran = NEgran;
-  m.row("Número estructural requerido a las capas granulares: NE<sub>T</sub> − NE<sub>asf</sub>", `${fmt(NEgReq, 1)} mm`, "3.604.108(2).3");
+  m.row("Número estructural requerido a las capas granulares: NE<sub>T</sub> − NE<sub>A</sub>", `${fmt(NEgReq, 1)} mm`, "3.604.108(2).3");
   if (d.usaSB) m.row("Espesor requerido de la subbase ; adoptado (múltiplo de 10 mm, mín. 150 mm)", `${fmt(sb.req, 1)} ; <b>${fmt(sb.h, 0)} mm</b>`);
   else m.row("Espesor requerido de la base ; adoptado (múltiplo de 10 mm, mín. 150 mm)", `${fmt(base.req, 1)} ; <b>${fmt(base.h, 0)} mm</b>`);
   m.row("<b>Número estructural granular provisto</b>", `<b>${fmt(NEgran, 1)} ≥ ${fmt(NEgReq, 1)} mm</b> ${okTxt(NEgran >= NEgReq - 1e-6)}`);
-  m.eq(L`NE_T - NE_{asf} = ${tn(NET, 1)} - ${tn(NEasf, 1)} = ${tn(NEgReq, 1)}\ \mathrm{mm} = a_2 h_2 m_2${d.usaSB ? " + a_3 h_3 m_3" : ""}`, "3.604.108(2).3");
+  m.eq(L`NE_T - NE_A = ${tn(NET, 1)} - ${tn(NEA, 1)} = ${tn(NEgReq, 1)}\ \mathrm{mm} = a_2 h_2 m_2${d.usaSB ? " + a_3 h_3 m_3" : ""}`, "3.604.108(2).3");
   if (d.usaSB) m.eq(L`h_{3,req} = \frac{${tn(NEgReq, 1)} - ${tn(a2, 3)}\cdot ${tn(base.h, 0)}\cdot ${tn(m2, 2)}}{${tn(a3, 3)}\cdot ${tn(m3, 2)}} = ${tn(sb.req, 1)}\ \mathrm{mm} \;\Rightarrow\; h_3 = ${tn(sb.h, 0)}\ \mathrm{mm}`);
   else m.eq(L`h_{2,req} = \frac{${tn(NEgReq, 1)}}{${tn(a2, 3)}\cdot ${tn(m2, 2)}} = ${tn(base.req, 1)}\ \mathrm{mm} \;\Rightarrow\; h_2 = ${tn(base.h, 0)}\ \mathrm{mm}`);
 
@@ -672,7 +681,7 @@ function calcular(d, m) {
   m.out.push(`<table class="prop"><tr><th>Capa</th><th class="num">a<sub>i</sub></th><th class="num">m<sub>i</sub></th><th class="num">h<sub>i</sub> [mm]</th><th class="num">a·m·h [mm]</th></tr>` +
     capas.map(c => `<tr><td>${c.nom}${c.calc ? " (calculada)" : ""}</td><td class="num">${fmt(c.a, 3)}</td><td class="num">${c.mm ? fmt(c.mm, 2) : "—"}</td><td class="num">${fmt(c.h, 0)}</td><td class="num">${fmt(c.a * (c.mm ?? 1) * c.h, 1)}</td></tr>`).join("") +
     `<tr><td><b>Total</b></td><td></td><td></td><td class="num"><b>${fmt(capas.reduce((s, c) => s + c.h, 0), 0)}</b></td><td class="num"><b>${fmt(NEprov, 1)}</b></td></tr></table>`);
-  m.tex.push(L`\begin{table}[H]
+  m.bloque(L`\begin{table}[H]
 \centering
 \caption{Estructuración adoptada.}
 \begin{tabular}{lrrrr}
@@ -793,6 +802,33 @@ ${s}\end{tikzpicture}
 // ---------------------------------------------------------------------------
 let ultimoTex = "", ultimoNombre = "memoria_pavimento_flexible.tex";
 
+// Reglas de datos obligatorios [id, mínimo, estricto] según las opciones activas
+function reglasVial() {
+  const R = [["pi", 0, true], ["pf", 0, true], ["cbrBase", 0, true]];
+  if ($("modoEE").value === "directo") R.push(["EEd", 0, true]);
+  else {
+    R.push(["tmda", 0, true], ["mProy", 0], ["N", 0, true], ["FD", 0, true]);
+    [1, 2, 3].forEach(k => R.push(["c" + k, 0], ["i" + k, -50], ["f" + k, 0]));
+    if ($("calzada").value !== "bi" && !vacio("FPman")) R.push(["FPman", 0, true]);
+  }
+  if (!vacio("S0man")) R.push(["S0man", 0, true]);
+  R.push($("modoMR").value === "cbr" ? ["cbr", 0, true] : ["MRin", 0, true]);
+  if ($("mej").checked) R.push(["hMej", 0, true], ["cbrMej", 0, true]);
+  if ($("modoT").value === "dir") R.push(["tmapa", -60]);
+  else MESES.forEach((_, k) => R.push(["t" + k, -60]));
+  if ($("critM").value === "man") R.push(["m2", 0, true], ["m3", 0, true]);
+  ["hRod", "hInt", "hBA", "hBase"].forEach(id => { const e = $(id); if (!e.disabled && !e.closest(".hidden") && !e.classList.contains("hidden")) R.push([id, 0, true]); });
+  if ($("usaSB").checked) R.push(["cbrSB", 0, true]);
+  return R;
+}
+// Aviso de datos inválidos: se vacían los resultados y no se genera .tex
+function sinCalculo(malos) {
+  ["summary", "memo", "avisos", "svgPaq"].forEach(id => { $(id).innerHTML = ""; });
+  $("resTitle").textContent = "Resultados";
+  $("verdict").innerHTML = avisoInvalidos(malos);
+  ultimoTex = "";
+}
+
 function actualizar() {
   const modoEE = $("modoEE").value;
   $("gDirecto").classList.toggle("hidden", modoEE !== "directo");
@@ -824,6 +860,12 @@ function actualizar() {
   $("precip").value = prev === "gt" ? "gt" : "le";
   const man = $("critM").value === "man";
   $("m2").disabled = !man; $("m3").disabled = !man;
+
+  // Validación: un dato vacío o fuera de rango no se calcula (evita un "CUMPLE" falso)
+  limpiarInvalidos($("inputs"));
+  const malos = datosInvalidos(reglasVial());
+  if (!malos.length && num("pi") <= Math.max(num("pf"), 1.5)) { $("pi").classList.add("invalido"); malos.push("p_i debe ser mayor que p_f y que 1,5"); }
+  if (malos.length) return sinCalculo(malos);
 
   const d = leer();
   const m = new Memo();
@@ -862,8 +904,9 @@ ${r.avisos.map(a => `\\item ${texTxt(a).replace(/≤/g, "$\\le$").replace(/≥/g
   ultimoTex = L`\documentclass[11pt,letterpaper]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[spanish,es-tabla,es-noshorthands]{babel}
+\usepackage[spanish,es-tabla,es-noshorthands,es-nolists]{babel}
 \usepackage{amsmath,amssymb}
+${TEX_ESTILO}
 \usepackage{geometry}
 \geometry{margin=2.2cm}
 \usepackage{booktabs}
@@ -902,7 +945,7 @@ Coeficientes de drenaje $m_2$ ; $m_3$ & ${tn(r.m2, 2)} ; ${tn(r.m3, 2)}\\
 \end{tabular}
 \end{table}
 
-${m.tex.join("\n")}
+${m.texto()}
 
 ${tikz(d, r)}
 
@@ -925,7 +968,8 @@ ${avisosTex}
 }
 
 function descargarTex() {
-  const blob = new Blob([ultimoTex], { type: "application/x-tex;charset=utf-8" });
+  if (!ultimoTex) return;
+  const blob = new Blob([texUnicode(ultimoTex)], { type: "application/x-tex;charset=utf-8" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob); a.download = ultimoNombre;
   document.body.appendChild(a); a.click(); a.remove();
