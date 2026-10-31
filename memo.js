@@ -283,7 +283,84 @@ document.addEventListener("click", (ev) => {
   .km.crudo { font-family: Consolas, monospace; font-size: 12px; white-space: pre-wrap; }
   .vereq, .todasEq { font: inherit; font-size: 12.5px; padding: 4px 10px; border: 1px solid var(--accent, #2f7d6d); color: var(--accent, #2f7d6d); background: #fff; border-radius: 4px; cursor: pointer; }
   .todasEq { margin: 10px 16px 0; }
+  table.comb { width: 100%; min-width: 680px; border-collapse: collapse; font-size: 12.5px; margin: 6px 0; }
+  table.comb td:first-child { white-space: nowrap; }
+  table.comb td:nth-child(2) { min-width: 190px; }
+  table.comb th, table.comb td { border-bottom: 1px solid #e3e7ec; padding: 5px 6px; text-align: left; vertical-align: top; }
+  table.comb th { font-weight: 600; background: rgba(47,125,109,.08); }
+  table.comb td.num { text-align: right; white-space: nowrap; }
+  table.comb tr.sel td { background: rgba(42,111,176,.12); font-weight: 600; }
+  .combWrap { overflow-x: auto; }
+  .critTag { display: inline-block; font-size: 11px; font-weight: 700; color: #fff; background: #c0392b; border-radius: 3px; padding: 0 5px; margin-left: 4px; }
+  .selTag { display: inline-block; font-size: 11px; font-weight: 700; color: #fff; background: #2a6fb0; border-radius: 3px; padding: 0 5px; margin-left: 4px; }
   @media print { .todasEq, .vereq, .chev { display: none; } }
   `;
   document.head.appendChild(st);
 })();
+
+// ---------------------------------------------------------------------------
+// Combinaciones de carga para columnas y pies derechos (madera aserrada y MLE)
+// Cada combinación usa el K_D de su carga de menor duración (NCh 1198, Anexo G).
+// d: qPP, qSCp, qSCt, KDpp, KDsc, KDt, KDv.
+// ---------------------------------------------------------------------------
+const COMBINACIONES = [
+  { n: "C1", inc: ["PP"], kd: "KDpp", kdTxt: "permanente" },
+  { n: "C2", inc: ["PP", "SCp"], kd: "KDsc", kdTxt: "SC de piso" },
+  { n: "C3", inc: ["PP", "SCp", "SCt"], kd: "KDt", kdTxt: "SC de techo" },
+  { n: "C4", inc: ["PP", "SCp", "V"], kd: "KDv", kdTxt: "viento" },
+  { n: "C5", inc: ["PP", "SCp", "SCt", "V"], kd: "KDv", kdTxt: "viento" },
+];
+const COMB_HTML = { PP: "PP", SCp: "SC<sub>piso</sub>", SCt: "SC<sub>techo</sub>", V: "V" };
+const COMB_TEX = { PP: "PP", SCp: "SC_{piso}", SCt: "SC_{techo}", V: "V" };
+const COMB_DESC = { PP: "peso propio", SCp: "sobrecarga de piso", SCt: "sobrecarga de techo", V: "viento" };
+function combinaciones(d, conViento) {
+  return COMBINACIONES.filter(c => conViento || !c.inc.includes("V")).map(c => {
+    const desc = c.inc.map(k => COMB_DESC[k]);
+    return {
+      n: c.n, inc: c.inc, kdTxt: c.kdTxt, KD: d[c.kd], viento: c.inc.includes("V"),
+      txt: c.inc.map(k => COMB_HTML[k]).join(" + "),
+      tex: c.inc.map(k => COMB_TEX[k]).join(" + "),
+      desc: (desc.length > 1 ? desc.slice(0, -1).join(", ") + " y " + desc.at(-1) : desc[0]).replace(/^./, s => s.toUpperCase()),
+      q: (c.inc.includes("PP") ? d.qPP : 0) + (c.inc.includes("SCp") ? d.qSCp : 0) + (c.inc.includes("SCt") ? d.qSCt : 0),
+    };
+  });
+}
+// Opciones del selector "Combinación a analizar"; las con viento se deshabilitan si el viento es nulo
+function opcionesCombinacion(sel, conViento) {
+  const v = sel.value || "auto";
+  sel.innerHTML = `<option value="auto">Crítica (automática)</option>` + COMBINACIONES.map(c =>
+    `<option value="${c.n}"${!conViento && c.inc.includes("V") ? " disabled" : ""}>${c.n} — ${c.inc.map(k => k === "SCp" ? "SC piso" : k === "SCt" ? "SC techo" : k).join(" + ")}</option>`).join("");
+  sel.value = !conViento && COMBINACIONES.find(c => c.n === v)?.inc.includes("V") ? "auto" : v;
+}
+// c.max: mayor razón del elemento en la combinación (compresión paralela y, con viento, flexión, cizalle e interacción)
+function elegirCombinacion(combos, valor) {
+  const crit = combos.reduce((a, c) => (c.max > a.max ? c : a));
+  return { sel: combos.find(c => c.n === valor) || crit, crit };
+}
+// Tabla resumen de combinaciones (pantalla y .tex). s: símbolos { f, F, ftex, Ftex }
+function tablaCombinaciones(m, combos, sel, crit, elemento, s) {
+  const hayV = combos.some(c => c.viento);
+  const f3 = (x) => (Number.isFinite(x) ? fmt(x, 3) : "∞");
+  m.out.push(`<div class="combWrap"><table class="comb"><tr><th>Comb.</th><th>Incluye</th><th>K<sub>D</sub></th><th>P [kgf]</th><th>${s.f} [kgf/cm²]</th><th>${s.F} [kgf/cm²]</th><th>${s.f}/${s.F}</th>${hayV ? "<th>Flexocomp.</th>" : ""}<th>Razón máx.</th></tr>` +
+    combos.map(c => `<tr${c === sel ? ' class="sel"' : ""}><td>${c.n}${c === crit ? '<br><span class="critTag">crítica</span>' : ""}${c === sel ? '<br><span class="selTag">analizada</span>' : ""}</td>` +
+      `<td>${c.txt}<div class="unit">${c.desc}; K<sub>D</sub> de ${c.kdTxt}</div></td><td class="num">${fmt(c.KD, 2)}</td><td class="num">${fmt(c.P, 1)}</td>` +
+      `<td class="num">${fmt(c.fc, 2)}</td><td class="num">${fmt(c.Fcl, 2)}</td><td class="num">${fmt(c.ratio, 3)}</td>` +
+      (hayV ? `<td class="num">${c.viento ? f3(c.inter) : "—"}</td>` : "") + `<td class="num">${f3(c.max)}</td></tr>`).join("") +
+    `</table></div><div class="unit" style="margin-top:4px">Combinación crítica: <b>${crit.n}</b> (razón máxima ${f3(crit.max)}). Combinación analizada: <b>${sel.n}</b>. La razón máxima de cada combinación es la de compresión paralela${hayV ? " o, en las combinaciones con viento, la mayor entre compresión paralela, flexión, cizalle y flexocompresión" : ""}.${hayV ? "" : " Sin viento no se generan las combinaciones C4 y C5."}</div>`);
+  const t3 = (x) => (Number.isFinite(x) ? tn(x, 3) : L`$\infty$`);
+  memoTexCerrar(m);
+  m.tex.push(L`\begin{table}[H]
+\centering\footnotesize\setlength{\tabcolsep}{4pt}
+\caption{Combinaciones de carga ${elemento}: tensiones de trabajo ($${s.ftex}$) y de diseño con pandeo ($${s.Ftex}$) en kgf/cm$^2$. Combinación crítica: ${crit.n}; combinación analizada: ${sel.n}.}
+\begin{tabular}{ll${"r".repeat(hayV ? 7 : 6)}}
+\toprule
+Comb. & Incluye & $K_D$ & $P$ [kgf] & $${s.ftex}$ & $${s.Ftex}$ & Comp. par. & ${hayV ? "Flexocomp. & " : ""}Razón máx.\\
+\midrule
+${combos.map(c => `${c === sel ? `\\textbf{${c.n}}` : c.n}${c === crit ? " (crítica)" : ""} & $${c.tex}$ & ${tn(c.KD, 2)} & ${tn(c.P, 1)} & ${tn(c.fc, 3)} & ${tn(c.Fcl, 2)} & ${tn(c.ratio, 3)} & ${hayV ? `${c.viento ? t3(c.inter) : "---"} & ` : ""}${t3(c.max)}\\\\`).join("\n")}
+\bottomrule
+\end{tabular}
+\end{table}
+`);
+  m.tex.push(L`La razón máxima de cada combinación es la de compresión paralela${hayV ? " o, en las combinaciones con viento, la mayor entre compresión paralela, flexión, cizalle y flexocompresión" : ""}. La combinación crítica es ${crit.n} (${crit.desc.toLowerCase()}); a continuación se desarrolla la combinación ${sel.n} (${sel.desc.toLowerCase()})${sel === crit ? ", que corresponde a la crítica" : ""}.
+`);
+}

@@ -202,7 +202,7 @@
         </div>
         <label for="uso">Uso (Tabla 6)</label>
         <select id="uso"></select>
-        <label class="chk"><input type="checkbox" id="v1kN" checked> Verificar peso propio + carga puntual de 1 kN (8.2.4.9)</label>
+        <label class="chk"><input type="checkbox" id="v1kN" checked> Verificar hombre de 100 kg al centro + peso propio (δ ≤ 1 mm)</label>
       </fieldset>
       </div>
 
@@ -251,6 +251,12 @@
         <label for="cDef">Deformación por viento (8.2.4.8, Tabla 6)</label>
         <select id="cDef"><option value="0">No verificar</option><option value="240">Paredes con enlucidos frágiles (L/240)</option><option value="120" selected>Paredes sin enlucidos frágiles (L/120)</option></select>
         <div class="hint">Cada combinación usa el K<sub>D</sub> de su carga de menor duración; con viento, K<sub>D</sub> de viento en todas las verificaciones.</div>
+      </fieldset>
+      <fieldset>
+        <legend>Columna — combinación a analizar</legend>
+        <label for="cComb">Combinación</label>
+        <select id="cComb"><option value="auto">Crítica (automática)</option></select>
+        <div class="hint">C1 PP · C2 PP + SC piso · C3 PP + SC piso + SC techo · C4 PP + SC piso + V · C5 PP + SC piso + SC techo + V. Las verificaciones por viento (flexión, cizalle, flexocompresión y deformación) se desarrollan solo si la combinación elegida incluye viento.</div>
       </fieldset>
       </div>
     </div>
@@ -661,11 +667,11 @@ ${nom} &= \left(\frac{5\,${qTxt}\,L^4}{384\,E_{dis}\,I}${d.P ? L` + \frac{P\,L^3
   if (divSC) m.eq(L`\delta_{SC} = ${tn(dSC, 2)}\ \mathrm{mm} \;${cmp(dSC, limSC)}\; ${maxSC ? L`\min\left(\frac{L}{${divSC}};\ ${maxSC}\right)` : L`\frac{L}{${divSC}}`} = ${tn(limSC, 2)}\ \mathrm{mm} \hspace{2em}\textbf{${dSC <= limSC ? "¡CUMPLE!" : "¡NO CUMPLE!"}}`, "Tabla 6");
   if (d.uso.startsWith("Vigas de piso")) m.p(L`Para vigas de piso, la deformación por peso propio más sobrecarga no debe exceder además 15 mm (8.2.4.10).`, true);
   if (d.v1kN) {
-    const d1 = fl(qPP, 100), lim1 = Math.min(Lc * 10 / 100, 20);
+    const d1 = fl(qPP, 100), lim1 = 1;
     r.d1 = d1 / lim1; Object.assign(r, { d1v: d1, lim1 });
-    m.row("<b>Peso propio + carga puntual de 1 kN: δ ≤ min(L/100; 20 mm)</b>", `<b>${fmt(d1, 2)} ≤ ${fmt(lim1, 2)} mm</b> ${okTxt(d1 <= lim1)}`, "8.2.4.9");
-    m.p(L`\textbf{Carga puntual de 1 kN.} Bajo el peso propio y una carga puntual de 1 kN ($\approx 100$ kgf, una persona) al centro, la deformación no debe superar $L/100$ ni 20 mm (8.2.4.9):`);
-    m.eq(L`\delta = \frac{100\,L^3}{48\,E_{dis}\,I} + \frac{5\,q_{PP}\,L^4}{384\,E_{dis}\,I} = ${tn(d1, 2)}\ \mathrm{mm} \;${cmp(d1, lim1)}\; \min\left(\frac{L}{100};\ 20\right) = ${tn(lim1, 2)}\ \mathrm{mm} \hspace{2em}\textbf{${d1 <= lim1 ? "¡CUMPLE!" : "¡NO CUMPLE!"}}`, "8.2.4.9");
+    m.row("<b>Deformación por hombre de 100 kg: δ<sub>HH+PP</sub> ≤ 1 mm</b>", `<b>${fmt(d1, 3)} ≤ ${fmt(lim1, 0)} mm</b> ${okTxt(d1 <= lim1)}`, "8.2.4.13");
+    m.p(L`\textbf{Hombre de 100 kg.} Bajo el peso propio y una carga puntual de 100 kgf (1 kN, una persona) al centro del vano, la deformación no debe superar 1 mm:`);
+    m.eq(L`\delta_{HH+PP} = \frac{100\,L^3}{48\,E_{dis}\,I} + \frac{5\,q_{PP}\,L^4}{384\,E_{dis}\,I} = ${tn(d1, 3)}\ \mathrm{mm} \;${cmp(d1, lim1)}\; 1\ \mathrm{mm} \hspace{2em}\textbf{${d1 <= lim1 ? "¡CUMPLE!" : "¡NO CUMPLE!"}}`, "8.2.4.13");
   }
   Object.assign(r, { P, F, f, KD, M, V, q, qPP, pp, ff, Fdis: fx.Fdis, fcz, Fczd, fcn, Fcnd });
   return r;
@@ -682,7 +688,7 @@ function leerColumna() {
     Lpx: vacio("cLpx") ? Lm : num("cLpx"), Lpy: vacio("cLpy") ? Lm : num("cLpy"), la: (vacio("cla") ? Lm : num("cla")) * 100,
     Kp: kp[tipo], kpTxt: `${kp[0]} (${tipo === 1 ? "teórico" : "recomendado"})`,
     qPP: num("cqPP"), qSCp: num("cqSCp"), qSCt: num("cqSCt"), B: num("cB"), w: num("cw"),
-    KDpp: num("cKDpp"), KDsc: num("cKDsc"), KDt: num("cKDt"), KDv: num("cKDv"), Kcn: num("cKcn"), def: +$("cDef").value,
+    KDpp: num("cKDpp"), KDsc: num("cKDsc"), KDt: num("cKDt"), KDv: num("cKDv"), Kcn: num("cKcn"), def: +$("cDef").value, comb: $("cComb").value,
   };
 }
 
@@ -695,13 +701,7 @@ function calcularColumna(d, m) {
   // Cargas y combinaciones
   m.h("Cargas y combinaciones");
   const ppc = P.rhoP * (d.b / 1000) * (d.h / 1000) * d.Lm;       // kgf
-  const combos = [
-    { n: "C1", txt: "PP", tex: "PP", q: d.qPP, KD: d.KDpp, kdTxt: "permanente", v: false },
-    { n: "C2", txt: "PP + SC<sub>piso</sub>", tex: L`PP + SC_{piso}`, q: d.qPP + d.qSCp, KD: d.KDsc, kdTxt: "SC de piso", v: false },
-    { n: "C3", txt: "PP + SC<sub>piso</sub> + SC<sub>techo</sub>", tex: L`PP + SC_{piso} + SC_{techo}`, q: d.qPP + d.qSCp + d.qSCt, KD: d.KDt, kdTxt: "SC de techo", v: false },
-    { n: "C4", txt: "PP + SC<sub>piso</sub> + V", tex: L`PP + SC_{piso} + V`, q: d.qPP + d.qSCp, KD: d.KDv, kdTxt: "viento", v: true },
-    { n: "C5", txt: "PP + SC<sub>piso</sub> + SC<sub>techo</sub> + V", tex: L`PP + SC_{piso} + SC_{techo} + V`, q: d.qPP + d.qSCp + d.qSCt, KD: d.KDv, kdTxt: "viento", v: true },
-  ].filter(c => !c.v || d.w > 0);
+  const combos = combinaciones(d, d.w > 0);
   combos.forEach(c => { c.P = c.q * d.B + ppc; });
   const MV = d.w * d.Lm ** 2 / 8 * 100, VV = d.w * d.Lm / 2;   // kgf·cm ; kgf
   m.row("Peso propio de la columna", `${fmt(ppc, 2)} kgf`);
@@ -715,19 +715,11 @@ function calcularColumna(d, m) {
   const f = factores(d, m, d.Lm, `${fmt(d.KDpp, 2)} / ${fmt(d.KDsc, 2)} / ${fmt(d.KDt, 2)} / ${fmt(d.KDv, 2)} (PP / SC piso / SC techo / viento)`, r);
   const Edis = F.E * f.KH("E");
 
-  // Compresión paralela
-  m.h("Compresión paralela — 8.3 y 11.3.1.4");
+  // Todas las combinaciones (sin memoria): compresión paralela, normal y, con viento, flexión, cizalle e interacción
   const lx = d.Kp * d.Lpx * 100 / (0.289 * hc), ly = d.Kp * d.Lpy * 100 / (0.289 * bc);
   const lam = Math.max(lx, ly);
   const FcE = 5.0 * Edis / lam ** 2;
   r.lam = lam / d.lamMax;
-  m.row("Factor de longitud efectiva: K<sub>p</sub>", `${fmt(d.Kp, 2)} — ${d.kpTxt}`, "Anexo J");
-  m.row("Esbeltez en torno a x ; en torno a y: λ<sub>x</sub> ; λ<sub>y</sub>", `${fmt(lx, 2)} ; ${fmt(ly, 2)}`);
-  m.row(`Esbeltez reguladora: λ ≤ ${d.lamMax}`, `${fmt(lam, 2)} ${okTxt(lam <= d.lamMax)}`, "8.3.2");
-  m.row("Módulo de diseño ; tensión crítica: E<sub>dis</sub> ; F<sub>cE</sub>", `${fmt(Edis, 0)} ; ${fmt(FcE, 2)} kgf/cm²`, "11.3.1.4");
-  m.p(L`\textbf{Esbeltez.} Con el radio de giro de la sección rectangular ($i = 0{,}289$ por el lado) y $K_p = ${tn(d.Kp, 2)}$ (${d.kpTxt.toLowerCase()}):`);
-  m.eq(L`\lambda_x = \frac{K_p\,L_{p,x}}{0{,}289\,h} = \frac{${tn(d.Kp, 2)}\cdot ${tn(d.Lpx * 100, 0)}}{0{,}289\cdot ${tn(hc, 1)}} = ${tn(lx, 2)} \qquad \lambda_y = \frac{K_p\,L_{p,y}}{0{,}289\,b} = \frac{${tn(d.Kp, 2)}\cdot ${tn(d.Lpy * 100, 0)}}{0{,}289\cdot ${tn(bc, 1)}} = ${tn(ly, 2)}`);
-  m.eq(L`\lambda = \max(\lambda_x;\ \lambda_y) = ${tn(lam, 2)} \;${lam <= d.lamMax ? LE : ">"}\; ${d.lamMax} \qquad F_{cE,ml} = \frac{5{,}0\,E_{dis}}{\lambda^2} = \frac{5{,}0\cdot ${tn(Edis, 0)}}{${tn(lam, 2)}^2} = ${tn(FcE, 2)}\ \mathrm{kgf/cm^2}`, "11.3.1.4");
   for (const c of combos) {
     c.fc = c.P / A;
     c.Fcp = F.cp * f.KH("cp") * c.KD;
@@ -738,21 +730,50 @@ function calcularColumna(d, m) {
     }
     c.Fcl = c.Fcp * c.Kl;
     c.ratio = c.fc / c.Fcl;
-    m.row(`<b>${c.n} (K<sub>D</sub> = ${fmt(c.KD, 2)}): f<sub>c</sub> / F<sub>cλ,dis</sub></b>`, `<b>${fmt(c.fc, 2)} / ${fmt(c.Fcl, 2)} = ${fmt(c.ratio, 3)}</b> ${okTxt(c.ratio <= 1)}`);
-    m.p(L`\textbf{Combinación ${c.n}} ($${c.tex}$, $K_D = ${tn(c.KD, 2)}$, ${c.kdTxt}):`, true);
-    m.eq(L`f_c = \frac{P}{b\,h} = \frac{${tn(c.P, 1)}}{${tn(bc, 1)}\cdot ${tn(hc, 1)}} = ${tn(c.fc, 3)} \qquad F_{cp,dis} = F_{cp}\,K_H\,K_D = ${tn(F.cp, 2)}\cdot ${tn(f.KH("cp"), 3)}\cdot ${tn(c.KD, 2)} = ${tn(c.Fcp, 2)}\ \mathrm{kgf/cm^2}`);
-    if (lam >= 10) m.eq(L`A = \frac{\frac{F_{cE,ml}}{F_{cp,dis}}\left(1 + \frac{\lambda}{300}\right) + 1}{1{,}8} = ${tn(c.A, 4)} \qquad B = \frac{F_{cE,ml}}{0{,}9\,F_{cp,dis}} = ${tn(c.B, 4)} \qquad K_\lambda = A - \sqrt{A^2 - B} = ${tn(c.Kl, 4)}`, "11.3.1.4");
-    m.eq(L`F_{c\lambda,dis} = F_{cp,dis}\,K_\lambda = ${tn(c.Fcp, 2)}\cdot ${tn(c.Kl, 4)} = ${tn(c.Fcl, 2)}\ \mathrm{kgf/cm^2}`);
-    m.eq(chequeo("f_c", c.fc, L`F_{c\lambda,dis}`, c.Fcl, UKG, 3));
   }
-  const cMax = combos.reduce((a, c) => (c.ratio > a.ratio ? c : a));
-  r.comp = cMax.ratio; r.compN = cMax.n; r.cMax = cMax;
-
-  // Viento: flexión, cizalle, flexocompresión y deformación
+  const Fcnd = F.cn * f.KH("cn") * d.Kcn;
+  let ffx = 0, fx = null, fcz = 0, Fczd = 0, FcEx = 0;
   if (d.w > 0) {
+    ffx = MV / Wx;
+    fx = flexionDis(d, F, f, d.KDv, Edis, d.la, false);
+    fcz = 1.5 * VV / A; Fczd = F.cz * f.KH("cz") * d.KDv;
+    FcEx = 5 * Edis / lx ** 2;
+  }
+  for (const c of combos) {
+    c.fcn = c.P / A; c.rcn = c.fcn / Fcnd;
+    const v = [c.ratio];
+    if (c.viento) {
+      c.amp = 1 - c.fc / FcEx;
+      c.inter = c.amp > 0 ? (c.fc / c.Fcl) ** 2 + ffx / (c.amp * fx.Fdis) : Infinity;
+      v.push(ffx / fx.Fdis, fcz / Fczd, c.inter);
+    }
+    c.max = Math.max(...v);
+  }
+  const { sel, crit } = elegirCombinacion(combos, d.comb);
+
+  m.h("Resumen de combinaciones de carga");
+  tablaCombinaciones(m, combos, sel, crit, "de la columna", { f: "f<sub>c</sub>", F: "F<sub>cλ,dis</sub>", ftex: "f_c", Ftex: L`F_{c\lambda,dis}` });
+
+  // Compresión paralela de la combinación analizada
+  m.h(`Compresión paralela — combinación ${sel.n} (8.3 y 11.3.1.4)`);
+  m.row("Factor de longitud efectiva: K<sub>p</sub>", `${fmt(d.Kp, 2)} — ${d.kpTxt}`, "Anexo J");
+  m.row("Esbeltez en torno a x ; en torno a y: λ<sub>x</sub> ; λ<sub>y</sub>", `${fmt(lx, 2)} ; ${fmt(ly, 2)}`);
+  m.row(`Esbeltez reguladora: λ ≤ ${d.lamMax}`, `${fmt(lam, 2)} ${okTxt(lam <= d.lamMax)}`, "8.3.2");
+  m.row("Módulo de diseño ; tensión crítica: E<sub>dis</sub> ; F<sub>cE</sub>", `${fmt(Edis, 0)} ; ${fmt(FcE, 2)} kgf/cm²`, "11.3.1.4");
+  m.row(`<b>${sel.n} — ${sel.txt} (K<sub>D</sub> = ${fmt(sel.KD, 2)}): f<sub>c</sub> / F<sub>cλ,dis</sub></b>`, `<b>${fmt(sel.fc, 2)} / ${fmt(sel.Fcl, 2)} = ${fmt(sel.ratio, 3)}</b> ${okTxt(sel.ratio <= 1)}`);
+  m.p(L`\textbf{Esbeltez.} Con el radio de giro de la sección rectangular ($i = 0{,}289$ por el lado) y $K_p = ${tn(d.Kp, 2)}$ (${d.kpTxt.toLowerCase()}):`);
+  m.eq(L`\lambda_x = \frac{K_p\,L_{p,x}}{0{,}289\,h} = \frac{${tn(d.Kp, 2)}\cdot ${tn(d.Lpx * 100, 0)}}{0{,}289\cdot ${tn(hc, 1)}} = ${tn(lx, 2)} \qquad \lambda_y = \frac{K_p\,L_{p,y}}{0{,}289\,b} = \frac{${tn(d.Kp, 2)}\cdot ${tn(d.Lpy * 100, 0)}}{0{,}289\cdot ${tn(bc, 1)}} = ${tn(ly, 2)}`);
+  m.eq(L`\lambda = \max(\lambda_x;\ \lambda_y) = ${tn(lam, 2)} \;${lam <= d.lamMax ? LE : ">"}\; ${d.lamMax} \qquad F_{cE,ml} = \frac{5{,}0\,E_{dis}}{\lambda^2} = \frac{5{,}0\cdot ${tn(Edis, 0)}}{${tn(lam, 2)}^2} = ${tn(FcE, 2)}\ \mathrm{kgf/cm^2}`, "11.3.1.4");
+  m.p(L`\textbf{Combinación ${sel.n}} ($${sel.tex}$, $K_D = ${tn(sel.KD, 2)}$, ${sel.kdTxt}):`);
+  m.eq(L`f_c = \frac{P}{b\,h} = \frac{${tn(sel.P, 1)}}{${tn(bc, 1)}\cdot ${tn(hc, 1)}} = ${tn(sel.fc, 3)} \qquad F_{cp,dis} = F_{cp}\,K_H\,K_D = ${tn(F.cp, 2)}\cdot ${tn(f.KH("cp"), 3)}\cdot ${tn(sel.KD, 2)} = ${tn(sel.Fcp, 2)}\ \mathrm{kgf/cm^2}`);
+  if (lam >= 10) m.eq(L`A = \frac{\frac{F_{cE,ml}}{F_{cp,dis}}\left(1 + \frac{\lambda}{300}\right) + 1}{1{,}8} = ${tn(sel.A, 4)} \qquad B = \frac{F_{cE,ml}}{0{,}9\,F_{cp,dis}} = ${tn(sel.B, 4)} \qquad K_\lambda = A - \sqrt{A^2 - B} = ${tn(sel.Kl, 4)}`, "11.3.1.4");
+  m.eq(L`F_{c\lambda,dis} = F_{cp,dis}\,K_\lambda = ${tn(sel.Fcp, 2)}\cdot ${tn(sel.Kl, 4)} = ${tn(sel.Fcl, 2)}\ \mathrm{kgf/cm^2}`);
+  m.eq(chequeo("f_c", sel.fc, L`F_{c\lambda,dis}`, sel.Fcl, UKG, 3));
+  r.comp = sel.ratio;
+
+  // Viento: solo si la combinación analizada lo incluye
+  if (sel.viento) {
     m.h("Flexión por viento — 8.2.2 y 11.3");
-    const ffx = MV / Wx;
-    const fx = flexionDis(d, F, f, d.KDv, Edis, d.la, false);
     r.flex = ffx / fx.Fdis; r.ffx = ffx; r.Ffx = fx.Fdis;
     if (fx.necesita) { r.lamv = fx.lamv; if (fx.lamv > 50) r.avisos.push(`La esbeltez de volcamiento λ<sub>v</sub> = ${fmt(fx.lamv, 1)} supera 50 (8.2.1.8).`); }
     m.row("Módulo resistente ; tensión de trabajo: W<sub>x</sub> ; f<sub>fx</sub>", `${fmt(Wx, 1)} cm³ ; ${fmt(ffx, 2)} kgf/cm²`);
@@ -762,25 +783,18 @@ function calcularColumna(d, m) {
     memoFlexion(m, d, F, f, d.KDv, Edis, d.la, fx, ffx, false);
 
     m.h("Cizalle por viento — 8.2.3");
-    const fcz = 1.5 * VV / A, Fczd = F.cz * f.KH("cz") * d.KDv;
-    r.ciz = fcz / Fczd;
+    r.ciz = fcz / Fczd; r.fcz = fcz; r.Fczd = Fczd;
     m.row("<b>Cizalle: f<sub>cz</sub> / F<sub>cz,dis</sub></b>", `<b>${fmt(fcz, 3)} / ${fmt(Fczd, 2)} = ${fmt(r.ciz, 3)}</b> ${okTxt(r.ciz <= 1)}`);
     m.eq(L`f_{cz} = \frac{1{,}5\,V_V}{b\,h} = \frac{1{,}5\cdot ${tn(VV, 2)}}{${tn(bc, 1)}\cdot ${tn(hc, 1)}} = ${tn(fcz, 3)} \qquad F_{cz,dis} = F_{cz}\,K_H\,K_D = ${tn(F.cz, 2)}\cdot ${tn(f.KH("cz"), 3)}\cdot ${tn(d.KDv, 2)} = ${tn(Fczd, 2)}\ \mathrm{kgf/cm^2}`, "8.2.3");
     m.eq(chequeo("f_{cz}", fcz, "F_{cz,dis}", Fczd, UKG, 3));
 
-    m.h("Flexión y compresión combinadas — 11.4");
-    const FcEx = 5 * Edis / lx ** 2;
-    let peor = null;
-    m.p(L`Se verifican las combinaciones con viento con la expresión de 11.4 (flexión de canto, $f_{fy} = 0$), con $F_{cE,x} = 5\,E_{x,dis}/\lambda_x^2$:`);
+    m.h(`Flexión y compresión combinadas — combinación ${sel.n} (11.4)`);
+    r.fc = sel.inter;
+    m.row("Tensión crítica de pandeo en el plano del viento: F<sub>cE,x</sub>", `${fmt(FcEx, 2)} kgf/cm²`, "11.4");
+    m.row(`<b>Interacción ${sel.n}</b>`, `<b>${fmt(sel.inter, 3)}</b> ${okTxt(sel.inter <= 1)}`, "11.4");
+    m.p(L`Se verifica la combinación ${sel.n} con la expresión de 11.4 (flexión de canto, $f_{fy} = 0$), con $F_{cE,x} = 5\,E_{x,dis}/\lambda_x^2$:`);
     m.eq(L`F_{cE,x} = \frac{5\,E_{x,dis}}{\lambda_x^2} = \frac{5\cdot ${tn(Edis, 0)}}{${tn(lx, 2)}^2} = ${tn(FcEx, 2)}\ \mathrm{kgf/cm^2}`, "11.4");
-    for (const c of combos.filter(c => c.v)) {
-      const amp = 1 - c.fc / FcEx;
-      c.inter = amp > 0 ? (c.fc / c.Fcl) ** 2 + ffx / (amp * fx.Fdis) : Infinity;
-      m.row(`<b>Interacción ${c.n}</b>`, `<b>${fmt(c.inter, 3)}</b> ${okTxt(c.inter <= 1)}`, "11.4");
-      m.eq(L`\left(\frac{f_c}{F_{c\lambda,dis}}\right)^2 + \frac{f_{fx}}{\left(1 - \frac{f_c}{F_{cE,x}}\right)F_{fx,dis}} = \left(\frac{${tn(c.fc, 3)}}{${tn(c.Fcl, 2)}}\right)^2 + \frac{${tn(ffx, 2)}}{\left(1 - \frac{${tn(c.fc, 3)}}{${tn(FcEx, 2)}}\right)\cdot ${tn(fx.Fdis, 2)}} = ${tn(c.inter, 3)} \;${c.inter <= 1 ? LE : ">"}\; 1`, "11.4");
-      if (!peor || c.inter > peor.inter) peor = c;
-    }
-    r.fc = peor.inter; r.fcN = peor.n;
+    m.eq(L`\left(\frac{f_c}{F_{c\lambda,dis}}\right)^2 + \frac{f_{fx}}{\left(1 - \frac{f_c}{F_{cE,x}}\right)F_{fx,dis}} = \left(\frac{${tn(sel.fc, 3)}}{${tn(sel.Fcl, 2)}}\right)^2 + \frac{${tn(ffx, 2)}}{\left(1 - \frac{${tn(sel.fc, 3)}}{${tn(FcEx, 2)}}\right)\cdot ${tn(fx.Fdis, 2)}} = ${tn(sel.inter, 3)} \;${sel.inter <= 1 ? LE : ">"}\; 1`, "11.4");
 
     if (d.def) {
       const dV = 5 * (d.w / 100) * Lc ** 4 / (384 * Edis * Ix) * 10, limV = Lc * 10 / d.def;
@@ -789,19 +803,20 @@ function calcularColumna(d, m) {
       m.row(`<b>Deformación lateral: δ ≤ L/${d.def}</b>`, `<b>${fmt(dV, 2)} ≤ ${fmt(limV, 2)} mm</b> ${okTxt(dV <= limV)}`, "Tabla 6");
       m.eq(L`\delta_V = \frac{5\,w\,L^4}{384\,E_{dis}\,I_x} = \frac{5\cdot ${tn(d.w / 100, 3)}\cdot ${tn(Lc, 0)}^4}{384\cdot ${tn(Edis, 0)}\cdot ${tn(Ix, 0)}} = ${tn(dV, 2)}\ \mathrm{mm} \;${cmp(dV, limV)}\; \frac{L}{${d.def}} = ${tn(limV, 2)}\ \mathrm{mm} \hspace{2em}\textbf{${dV <= limV ? "¡CUMPLE!" : "¡NO CUMPLE!"}}`, "8.2.4.8");
     }
+  } else if (d.w > 0) {
+    m.p(L`La combinación ${sel.n} no incluye viento, por lo que no se desarrollan las verificaciones de flexión, cizalle, flexocompresión ni deformación por viento (ver C4 y C5 en el resumen de combinaciones).`);
   }
 
-  // Compresión normal en el apoyo
+  // Compresión normal en el apoyo, con la carga de la combinación analizada
   m.h("Compresión normal en el apoyo — 8.5");
-  const Pmax = Math.max(...combos.map(c => c.P));
-  const fcn = Pmax / A, Fcnd = F.cn * f.KH("cn") * d.Kcn;
-  r.cn = fcn / Fcnd;
-  m.row("<b>Compresión normal: f<sub>cn</sub> / F<sub>cn,dis</sub></b>", `<b>${fmt(fcn, 3)} / ${fmt(Fcnd, 2)} = ${fmt(r.cn, 3)}</b> ${okTxt(r.cn <= 1)}`, "8.5");
-  m.p(L`Sobre el elemento de apoyo transversal a la fibra (solera, viga) actúa la carga axial máxima en el área de contacto de la columna; $F_{cn,dis}$ no se afecta por $K_D$:`, true);
-  m.eq(L`f_{cn} = \frac{P_{m\acute{a}x}}{b\,h} = \frac{${tn(Pmax, 1)}}{${tn(A, 1)}} = ${tn(fcn, 3)} \qquad F_{cn,dis} = F_{cn}\,K_H\,K_{cn} = ${tn(F.cn, 2)}\cdot ${tn(f.KH("cn"), 3)}\cdot ${tn(d.Kcn, 2)} = ${tn(Fcnd, 2)}\ \mathrm{kgf/cm^2}`, "8.5");
+  const fcn = sel.fcn;
+  r.cn = sel.rcn;
+  m.row(`<b>Compresión normal (${sel.n}): f<sub>cn</sub> / F<sub>cn,dis</sub></b>`, `<b>${fmt(fcn, 3)} / ${fmt(Fcnd, 2)} = ${fmt(r.cn, 3)}</b> ${okTxt(r.cn <= 1)}`, "8.5");
+  m.p(L`Sobre el elemento de apoyo transversal a la fibra (solera, viga) actúa la carga axial de la combinación ${sel.n} en el área de contacto de la columna; $F_{cn,dis}$ no se afecta por $K_D$:`, true);
+  m.eq(L`f_{cn} = \frac{P_{${sel.n}}}{b\,h} = \frac{${tn(sel.P, 1)}}{${tn(A, 1)}} = ${tn(fcn, 3)} \qquad F_{cn,dis} = F_{cn}\,K_H\,K_{cn} = ${tn(F.cn, 2)}\cdot ${tn(f.KH("cn"), 3)}\cdot ${tn(d.Kcn, 2)} = ${tn(Fcnd, 2)}\ \mathrm{kgf/cm^2}`, "8.5");
   m.eq(chequeo("f_{cn}", fcn, "F_{cn,dis}", Fcnd, UKG, 3));
 
-  Object.assign(r, { P, F, f, combos, lx, ly, lamv: r.lamv, fcn, Fcnd, Pmax, ppc });
+  Object.assign(r, { P, F, f, combos, sel, crit, lx, ly, lamv: r.lamv, fcn, Fcnd, ppc });
   return r;
 }
 
@@ -880,7 +895,8 @@ function seccionTikz(d, P, esViga) {
   }
   s += `\\draw[thick] (${f(x0)},${f(y0)}) rectangle (${f(x0 + bw)},${f(y0 + hh)});\n`;
   s += `\\draw[violet, dash dot] (${f(x0 - 0.5)},0) -- (${f(x0 + bw + 0.5)},0) node[right] {$x$};\n`;
-  s += `\\draw[violet, dash dot] (0,${f(y0 - 0.5)}) -- (0,${f(y0 + hh + 0.5)}) node[above right] {$y$};\n`;
+  // el eje y no baja hasta la cota de b (y0 − 0,8) y su rótulo queda arriba
+  s += `\\draw[violet, dash dot] (0,${f(y0 - 0.3)}) -- (0,${f(y0 + hh + 0.5)}) node[above right] {$y$};\n`;
   s += `\\draw[cota] (${f(x0)},${f(y0 - 0.8)}) -- node[below, font=\\small] {$b = ${tn(d.b, 0)}$ mm} (${f(x0 + bw)},${f(y0 - 0.8)});\n`;
   s += `\\draw[cota] (${f(x0 - 0.8)},${f(y0)}) -- node[left, font=\\small] {$h = ${tn(d.h, 0)}$ mm} (${f(x0 - 0.8)},${f(y0 + hh)});\n`;
   if (d.lam === "horizontal") s += `\\draw[cota, brown!60!black] (${f(x0 + bw + 0.35)},${f(y0)}) -- node[right, font=\\footnotesize] {$t = ${tn(d.t, 0)}$ mm} (${f(x0 + bw + 0.35)},${f(y0 + hh / n)});\n`;
@@ -996,7 +1012,7 @@ function mostrar(items, titulo, verdictTxt, r, d, esViga, m, texTitulo, texSub, 
   const dc = Math.max(...items.map(i => i[1]));
   const ok = dc <= 1;
   $("resTitle").textContent = titulo;
-  $("verdict").innerHTML = `<div class="verdict ${ok ? "ok" : "bad"}">${ok ? `✔ ${verdictTxt} CUMPLE` : `✘ ${verdictTxt} NO CUMPLE`} — razón máxima = ${fmt(dc, 3)}</div>`;
+  $("verdict").innerHTML = `<div class="verdict ${ok ? "ok" : "bad"}">${ok ? `✔ ${verdictTxt} CUMPLE` : `✘ ${verdictTxt} NO CUMPLE`} — razón máxima = ${fmt(dc, 3)}${r.notaComb ? `<div style="font-weight:400;font-size:13px;margin-top:4px">${r.notaComb}</div>` : ""}</div>`;
   $("avisos").innerHTML = r.avisos.map(a => `<div class="note">${a}</div>`).join("");
   $("svgSec").innerHTML = seccionSVG(d, r.P, esViga);
   $("memo").innerHTML = m.html();
@@ -1038,7 +1054,7 @@ function actualizar() {
     if (r.lamv !== undefined) items.push(["Volcamiento λ<sub>v</sub>/50", r.lamv / 50, `λ<sub>v</sub> = ${fmt(r.lamv, 1)}`]);
     if (r.divT) items.push(["Deformación SC+PP", r.defT, `${fmt(r.dT, 2)} / ${fmt(r.limT, 2)} mm`]);
     if (r.divSC) items.push(["Deformación SC", r.defSC, `${fmt(r.dSC, 2)} / ${fmt(r.limSC, 2)} mm`]);
-    if (d.v1kN) items.push(["PP + 1 kN (8.2.4.9)", r.d1, `${fmt(r.d1v, 2)} / ${fmt(r.lim1, 2)} mm`]);
+    if (d.v1kN) items.push(["Hombre de 100 kg + PP (≤ 1 mm)", r.d1, `${fmt(r.d1v, 3)} / ${fmt(r.lim1, 0)} mm`]);
     const datos = [
       L`Material & ${r.P.nombre.replace(/–/g, "--")} (${r.P.tipo.toLowerCase()})`,
       L`Sección $b\times h$ ; lámina $t$ & ${tn(d.b, 0)} $\times$ ${tn(d.h, 0)} mm ; ${tn(d.t, 0)} mm (${d.lam})`,
@@ -1051,20 +1067,23 @@ function actualizar() {
       "Viga de Madera Laminada Encolada", `${r.P.nombre.replace(/–/g, "--")}, sección ${tn(d.b, 0)} $\\times$ ${tn(d.h, 0)} mm, luz $L = ${tn(d.Lm, 2)}$ m`,
       datos, "la viga", `memoria_viga_mle_${d.b}x${d.h}.tex`);
   } else {
+    opcionesCombinacion($("cComb"), num("cw") > 0);
     const d = leerColumna();
     const r = calcularColumna(d, m);
+    const s = r.sel;
     const items = [
-      [`Compresión paralela (${r.compN})`, r.comp, `${fmt(r.cMax.fc, 2)} / ${fmt(r.cMax.Fcl, 2)} kgf/cm²`],
+      [`Compresión paralela (${s.n})`, r.comp, `${fmt(s.fc, 2)} / ${fmt(s.Fcl, 2)} kgf/cm²`],
       [`Esbeltez λ/${d.lamMax}`, r.lam, `λ = ${fmt(r.lam * d.lamMax, 1)}`],
     ];
-    if (d.w > 0) {
-      items.push(["Flexión por viento", r.flex, `${fmt(r.ffx, 1)} / ${fmt(r.Ffx, 1)} kgf/cm²`]);
-      items.push(["Cizalle por viento", r.ciz, ""]);
-      items.push([`Flexocompresión (${r.fcN})`, r.fc, "interacción 11.4"]);
+    if (s.viento) {
+      items.push([`Flexión por viento (${s.n})`, r.flex, `${fmt(r.ffx, 1)} / ${fmt(r.Ffx, 1)} kgf/cm²`]);
+      items.push([`Cizalle por viento (${s.n})`, r.ciz, `${fmt(r.fcz, 3)} / ${fmt(r.Fczd, 2)} kgf/cm²`]);
+      items.push([`Flexocompresión (${s.n})`, r.fc, "interacción 11.4"]);
       if (r.lamv !== undefined) items.push(["Volcamiento λ<sub>v</sub>/50", r.lamv / 50, `λ<sub>v</sub> = ${fmt(r.lamv, 1)}`]);
       if (d.def) items.push(["Deformación por viento", r.defV, `${fmt(r.dV, 2)} / ${fmt(r.limV, 2)} mm`]);
     }
-    items.push(["Compresión normal (apoyo)", r.cn, `${fmt(r.fcn, 2)} / ${fmt(r.Fcnd, 2)} kgf/cm²`]);
+    items.push([`Compresión normal (${s.n})`, r.cn, `${fmt(r.fcn, 2)} / ${fmt(r.Fcnd, 2)} kgf/cm²`]);
+    r.notaComb = `Combinación analizada: ${s.n} (${s.txt})${s === r.crit ? " — es la combinación crítica" : ` · combinación crítica: ${r.crit.n} (${r.crit.txt}), razón máxima ${fmt(r.crit.max, 3)}`}`;
     const datos = [
       L`Material & ${r.P.nombre.replace(/–/g, "--")} (${r.P.tipo.toLowerCase()})`,
       L`Sección $b\times h$ ; lámina $t$ & ${tn(d.b, 0)} $\times$ ${tn(d.h, 0)} mm ; ${tn(d.t, 0)} mm (${d.lam})`,
@@ -1072,6 +1091,7 @@ function actualizar() {
       L`Altura $L$ ; $L_{p,x}$ ; $L_{p,y}$ ; $K_p$ & ${tn(d.Lm, 2)} ; ${tn(d.Lpx, 2)} ; ${tn(d.Lpy, 2)} m ; ${tn(d.Kp, 2)}`,
       L`$q_{PP}$ ; $q_{SC,piso}$ ; $q_{SC,techo}$ ; $B$ & ${tn(d.qPP, 1)} ; ${tn(d.qSCp, 1)} ; ${tn(d.qSCt, 1)} kgf/m ; ${tn(d.B, 2)} m`,
       L`Viento $w$ & ${tn(d.w, 1)} kgf/m`,
+      s === r.crit ? L`Combinación analizada & ${s.n} ($${s.tex}$), crítica` : L`Combinación analizada ; crítica & ${s.n} ; ${r.crit.n} ($${r.crit.tex}$)`,
     ];
     mostrar(items, `Resultados — columna ${nomSec(d)} · ${r.P.nombre} · L = ${fmt(d.Lm, 2)} m`, "La columna", r, d, false, m,
       "Columna de Madera Laminada Encolada", `${r.P.nombre.replace(/–/g, "--")}, sección ${tn(d.b, 0)} $\\times$ ${tn(d.h, 0)} mm, altura $L = ${tn(d.Lm, 2)}$ m`,

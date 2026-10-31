@@ -73,6 +73,11 @@
   table.par td.num { text-align: right; }
   h3.sec { font-size: 13.5px; color: var(--head); margin: 18px 0 6px; padding-bottom: 4px; border-bottom: 2px solid var(--accent); }
   h3.sec:first-child { margin-top: 4px; }
+  /* Pasos de cálculo con el formato común de memo.js */
+  table.calc { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.calc td { padding: 4px 8px; border-bottom: 1px solid #eef0f3; vertical-align: top; }
+  table.calc td.v { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  h4.sep { margin: 0; height: 8px; }
   .formula { margin: 10px 0 0; padding: 8px 10px; background: #f3f7f6; border-radius: 5px; font-size: 13px; }
   details { margin: 0 16px 16px; }
   details summary { cursor: pointer; font-size: 13px; color: var(--head); font-weight: 600; padding: 6px 0; }
@@ -164,7 +169,7 @@
       <div id="pasosU"></div>
       <h3 class="sec">Parámetros del espectro</h3>
       <table class="par" id="tablaPar"></table>
-      <div class="paso"><button type="button" class="vereq">Ver ecuaciones</button><div class="eqs hidden" id="formula"></div></div>
+      <div id="formula" style="margin-top:8px"></div>
       <div class="nota">El archivo .txt contiene dos columnas separadas por tabulación (T en s, S<sub>a</sub> en g), sin dividir por R* ni multiplicar por g: en ETABS defina la función con estos valores y aplique el factor de escala g/R* en el caso de carga.</div>
     </div>
     <details>
@@ -236,6 +241,11 @@ const NORMAS = {
 const $ = (id) => document.getElementById(id);
 const fmt = (x, d = 3) => Number.isFinite(x) ? x.toLocaleString("es-CL", { minimumFractionDigits: d, maximumFractionDigits: d }) : "—";
 const num = (id) => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : 0; };
+const L = String.raw;
+// Número para KaTeX: coma decimal {,} y espacio fino en miles
+const tn = (x, d = 3) => Number.isFinite(x) ? fmt(x, d).replace(/,/g, "{,}").replace(/(\d)\.(\d{3})/g, "$1\\,$2") : "\\infty";
+const ALFA = (r, q) => L`\frac{1 + ${r}\left(\frac{T}{T_0}\right)^{p}}{1 + \left(\frac{T}{T_0}\right)^{${q}}}`;
+const ALFAV = (r, T0, p, q) => L`\frac{1 + ${r}\left(\frac{T}{${T0}}\right)^{${p}}}{1 + \left(\frac{T}{${T0}}\right)^{${q}}}`;
 
 // ---------------------------------------------------------------------------
 // Pseudo-aceleración elástica Sa(T) en g (sin R*, sin g)
@@ -246,14 +256,16 @@ function modelo(norma, cat, zona, suelo, xi) {
   if (norma === "433-1996") {
     return {
       par: [["I", I, N.refCat], ["A<sub>0</sub> [g]", A0, N.refA0], ["T<sub>0</sub> [s]", s.T0, N.refSuelo], ["p", s.p, N.refSuelo]],
-      formula: "S<sub>a</sub> = I·A<sub>0</sub>·α ; α = (1 + 4,5(T/T<sub>0</sub>)<sup>p</sup>) / (1 + (T/T<sub>0</sub>)<sup>3</sup>)",
+      eqs: [L`S_a = I\,A_0\,\alpha \qquad \alpha = ${ALFA("4{,}5", 3)}`,
+        L`S_a(T) = ${tn(I, 1)}\cdot ${tn(A0, 2)}\cdot ${ALFAV("4{,}5", tn(s.T0, 2), tn(s.p, 2), 3)}`],
       Sa: (T) => I * A0 * (1 + 4.5 * (T / s.T0) ** s.p) / (1 + (T / s.T0) ** 3),
     };
   }
   if (norma === "433-2026") {
     return {
       par: [["I", I, N.refCat], ["A<sub>0</sub> [g]", A0, N.refA0], ["S", s.S, N.refSuelo], ["T<sub>0</sub> [s]", s.T0, N.refSuelo], ["p", s.p, N.refSuelo]],
-      formula: "S<sub>a</sub> = S·A<sub>0</sub>·I·α ; α = (1 + 4,5(T/T<sub>0</sub>)<sup>p</sup>) / (1 + (T/T<sub>0</sub>)<sup>3</sup>)",
+      eqs: [L`S_a = S\,A_0\,I\,\alpha \qquad \alpha = ${ALFA("4{,}5", 3)}`,
+        L`S_a(T) = ${tn(s.S, 2)}\cdot ${tn(A0, 2)}\cdot ${tn(I, 1)}\cdot ${ALFAV("4{,}5", tn(s.T0, 2), tn(s.p, 2), 3)}`],
       Sa: (T) => s.S * A0 * I * (1 + 4.5 * (T / s.T0) ** s.p) / (1 + (T / s.T0) ** 3),
     };
   }
@@ -262,7 +274,9 @@ function modelo(norma, cat, zona, suelo, xi) {
     return {
       par: [["I", I, N.refCat], ["A<sub>0</sub> ; A<sub>r</sub> = 1,4A<sub>0</sub> [g]", `${fmt(A0, 2)} ; ${fmt(Ar, 2)}`, N.refA0], ["S", s.S, N.refSuelo], ["r", s.r, N.refSuelo],
         ["T<sub>0</sub> [s]", s.T0, N.refSuelo], ["p ; q", `${fmt(s.p, 2)} ; ${fmt(s.q, 2)}`, N.refSuelo], ["Factor de amortiguamiento: (0,05/ξ)<sup>0,4</sup>", fxi, `ξ = ${fmt(xi, 3)}`]],
-      formula: "S<sub>a</sub> = I·A<sub>r</sub>·S·(1 + r(T/T<sub>0</sub>)<sup>p</sup>) / (1 + (T/T<sub>0</sub>)<sup>q</sup>)·(0,05/ξ)<sup>0,4</sup>",
+      eqs: [L`S_a = I\,A_r\,S\,${ALFA("r", "q")}\left(\frac{0{,}05}{\xi}\right)^{0{,}4}`,
+        L`A_r = 1{,}4\,A_0 = 1{,}4\cdot ${tn(A0, 2)} = ${tn(Ar, 2)}\ \mathrm{g} \qquad \left(\frac{0{,}05}{\xi}\right)^{0{,}4} = \left(\frac{0{,}05}{${tn(xi, 3)}}\right)^{0{,}4} = ${tn(fxi, 3)}`,
+        L`S_a(T) = ${tn(I, 1)}\cdot ${tn(Ar, 2)}\cdot ${tn(s.S, 2)}\cdot ${ALFAV(tn(s.r, 1), tn(s.T0, 2), tn(s.p, 2), tn(s.q, 1))}\cdot ${tn(fxi, 3)}`],
       Sa: (T) => I * Ar * s.S * (1 + s.r * (T / s.T0) ** s.p) / (1 + (T / s.T0) ** s.q) * fxi,
     };
   }
@@ -277,7 +291,9 @@ function modelo(norma, cat, zona, suelo, xi) {
   return {
     par: [["I", I, N.refCat], ["A<sub>0</sub> [g] ; Z", `${fmt(A0, 2)} ; ${fmt(Z, 2)}`, N.refA0], ["T<sub>a</sub> ; T<sub>b</sub> ; T<sub>c</sub> ; T<sub>d</sub> [s]", `${s.Ta} ; ${s.Tb} ; ${s.Tc} ; ${s.Td}`, N.refSuelo],
       ["Z·α<sub>A</sub>A [cm/s²]", aA, N.refSuelo], ["Z·α<sub>V</sub>V [cm/s]", aV, N.refSuelo], ["Z·α<sub>D</sub>D [cm]", aD, N.refSuelo], ["p", s.p, N.refSuelo]],
-    formula: "S<sub>a</sub> = I·S<sub>ae</sub>(T)/g ; S<sub>ae</sub>: A<sub>0</sub>g → lineal hasta Zα<sub>A</sub>A en T<sub>b</sub> ; Zα<sub>A</sub>A hasta T<sub>c</sub> ; 2π·Zα<sub>V</sub>V/T<sup>p</sup> hasta T<sub>d</sub> ; 4π²·Zα<sub>D</sub>D/T²",
+    eqs: [L`S_a = \frac{I\,S_{ae}(T)}{g} \qquad g = 981\ \mathrm{cm/s^2}`,
+      L`S_{ae}(T) = \begin{cases} A_0\,g + (Z\alpha_A A - A_0\,g)\dfrac{T - T_a}{T_b - T_a} & T \le T_b \\[4pt] Z\alpha_A A & T_b < T \le T_c \\[4pt] \dfrac{2\pi\,Z\alpha_V V}{T^{p}} & T_c < T \le T_d \\[4pt] \dfrac{4\pi^2\,Z\alpha_D D}{T^2} & T > T_d \end{cases}`,
+      L`S_{ae}(T) = \begin{cases} ${tn(A0g, 1)} + (${tn(aA, 1)} - ${tn(A0g, 1)})\dfrac{T - ${tn(s.Ta, 2)}}{${tn(s.Tb, 2)} - ${tn(s.Ta, 2)}} & T \le ${tn(s.Tb, 2)} \\[4pt] ${tn(aA, 1)} & ${tn(s.Tb, 2)} < T \le ${tn(s.Tc, 2)} \\[4pt] \dfrac{2\pi\cdot ${tn(aV, 2)}}{T^{${tn(s.p, 1)}}} & ${tn(s.Tc, 2)} < T \le ${tn(s.Td, 2)} \\[4pt] \dfrac{4\pi^2\cdot ${tn(aD, 2)}}{T^2} & T > ${tn(s.Td, 2)} \end{cases}\ \mathrm{cm/s^2}`],
     Sa: (T) => I * Sae(T) / g,
     Sae,
   };
@@ -286,20 +302,26 @@ function modelo(norma, cat, zona, suelo, xi) {
 // ---------------------------------------------------------------------------
 // Factor de reducción R* por dirección (planilla «Espectros Chile»)
 // ---------------------------------------------------------------------------
-function factorR(d, Ts) {
+// tex: ecuaciones con valores (KaTeX) para la dirección dir
+function factorR(d, Ts, dir = "") {
   const s = NORMAS[d.norma].suelos[d.suelo];
+  const Rd = L`R^*_{${dir}}`, Td = L`T^*_{${dir}}`;
   if (d.norma === "2369-2025") {
     const R = d.R, Cr = 0.16 * R, lim = Cr * s.T1;
-    let Rs, txt;
+    let Rs;
+    const tex = [L`C_r = 0{,}16\,R = 0{,}16\cdot ${tn(R, 2)} = ${tn(Cr, 3)} \qquad C_r\,T_1 = ${tn(Cr, 3)}\cdot ${tn(s.T1, 2)} = ${tn(lim, 3)}\ \mathrm{s}\ \ (T_1 = ${tn(s.T1, 2)}\ \mathrm{s,\ suelo\ ${d.suelo}})`];
     // R* nunca puede superar a R: con R ≤ 1,5 la interpolación desde 1,5 daría R* > R (no conservador)
-    if (R <= 1.5) { Rs = R; txt = `R = ${fmt(R, 2)} ≤ 1,5 → R* = R = ${fmt(R, 2)}`; }
-    else if (Ts >= lim) { Rs = R; txt = `T* = ${fmt(Ts, 3)} ≥ C<sub>r</sub>T<sub>1</sub> = ${fmt(lim, 3)} → R* = R = ${fmt(R, 2)}`; }
-    else { Rs = Math.min(R, 1.5 + (R - 1.5) * Ts / lim); txt = `1,5 + (${fmt(R, 2)} − 1,5)·${fmt(Ts, 3)}/${fmt(lim, 3)} = ${fmt(Rs, 3)}`; }
-    return { Rs, txt };
+    if (R <= 1.5) { Rs = R; tex.push(L`R = ${tn(R, 2)} \le 1{,}5 \;\Rightarrow\; ${Rd} = R = ${tn(R, 2)}`); }
+    else if (Ts >= lim) { Rs = R; tex.push(L`${Td} = ${tn(Ts, 3)} \ge C_r\,T_1 = ${tn(lim, 3)} \;\Rightarrow\; ${Rd} = R = ${tn(R, 2)}`); }
+    else {
+      Rs = Math.min(R, 1.5 + (R - 1.5) * Ts / lim);
+      tex.push(L`${Td} = ${tn(Ts, 3)} < C_r\,T_1 = ${tn(lim, 3)} \;\Rightarrow\; ${Rd} = 1{,}5 + (R - 1{,}5)\frac{T^*}{C_r\,T_1} = 1{,}5 + (${tn(R, 2)} - 1{,}5)\frac{${tn(Ts, 3)}}{${tn(lim, 3)}} = ${tn(Rs, 3)}`);
+    }
+    return { Rs, tex };
   }
   const T0 = s.T0, R0 = d.R0;
   const Rs = 1 + Ts / (0.1 * T0 + Ts / R0);
-  return { Rs, txt: `1 + ${fmt(Ts, 3)}/(0,1·${fmt(T0, 2)} + ${fmt(Ts, 3)}/${fmt(R0, 1)}) = ${fmt(Rs, 3)}` };
+  return { Rs, tex: [L`${Rd} = 1 + \frac{${Td}}{0{,}1\,T_0 + ${Td}/R_0} = 1 + \frac{${tn(Ts, 3)}}{0{,}1\cdot ${tn(T0, 2)} + ${tn(Ts, 3)}/${tn(R0, 1)}} = ${tn(Rs, 3)}`] };
 }
 
 // ---------------------------------------------------------------------------
@@ -307,19 +329,24 @@ function factorR(d, Ts) {
 //   NCh 433-1996 / 433:2026: u = Sa(T*)/R*·g/ω² ; NCh 2369:2025: u = Sa(T*)·g/ω²
 //   DS 117 Art. 9: Tag = k_agriet·T* ; Sde = Tag²/(4π²)·Sae(Tag) ; δu = k_δu·Sde
 // ---------------------------------------------------------------------------
-function desplazamiento(d, M, Ts, Rs) {
-  if (!(Ts > 0)) return { u: 0, txt: "T* = 0 → u = 0" };
+function desplazamiento(d, M, Ts, Rs, dir = "") {
+  const Td = L`T^*_{${dir}}`;
+  if (!(Ts > 0)) return { u: 0, tex: [L`${Td} = 0 \;\Rightarrow\; u_{${dir}} = 0`] };
   if (d.norma === "ds117") {
     const Tag = d.kAg * Ts, Sae = M.Sae(Tag), Sde = Tag ** 2 / (4 * Math.PI ** 2) * Sae, u = d.kDu * Sde;
-    return { u, txt: `T<sub>ag</sub> = ${fmt(d.kAg, 2)}·${fmt(Ts, 3)} = ${fmt(Tag, 3)} s ; S<sub>ae</sub> = ${fmt(Sae, 2)} cm/s² ; S<sub>de</sub> = ${fmt(Tag, 3)}²/(4π²)·${fmt(Sae, 2)} = ${fmt(Sde, 3)} cm ; δ<sub>u</sub> = ${fmt(d.kDu, 2)}·${fmt(Sde, 3)} = ${fmt(u, 3)} cm` };
+    return { u, tex: [
+      L`T_{ag} = k_{agriet}\,${Td} = ${tn(d.kAg, 2)}\cdot ${tn(Ts, 3)} = ${tn(Tag, 3)}\ \mathrm{s} \qquad S_{ae}(T_{ag}) = ${tn(Sae, 2)}\ \mathrm{cm/s^2}`,
+      L`S_{de} = \frac{T_{ag}^2}{4\pi^2}\,S_{ae}(T_{ag}) = \frac{${tn(Tag, 3)}^2}{4\pi^2}\cdot ${tn(Sae, 2)} = ${tn(Sde, 3)}\ \mathrm{cm}`,
+      L`\delta_{u,${dir}} = k_{\delta u}\,S_{de} = ${tn(d.kDu, 2)}\cdot ${tn(Sde, 3)} = ${tn(u, 3)}\ \mathrm{cm}`] };
   }
   const w = 2 * Math.PI / Ts, Sa = M.Sa(Ts);
+  const tw = L`\omega = \frac{2\pi}{${Td}} = \frac{2\pi}{${tn(Ts, 3)}} = ${tn(w, 3)}\ \mathrm{rad/s} \qquad S_a(${Td}) = ${tn(Sa, 4)}\ \mathrm{g}`;
   if (d.norma === "2369-2025") {
     const u = Sa * 981 / w ** 2;
-    return { u, txt: `ω = 2π/${fmt(Ts, 3)} = ${fmt(w, 3)} rad/s ; u = ${fmt(Sa, 4)}·981/${fmt(w, 3)}² = ${fmt(u, 3)} cm` };
+    return { u, tex: [tw, L`u_{${dir}} = \frac{S_a(${Td})\,g}{\omega^2} = \frac{${tn(Sa, 4)}\cdot 981}{${tn(w, 3)}^2} = ${tn(u, 3)}\ \mathrm{cm}`] };
   }
   const u = Sa / Rs * 981 / w ** 2;
-  return { u, txt: `ω = 2π/${fmt(Ts, 3)} = ${fmt(w, 3)} rad/s ; u = ${fmt(Sa, 4)}/${fmt(Rs, 3)}·981/${fmt(w, 3)}² = ${fmt(u, 3)} cm` };
+  return { u, tex: [tw, L`u_{${dir}} = \frac{S_a(${Td})}{R^*_{${dir}}}\,\frac{g}{\omega^2} = \frac{${tn(Sa, 4)}}{${tn(Rs, 3)}}\cdot\frac{981}{${tn(w, 3)}^2} = ${tn(u, 3)}\ \mathrm{cm}`] };
 }
 
 function leer() {
@@ -447,7 +474,7 @@ function calcular() {
   if (malos.length) {
     actual = null;
     $("tiles").innerHTML = avisoInvalidos(malos);
-    ["svgWrap", "pasosR", "pasosU", "tablaPar", "tablaVal"].forEach(id => { $(id).innerHTML = ""; });
+    ["svgWrap", "pasosR", "pasosU", "tablaPar", "tablaVal", "formula"].forEach(id => { $(id).innerHTML = ""; });
     $("tip").classList.add("hidden");
     return;
   }
@@ -465,39 +492,49 @@ function calcular() {
   ].map(([t, v, s]) => `<div class="tile"><div class="t">${t}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join("");
   $("tablaPar").innerHTML = `<tr><th>Parámetro</th><th style="text-align:right">Valor</th><th>Referencia</th></tr>` +
     M.par.map(([k, v, r]) => `<tr><td>${k}</td><td class="num">${typeof v === "number" ? fmt(v, v % 1 ? 3 : 0) : v}</td><td>${N.nombre}, ${r}</td></tr>`).join("");
-  $("formula").innerHTML = M.formula;
+  // Forma del espectro: paso desplegable con la ecuación general y con los parámetros reemplazados
+  $("formula").innerHTML = memoHTML([
+    { tex: `Espectro elástico de ${N.nombre} (categoría ${d.cat}, zona ${d.zona}, suelo ${d.suelo}):` },
+    ...M.eqs.map(e => ({ tex: e, eq: true })),
+  ]);
 
-  // Pasos desplegables: filas con el resultado; al pincharlas, ecuación y valores reemplazados.
-  const chev = '<span class="chev">▸</span>';
-  const paso = (filas, eqGen, reemplazo) =>
-    `<div class="paso"><table class="par clic" title="Pinchar para ver las ecuaciones">${filas}</table><div class="eqs hidden"><p><b>Ecuación:</b> ${eqGen}</p>${reemplazo.map(r => `<p>${r}</p>`).join("")}</div></div>`;
-
-  // Factores de reducción en X e Y
+  // Pasos desplegables (mismo formato que los demás programas): filas con el resultado;
+  // al pincharlas, la ecuación general y luego los valores reemplazados en KaTeX.
   const es2369 = d.norma === "2369-2025";
   const s = N.suelos[d.suelo];
   const eqR = es2369
-    ? `R* = R si R ≤ 1,5 o T* ≥ C<sub>r</sub>·T<sub>1</sub> ; R* = 1,5 + (R − 1,5)·T*/(C<sub>r</sub>·T<sub>1</sub>) si T* &lt; C<sub>r</sub>·T<sub>1</sub> ; C<sub>r</sub> = 0,16·R = ${fmt(0.16 * d.R, 2)} ; T<sub>1</sub> = ${fmt(s.T1, 2)} s`
-    : `R* = 1 + T* / (0,1·T<sub>0</sub> + T*/R<sub>0</sub>) ; T<sub>0</sub> = ${fmt(s.T0, 2)} s (suelo ${d.suelo}) ; R<sub>0</sub> = ${fmt(d.R0, 1)}`;
+    ? L`R^* = \begin{cases} R & R \le 1{,}5 \ \text{o}\ T^* \ge C_r\,T_1 \\[4pt] 1{,}5 + (R - 1{,}5)\dfrac{T^*}{C_r\,T_1} & T^* < C_r\,T_1 \end{cases}`
+    : L`R^* = 1 + \frac{T^*}{0{,}1\,T_0 + T^*/R_0} \qquad T_0 = ${tn(s.T0, 2)}\ \mathrm{s} \qquad R_0 = ${tn(d.R0, 1)}`;
   const pasoR = (dir, Ts) => {
-    const { Rs, txt } = factorR(d, Ts);
+    const { Rs, tex } = factorR(d, Ts, dir);
     const SaT = M.Sa(Ts);
-    return paso(`<tr><td>${chev}<b>Factor de reducción, dirección ${dir}: R*<sub>${dir}</sub></b></td><td class="num"><b>${fmt(Rs, 3)}</b></td></tr>
-      <tr><td>Factor de escala ETABS, dirección ${dir}: g/R*<sub>${dir}</sub></td><td class="num">${fmt(9.81 / Rs, 4)}</td></tr>`, eqR,
-      [`R*<sub>${dir}</sub> = ${txt}`, `g/R*<sub>${dir}</sub> = 9,81/${fmt(Rs, 3)} = ${fmt(9.81 / Rs, 4)} m/s² ; S<sub>a</sub>(T*<sub>${dir}</sub>) = ${fmt(SaT, 3)} g → S<sub>a</sub>/R* = ${fmt(SaT / Rs, 4)} g`]);
+    return [
+      { k: `<b>Factor de reducción, dirección ${dir}: R*<sub>${dir}</sub></b>`, v: `<b>${fmt(Rs, 3)}</b>` },
+      { k: `Factor de escala ETABS, dirección ${dir}: g/R*<sub>${dir}</sub>`, v: `${fmt(9.81 / Rs, 4)} m/s²` },
+      { tex: es2369 ? L`Factor de reducción según NCh 2369:2025 con $T^*_{${dir}} = ${tn(Ts, 3)}$ s:` : L`Factor de reducción con el periodo $T^*_{${dir}} = ${tn(Ts, 3)}$ s (suelo ${d.suelo}):` },
+      { tex: eqR, eq: true },
+      ...tex.map(t => ({ tex: t, eq: true })),
+      { tex: L`\frac{g}{R^*_{${dir}}} = \frac{9{,}81}{${tn(Rs, 3)}} = ${tn(9.81 / Rs, 4)}\ \mathrm{m/s^2} \qquad \frac{S_a(T^*_{${dir}})}{R^*_{${dir}}} = \frac{${tn(SaT, 3)}}{${tn(Rs, 3)}} = ${tn(SaT / Rs, 4)}\ \mathrm{g}`, eq: true },
+    ];
   };
-  $("pasosR").innerHTML = pasoR("x", d.Tx) + pasoR("y", d.Ty);
+  $("pasosR").innerHTML = memoHTML([...pasoR("x", d.Tx), "<h4 class=\"sep\"></h4>", ...pasoR("y", d.Ty)]);
 
   // Desplazamiento máximo en X e Y
   const esDS = d.norma === "ds117";
-  const ux = desplazamiento(d, M, d.Tx, factorR(d, d.Tx).Rs), uy = desplazamiento(d, M, d.Ty, factorR(d, d.Ty).Rs);
+  const ux = desplazamiento(d, M, d.Tx, factorR(d, d.Tx).Rs, "x"), uy = desplazamiento(d, M, d.Ty, factorR(d, d.Ty).Rs, "y");
   const sim = esDS ? "δ<sub>u" : "u<sub>";
   const eqU = esDS
-    ? "DS 117, Art. 9: T<sub>ag</sub> = k<sub>agriet</sub>·T* ; S<sub>de</sub>(T<sub>ag</sub>) = T<sub>ag</sub>²/(4π²)·S<sub>ae</sub>(T<sub>ag</sub>) (sin I) ; δ<sub>u</sub> = k<sub>δu</sub>·S<sub>de</sub>"
+    ? [L`T_{ag} = k_{agriet}\,T^* \qquad S_{de}(T_{ag}) = \frac{T_{ag}^2}{4\pi^2}\,S_{ae}(T_{ag}) \qquad \delta_u = k_{\delta u}\,S_{de}`, "DS 117, Art. 9: S_de se calcula con S_ae sin el factor I."]
     : es2369
-      ? "u<sub>máx</sub> = S<sub>a</sub>(T*)·g/ω² ; ω = 2π/T* ; g = 981 cm/s² (sin dividir por R*)"
-      : "u<sub>máx</sub> = S<sub>a</sub>(T*)·(1/R*)·g/ω² ; ω = 2π/T* ; g = 981 cm/s²";
-  $("pasosU").innerHTML = [["x", ux], ["y", uy]].map(([dir, r]) =>
-    paso(`<tr><td>${chev}<b>Desplazamiento máximo, dirección ${dir}: ${sim},${dir}</sub></b></td><td class="num"><b>${fmt(r.u, 3)} cm</b></td></tr>`, eqU, r.txt.split(" ; "))).join("");
+      ? [L`u_{m\acute{a}x} = \frac{S_a(T^*)\,g}{\omega^2} \qquad \omega = \frac{2\pi}{T^*} \qquad g = 981\ \mathrm{cm/s^2}`, "En NCh 2369:2025 el desplazamiento se calcula sin dividir por R*."]
+      : [L`u_{m\acute{a}x} = \frac{S_a(T^*)}{R^*}\,\frac{g}{\omega^2} \qquad \omega = \frac{2\pi}{T^*} \qquad g = 981\ \mathrm{cm/s^2}`, ""];
+  $("pasosU").innerHTML = memoHTML([["x", ux], ["y", uy]].flatMap(([dir, r], i) => [
+    ...(i ? ["<h4 class=\"sep\"></h4>"] : []),
+    { k: `<b>Desplazamiento máximo, dirección ${dir}: ${sim},${dir}</sub></b>`, v: `<b>${fmt(r.u, 3)} cm</b>` },
+    ...(eqU[1] ? [{ tex: eqU[1].replace(/S_de/, "$S_{de}$").replace(/S_ae/, "$S_{ae}$").replace(/R\*/, "$R^*$") }] : []),
+    { tex: eqU[0], eq: true },
+    ...r.tex.map(t => ({ tex: t, eq: true })),
+  ]));
   $("tiles").insertAdjacentHTML("beforeend", [["x", ux], ["y", uy]].map(([dir, r]) =>
     `<div class="tile"><div class="t">${sim},${dir},máx</sub></div><div class="v">${fmt(r.u, 3)} cm</div><div class="s">T*<sub>${dir}</sub> = ${fmt(dir === "x" ? d.Tx : d.Ty, 3)} s</div></div>`).join(""));
   $("sumTabla").textContent = `Tabla de valores (${pts.length} puntos)`;

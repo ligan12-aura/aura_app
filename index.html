@@ -65,6 +65,16 @@
   .opts a small { color: var(--muted); }
   .opts a .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: 0 0 8px; }
   .opts a .arr { margin-left: auto; color: var(--c); font-weight: 700; }
+  /* Subgrupo desplegable dentro de una tarjeta (Madera → aserrada / MLE) */
+  .opts button.sub { all: unset; box-sizing: border-box; width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 6px; cursor: pointer; color: var(--ink); }
+  .opts button.sub:hover, .opts button.sub:focus-visible { background: #f2f4f7; }
+  .opts button.sub b { display: block; font-weight: 600; }
+  .opts button.sub small { color: var(--muted); }
+  .opts button.sub .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: 0 0 8px; }
+  .opts button.sub .arr { margin-left: auto; color: var(--c); font-weight: 700; transition: transform .2s; }
+  .grupo.open button.sub .arr { transform: rotate(180deg); }
+  .subopts { display: none; margin: 2px 0 4px 20px; border-left: 2px solid var(--line); padding-left: 6px; }
+  .grupo.open .subopts { display: block; }
   footer { text-align: center; color: var(--muted); font-size: 12px; padding: 10px 0 24px; }
 </style>
 </head>
@@ -92,9 +102,13 @@
       <div class="opts" id="optCalc">
         <a href="acero.html"><span class="dot"></span><span><b>Acero estructural</b><small>Vigas y columnas · AISC 360-16</small></span><span class="arr">→</span></a>
         <a href="hormigon.html"><span class="dot"></span><span><b>Hormigón armado</b><small>Vigas, losas y muros · ACI 318-08</small></span><span class="arr">→</span></a>
-        <a href="madera.html"><span class="dot"></span><span><b>Madera aserrada</b><small>Envigados y pies derechos de tabiques · pino radiata · NCh 1198:2024</small></span><span class="arr">→</span></a>
-        <a href="mle.html"><span class="dot"></span><span><b>Madera laminada MLE — vigas</b><small>NCh 2165:2023 · NCh 1198:2024 cl. 11</small></span><span class="arr">→</span></a>
-        <a href="mle.html?elemento=columna"><span class="dot"></span><span><b>Madera laminada MLE — columnas</b><small>Compresión, viento y flexocompresión · NCh 1198:2024 cl. 11</small></span><span class="arr">→</span></a>
+        <div class="grupo">
+          <button type="button" class="sub" aria-expanded="false" aria-controls="optMadera"><span class="dot"></span><span><b>Madera</b><small>Madera aserrada y madera laminada encolada (MLE)</small></span><span class="arr">▾</span></button>
+          <div class="subopts" id="optMadera">
+            <a href="madera.html"><span class="dot"></span><span><b>Madera aserrada</b><small>Envigados y pies derechos de tabiques · pino radiata · NCh 1198:2024</small></span><span class="arr">→</span></a>
+            <a href="mle.html"><span class="dot"></span><span><b>Madera laminada MLE</b><small>Vigas y columnas · NCh 2165:2023 · NCh 1198:2024 cl. 11</small></span><span class="arr">→</span></a>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -146,6 +160,11 @@ document.querySelectorAll(".mat > button").forEach(btn => {
   btn.addEventListener("click", () => {
     const card = btn.parentElement;
     btn.setAttribute("aria-expanded", card.classList.toggle("open"));
+  });
+});
+document.querySelectorAll(".opts button.sub").forEach(btn => {
+  btn.addEventListener("click", () => {
+    btn.setAttribute("aria-expanded", btn.parentElement.classList.toggle("open"));
   });
 });
 </script>
