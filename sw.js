@@ -1,6 +1,6 @@
 // Service worker de AURA: guarda la app completa para uso sin conexión.
 // Al publicar cambios, incremente VERSION para que los dispositivos descarguen la nueva versión.
-const VERSION = "aura-v17";
+const VERSION = "aura-v18";
 const ARCHIVOS = [
   "./",
   "./index.html",
@@ -26,7 +26,8 @@ const KATEX = [
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(VERSION).then((c) =>
-    c.addAll(ARCHIVOS).then(() =>
+    // cache: "reload": baja cada archivo del servidor, no de la caché HTTP del navegador
+    c.addAll(ARCHIVOS.map((u) => new Request(u, { cache: "reload" }))).then(() =>
       // Si el CDN no responde, la app igual se instala; KaTeX se guardará en el próximo uso con conexión.
       Promise.all(KATEX.map((u) => c.add(new Request(u, { mode: "cors" })).catch(() => {}))))
   ).then(() => self.skipWaiting()));
@@ -46,8 +47,9 @@ self.addEventListener("fetch", (e) => {
   // Propios y KaTeX (cdnjs) para que las ecuaciones también se vean sin conexión.
   const url = new URL(req.url);
   if (req.method !== "GET" || (url.origin !== self.location.origin && url.hostname !== "cdnjs.cloudflare.com")) return;
+  // no-cache: revalida con el servidor y evita mezclar una página nueva con un memo.js viejo de la caché HTTP
   e.respondWith(
-    fetch(req)
+    fetch(req.mode === "navigate" ? req : new Request(req, { cache: "no-cache" }))
       .then((resp) => {
         if (resp.ok) {
           const copia = resp.clone();
