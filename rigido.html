@@ -888,7 +888,7 @@ function actualizar() {
   const filas = items.map(([t, v, s]) => `${texTxt(t)} & ${texTxt(s).replace(/,/g, "{,}").replace(/\./g, "\\,")} & ${tn(v, 3)} & ${v <= 1 + 1e-9 ? "Cumple" : "No cumple"}\\\\`).join("\n");
   const avisosTex = r.avisos.length ? L`\paragraph{Observaciones.}
 \begin{itemize}
-${r.avisos.map(a => `\\item ${texTxt(a).replace(/≤/g, "$\\le$").replace(/≥/g, "$\\ge$").replace(/%/g, "\\%").replace(/·/g, "$\\cdot$").replace(/–/g, "--").replace(/′/g, "'")}`).join("\n")}
+${r.avisos.map(a => `\\item ${texTxt(a).replace(/≤/g, "$\\le$").replace(/≥/g, "$\\ge$").replace(/%/g, "\\%").replace(/·/g, "$\\cdot$").replace(/–/g, "--").replace(/′/g, "'").replace(/(\d),(\d)/g, "$1{,}$2")}`).join("\n")}
 \end{itemize}` : "";
   ultimoTex = L`\documentclass[11pt,letterpaper]{article}
 \usepackage[utf8]{inputenc}

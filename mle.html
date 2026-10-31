@@ -177,12 +177,12 @@
         <div class="hint">El peso propio de la viga (ρ<sub>mle,prom</sub>·b·h) se agrega automáticamente a q<sub>PP</sub>.</div>
         <label for="vkd">Duración de la carga que controla (K<sub>D</sub>, 7.1.2)</label>
         <select id="vkd">
-          <option value="1.577e9">Permanente (50 años)</option>
-          <option value="3.154e8" selected>Normal — sobrecarga de uso (10 años)</option>
-          <option value="5.256e6">2 meses (nieve)</option>
-          <option value="6.048e5">7 días</option>
-          <option value="600">Viento o sismo (10 min)</option>
-          <option value="1">Impacto (1 s)</option>
+          <option value="0.9">Permanente — K_D = 0,90</option>
+          <option value="1" selected>Normal — sobrecarga de uso (10 años) — K_D = 1,00</option>
+          <option value="1.15">Dos meses (nieve) — K_D = 1,15</option>
+          <option value="1.25">Siete días (SC de techo) — K_D = 1,25</option>
+          <option value="1.6">Viento o sismo — K_D = 1,60</option>
+          <option value="2">Impacto — K_D = 2,00</option>
         </select>
       </fieldset>
       <fieldset>
@@ -327,7 +327,7 @@ const num = (id) => { const v = parseFloat($(id).value); return Number.isFinite(
 const vacio = (id) => $(id).value.trim() === "";
 const fmt = (x, d = 2) => Number.isFinite(x) ? x.toLocaleString("es-CL", { minimumFractionDigits: d, maximumFractionDigits: d }) : "—";
 const L = String.raw;
-const tn = (x, d = 2) => Number.isFinite(x) ? fmt(x, d).replace(/,/g, "{,}").replace(/\./g, "\\,") : "\\infty";
+const tn = (x, d = 2) => Number.isFinite(x) ? fmt(x, d).replace(/,/g, "{,}").replace(/(\d)\.(\d{3})/g, "$1\\,$2") : "\\infty";
 const LE = L`\le`;
 const cmp = (a, b) => (a <= b ? LE : ">");
 const tag = (ok, t) => `<span class="tag ${ok ? "ok" : "bad"}">${t}</span>`;
@@ -428,15 +428,23 @@ Densidad $\rho_{mle,k}$ ; $\rho_{mle,prom}$ [kg/m$^3$] & ${tn(P.rhoK, 0)} ; ${tn
 }
 
 // Factores de modificación comunes (11.3) — L en m (para K_V)
-function factores(d, m, Lm, KDtxt) {
+function factores(d, m, Lm, KDtxt, r) {
   const KH = (k) => (d.H >= 16 ? KH41[k] : 1);
   const n = Math.round((d.lam === "horizontal" ? d.h : d.b) / d.t);
   const kt = d.t < 40 ? Math.min((40 / d.t) ** 0.1, 1.05) : 1;
-  const q1 = Math.min(1, 6.4 / Lm), q2 = Math.min(1, 300 / d.h), q3 = Math.min(1, 135 / d.b);
+  const q1 = Math.min(1, 6.4 / Lm), q2 = Math.min(1, 600 / d.h), q3 = Math.min(1, 135 / d.b);
   const KV = d.lam === "horizontal" ? (q1 * q2 * q3) ** 0.1 : 1;
   const Khf = d.lam === "vertical" && d.h > 90 ? (90 / d.h) ** 0.2 : 1;
   const lamVert12 = d.lam === "vertical" && tipoMLE(d) === "Homogénea" && n >= 4 && d.t > 45 && d.t < 85;
   const Klv12 = lamVert12 ? 1.2 : 1;
+  // Espesor y número de láminas (NCh 2165, 3.1.17: al menos dos láminas de 6 a 45 mm)
+  const dimLam = d.lam === "horizontal" ? d.h : d.b;
+  if (n < 2) r.avisos.push(`La sección tiene ${n} lámina en la dirección de laminación; la MLE requiere al menos dos láminas (NCh 2165, 3.1.17).`);
+  if (d.t < 6 || (d.lam === "horizontal" && d.t > 45) || (d.lam === "vertical" && d.t > 85))
+    r.avisos.push(`El espesor de lámina t = ${fmt(d.t, 0)} mm está fuera del rango de la MLE (6 a 45 mm, NCh 2165, 3.1.17${d.lam === "vertical" ? "; hasta 85 mm en laminación vertical según 11.3.1.7" : ""}).`);
+  if (Math.abs(dimLam / d.t - n) > 0.05) r.avisos.push(`${d.lam === "horizontal" ? "h" : "b"}/t = ${fmt(dimLam / d.t, 2)} no es entero: se consideran ${n} láminas de ${fmt(dimLam / n, 1)} mm.`);
+  // 11.3.1.7: el incremento de 20 % y el trabajo conjunto K_c son alternativos (no se acumulan)
+  if (lamVert12 && d.Kc > 1) { d.Kc = 1; r.avisos.push("Con laminación vertical que cumple 11.3.1.7 (+20 %), el factor de trabajo conjunto no se acumula: se usa K<sub>c</sub> = 1."); }
   const f = { KH, n, kt, KV, Khf, Klv12, q1, q2, q3 };
   m.h("Factores de modificación — NCh 1198, 11.3");
   m.row("Factor por humedad (flexión ; c. paralela ; cizalle ; c. normal ; E): K<sub>H</sub>", ["f", "cp", "cz", "cn", "E"].map(k => fmt(KH(k), 3)).join(" ; "), "11.3.1.2, Tabla 41");
@@ -449,8 +457,8 @@ function factores(d, m, Lm, KDtxt) {
   m.p(L`\textbf{Espesor de lámina.} La sección de ${tn(d.lam === "horizontal" ? d.h : d.b, 0)} mm está formada por $n = ${n}$ láminas de $t = ${tn(d.t, 0)}$ mm. ${d.t < 40 ? "Como" : "Como"} $t ${d.t < 40 ? "<" : L`\ge`} 40$ mm, ${d.t < 40 ? "la resistencia de flexión se modifica por" : "no es necesario modificar la resistencia de flexión"}:`);
   m.eq(d.t < 40 ? L`k_t = \min\left[\left(\frac{40}{t}\right)^{0{,}1};\ 1{,}05\right] = \min\left[\left(\frac{40}{${tn(d.t, 0)}}\right)^{0{,}1};\ 1{,}05\right] = ${tn(kt, 3)}` : L`k_t = 1{,}00`, "NCh 2165, 4.1.3");
   if (d.lam === "horizontal") {
-    m.p(L`\textbf{Volumen.} En laminación horizontal la tensión de flexión del canto traccionado se afecta por $K_V$, con $L = ${tn(Lm, 2)}$ m entre puntos de inflexión; ningún cociente puede superar individualmente la unidad:`);
-    m.eq(L`K_V = \left(\frac{6{,}40}{L}\right)^{1/10}\left(\frac{300}{h}\right)^{1/10}\left(\frac{135}{b}\right)^{1/10} = (${tn(q1, 4)}\cdot ${tn(q2, 4)}\cdot ${tn(q3, 4)})^{1/10} = ${tn(KV, 4)} \le 1{,}0`, "11.3.1.5");
+    m.p(L`\textbf{Volumen.} En laminación horizontal la tensión de flexión del canto traccionado se afecta por $K_V$, con $L = ${tn(Lm, 2)}$ m entre puntos de inflexión; ningún cociente puede superar individualmente la unidad. Como altura de referencia se usa 600 mm, a la que NCh 2165:2023 (4.1.3) refiere la resistencia característica de flexión (NCh 1198:2024 indica 300 mm):`);
+    m.eq(L`K_V = \left(\frac{6{,}40}{L}\right)^{1/10}\left(\frac{600}{h}\right)^{1/10}\left(\frac{135}{b}\right)^{1/10} = (${tn(q1, 4)}\cdot ${tn(q2, 4)}\cdot ${tn(q3, 4)})^{1/10} = ${tn(KV, 4)} \le 1{,}0`, "11.3.1.5");
   } else {
     m.p(L`\textbf{Laminación vertical.} Se aplica el factor de altura $K_{hf}$ (8.2.2.3) con la altura efectiva de las láminas ${lamVert12 ? L`y, por tratarse de MLE homogénea de al menos cuatro láminas de espesor entre 45 y 85 mm, la resistencia de flexión se incrementa en 20\,\%` : "; no corresponde el incremento de 20\\,\\% de 11.3.1.7"}:`);
     m.eq(L`K_{hf} = ${d.h > 90 ? L`\left(\frac{90}{h}\right)^{1/5} = \left(\frac{90}{${tn(d.h, 0)}}\right)^{1/5} = ` : ""}${tn(Khf, 3)}`, "11.3.1.6");
@@ -488,7 +496,7 @@ function memoFlexion(m, d, F, f, KD, Edis, la, fx, ff, cargaConc) {
     : L`F_{ft,dis} = F_f\,K_H\,K_D\,K_c\,k_t\,K_{hf}\cdot ${tn(f.Klv12, 1)} = ${tn(F.f, 2)}\cdot ${tn(f.KH("f"), 3)}\cdot ${tn(KD, 3)}\cdot ${tn(d.Kc, 2)}\cdot ${tn(f.kt, 3)}\cdot ${tn(f.Khf, 3)}\cdot ${tn(f.Klv12, 1)} = ${tn(fx.Fft, 2)}\ \mathrm{kgf/cm^2}`, "11.3");
   if (fx.necesita) {
     const rel = la / hc;
-    m.p(L`\textbf{Canto flexocomprimido.} Con $l_a = ${tn(la, 0)}$ cm y $l_a/h = ${tn(rel, 3)} ${rel < 7 ? "< 7" : L`\ge 7`}$, la Tabla 5 entrega la longitud efectiva de volcamiento; la tensión crítica usa el coeficiente 0,61 propio de la MLE (11.3.1.3) y $F^*_{f,dis}$ excluye $K_V$ y $K_{\lambda v}$:`, true);
+    m.p(L`\textbf{Canto flexocomprimido.} Con $l_a = ${tn(la, 0)}$ cm y $l_a/h = ${tn(rel, 3)} ${rel < 7 ? "< 7" : L`\ge 7`}$, la Tabla 5 entrega la longitud efectiva de volcamiento; la tensión crítica usa el coeficiente 0{,}61 propio de la MLE (11.3.1.3) y $F^*_{f,dis}$ excluye $K_V$ y $K_{\lambda v}$:`, true);
     m.eq(rel < 7 ? L`l_v = ${cargaConc ? "1{,}80" : "2{,}06"}\,l_a = ${tn(fx.lv, 1)}\ \mathrm{cm}` : L`l_v = ${cargaConc ? "1{,}37" : "1{,}63"}\,l_a + 3h = ${cargaConc ? "1{,}37" : "1{,}63"}\cdot ${tn(la, 0)} + 3\cdot ${tn(hc, 1)} = ${tn(fx.lv, 1)}\ \mathrm{cm}`, "Tabla 5");
     m.eq(L`\lambda_v = \sqrt{\frac{l_v\,h}{b^2}} = \sqrt{\frac{${tn(fx.lv, 1)}\cdot ${tn(hc, 1)}}{${tn(bc, 1)}^2}} = ${tn(fx.lamv, 3)} \;${fx.lamv <= 50 ? LE : ">"}\; 50`, "8.2.1.8");
     m.eq(L`F^*_{f,dis} = ${tn(fx.Fstar, 2)}\ \mathrm{kgf/cm^2} \qquad F_{fE,ml} = \frac{0{,}61\,E_{dis}}{\lambda_v^2} = \frac{0{,}61\cdot ${tn(Edis, 0)}}{${tn(fx.lamv, 3)}^2} = ${tn(fx.FfE, 2)}\ \mathrm{kgf/cm^2}`, "11.3.1.3");
@@ -509,7 +517,7 @@ function memoFlexion(m, d, F, f, KD, Edis, la, fx, ff, cargaConc) {
 function leerViga() {
   return {
     ...leerMaterial(), apoyo: $("vApoyo").value, Lm: num("vL"), la: num("vla"),
-    qSC: num("vqSC"), qPPa: num("vqPP"), P: num("vP"), tKD: +$("vkd").value, kdTxt: $("vkd").selectedOptions[0].text,
+    qSC: num("vqSC"), qPPa: num("vqPP"), P: num("vP"), KD: +$("vkd").value, kdTxt: $("vkd").selectedOptions[0].text,
     Lap: num("vLap"), Kcn: num("vKcn"), rebaje: $("rebaje").checked, hr: num("hr"), ladoReb: $("ladoReb").value, xReb: num("xReb"), beta: num("beta"),
     uso: $("uso").value, v1kN: $("v1kN").checked,
   };
@@ -535,9 +543,10 @@ function calcularViga(d, m) {
   m.eq(L`M = \frac{q\,L^2}{8}${d.P ? L` + \frac{P\,L}{4}` : ""} = \frac{${tn(q, 2)}\cdot ${tn(d.Lm, 2)}^2}{8}${d.P ? L` + \frac{${tn(d.P, 1)}\cdot ${tn(d.Lm, 2)}}{4}` : ""} = ${tn(M, 2)}\ \mathrm{kgf\cdot m}`);
   m.eq(L`V = \frac{q\,L}{2}${d.P ? L` + \frac{P}{2}` : ""} = ${tn(V, 2)}\ \mathrm{kgf}`);
 
-  const KD = 1.747 / d.tKD ** 0.0464 + 0.295;
-  const f = factores(d, m, d.Lm, `${fmt(KD, 3)} (${d.kdTxt})`);
-  m.eq(L`K_D = \frac{1{,}747}{t^{0{,}0464}} + 0{,}295 = ${tn(KD, 3)}`, "7.1.2");
+  const KD = d.KD;                               // NCh 1198, Anexo G (G.3)
+  const f = factores(d, m, d.Lm, `${fmt(KD, 2)} (${d.kdTxt.split(" — ").slice(0, -1).join(" — ")})`, r);
+  m.p(L`\textbf{Duración de la carga.} Se adopta el factor tabulado del Anexo G (G.3) para la carga de menor duración: ${d.kdTxt.split(" — ").slice(0, -1).join(" --- ")}.`, true);
+  m.eq(L`K_D = ${tn(KD, 2)}`, "Anexo G, G.3");
   const Edis = F.E * f.KH("E");
 
   // Flexión
@@ -580,6 +589,26 @@ function calcularViga(d, m) {
   m.eq(L`F_{cz,dis} = F_{cz}\,K_H\,K_D\,K_r = ${tn(F.cz, 2)}\cdot ${tn(f.KH("cz"), 3)}\cdot ${tn(KD, 3)}\cdot ${tn(Kr, 3)} = ${tn(Fczd, 2)}\ \mathrm{kgf/cm^2}`, "8.2.3.4");
   m.eq(chequeo("f_{cz}", fcz, "F_{cz,dis}", Fczd, UKG, 3));
 
+  // Peso propio solo con K_D permanente (Anexo G): puede controlar cuando la carga permanente domina
+  if (KD > 0.9 && qPP > 0) {
+    const KDp = 0.9;
+    m.h("Peso propio solo con duración de carga permanente — Anexo G");
+    const Mpp = qPP * d.Lm ** 2 / 8, Vpp = qPP * d.Lm / 2;
+    const ffp = Mpp * 100 / W, fp = flexionDis(d, F, f, KDp, Edis, d.la, false);
+    const fczp = 1.5 * Vpp / (bc * hEf), Fczp = F.cz * f.KH("cz") * KDp * Kr;
+    r.flexPP = ffp / fp.Fdis; r.cizPP = fczp / Fczp;
+    Object.assign(r, { ffp, FdisPP: fp.Fdis, fczp, Fczp });
+    m.row("Momento ; corte de peso propio: M<sub>PP</sub> ; V<sub>PP</sub>", `${fmt(Mpp, 2)} kgf·m ; ${fmt(Vpp, 2)} kgf`);
+    m.row("<b>Flexión con peso propio (K<sub>D</sub> = 0,90): f<sub>f</sub> / F<sub>f,dis</sub></b>", `<b>${fmt(ffp, 2)} / ${fmt(fp.Fdis, 2)} = ${fmt(r.flexPP, 3)}</b> ${okTxt(r.flexPP <= 1)}`);
+    m.row("<b>Cizalle con peso propio (K<sub>D</sub> = 0,90): f<sub>cz</sub> / F<sub>cz,dis</sub></b>", `<b>${fmt(fczp, 3)} / ${fmt(Fczp, 2)} = ${fmt(r.cizPP, 3)}</b> ${okTxt(r.cizPP <= 1)}`);
+    m.p(L`Como el peso propio actúa de forma permanente, se verifica también la carga permanente sola con $K_D = 0{,}90$ (Anexo G), combinación que puede controlar cuando la carga permanente es una fracción importante de la total:`, true);
+    m.eq(L`M_{PP} = \frac{q_{PP}\,L^2}{8} = \frac{${tn(qPP, 2)}\cdot ${tn(d.Lm, 2)}^2}{8} = ${tn(Mpp, 2)}\ \mathrm{kgf\cdot m} \qquad V_{PP} = \frac{q_{PP}\,L}{2} = ${tn(Vpp, 2)}\ \mathrm{kgf}`);
+    m.eq(L`f_f = \frac{M_{PP}}{W} = \frac{${tn(Mpp * 100, 0)}}{${tn(W, 1)}} = ${tn(ffp, 2)} \qquad F_{f,dis} = \min(F_{ft,dis},\ F_{fv,dis}) = \min(${tn(fp.Fft, 2)},\ ${tn(fp.Ffv, 2)}) = ${tn(fp.Fdis, 2)}\ \mathrm{kgf/cm^2}`);
+    m.eq(chequeo("f_f", ffp, "F_{f,dis}", fp.Fdis));
+    m.eq(L`f_{cz} = \frac{1{,}5\,V_{PP}}{b\,${d.rebaje ? "h_r" : "h"}} = ${tn(fczp, 3)} \qquad F_{cz,dis} = F_{cz}\,K_H\cdot 0{,}90\cdot K_r = ${tn(Fczp, 2)}\ \mathrm{kgf/cm^2}`);
+    m.eq(chequeo("f_{cz}", fczp, "F_{cz,dis}", Fczp, UKG, 3));
+  }
+
   // Compresión normal
   m.h("Compresión normal en apoyos — 8.5");
   const An = bc * d.Lap / 10, fcn = V / An, Fcnd = F.cn * f.KH("cn") * d.Kcn;
@@ -593,9 +622,9 @@ function calcularViga(d, m) {
   m.eq(chequeo("f_{cn}", fcn, "F_{cn,dis}", Fcnd, UKG, 3));
 
   // Deformaciones
-  m.h("Deformaciones y contraflecha — 8.2.4 y 11.5");
+  m.h("Deformaciones — 8.2.4");
   const EI = Edis * I;
-  const G = Edis / 15;
+  const G = 650 * MPA * f.KH("E");                                // G_mle,prom = 650 MPa (NCh 2165, Tablas 4 a 6)
   const fl = (qq, PP) => (5 * (qq / 100) * Lc ** 4 / (384 * EI) + PP * Lc ** 3 / (48 * EI)) * 10;   // mm
   const qEq = q + 2 * d.P / d.Lm;
   const gq = qEq > 0 ? qPP / qEq : 0;
@@ -611,23 +640,26 @@ function calcularViga(d, m) {
   const limT = divT ? Math.min(Lc * 10 / divT, maxT ?? Infinity) : Infinity;
   const limSC = divSC ? Math.min(Lc * 10 / divSC, maxSC ?? Infinity) : Infinity;
   r.defT = divT ? dT / limT : 0; r.defSC = divSC ? dSC / limSC : 0;
-  const dPP = fl(qPP, 0), contra = 1.5 * dPP;
-  Object.assign(r, { dT, limT, dSC, limSC, divT, divSC, contra });
-  m.row("Módulo de diseño ; módulo de corte: E<sub>dis</sub> ; G = E/15", `${fmt(Edis, 0)} ; ${fmt(G, 0)} kgf/cm²`, "11.5.2");
+  Object.assign(r, { dT, limT, dSC, limSC, divT, divSC });
+  m.row("Módulo de diseño ; módulo de corte: E<sub>dis</sub> ; G", `${fmt(Edis, 0)} ; ${fmt(G, 0)} kgf/cm²`, "NCh 2165, Tablas 4 a 6");
   m.row("Razón g/q ; creep ; factor ρ", `${fmt(gq, 3)} ; ${creep ? "aplica" : "no aplica"} ; ${fmt(rho, 3)}`, "8.2.4.11");
   m.row("Deformación por corte (L/h < 20)", `${corte ? "aplica" : "no aplica"} (L/h = ${fmt(Lc / hc, 1)})`, "8.2.4.12");
   if (divT) m.row("Deformación SC + PP: δ ≤ δ<sub>adm</sub>", `${fmt(dT, 2)} ≤ ${fmt(limT, 2)} mm ${okTxt(dT <= limT)}`, "Tabla 6");
   if (divSC) m.row("Deformación SC: δ ≤ δ<sub>adm</sub>", `${fmt(dSC, 2)} ≤ ${fmt(limSC, 2)} mm ${okTxt(dSC <= limSC)}`, "Tabla 6");
-  m.row("<b>Contraflecha mínima (1,5·δ<sub>PP</sub>)</b>", `<b>${fmt(contra, 1)} mm</b>`, "11.5.1");
-  m.p(L`\textbf{Rigidez.} Se usa el módulo de elasticidad promedio afectado por humedad, $E_{dis} = E_{p,mle,prom}\,K_H = ${tn(F.E, 0)}\cdot ${tn(f.KH("E"), 3)} = ${tn(Edis, 0)}$ kgf/cm$^2$, y $G = E_{dis}/15$ (11.5.2):`);
-  m.eq(L`I = \frac{b\,h^3}{12} = \frac{${tn(bc, 1)}\cdot ${tn(hc, 1)}^3}{12} = ${tn(I, 0)}\ \mathrm{cm^4} \qquad G = \frac{${tn(Edis, 0)}}{15} = ${tn(G, 0)}\ \mathrm{kgf/cm^2}`);
+  m.p(L`\textbf{Rigidez.} Se usa el módulo de elasticidad promedio afectado por humedad, $E_{dis} = E_{p,mle,prom}\,K_H = ${tn(F.E, 0)}\cdot ${tn(f.KH("E"), 3)} = ${tn(Edis, 0)}$ kgf/cm$^2$, y el módulo de corte promedio de la MLE, $G_{mle,prom} = 650$ MPa (NCh 2165, Tablas 4 a 6), afectado por el mismo factor de humedad:`);
+  m.eq(L`I = \frac{b\,h^3}{12} = \frac{${tn(bc, 1)}\cdot ${tn(hc, 1)}^3}{12} = ${tn(I, 0)}\ \mathrm{cm^4} \qquad G = G_{mle,prom}\,K_H = 6500\cdot ${tn(f.KH("E"), 3)} = ${tn(G, 0)}\ \mathrm{kgf/cm^2}`);
   m.p(L`\textbf{Creep.} ${creep ? L`Como $g/q = ${tn(gq, 3)} > 0{,}5$, se incorpora el flujo plástico con $k_\delta = ${d.H < 15 ? L`3/2 - g/q` : L`5/3 - \tfrac{4}{3}\,g/q`} = ${tn(kdel, 3)}$ y $\rho = 1/k_\delta - 1 = ${tn(rho, 3)}$.` : L`Como $g/q = ${tn(gq, 3)} \le 0{,}5$, no se considera la deformación por creep ($\rho = 0$).`} ${corte ? L`Como $L/h = ${tn(Lc / hc, 1)} < 20$, se suma la deformación por corte.` : ""}`);
-  m.eq(L`\delta_{SC+PP} = \frac{5\,q\,L^4}{384\,E_{dis}\,I}${d.P ? L` + \frac{P\,L^3}{48\,E_{dis}\,I}` : ""}${rho ? L`\left(1 + \rho\frac{g}{q}\right)` : ""}${corte ? L` + \frac{1{,}2\,M}{G\,A}${rho ? L`\left(1 + 2\rho\frac{g}{q}\right)` : ""}` : ""} = ${tn(deT, 2)}${corte ? L` + ${tn(dQ(M), 2)}` : ""}${rho ? " (\\text{con creep})" : ""} = ${tn(dT, 2)}\ \mathrm{mm}`, "8.2.4");
+  // Deformación total con creep sobre la flexión y el corte: δ = δe(1 + ρg/q) + δQ(1 + 2ρg/q)
+  const eqDef = (nom, qTxt, de, MM, dd) => L`\begin{aligned}
+${nom} &= \left(\frac{5\,${qTxt}\,L^4}{384\,E_{dis}\,I}${d.P ? L` + \frac{P\,L^3}{48\,E_{dis}\,I}` : ""}\right)\left(1 + \rho\frac{g}{q}\right)${corte ? L` + \frac{1{,}2\,M}{G\,A}\left(1 + 2\rho\frac{g}{q}\right)` : ""}\\
+&= ${tn(de, 3)}\cdot(1 + ${tn(rho, 3)}\cdot ${tn(gq, 3)})${corte ? L` + ${tn(dQ(MM), 3)}\cdot(1 + 2\cdot ${tn(rho, 3)}\cdot ${tn(gq, 3)})` : ""} = ${tn(dd, 2)}\ \mathrm{mm}
+\end{aligned}`;
+  m.p(L`La deformación por creep se incorpora tanto en la verificación de peso propio más sobrecarga como en la de sobrecarga sola; la deformación por corte usa $\delta_Q = 1{,}2\,M/(G\,A)$ (8.2.4.12):`, true);
+  m.eq(eqDef(L`\delta_{SC+PP}`, "q", deT, M, dT), "8.2.4");
+  if (divSC) m.eq(eqDef(L`\delta_{SC}`, "q_{SC}", deSC, MSC, dSC), "8.2.4");
   if (divT) m.eq(L`\delta_{SC+PP} = ${tn(dT, 2)}\ \mathrm{mm} \;${cmp(dT, limT)}\; ${maxT ? L`\min\left(\frac{L}{${divT}};\ ${maxT}\right)` : L`\frac{L}{${divT}}`} = ${tn(limT, 2)}\ \mathrm{mm} \hspace{2em}\textbf{${dT <= limT ? "¡CUMPLE!" : "¡NO CUMPLE!"}}`, "Tabla 6");
   if (divSC) m.eq(L`\delta_{SC} = ${tn(dSC, 2)}\ \mathrm{mm} \;${cmp(dSC, limSC)}\; ${maxSC ? L`\min\left(\frac{L}{${divSC}};\ ${maxSC}\right)` : L`\frac{L}{${divSC}}`} = ${tn(limSC, 2)}\ \mathrm{mm} \hspace{2em}\textbf{${dSC <= limSC ? "¡CUMPLE!" : "¡NO CUMPLE!"}}`, "Tabla 6");
   if (d.uso.startsWith("Vigas de piso")) m.p(L`Para vigas de piso, la deformación por peso propio más sobrecarga no debe exceder además 15 mm (8.2.4.10).`, true);
-  m.p(L`\textbf{Contraflecha.} Para compensar la deformación permanente se adopta una contraflecha mínima de 1,5 veces la deformación instantánea por cargas permanentes:`);
-  m.eq(L`\delta_{PP} = \frac{5\,q_{PP}\,L^4}{384\,E_{dis}\,I} = \frac{5\cdot ${tn(qPP / 100, 4)}\cdot ${tn(Lc, 0)}^4}{384\cdot ${tn(Edis, 0)}\cdot ${tn(I, 0)}} = ${tn(dPP, 2)}\ \mathrm{mm} \qquad c_f = 1{,}5\,\delta_{PP} = ${tn(contra, 1)}\ \mathrm{mm}`, "11.5.1");
   if (d.v1kN) {
     const d1 = fl(qPP, 100), lim1 = Math.min(Lc * 10 / 100, 20);
     r.d1 = d1 / lim1; Object.assign(r, { d1v: d1, lim1 });
@@ -680,7 +712,7 @@ function calcularColumna(d, m) {
   combos.forEach(c => m.eq(L`P_{${c.n}} = (${c.tex.replace(/PP/g, "q_{PP}").replace(/SC_\{piso\}/g, "q_{SC,p}").replace(/SC_\{techo\}/g, "q_{SC,t}").replace(/ \+ V/, "")})\,B + P_{pp} = ${tn(c.q, 2)}\cdot ${tn(d.B, 2)} + ${tn(ppc, 2)} = ${tn(c.P, 1)}\ \mathrm{kgf}`));
   if (d.w > 0) m.eq(L`M_V = \frac{w\,L^2}{8} = \frac{${tn(d.w, 2)}\cdot ${tn(d.Lm, 2)}^2}{8} = ${tn(MV / 100, 2)}\ \mathrm{kgf\cdot m} \qquad V_V = \frac{w\,L}{2} = ${tn(VV, 2)}\ \mathrm{kgf}`);
 
-  const f = factores(d, m, d.Lm, `${fmt(d.KDpp, 2)} / ${fmt(d.KDsc, 2)} / ${fmt(d.KDt, 2)} / ${fmt(d.KDv, 2)} (PP / SC piso / SC techo / viento)`);
+  const f = factores(d, m, d.Lm, `${fmt(d.KDpp, 2)} / ${fmt(d.KDsc, 2)} / ${fmt(d.KDt, 2)} / ${fmt(d.KDv, 2)} (PP / SC piso / SC techo / viento)`, r);
   const Edis = F.E * f.KH("E");
 
   // Compresión paralela
@@ -797,7 +829,7 @@ function seccionSVG(d, P, esViga) {
   g += `<rect x="${x0}" y="${y0}" width="${bw}" height="${hh}" fill="none" stroke="#1d2330" stroke-width="2"/>`;
   // ejes
   g += `<line x1="${x0 - 22}" x2="${x0 + bw + 22}" y1="${cy}" y2="${cy}" stroke="#6b4fa0" stroke-width="1" stroke-dasharray="8 4 2 4"/><text x="${x0 + bw + 26}" y="${cy + 4}" font-size="14" fill="#6b4fa0" font-style="italic">x</text>`;
-  g += `<line x1="${cx}" x2="${cx}" y1="${y0 - 22}" y2="${y0 + hh + 22}" stroke="#6b4fa0" stroke-width="1" stroke-dasharray="8 4 2 4"/><text x="${cx + 5}" y="${esViga ? y0 + hh + 20 : y0 - 26}" font-size="14" fill="#6b4fa0" font-style="italic">y</text>`;
+  g += `<line x1="${cx}" x2="${cx}" y1="${y0 - 22}" y2="${y0 + hh + 22}" stroke="#6b4fa0" stroke-width="1" stroke-dasharray="8 4 2 4"/><text x="${cx + 5}" y="${y0 - 26}" font-size="14" fill="#6b4fa0" font-style="italic">y</text>`;
   // cotas
   g += `<line x1="${x0}" x2="${x0 + bw}" y1="${y0 + hh + 34}" y2="${y0 + hh + 34}" stroke="#1d2330" marker-start="url(#fl)" marker-end="url(#fl)"/>`;
   g += `<text x="${cx}" y="${y0 + hh + 52}" font-size="14" font-weight="600" text-anchor="middle">b = ${fmt(d.b, 0)} mm</text>`;
@@ -812,11 +844,12 @@ function seccionSVG(d, P, esViga) {
     g += `<line x1="${x1}" x2="${x0 + bw}" y1="${y0 - 12}" y2="${y0 - 12}" stroke="#8a5a2b" marker-start="url(#fl3)" marker-end="url(#fl3)"/><text x="${x0 + bw + 6}" y="${y0 - 8}" font-size="12" fill="#8a5a2b">t = ${fmt(d.t, 0)} mm</text>`;
   }
   // carga
-  if (esViga) g += `<path d="M ${cx} ${y0 - 70} L ${cx} ${y0 - 8}" stroke="#c62828" stroke-width="2.5" marker-end="url(#fl4)"/><text x="${cx + 8}" y="${y0 - 52}" font-size="12" fill="#c62828">q</text>`;
+  const xq = cx - bw / 4;     // carga desplazada del eje y para no tapar su rótulo
+  if (esViga) g += `<path d="M ${xq} ${y0 - 60} L ${xq} ${y0 - 6}" stroke="#c62828" stroke-width="2.5" marker-end="url(#fl4)"/><text x="${xq - 16}" y="${y0 - 40}" font-size="13" fill="#c62828" font-style="italic">q</text>`;
   else g += `<circle cx="${cx}" cy="${cy}" r="9" fill="#fff" stroke="#c62828" stroke-width="2"/><circle cx="${cx}" cy="${cy}" r="2.5" fill="#c62828"/><text x="${cx + 13}" y="${cy - 10}" font-size="12" fill="#c62828">P</text>`
     + `<path d="M ${x0 - 70} ${cy - 40} L ${x0 - 10} ${cy - 40}" stroke="#2a6fb0" stroke-width="2.2" marker-end="url(#fl5)"/><text x="${x0 - 70}" y="${cy - 48}" font-size="12" fill="#2a6fb0">viento</text>`;
   // texto
-  const tx = 440;
+  const tx = 505;             // a la derecha de las cotas de lámina (que llegan hasta x ≈ 480)
   g += `<text x="${tx}" y="60" font-size="13.5" font-weight="600">${P.nombre}</text>`;
   g += `<text x="${tx}" y="80" font-size="12.5" fill="#5f6b7a">${P.tipo} · ${n} láminas</text>`;
   g += `<text x="${tx}" y="98" font-size="12.5" fill="#5f6b7a">laminación ${d.lam}</text>`;
@@ -847,12 +880,12 @@ function seccionTikz(d, P, esViga) {
   }
   s += `\\draw[thick] (${f(x0)},${f(y0)}) rectangle (${f(x0 + bw)},${f(y0 + hh)});\n`;
   s += `\\draw[violet, dash dot] (${f(x0 - 0.5)},0) -- (${f(x0 + bw + 0.5)},0) node[right] {$x$};\n`;
-  s += esViga ? `\\draw[violet, dash dot] (0,${f(y0 + hh + 0.5)}) -- (0,${f(y0 - 0.5)}) node[below right] {$y$};\n` : `\\draw[violet, dash dot] (0,${f(y0 - 0.5)}) -- (0,${f(y0 + hh + 0.5)}) node[above] {$y$};\n`;
+  s += `\\draw[violet, dash dot] (0,${f(y0 - 0.5)}) -- (0,${f(y0 + hh + 0.5)}) node[above right] {$y$};\n`;
   s += `\\draw[cota] (${f(x0)},${f(y0 - 0.8)}) -- node[below, font=\\small] {$b = ${tn(d.b, 0)}$ mm} (${f(x0 + bw)},${f(y0 - 0.8)});\n`;
   s += `\\draw[cota] (${f(x0 - 0.8)},${f(y0)}) -- node[left, font=\\small] {$h = ${tn(d.h, 0)}$ mm} (${f(x0 - 0.8)},${f(y0 + hh)});\n`;
   if (d.lam === "horizontal") s += `\\draw[cota, brown!60!black] (${f(x0 + bw + 0.35)},${f(y0)}) -- node[right, font=\\footnotesize] {$t = ${tn(d.t, 0)}$ mm} (${f(x0 + bw + 0.35)},${f(y0 + hh / n)});\n`;
   else s += `\\draw[cota, brown!60!black] (${f(x0 + bw - bw / n)},${f(y0 + hh + 0.3)}) -- node[above, font=\\footnotesize] {$t = ${tn(d.t, 0)}$ mm} (${f(x0 + bw)},${f(y0 + hh + 0.3)});\n`;
-  if (esViga) s += `\\draw[->, very thick, red!70!black] (0,${f(y0 + hh + 1.4)}) -- node[right, font=\\small] {$q$} (0,${f(y0 + hh + 0.1)});\n`;
+  if (esViga) s += `\\draw[->, very thick, red!70!black] (${f(-bw / 4)},${f(y0 + hh + 1.4)}) -- node[left, font=\\small] {$q$} (${f(-bw / 4)},${f(y0 + hh + 0.1)});\n`;
   else s += `\\draw[red!70!black, thick] (0,0) circle (0.15); \\fill[red!70!black] (0,0) circle (0.05); \\node[red!70!black, font=\\small] at (0.45,0.35) {$P$};\n\\draw[->, very thick, blue!60!black] (${f(x0 - 1.6)},${f(hh / 4)}) -- node[above, font=\\small] {viento} (${f(x0 - 0.2)},${f(hh / 4)});\n`;
   return L`\begin{figure}[H]
 \centering
@@ -893,10 +926,10 @@ const texCelda = (s) => s.replace(/λ/g, "$\\lambda$").replace(/δ/g, "$\\delta$
 
 function documentoTex(titulo, subtitulo, datos, figura, cuerpo, items, dc, ok, sujeto, avisos) {
   const fecha = new Date().toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
-  const filas = items.map(([t, v, s]) => `${texCelda(t)} & ${texCelda(s).replace(/,/g, "{,}").replace(/\./g, "\\,").replace(/²/g, "$^2$")} & ${tn(v, 3)} & ${v <= 1 ? "Cumple" : "No cumple"}\\\\`).join("\n");
+  const filas = items.map(([t, v, s]) => `${texCelda(t).replace(/(\d),(\d)/g, "$1{,}$2")} & ${texCelda(s).replace(/,/g, "{,}").replace(/(\d)\.(\d{3})/g, "$1\\,$2").replace(/²/g, "$^2$")} & ${tn(v, 3)} & ${v <= 1 ? "Cumple" : "No cumple"}\\\\`).join("\n");
   const obs = avisos.length ? L`\paragraph{Observaciones.}
 \begin{itemize}
-${avisos.map(a => `\\item ${texCelda(a).replace(/≤/g, "$\\le$").replace(/≥/g, "$\\ge$").replace(/%/g, "\\%").replace(/·/g, "$\\cdot$").replace(/–/g, "--")}`).join("\n")}
+${avisos.map(a => `\\item ${texCelda(a).replace(/≤/g, "$\\le$").replace(/≥/g, "$\\ge$").replace(/%/g, "\\%").replace(/·/g, "$\\cdot$").replace(/–/g, "--").replace(/(\d),(\d)/g, "$1{,}$2")}`).join("\n")}
 \end{itemize}` : "";
   return L`\documentclass[11pt,letterpaper]{article}
 \usepackage[utf8]{inputenc}
@@ -985,7 +1018,8 @@ function actualizar() {
 
   limpiarInvalidos($("inputs"));
   const malos = datosInvalidos(reglas());
-  if (!malos.length && num("t") > Math.max(num("b"), num("h"))) { $("t").classList.add("invalido"); malos.push("El espesor de lámina no puede superar la sección"); }
+  const dimLam = $("lam").value === "horizontal" ? num("h") : num("b");
+  if (!malos.length && Math.round(dimLam / num("t")) < 1) { $("t").classList.add("invalido"); malos.push(`El espesor de lámina debe ser menor que ${$("lam").value === "horizontal" ? "h" : "b"} (al menos una lámina)`); }
   if (!malos.length && $("rebaje").checked && modo === "viga" && num("hr") >= num("h")) { $("hr").classList.add("invalido"); malos.push("h_r debe ser menor que h"); }
   if (malos.length) return sinCalculo(malos);
 
@@ -999,6 +1033,8 @@ function actualizar() {
       ["Cizalle f<sub>cz</sub>/F<sub>cz,dis</sub>", r.ciz, `${fmt(r.fcz, 2)} / ${fmt(r.Fczd, 2)} kgf/cm²`],
       ["Compresión normal", r.cn, `${fmt(r.fcn, 2)} / ${fmt(r.Fcnd, 2)} kgf/cm²`],
     ];
+    if (r.flexPP !== undefined) items.push(["Flexión PP (K<sub>D</sub> = 0,90)", r.flexPP, `${fmt(r.ffp, 1)} / ${fmt(r.FdisPP, 1)} kgf/cm²`],
+      ["Cizalle PP (K<sub>D</sub> = 0,90)", r.cizPP, `${fmt(r.fczp, 2)} / ${fmt(r.Fczp, 2)} kgf/cm²`]);
     if (r.lamv !== undefined) items.push(["Volcamiento λ<sub>v</sub>/50", r.lamv / 50, `λ<sub>v</sub> = ${fmt(r.lamv, 1)}`]);
     if (r.divT) items.push(["Deformación SC+PP", r.defT, `${fmt(r.dT, 2)} / ${fmt(r.limT, 2)} mm`]);
     if (r.divSC) items.push(["Deformación SC", r.defSC, `${fmt(r.dSC, 2)} / ${fmt(r.limSC, 2)} mm`]);
@@ -1010,7 +1046,6 @@ function actualizar() {
       L`Luz $L$ ; $l_a$ & ${tn(d.Lm, 2)} m ; ${tn(d.la, 0)} cm`,
       L`$q_{PP}$ ; $q_{SC}$ ; $P$ & ${tn(r.qPP, 2)} ; ${tn(d.qSC, 2)} kgf/m ; ${tn(d.P, 0)} kgf`,
       L`Uso (Tabla 6) & ${d.uso.replace(/—/g, "---")}`,
-      L`Contraflecha mínima & ${tn(r.contra, 1)} mm`,
     ];
     mostrar(items, `Resultados — viga ${nomSec(d)} · ${r.P.nombre} · L = ${fmt(d.Lm, 2)} m`, "La viga", r, d, true, m,
       "Viga de Madera Laminada Encolada", `${r.P.nombre.replace(/–/g, "--")}, sección ${tn(d.b, 0)} $\\times$ ${tn(d.h, 0)} mm, luz $L = ${tn(d.Lm, 2)}$ m`,
@@ -1053,16 +1088,19 @@ function descargarTex() {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
-// Valores por defecto de cada pestaña (ejemplos de la planilla «MLE v4»)
-const DEF = {
-  viga: { clase: "mle 20h", b: 135, h: 405, t: 40 },
-  col: { clase: "mle 24h", b: 90, h: 180, t: 45 },
+// Material y sección propios de cada pestaña: parten con los ejemplos de la planilla «MLE v4»
+// y conservan lo que ingrese el usuario al cambiar de pestaña.
+const CAMPOS_PESTANA = ["metodo", "clase", "claseT", "Rfj", "H", "lam", "b", "h", "t", "kc", "Kcval"];
+const PESTANA = {
+  viga: { clase: "mle 20h", b: "135", h: "405", t: "40" },
+  col: { clase: "mle 24h", b: "90", h: "180", t: "45" },
 };
+const valorCampo = (id) => ($(id).type === "checkbox" ? $(id).checked : $(id).value);
 function setModo(nuevo) {
   if (nuevo === modo) return;
+  PESTANA[modo] = Object.fromEntries(CAMPOS_PESTANA.map(id => [id, valorCampo(id)]));
   modo = nuevo;
-  const v = DEF[modo];
-  $("clase").value = v.clase; $("b").value = v.b; $("h").value = v.h; $("t").value = v.t;
+  Object.entries(PESTANA[modo]).forEach(([id, v]) => { if ($(id).type === "checkbox") $(id).checked = v; else $(id).value = v; });
   actualizar();
 }
 

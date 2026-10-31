@@ -180,12 +180,12 @@
         <input id="P" type="number" step="any" min="0" value="0">
         <label for="kd">Duración de la carga que controla (K<sub>D</sub>, 7.1.2)</label>
         <select id="kd">
-          <option value="1.577e9">Permanente (50 años)</option>
-          <option value="3.154e8" selected>Normal — sobrecarga de uso (10 años)</option>
-          <option value="5.256e6">2 meses (nieve)</option>
-          <option value="6.048e5">7 días</option>
-          <option value="600">Viento o sismo (10 min)</option>
-          <option value="1">Impacto (1 s)</option>
+          <option value="0.9">Permanente — K_D = 0,90</option>
+          <option value="1" selected>Normal — sobrecarga de uso (10 años) — K_D = 1,00</option>
+          <option value="1.15">Dos meses (nieve) — K_D = 1,15</option>
+          <option value="1.25">Siete días (SC de techo) — K_D = 1,25</option>
+          <option value="1.6">Viento o sismo — K_D = 1,60</option>
+          <option value="2">Impacto — K_D = 2,00</option>
         </select>
       </fieldset>
 
@@ -316,10 +316,10 @@ const U1 = {
   "C24": [9.3, 8.0, 4.7, 2.5, 1.1, 10200], "C16": [5.2, 7.5, 3.5, 2.5, 1.1, 7900],
   "MGP10": [8.4, 10, 4.0, 2.5, 1.3, 10000], "MGP12": [13.5, 15.5, 6.0, 2.5, 1.3, 12700],
 };
-// Factor de humedad: ΔR por punto de humedad (H ≤ 20 %) y factor verde (H > 20 %) — pino radiata
+// Factor de humedad: ΔR por punto de humedad (H ≤ 18 %) y factores de madera verde de la Tabla 4 (H > 18 %) — pino radiata
 const DR = { Ff: 0.025, Fcp: 0.048, Fcz: 0.015, Fcn: 0, Ef: 0.017 };
 const VERDE = { Ff: 0.75, Fcp: 0.52, Fcz: 0.85, Fcn: 0.67, Ef: 0.83 };
-const factorKH = (H, k) => (H <= 20 ? 1 - (H - 12) * DR[k] : VERDE[k]);
+const factorKH = (H, k) => (H <= 18 ? 1 - (H - 12) * DR[k] : VERDE[k]);
 // Factor de longitud efectiva de pandeo K_p: [condición, teórico, recomendado]
 const KP = {
   C1: ["Empotrado – empotrado", 0.5, 0.65],
@@ -349,7 +349,7 @@ const $ = (id) => document.getElementById(id);
 const num = (id) => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : 0; };
 const fmt = (x, d = 2) => Number.isFinite(x) ? x.toLocaleString("es-CL", { minimumFractionDigits: d, maximumFractionDigits: d }) : "—";
 const L = String.raw;
-const tn = (x, d = 2) => Number.isFinite(x) ? fmt(x, d).replace(/,/g, "{,}").replace(/\./g, "\\,") : "\\infty";
+const tn = (x, d = 2) => Number.isFinite(x) ? fmt(x, d).replace(/,/g, "{,}").replace(/(\d)\.(\d{3})/g, "$1\\,$2") : "\\infty";
 const LE = L`\le`;
 const cmp = (a, b) => (a <= b ? LE : ">");
 const tag = (ok, t) => `<span class="tag ${ok ? "ok" : "bad"}">${t}</span>`;
@@ -362,6 +362,9 @@ const chequeo = (a, va, b, vb, u = UKG, dec = 2) => {
 };
 // K_D de la carga permanente sola (peso propio), como en la práctica de diseño habitual
 const KD_PERM = 0.90;
+// Coeficiente de volcamiento C_fE (8.2.2.4): 0,439 madera clasificada visualmente; 0,561 clasificada mecánicamente
+const MECANICOS = ["C24", "C16", "MGP10", "MGP12"];
+const CfE = (grado) => (MECANICOS.includes(grado) ? 0.561 : 0.439);
 
 class Memo {
   constructor() { this.out = []; this.tex = []; this.n = 0; }
@@ -410,18 +413,18 @@ Se adopta la conversión 1 MPa $= 10$ kgf/cm$^2$.
 `);
 }
 
-// K_H por propiedad: ΔR de cada una (H ≤ 20 %) o factor verde (H > 20 %)
+// K_H por propiedad: ΔR de cada una (H ≤ 18 %) o factor verde de la Tabla 4 (H > 18 %)
 const NOMK = { Ff: "F_f", Fcp: "F_{cp}", Fcz: "F_{cz}", Fcn: "F_{cn}", Ef: "E_f" };
 function bloqueKH(m, H, claves) {
-  if (H <= 20) {
+  if (H <= 18) {
     m.p(L`\textbf{Factor de modificación por humedad} (7.1.1). ${H > 12 ? L`Dado que el contenido de humedad $H = ${tn(H, 1)}\,\%$ supera el 12\,\%, se aplican los factores de reducción de la Tabla 3 con $\Delta H = ${tn(H, 1)} - 12 = ${tn(H - 12, 1)}\,\%$` : L`La madera opera en estado seco ($H = 12\,\%$), por lo que los factores resultan unitarios`}:`, true);
-    m.p(L`Para $H \le 20\,\%$ se usa $K_H = 1 - (H - 12)\,\Delta R$, con $\Delta R$ propio de cada propiedad:`, true);
-    m.out.push({ tex: L`Factor de humedad para $H = ${tn(H, 1)}\,\%$ ($\le 20\,\%$): $K_H = 1 - (H - 12)\,\Delta R$, con $\Delta R$ propio de cada propiedad:` });
+    m.p(L`Para $H \le 18\,\%$ se usa $K_H = 1 - (H - 12)\,\Delta R$, con $\Delta R$ propio de cada propiedad:`, true);
+    m.out.push({ tex: L`Factor de humedad para $H = ${tn(H, 1)}\,\%$ ($\le 18\,\%$): $K_H = 1 - (H - 12)\,\Delta R$, con $\Delta R$ propio de cada propiedad:` });
     m.eq(L`\begin{aligned}
 ${claves.map(k => L`\Delta R_{${NOMK[k]}} &= ${tn(DR[k], 3)} & \quad K_{H,${NOMK[k]}} &= 1 - (${tn(H, 1)} - 12)\cdot ${tn(DR[k], 3)} = ${tn(factorKH(H, k), 3)}`).join(" \\\\\n")}
 \end{aligned}`, "7.1.1");
   } else {
-    m.p(L`Factor de humedad para $H = ${tn(H, 1)}\,\% > 20\,\%$ (madera verde): $K_H$ propio de cada propiedad:`);
+    m.p(L`Factor de humedad para $H = ${tn(H, 1)}\,\% > 18\,\%$: se usan los factores de madera verde de la Tabla 4, propios de cada propiedad:`);
     m.eq(claves.map(k => L`K_{H,${NOMK[k]}} = ${tn(VERDE[k], 2)}`).join(L` \qquad `), "7.1.1");
   }
 }
@@ -525,7 +528,7 @@ function calcularTabique(d, m) {
   m.eq(L`K_c = ${tn(Kc, 2)}`, "7.1.3");
   m.p(L`\textbf{Factor de modificación por altura en flexión} (8.2.2.3). ${Khf < 1 ? `Como h = ${tn(d.h, 0)} mm supera los ${mgp ? 160 : 90} mm, se aplica:` : `Como h = ${tn(d.h, 0)} mm no supera los ${mgp ? 160 : 90} mm, el factor resultaría mayor que la unidad y normativamente no se aplica, asumiéndose:`}`, true);
   m.eq(Khf < 1 ? L`K_{hf} = ${mgp ? L`\left(\frac{160}{${tn(d.h, 0)}}\right)^{${d.grado === "MGP10" ? "1/3" : "1/2"}}` : L`\left(\frac{90}{${tn(d.h, 0)}}\right)^{1/5}`} = ${tn(Khf, 3)}` : L`K_{hf} = 1`, "8.2.2.3");
-  m.p(L`\textbf{Ajuste del módulo de elasticidad.} ${KhEx < 1 || KhEy < 1 ? "Como las dimensiones de la sección son menores a 180 mm, se aplica el factor de modificación por altura (con mínimo 0,67) en cada dirección de pandeo:" : "La sección no requiere reducir el módulo de elasticidad por altura:"}`, true);
+  m.p(L`\textbf{Ajuste del módulo de elasticidad.} ${KhEx < 1 || KhEy < 1 ? "Como las dimensiones de la sección son menores a 180 mm, se aplica el factor de modificación por altura (con mínimo 0{,}67) en cada dirección de pandeo:" : "La sección no requiere reducir el módulo de elasticidad por altura:"}`, true);
   m.eq(L`K_{hE,x} = ${KhEx < 1 ? L`\left(\frac{h}{180}\right)^{1/4} = \left(\frac{${tn(d.h, 0)}}{180}\right)^{1/4} = ` : ""}${tn(KhEx, 3)}`);
   m.eq(L`K_{hE,y} = ${KhEy < 1 ? L`\left(\frac{b}{180}\right)^{1/4} = \left(\frac{${tn(d.b, 0)}}{180}\right)^{1/4} = ` : ""}${tn(KhEy, 3)}`);
   m.p(L`Los módulos de elasticidad de diseño en cada eje resultan:`, true);
@@ -589,7 +592,7 @@ function calcularTabique(d, m) {
   if (necesitaKlv) {
     lv = d.la / hc < 7 ? 2.06 * d.la : 1.63 * d.la + 3 * hc;
     lamv = Math.sqrt(lv * hc / bc ** 2);
-    FfE = 0.439 * Ex / lamv ** 2;
+    FfE = CfE(d.grado) * Ex / lamv ** 2;
     const rr = FfE / Fstar;
     Klv = (1 + rr) / 1.9 - Math.sqrt(((1 + rr) / 1.9) ** 2 - rr / 0.95);
     r.lamv = lamv;
@@ -615,7 +618,7 @@ function calcularTabique(d, m) {
     m.eq(d.la / hc < 7 ? L`l_v = 2{,}06\,l_a = 2{,}06\cdot ${tn(d.la, 0)} = ${tn(lv, 1)}\ \mathrm{cm}` : L`l_v = 1{,}63\,l_a + 3h = 1{,}63\cdot ${tn(d.la, 0)} + 3\cdot ${tn(hc, 1)} = ${tn(lv, 1)}\ \mathrm{cm}`, "Tabla 5");
     m.eq(L`\lambda_v = \sqrt{\frac{l_v\,h}{b^2}} = \sqrt{\frac{${tn(lv, 1)}\cdot ${tn(hc, 1)}}{${tn(bc, 1)}^2}} = ${tn(lamv, 3)} \;${lamv <= 50 ? L`\le` : ">"}\; 50`, "8.2.2.4");
     m.eq(L`F^*_{f,dis} = F_f\,K_H\,K_D\,K_c = ${tn(Fstar, 2)}\ \mathrm{kgf/cm^2}`);
-    m.eq(L`F_{fE} = \frac{0{,}439\,E_{x,dis}}{\lambda_v^2} = \frac{0{,}439\cdot ${tn(Ex, 0)}}{${tn(lamv, 3)}^2} = ${tn(FfE, 2)}\ \mathrm{kgf/cm^2}`);
+    m.eq(L`F_{fE} = \frac{C_{fE}\,E_{x,dis}}{\lambda_v^2} = \frac{${tn(CfE(d.grado), 3)}\cdot ${tn(Ex, 0)}}{${tn(lamv, 3)}^2} = ${tn(FfE, 2)}\ \mathrm{kgf/cm^2}`, "8.2.2.4");
     m.eq(L`K_{\lambda v} = \frac{1 + F_{fE}/F^*_{f,dis}}{1{,}9} - \sqrt{\left(\frac{1 + F_{fE}/F^*_{f,dis}}{1{,}9}\right)^2 - \frac{F_{fE}/F^*_{f,dis}}{0{,}95}} = \frac{1 + ${tn(rr, 3)}}{1{,}9} - \sqrt{\left(\frac{1 + ${tn(rr, 3)}}{1{,}9}\right)^2 - \frac{${tn(rr, 3)}}{0{,}95}} = ${tn(Klv, 3)}`, "8.2.2.4");
     m.eq(L`F_{fv,dis} = F^*_{f,dis}\,K_{\lambda v} = ${tn(Fstar, 2)}\cdot ${tn(Klv, 3)} = ${tn(Ffv, 2)}\ \mathrm{kgf/cm^2}`);
   } else {
@@ -687,7 +690,7 @@ function leer() {
     maestra: $("tipoViga").value === "maestra", kc: $("kc").checked,
     Lm: num("L"), la: num("la"), apoyoLat: $("apoyoLat").value,
     modoCarga: $("modoCarga").value, Dm2: num("Dm2"), Lm2: num("Lm2"), di: num("di"), rho: num("rho"), qExtra: num("qExtra"),
-    qPPin: num("qPP"), qSCin: num("qSC"), P: num("P"), tKD: +$("kd").value, kdTxt: $("kd").selectedOptions[0].text,
+    qPPin: num("qPP"), qSCin: num("qSC"), P: num("P"), KD: +$("kd").value, kdTxt: $("kd").selectedOptions[0].text,
     Lap: num("Lap"), Kcn: num("Kcn"),
     rebaje: $("rebaje").checked, hr: num("hr"), ladoReb: $("ladoReb").value, xReb: num("xReb"), beta: num("beta"),
     // Con cargas por m² la separación es la misma que da q_PP (di); en cargas lineales se ingresa aparte
@@ -733,8 +736,8 @@ function calcular(d, m) {
   m.eq(L`V = \frac{(q_{PP} + q_{SC})\,L}{2}${d.P ? L` + \frac{P}{2}` : ""} = \frac{(${tn(qPP, 3)} + ${tn(qSC, 2)})\cdot ${tn(d.Lm)}}{2}${d.P ? L` + \frac{${tn(d.P, 1)}}{2}` : ""} = ${tn(V, 3)}\ \mathrm{kgf}`);
 
   // Factores de modificación
-  const KH = (k) => (d.H <= 20 ? 1 - (d.H - 12) * DR[k] : VERDE[k]);
-  const KD = 1.747 / d.tKD ** 0.0464 + 0.295;
+  const KH = (k) => factorKH(d.H, k);
+  const KD = d.KD;                               // Anexo G (G.3), valores tabulados
   const Kc = d.kc && !d.maestra ? 1.15 : 1.0;   // la viga maestra no es un elemento repetitivo
   const Khf = mgp ? (d.h > 160 ? (160 / d.h) ** (d.grado === "MGP10" ? 1 / 3 : 1 / 2) : 1) : (d.h > 90 ? (90 / d.h) ** 0.2 : 1);
   const KhE = !mgp && d.h < 180 ? Math.max((d.h / 180) ** 0.25, 0.67) : 1;
@@ -748,13 +751,13 @@ function calcular(d, m) {
   m.row("Módulo de elasticidad de diseño: E<sub>f,dis</sub>", `${fmt(Edis, 0)} kgf/cm²`);
   m.p(L`Pino radiata grado ${d.grado} (Tabla U.1), con $F_f = ${tn(FfM, 1)}$, $F_{cz} = ${tn(FczM, 1)}$, $F_{cn} = ${tn(FcnM, 1)}$ y $E_f = ${tn(EfM, 0)}$ MPa${d.maestra ? L` (viga maestra: $0{,}60\,E_f$)` : ""}; se usa 1 MPa $= 10$ kgf/cm$^2$.`);
   bloqueKH(m, d.H, ["Ff", "Fcz", "Fcn", "Ef"]);
-  m.p(L`\textbf{Factor de modificación por duración de la carga} (7.1.2). Se adopta el factor de la carga de menor duración de la combinación (${d.kdTxt.replace(/—/g, "---")}), con una duración acumulada $t = ${tn(d.tKD, 0)}$ s:`, true);
-  m.eq(L`K_D = \frac{1{,}747}{t^{0{,}0464}} + 0{,}295 = \frac{1{,}747}{${tn(d.tKD, 0)}^{0{,}0464}} + 0{,}295 = ${tn(KD, 3)}`, "7.1.2");
+  m.p(L`\textbf{Factor de modificación por duración de la carga} (7.1.2). Se adopta el factor tabulado en el Anexo G (G.3) para la carga de menor duración de la combinación (${d.kdTxt.split(" — ").slice(0, -1).join(" --- ")}):`, true);
+  m.eq(L`K_D = ${tn(KD, 2)}`, "Anexo G, G.3");
   m.p(L`\textbf{Factor de modificación por trabajo conjunto} (7.1.3). ${Kc > 1 ? "El envigado conforma un sistema de tres o más elementos paralelos distanciados a no más de 610 mm que comparten la carga aplicada, por lo que:" : d.maestra ? "La viga maestra actúa como un elemento principal aislado que no cumple los criterios de redundancia y proximidad, por lo que su capacidad no se mayora:" : "No se cumplen las condiciones de elemento repetitivo, por lo que:"}`, true);
   m.eq(L`K_c = ${tn(Kc, 2)}`, "7.1.3");
   m.p(L`\textbf{Factor de modificación por altura} (8.2.2.3). ${Khf < 1 ? `Como la altura de la sección (${tn(d.h, 0)} mm) supera los ${mgp ? 160 : 90} mm, se aplica:` : `Como la altura de la sección (${tn(d.h, 0)} mm) no supera los ${mgp ? 160 : 90} mm, el factor no reduce la tensión:`}`, true);
   m.eq(Khf < 1 ? L`K_{hf} = ${mgp ? L`\left(\frac{160}{h}\right)^{${d.grado === "MGP10" ? "1/3" : "1/2"}}` : L`\left(\frac{90}{h}\right)^{1/5}`} = ${mgp ? L`\left(\frac{160}{${tn(d.h, 0)}}\right)^{${d.grado === "MGP10" ? "1/3" : "1/2"}}` : L`\left(\frac{90}{${tn(d.h, 0)}}\right)^{1/5}`} = ${tn(Khf, 3)}` : L`K_{hf} = 1`, "8.2.2.3");
-  m.p(L`\textbf{Módulo de elasticidad de diseño.} ${KhE < 1 ? `Según la Tabla U.1, como la altura de la sección es menor a 180 mm (h = ${tn(d.h, 0)} mm) se aplica el factor de altura ${L`$K_{hE}$`} (con mínimo 0,67):` : "La altura de la sección no requiere reducir el módulo por altura:"}`, true);
+  m.p(L`\textbf{Módulo de elasticidad de diseño.} ${KhE < 1 ? `Según la Tabla U.1, como la altura de la sección es menor a 180 mm (h = ${tn(d.h, 0)} mm) se aplica el factor de altura ${L`$K_{hE}$`} (con mínimo 0{,}67):` : "La altura de la sección no requiere reducir el módulo por altura:"}`, true);
   m.eq(KhE < 1 ? L`K_{hE} = \left(\frac{h}{180}\right)^{1/4} = \left(\frac{${tn(d.h, 0)}}{180}\right)^{1/4} = ${tn(KhE, 3)}` : L`K_{hE} = 1`);
   m.eq(L`E_{f,dis} = E_f\,K_H\,K_{hE} = ${tn(Ef0, 0)}\cdot ${tn(KH("Ef"), 3)}\cdot ${tn(KhE, 3)} = ${tn(Edis, 0)}\ \mathrm{kgf/cm^2}`);
 
@@ -773,7 +776,7 @@ function calcular(d, m) {
       const rel = d.la / hc;
       lv = rel < 7 ? (conc ? 1.80 : 2.06) * d.la : (conc ? 1.37 : 1.63) * d.la + 3 * hc;
       lamv = Math.sqrt(lv * hc / bc ** 2);
-      FfE = 0.439 * Edis / lamv ** 2;
+      FfE = CfE(d.grado) * Edis / lamv ** 2;
       const rr = FfE / Fstar;
       Klv = (1 + rr) / 1.9 - Math.sqrt(((1 + rr) / 1.9) ** 2 - rr / 0.95);
     }
@@ -808,7 +811,7 @@ function calcular(d, m) {
     m.p(L`Con la longitud efectiva se calculan la esbeltez de volcamiento (que no debe superar 50), la tensión admisible ponderada $F^*_{f,dis}$ (sin factores de altura ni volcamiento) y la tensión crítica de volcamiento:`, true);
     m.eq(L`\lambda_v = \sqrt{\frac{l_v\,h}{b^2}} = \sqrt{\frac{${tn(lv, 1)}\cdot ${tn(hc, 1)}}{${tn(bc, 1)}^2}} = ${tn(lamv, 3)} \;${lamv <= 50 ? L`\le` : ">"}\; 50`, "8.2.2.4");
     m.eq(L`F^*_{f,dis} = F_f\,K_H\,K_D\,K_c = ${tn(Ff, 1)}\cdot ${tn(KH("Ff"), 3)}\cdot ${tn(KD, 3)}\cdot ${tn(Kc, 2)} = ${tn(Fstar, 2)}\ \mathrm{kgf/cm^2}`);
-    m.eq(L`F_{fE} = \frac{0{,}439\,E_{f,dis}}{\lambda_v^2} = \frac{0{,}439\cdot ${tn(Edis, 0)}}{${tn(lamv, 3)}^2} = ${tn(FfE, 2)}\ \mathrm{kgf/cm^2}`);
+    m.eq(L`F_{fE} = \frac{C_{fE}\,E_{f,dis}}{\lambda_v^2} = \frac{${tn(CfE(d.grado), 3)}\cdot ${tn(Edis, 0)}}{${tn(lamv, 3)}^2} = ${tn(FfE, 2)}\ \mathrm{kgf/cm^2}`, "8.2.2.4");
     m.p(L`Con estos valores se obtiene el factor de modificación por volcamiento:`, true);
     m.eq(L`K_{\lambda v} = \frac{1 + F_{fE}/F^*_{f,dis}}{1{,}9} - \sqrt{\left(\frac{1 + F_{fE}/F^*_{f,dis}}{1{,}9}\right)^2 - \frac{F_{fE}/F^*_{f,dis}}{0{,}95}} = \frac{1 + ${tn(rr, 3)}}{1{,}9} - \sqrt{\left(\frac{1 + ${tn(rr, 3)}}{1{,}9}\right)^2 - \frac{${tn(rr, 3)}}{0{,}95}} = ${tn(Klv, 3)}`, "8.2.2.4");
     m.eq(L`F_{fv,dis} = F^*_{f,dis}\,K_{\lambda v} = ${tn(Fstar, 2)}\cdot ${tn(Klv, 3)} = ${tn(Ffv, 2)}\ \mathrm{kgf/cm^2}`);
@@ -844,8 +847,8 @@ function calcular(d, m) {
   m.eq(chequeo("f_{cz}", fcz, "F_{cz,dis}", Fczd));
 
   // Peso propio solo con K_D permanente: puede controlar cuando la carga permanente domina
-  const tPerm = 1.577e9;   // 50 años [s]
-  if (d.tKD < tPerm && qPP > 0) {
+
+  if (d.KD > KD_PERM && qPP > 0) {
     m.h("Peso propio solo con duración de carga permanente — 7.1.2");
     const KDp = KD_PERM;
     const Mpp = qPP * d.Lm ** 2 / 8, Vpp = qPP * d.Lm / 2;
@@ -899,7 +902,7 @@ function calcular(d, m) {
   const fQ = (MM) => corte ? 1.2 * MM * 100 / (G * A) * 10 : 0;     // mm
   const dT = fl(q, d.P) * (1 + rho * g_q) + fQ(M) * (1 + 2 * rho * g_q);
   const MSC = qSC * d.Lm ** 2 / 8 + d.P * d.Lm / 4;
-  const dSC = fl(qSC, d.P) + fQ(MSC);
+  const dSC = fl(qSC, d.P) * (1 + rho * g_q) + fQ(MSC) * (1 + 2 * rho * g_q);   // creep en ambas verificaciones
   const [divSC, divT, , maxT] = TABLA6[d.uso];
   const limT = divT ? Math.min(Lc * 10 / divT, maxT ?? Infinity) : Infinity;
   const limSC = divSC ? Lc * 10 / divSC : Infinity;
@@ -931,7 +934,7 @@ function calcular(d, m) {
   m.eq(L`\Delta_{total} = \Delta\left(1 + \rho\frac{g}{q}\right)${corte ? L` + \Delta_q\left(1 + 2\rho\frac{g}{q}\right)` : ""} = ${tn(dfl, 3)}\cdot(1 + ${tn(rho, 3)}\cdot ${tn(g_q, 3)})${corte ? L` + ${tn(dq, 3)}\cdot(1 + 2\cdot ${tn(rho, 3)}\cdot ${tn(g_q, 3)})` : ""} = ${tn(dT, 3)}\ \mathrm{mm}`, "8.2.4");
   m.eq(chequeo(L`\Delta_{total}`, dT, divT ? L`\frac{L}{${divT}}` : L`\Delta_{adm}`, limT, L`\ \mathrm{mm}`));
   if (divSC) {
-    m.eq(L`\Delta_{total,SC} = \Delta_{SC}${corte ? L` + \Delta_{q,SC}` : ""} = ${tn(dflSC, 3)}${corte ? L` + ${tn(dqSC, 3)}` : ""} = ${tn(dSC, 3)}\ \mathrm{mm}`);
+    m.eq(L`\Delta_{total,SC} = \Delta_{SC}\left(1 + \rho\frac{g}{q}\right)${corte ? L` + \Delta_{q,SC}\left(1 + 2\rho\frac{g}{q}\right)` : ""} = ${tn(dflSC, 3)}\cdot(1 + ${tn(rho, 3)}\cdot ${tn(g_q, 3)})${corte ? L` + ${tn(dqSC, 3)}\cdot(1 + 2\cdot ${tn(rho, 3)}\cdot ${tn(g_q, 3)})` : ""} = ${tn(dSC, 3)}\ \mathrm{mm}`);
     m.eq(chequeo(L`\Delta_{total,SC}`, dSC, L`\frac{L}{${divSC}}`, limSC, L`\ \mathrm{mm}`));
   }
   m.p(L`${dT <= limT && (!divSC || dSC <= limSC) ? "Como se observa, las deformaciones calculadas son inferiores a las tolerancias exigidas, por lo que la escuadría propuesta cumple con los criterios de deformabilidad." : "Las deformaciones calculadas superan las tolerancias exigidas, por lo que la escuadría propuesta no cumple con los criterios de deformabilidad."}`, true);
@@ -1005,7 +1008,7 @@ function sinCalculo(malos) {
 // Documento .tex común: encabezado, tabla de datos, memoria y resumen
 function documentoTex(titulo, subtitulo, datos, cuerpo, items, dc, ok, sujeto) {
   const fecha = new Date().toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
-  const filas = items.map(([t, v, s]) => `${texCelda(t)} & ${texCelda(s).replace(/,/g, "{,}").replace(/\./g, "\\,").replace(/²/g, "$^2$")} & ${tn(v, 3)} & ${v <= 1 ? "Cumple" : "No cumple"}\\\\`).join("\n");
+  const filas = items.map(([t, v, s]) => `${texCelda(t).replace(/(\d),(\d)/g, "$1{,}$2")} & ${texCelda(s).replace(/,/g, "{,}").replace(/(\d)\.(\d{3})/g, "$1\\,$2").replace(/²/g, "$^2$")} & ${tn(v, 3)} & ${v <= 1 ? "Cumple" : "No cumple"}\\\\`).join("\n");
   return L`\documentclass[11pt,letterpaper]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -1109,6 +1112,8 @@ function actualizarEnv() {
   $("kc").disabled = $("tipoViga").value === "maestra";
   limpiarInvalidos($("inputs"));
   const malos = datosInvalidos(reglasEnv());
+  const hSec = $("esc").value === "custom" ? num("h") : ESCUADRIAS[$("esc").value][1];
+  if (!malos.length && $("rebaje").checked && num("hr") >= hSec) { $("hr").classList.add("invalido"); malos.push(`h_r debe ser menor que h = ${hSec} mm`); }
   if (malos.length) return sinCalculo(malos);
   const d = leer();
   const m = new Memo();
@@ -1138,7 +1143,7 @@ function actualizarEnv() {
   $("memo").innerHTML = m.html();
 
   const fecha = new Date().toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
-  const filas = items.map(([t, v, s]) => `${texCelda(t)} & ${texCelda(s).replace(/,/g, "{,}").replace(/\./g, "\\,").replace(/²/g, "$^2$")} & ${tn(v, 3)} & ${v <= 1 ? "Cumple" : "No cumple"}\\\\`).join("\n");
+  const filas = items.map(([t, v, s]) => `${texCelda(t).replace(/(\d),(\d)/g, "$1{,}$2")} & ${texCelda(s).replace(/,/g, "{,}").replace(/(\d)\.(\d{3})/g, "$1\\,$2").replace(/²/g, "$^2$")} & ${tn(v, 3)} & ${v <= 1 ? "Cumple" : "No cumple"}\\\\`).join("\n");
   ultimoTex = L`\documentclass[11pt,letterpaper]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
