@@ -397,13 +397,14 @@
     <div class="toolbar">
       <button class="btn sec" type="button" onclick="window.print()">Imprimir</button>
       <button class="btn" type="button" id="btnTex">Descargar memoria (.tex)</button>
+        <button class="btn" type="button" onclick="descargarZipMemoria(ultimoTex, ultimoNombre, document.body)">Descargar .zip (Overleaf)</button>
     </div>
     <div class="memo" id="memo"></div>
   </section>
 </main>
 <footer>Herramienta de apoyo académico basada en NCh 1198:2024 y en la planilla «FULL MADERA». Verifique siempre los resultados.</footer>
 
-<script src="memo.js?v=22"></script>
+<script src="memo.js?v=23"></script>
 <script>
 "use strict";
 // ---------------------------------------------------------------------------
@@ -1491,7 +1492,7 @@ $PP + SC_{piso} + SC_{techo} + V$ & Gravitacionales y viento (fachada${d.pisos =
 \end{tabular}
 \end{table}
 `;
-  ultimoTex = documentoTex("Muro de corte", `Marco plataforma de pino radiata ${d.grado}, muro de ${tn(d.bm, 2)} $\times$ ${tn(d.hm, 2)} m, ${d.pisos === 2 ? "2 pisos" : "1 piso"}`,
+  ultimoTex = documentoTex("Muro de corte", `Marco plataforma de pino radiata ${d.grado}, muro de ${tn(d.bm, 2)} $\\times$ ${tn(d.hm, 2)} m, ${d.pisos === 2 ? "2 pisos" : "1 piso"}`,
     datos, m.texto(), items, dc, ok, "el muro de corte", { cargas, combos, figura: muroTikz(d, r) });
   ultimoNombre = `memoria_muro_corte_${d.grado}_${d.n}x${d.b}x${d.h}.tex`;
 }

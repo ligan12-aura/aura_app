@@ -416,3 +416,188 @@ function datosSobreMaximo(reglas) {
   }
   return malos;
 }
+// ---------------------------------------------------------------------------
+// Descarga para Overleaf: .zip con la memoria (.tex), referencias (.bib) y figuras (.png)
+// ---------------------------------------------------------------------------
+// Referencias normativas: patrón que la reconoce en el texto y entrada BibTeX
+const REFERENCIAS = [
+  { clave: "nch1198", patron: /NCh\s?1198(?::2024)?/, bib: String.raw`@manual{nch1198,
+  title        = {{NCh 1198:2024. Madera --- Construcciones en madera --- Cálculo}},
+  organization = {Instituto Nacional de Normalización (INN)},
+  address      = {Santiago, Chile},
+  year         = {2024}
+}` },
+  { clave: "nch2165", patron: /NCh\s?2165(?::2023)?/, bib: String.raw`@manual{nch2165,
+  title        = {{NCh 2165:2023. Madera laminada encolada estructural --- Propiedades físicas y mecánicas}},
+  organization = {Instituto Nacional de Normalización (INN)},
+  address      = {Santiago, Chile},
+  year         = {2023}
+}` },
+  { clave: "nch1537", patron: /NCh\s?1537(?::\d{4})?/, bib: String.raw`@manual{nch1537,
+  title        = {{NCh 1537:2009. Diseño estructural --- Cargas permanentes y cargas de uso}},
+  organization = {Instituto Nacional de Normalización (INN)},
+  address      = {Santiago, Chile},
+  year         = {2009}
+}` },
+  { clave: "aisc360", patron: /AISC\s?360(?:-16)?/, bib: String.raw`@manual{aisc360,
+  title        = {{ANSI/AISC 360-16. Specification for Structural Steel Buildings}},
+  organization = {American Institute of Steel Construction},
+  address      = {Chicago, IL},
+  year         = {2016}
+}` },
+  { clave: "aci318", patron: /ACI\s?318-08/, bib: String.raw`@manual{aci318,
+  title        = {{ACI 318-08. Building Code Requirements for Structural Concrete and Commentary}},
+  organization = {American Concrete Institute},
+  address      = {Farmington Hills, MI},
+  year         = {2008}
+}` },
+  { clave: "aci31814", patron: /ACI\s?318-14/, bib: String.raw`@manual{aci31814,
+  title        = {{ACI 318-14. Building Code Requirements for Structural Concrete and Commentary}},
+  organization = {American Concrete Institute},
+  address      = {Farmington Hills, MI},
+  year         = {2014}
+}` },
+  { clave: "ich2019", patron: /Manual de Detallamiento(?: para Elementos de Hormigón Armado\})?/, bib: String.raw`@manual{ich2019,
+  title        = {{Manual de Detallamiento para Elementos de Hormigón Armado}},
+  organization = {Instituto del Cemento y del Hormigón de Chile (ICH)},
+  address      = {Santiago, Chile},
+  year         = {2019}
+}` },
+  { clave: "mcv3", patron: /Manual de Carreteras/, bib: String.raw`@manual{mcv3,
+  title        = {{Manual de Carreteras, Volumen 3: Instrucciones y Criterios de Diseño}},
+  organization = {Dirección de Vialidad, Ministerio de Obras Públicas},
+  address      = {Santiago, Chile},
+  note         = {Edición vigente}
+}` },
+  { clave: "aashto93", patron: /AASHTO\s?(?:19)?93/, bib: String.raw`@manual{aashto93,
+  title        = {{AASHTO Guide for Design of Pavement Structures}},
+  organization = {American Association of State Highway and Transportation Officials},
+  address      = {Washington, D.C.},
+  year         = {1993}
+}` },
+  { clave: "aashto98", patron: /AASHTO\s?(?:19)?98|Suplemento(?: AASHTO)? 1998/, bib: String.raw`@manual{aashto98,
+  title        = {{Supplement to the AASHTO Guide for Design of Pavement Structures, Part II: Rigid Pavement Design \& Rigid Pavement Joint Design}},
+  organization = {American Association of State Highway and Transportation Officials},
+  address      = {Washington, D.C.},
+  year         = {1998}
+}` },
+];
+
+// Cita cada norma en su primera mención dentro del texto (título y cuerpo), fuera de ecuaciones,
+// y agrega la bibliografía al final. Devuelve { tex, usadas }.
+function conCitas(tex) {
+  const ini = tex.indexOf("\\begin{document}");
+  if (ini < 0) return { tex, usadas: [] };
+  let cuerpo = tex.slice(ini);
+  const usadas = [];
+  // Zonas donde no se puede citar: ecuaciones en bloque, entornos tikz y matemática en línea
+  const prohibidas = () => {
+    const z = [];
+    for (const re of [/(?<!\\)\\\[[\s\S]*?(?<!\\)\\\]/g, /\\begin\{tikzpicture\}[\s\S]*?\\end\{tikzpicture\}/g, /\$[^$]*\$/g, /\\(?:section|subsection)\{[^}]*\}/g])
+      for (const mm of cuerpo.matchAll(re)) z.push([mm.index, mm.index + mm[0].length]);
+    return z;
+  };
+  for (const ref of REFERENCIAS) {
+    const z = prohibidas();
+    const re = new RegExp(ref.patron.source, "g");
+    let mm, pos = -1;
+    while ((mm = re.exec(cuerpo))) {
+      const a = mm.index, b = a + mm[0].length;
+      if (!z.some(([x, y]) => a >= x && a < y)) { pos = b; break; }
+    }
+    if (pos < 0) continue;
+    cuerpo = cuerpo.slice(0, pos) + `~\\cite{${ref.clave}}` + cuerpo.slice(pos);
+    usadas.push(ref);
+  }
+  if (usadas.length) cuerpo = cuerpo.replace(/\\end\{document\}\s*$/, "\\bibliographystyle{unsrt}\n\\bibliography{referencias}\n\\end{document}\n");
+  return { tex: tex.slice(0, ini) + cuerpo, usadas };
+}
+
+// SVG en pantalla → PNG (fondo blanco, 2× de resolución)
+function svgAPng(svg, escala = 2) {
+  return new Promise((ok, mal) => {
+    const vb = svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width ? svg.viewBox.baseVal : svg.getBoundingClientRect();
+    const w = Math.round(vb.width), h = Math.round(vb.height);
+    const copia = svg.cloneNode(true);
+    copia.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    copia.setAttribute("width", w); copia.setAttribute("height", h);
+    copia.removeAttribute("style");
+    copia.setAttribute("font-family", "Segoe UI, Arial, Helvetica, sans-serif");
+    // Variables CSS (var(--...)) → color calculado en la página
+    const cs = getComputedStyle(document.documentElement);
+    let txt = new XMLSerializer().serializeToString(copia).replace(/var\((--[\w-]+)\)/g, (_, v) => cs.getPropertyValue(v).trim() || "#000");
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement("canvas");
+      c.width = w * escala; c.height = h * escala;
+      const g = c.getContext("2d");
+      g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
+      g.drawImage(img, 0, 0, c.width, c.height);
+      c.toBlob(b => b ? b.arrayBuffer().then(x => ok(new Uint8Array(x))) : mal(new Error("PNG")), "image/png");
+    };
+    img.onerror = () => mal(new Error("No se pudo convertir la figura"));
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(txt);
+  });
+}
+
+// ZIP sin compresión (método "store"), suficiente para .tex, .bib y .png
+const CRC_TABLA = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+const crc32 = (u8) => { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = CRC_TABLA[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+function crearZip(archivos) {
+  const enc = new TextEncoder(), partes = [], central = [];
+  let off = 0;
+  const d = new Date(), hora = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1), dia = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  for (const { nombre, datos } of archivos) {
+    const n = enc.encode(nombre), u = typeof datos === "string" ? enc.encode(datos) : datos, crc = crc32(u);
+    const loc = new DataView(new ArrayBuffer(30));
+    loc.setUint32(0, 0x04034b50, true); loc.setUint16(4, 20, true); loc.setUint16(6, 0x0800, true); loc.setUint16(8, 0, true);
+    loc.setUint16(10, hora, true); loc.setUint16(12, dia, true); loc.setUint32(14, crc, true);
+    loc.setUint32(18, u.length, true); loc.setUint32(22, u.length, true); loc.setUint16(26, n.length, true); loc.setUint16(28, 0, true);
+    partes.push(new Uint8Array(loc.buffer), n, u);
+    const cen = new DataView(new ArrayBuffer(46));
+    cen.setUint32(0, 0x02014b50, true); cen.setUint16(4, 20, true); cen.setUint16(6, 20, true); cen.setUint16(8, 0x0800, true); cen.setUint16(10, 0, true);
+    cen.setUint16(12, hora, true); cen.setUint16(14, dia, true); cen.setUint32(16, crc, true); cen.setUint32(20, u.length, true); cen.setUint32(24, u.length, true);
+    cen.setUint16(28, n.length, true); cen.setUint32(42, off, true);
+    central.push(new Uint8Array(cen.buffer), n);
+    off += 30 + n.length + u.length;
+  }
+  const tamC = central.reduce((s, x) => s + x.length, 0);
+  const fin = new DataView(new ArrayBuffer(22));
+  fin.setUint32(0, 0x06054b50, true); fin.setUint16(8, archivos.length, true); fin.setUint16(10, archivos.length, true);
+  fin.setUint32(12, tamC, true); fin.setUint32(16, off, true);
+  return new Blob([...partes, ...central, new Uint8Array(fin.buffer)], { type: "application/zip" });
+}
+
+// Arma y descarga el .zip: las figuras TikZ del .tex se reemplazan, en orden, por los dibujos de pantalla en PNG
+async function descargarZipMemoria(tex, nombre, contenedor) {
+  if (!tex) { alert("Corrija los datos inválidos antes de descargar la memoria."); return; }
+  const base = nombre.replace(/\.tex$/i, "");
+  const svgs = contenedor ? [...contenedor.querySelectorAll('svg[role="img"]')].filter(s => s.getBoundingClientRect().width > 0) : [];
+  const archivos = [];
+  let i = 0;
+  const bloques = [...tex.matchAll(/\\begin\{tikzpicture\}[\s\S]*?\\end\{tikzpicture\}/g)];
+  for (const b of bloques) {
+    if (i >= svgs.length) break;
+    try {
+      const png = await svgAPng(svgs[i]);
+      const ruta = `figuras/figura${i + 1}.png`;
+      archivos.push({ nombre: ruta, datos: png });
+      tex = tex.replace(b[0], `\\includegraphics[width=0.85\\linewidth]{${ruta}}`);
+      i++;
+    } catch (e) { break; }
+  }
+  // Varias imágenes en una misma figura (lado a lado): se reparte el ancho
+  tex = tex.replace(/\\begin\{figure\}[\s\S]*?\\end\{figure\}/g, (fig) => {
+    const k = (fig.match(/\\includegraphics\[width=0\.85\\linewidth\]/g) || []).length;
+    return k > 1 ? fig.replaceAll("\\includegraphics[width=0.85\\linewidth]", `\\includegraphics[width=${(0.9 / k - 0.04).toFixed(2)}\\linewidth]`) : fig;
+  });
+  if (i && !/\\usepackage\{graphicx\}/.test(tex)) tex = tex.replace(/\\begin\{document\}/, "\\usepackage{graphicx}\n\\begin{document}");
+  const { tex: conRef, usadas } = conCitas(tex);
+  archivos.unshift({ nombre: `${base}.tex`, datos: texUnicode(conRef) });
+  if (usadas.length) archivos.splice(1, 0, { nombre: "referencias.bib", datos: usadas.map(u => u.bib).join("\n\n") + "\n" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(crearZip(archivos));
+  a.download = `${base}.zip`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
