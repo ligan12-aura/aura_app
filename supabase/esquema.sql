@@ -3,7 +3,7 @@
 
 -- 1. Proyectos: cada fila es un proyecto con sus elementos (datos de entrada, memoria .tex y estado) en JSON
 create table if not exists public.proyectos (
-  id          text primary key,
+  id          text not null,
   user_id     uuid not null default auth.uid() references auth.users (id) on delete cascade,
   nombre      text not null,
   calculista  text,
@@ -11,8 +11,10 @@ create table if not exists public.proyectos (
   mandante    text,
   fecha       text,
   datos       jsonb not null default '{}'::jsonb,
+  version     integer not null default 1,
   creado      timestamptz not null default now(),
-  modificado  timestamptz not null default now()
+  modificado  timestamptz not null default now(),
+  primary key (user_id, id)
 );
 create index if not exists proyectos_user_idx on public.proyectos (user_id, modificado desc);
 
@@ -29,8 +31,8 @@ create policy "proyectos_update_propios" on public.proyectos for update to authe
 create policy "proyectos_delete_propios" on public.proyectos for delete to authenticated using (auth.uid() = user_id);
 
 -- 3. Figuras PNG de las memorias: bucket privado, una carpeta por usuario (<user_id>/<proyecto>/<archivo>.png)
-insert into storage.buckets (id, name, public)
-values ('figuras', 'figuras', false)
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('figuras', 'figuras', false, 5242880, array['image/png'])
 on conflict (id) do nothing;
 
 drop policy if exists "figuras_select_propias" on storage.objects;

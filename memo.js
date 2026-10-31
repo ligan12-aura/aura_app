@@ -579,7 +579,8 @@ function crearZip(archivos) {
 
 // Figuras TikZ del .tex → dibujos de pantalla en PNG, en orden. Devuelve { tex, archivos: [{ nombre, datos }] }.
 async function prepararFiguras(tex, contenedor, prefijo = "figura") {
-  const svgs = contenedor ? [...contenedor.querySelectorAll('svg[role="img"]')].filter(s => s.getBoundingClientRect().width > 0) : [];
+  // Dibujos de resultados visibles; se excluyen los esquemas de ayuda de los datos de entrada (dentro de <details>)
+  const svgs = contenedor ? [...contenedor.querySelectorAll('svg[role="img"]')].filter(s => s.getBoundingClientRect().width > 0 && !s.closest("details, [data-sin-figura]")) : [];
   const archivos = [];
   let i = 0;
   for (const b of [...tex.matchAll(/\\begin\{tikzpicture\}[\s\S]*?\\end\{tikzpicture\}/g)]) {

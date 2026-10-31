@@ -11,8 +11,8 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js"></script>
-<script src="nube.js?v=26"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js" integrity="sha384-K0oxqktRvaThvYgGL4G+OK2Ih6VS6Uyu7j3+7WJgp/uWM0Yv6Xi4YEiw0BB+mPfi" crossorigin="anonymous"></script>
+<script src="nube.js?v=27"></script>
 <style>
   /* PWA: sin zoom automático de iOS al enfocar campos y texto estable al rotar */
   html { -webkit-text-size-adjust: 100%; }
@@ -289,7 +289,7 @@
 </main>
 <footer>Herramienta de apoyo académico basada en el Manual de Carreteras, Volumen N° 3 (Edición 2025), Tópico 3.604.2. Verifique siempre los resultados.</footer>
 
-<script src="memo.js?v=26"></script>
+<script src="memo.js?v=27"></script>
 <script>
 "use strict";
 // ---------------------------------------------------------------------------
@@ -1008,7 +1008,7 @@ init();
 // Integración con proyectos (proyectos.js): datos para guardar y restaurar este cálculo
 window.AURA_MEMO = { tipo: "Pavimento rígido", elemento: () => "", tex: () => ultimoTex, nombre: () => ultimoNombre, recalcular: () => actualizar() };
 </script>
-<script src="proyectos.js?v=26"></script>
+<script src="proyectos.js?v=27"></script>
 <script>
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
 </script>

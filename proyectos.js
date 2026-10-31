@@ -27,29 +27,41 @@ async function proyTx(modo, fn) {
     tx.onerror = () => mal(tx.error);
   });
 }
+// Estructura mínima válida de un proyecto (filas antiguas o incompletas no rompen el panel ni la memoria)
+function normalizarProyecto(p) {
+  if (!p || typeof p !== "object") return undefined;
+  if (!Array.isArray(p.elementos)) p.elementos = [];
+  p.elementos = p.elementos.filter(e => e && typeof e === "object" && typeof e.id === "string");
+  p.elementos.forEach(e => { if (!e.datos || typeof e.datos !== "object") e.datos = {}; if (!Array.isArray(e.figuras)) e.figuras = []; });
+  if (typeof p.nombre !== "string" || !p.nombre) p.nombre = "Proyecto sin nombre";
+  return p;
+}
 // Copia local en el navegador (modo sin sesión y origen de la migración a la nube)
 const ProyectosLocal = {
-  listar: async () => (await proyTx("readonly", s => s.getAll())).sort((a, b) => (b.modificado || 0) - (a.modificado || 0)),
-  obtener: (id) => proyTx("readonly", s => s.get(id)),
+  listar: async () => (await proyTx("readonly", s => s.getAll())).map(normalizarProyecto).filter(Boolean).sort((a, b) => (b.modificado || 0) - (a.modificado || 0)),
+  obtener: async (id) => normalizarProyecto(await proyTx("readonly", s => s.get(id))),
   guardar: (p) => { p.modificado = Date.now(); return proyTx("readwrite", s => s.put(p)); },
   borrar: (id) => proyTx("readwrite", s => s.delete(id)),
   figura: async (f) => f.blob,
+  borrarFiguras: async () => {},
 };
-// Proyectos del usuario en Supabase: fila en «proyectos» (JSON) y figuras PNG en el bucket «figuras»
+// Proyectos del usuario en Supabase: fila en «proyectos» (JSON) y figuras PNG en el bucket «figuras».
+// Concurrencia optimista: cada guardado exige la versión leída; si otra pestaña o dispositivo guardó antes, se rechaza.
+class ConflictoVersion extends Error {}
 const ProyectosNube = {
   async listar() {
-    const { data, error } = await sb.from("proyectos").select("datos").order("modificado", { ascending: false });
+    const { data, error } = await sb.from("proyectos").select("datos, version").order("modificado", { ascending: false });
     if (error) throw error;
-    return data.map(r => r.datos);
+    return data.map(r => normalizarProyecto(Object.assign(r.datos || {}, { version: r.version }))).filter(Boolean);
   },
   async obtener(id) {
-    const { data, error } = await sb.from("proyectos").select("datos").eq("id", id).maybeSingle();
+    const { data, error } = await sb.from("proyectos").select("datos, version").eq("id", id).maybeSingle();
     if (error) throw error;
-    return data ? data.datos : undefined;
+    return data ? normalizarProyecto(Object.assign(data.datos || {}, { version: data.version })) : undefined;
   },
   async guardar(p) {
     p.modificado = Date.now();
-    const carpeta = `${usuarioActual.id}/${p.id}`, usadas = new Set();
+    const carpeta = `${usuarioActual.id}/${p.id}`;
     for (const e of p.elementos || []) for (const f of e.figuras || []) {
       if (f.blob && !f.ruta) {
         const ruta = `${carpeta}/${f.nombre.split("/").pop()}`;
@@ -57,15 +69,19 @@ const ProyectosNube = {
         if (error) throw error;
         f.ruta = ruta;
       }
-      if (f.ruta) usadas.add(f.ruta);
     }
-    const datos = JSON.parse(JSON.stringify(p, (k, v) => (k === "blob" ? undefined : v)));
-    const { error } = await sb.from("proyectos").upsert({ id: p.id, nombre: p.nombre, calculista: p.calculista, oficina: p.oficina, mandante: p.mandante, fecha: p.fecha, datos, modificado: new Date().toISOString() });
-    if (error) throw error;
-    // Figuras de elementos quitados del proyecto
-    const { data: lista } = await sb.storage.from("figuras").list(carpeta, { limit: 1000 });
-    const sobran = (lista || []).map(o => `${carpeta}/${o.name}`).filter(r => !usadas.has(r));
-    if (sobran.length) await sb.storage.from("figuras").remove(sobran);
+    const datos = JSON.parse(JSON.stringify(p, (k, v) => (k === "blob" || k === "version" ? undefined : v)));
+    const fila = { id: p.id, nombre: p.nombre, calculista: p.calculista, oficina: p.oficina, mandante: p.mandante, fecha: p.fecha, datos, modificado: new Date().toISOString() };
+    if (p.version == null) {
+      const { error } = await sb.from("proyectos").insert({ ...fila, version: 1 });
+      if (error) throw error;
+      p.version = 1;
+    } else {
+      const { data, error } = await sb.from("proyectos").update({ ...fila, version: p.version + 1 }).eq("id", p.id).eq("version", p.version).select("id");
+      if (error) throw error;
+      if (!data || !data.length) throw new ConflictoVersion("El proyecto fue modificado en otra pestaña o dispositivo. Se recargará la versión más reciente.");
+      p.version += 1;
+    }
   },
   async borrar(id) {
     const carpeta = `${usuarioActual.id}/${id}`;
@@ -80,12 +96,18 @@ const ProyectosNube = {
     if (error) throw error;
     return data;
   },
+  // Figuras de elementos quitados o reemplazados (solo rutas de la carpeta del usuario)
+  async borrarFiguras(rutas) {
+    const propias = rutas.filter(r => typeof r === "string" && r.startsWith(`${usuarioActual.id}/`));
+    if (propias.length) await sb.storage.from("figuras").remove(propias);
+  },
 };
 // Con sesión iniciada se usa la nube; sin sesión (o sin conexión al cargar la librería), el navegador
 const almacen = () => (typeof sb !== "undefined" && sb && usuarioActual ? ProyectosNube : ProyectosLocal);
+const textoError = (e) => (typeof errorEnEspanol === "function" ? errorEnEspanol(e) : e.message);
 const conAviso = (fn) => async (...a) => {
   try { return await fn(...a); }
-  catch (e) { alert(`No se pudo acceder a los proyectos: ${typeof errorEnEspanol === "function" ? errorEnEspanol(e) : e.message}`); throw e; }
+  catch (e) { alert(e instanceof ConflictoVersion ? e.message : `No se pudo acceder a los proyectos: ${textoError(e)}`); throw e; }
 };
 const Proyectos = {
   listar: conAviso(() => almacen().listar()),
@@ -93,7 +115,19 @@ const Proyectos = {
   guardar: conAviso((p) => almacen().guardar(p)),
   borrar: conAviso((id) => almacen().borrar(id)),
   figura: (f) => almacen().figura(f),
+  borrarFiguras: (rutas) => almacen().borrarFiguras(rutas).catch(() => {}),
 };
+// Lee la versión más reciente, aplica el cambio y guarda; ante un conflicto de versión reintenta con datos frescos.
+// fn(p) devuelve false para cancelar sin guardar.
+async function modificarProyecto(id, fn) {
+  for (let intento = 0; intento < 3; intento++) {
+    const p = await almacen().obtener(id);
+    if (!p) throw new Error("El proyecto ya no existe.");
+    if ((await fn(p)) === false) return p;
+    try { await almacen().guardar(p); return p; }
+    catch (e) { if (!(e instanceof ConflictoVersion) || intento === 2) throw e; }
+  }
+}
 const proyId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const ls = {
   get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
@@ -101,8 +135,12 @@ const ls = {
 };
 const proyectoActivoId = () => ls.get("auraProyectoActivo");
 const fijarProyectoActivo = (id) => ls.set("auraProyectoActivo", id);
-const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const escTex = (s) => String(s ?? "").replace(/\\/g, "\\textbackslash{}").replace(/([&%$#_{}])/g, "\\$1").replace(/~/g, "\\textasciitilde{}").replace(/\^/g, "\\textasciicircum{}");
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+// Texto del usuario → LaTeX: escapa los caracteres especiales y quita los que pdflatex no puede componer (emojis, símbolos fuera del BMP)
+const escTex = (s) => String(s ?? "")
+  .replace(/[\u{10000}-\u{10FFFF}☀-➿️‍]/gu, "").replace(/[\u0000-\u0008\u000B-\u001F]/g, "")
+  .replace(/[\\{}&%$#_~^]/g, c => ({ "\\": "\\textbackslash{}", "{": "\\{", "}": "\\}", "&": "\\&", "%": "\\%", "$": "\\$", "#": "\\#", "_": "\\_", "~": "\\textasciitilde{}", "^": "\\textasciicircum{}" }[c]))
+  .replace(/\s{2,}/g, " ").trim();
 const fechaLarga = (iso) => {
   const d = iso ? new Date(iso + "T12:00:00") : new Date();
   return d.toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
@@ -139,32 +177,49 @@ function tituloSugerido() {
   return t ? t.textContent.replace(/^Resultados\s*—\s*/, "").trim() : (window.AURA_MEMO?.tipo || "Elemento");
 }
 const paginaActual = () => location.pathname.split("/").pop() || "index.html";
+// Solo páginas propias de la app (un dato manipulado no puede convertirse en un enlace javascript: u otro sitio)
+const PAGINAS_CALCULO = ["acero.html", "hormigon.html", "madera.html", "mle.html", "vial.html", "rigido.html"];
 function urlElemento(p, e) {
   const q = new URLSearchParams();
   if (e.elemento) q.set("elemento", e.elemento);
   q.set("proyecto", p.id); q.set("el", e.id);
-  return `${e.pagina}?${q}`;
+  return `${PAGINAS_CALCULO.includes(e.pagina) ? e.pagina : "index.html"}?${q}`;
 }
 
 // Agrega (o actualiza) el cálculo visible en la página como elemento del proyecto activo
+let guardando = false;
 async function guardarCalculo(nombre, idExistente) {
-  const H = window.AURA_MEMO;
-  const p = await Proyectos.obtener(proyectoActivoId());
-  if (!H || !p) return;
+  const H = window.AURA_MEMO, pid = proyectoActivoId();
+  if (!H || !pid || guardando) return;
   const tex = H.tex();
-  if (!tex) { alert("Corrija los datos inválidos antes de agregar el cálculo al proyecto."); return; }
-  const id = idExistente || proyId();
-  const fig = await prepararFiguras(tex, document.body, `${id}_figura`);
-  const el = {
-    id, nombre: nombre || tituloSugerido(), tipo: H.tipo, pagina: paginaActual(), elemento: H.elemento ? H.elemento() : "",
-    datos: capturarFormulario(), tex: fig.tex, figuras: fig.archivos.map(a => ({ nombre: a.nombre, blob: new Blob([a.datos], { type: "image/png" }) })),
-    estado: estadoActual(), fecha: Date.now(),
-  };
-  const i = p.elementos.findIndex(e => e.id === id);
-  if (i >= 0) p.elementos[i] = el; else p.elementos.push(el);
-  await Proyectos.guardar(p);
-  panelEditando = id;
-  await pintarPanel();
+  if (!tex) { alert(H.sinMemoria || "Corrija los datos inválidos antes de agregar el cálculo al proyecto."); return; }
+  // Evita doble clic: los botones quedan deshabilitados hasta terminar
+  guardando = true;
+  document.querySelectorAll("#auraPanel .ap-acc button").forEach(b => { b.disabled = true; });
+  try {
+    const id = idExistente || proyId();
+    const fig = await prepararFiguras(tex, document.body, `${id}_figura`);
+    const el = {
+      id, nombre: nombre || tituloSugerido(), tipo: H.tipo, pagina: paginaActual(), elemento: H.elemento ? H.elemento() : "",
+      datos: capturarFormulario(), tex: fig.tex, figuras: fig.archivos.map(a => ({ nombre: a.nombre, blob: new Blob([a.datos], { type: "image/png" }) })),
+      estado: estadoActual(), fecha: Date.now(),
+    };
+    let viejas = [];
+    // Se lee la versión más reciente del proyecto justo antes de guardar (no se pisan cambios de otra pestaña)
+    await modificarProyecto(pid, (p) => {
+      const i = p.elementos.findIndex(e => e.id === id);
+      viejas = i >= 0 ? p.elementos[i].figuras.map(f => f.ruta).filter(Boolean) : [];
+      if (i >= 0) p.elementos[i] = el; else p.elementos.push(el);
+    });
+    const nuevas = new Set(el.figuras.map(f => f.ruta));
+    await Proyectos.borrarFiguras(viejas.filter(r => !nuevas.has(r)));
+    panelEditando = id;
+  } catch (e) {
+    alert(e instanceof ConflictoVersion ? e.message : `No se pudo guardar el cálculo en el proyecto: ${textoError(e)}`);
+  } finally {
+    guardando = false;
+    await pintarPanel().catch(() => {});
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -178,7 +233,8 @@ function partesMemoria(tex) {
   let subtitulo = "";
   const tit = cuerpo.match(/^\s*\\begin\{center\}([\s\S]*?)\\end\{center\}/);
   if (tit) {
-    const s = tit[1].match(/\\\\\[3pt\]\s*([\s\S]*?)\\\\\[2pt\]/);
+    // Subtítulo: segunda línea del bloque de título (entre los saltos \\[3pt]/\\[4pt] y \\[2pt])
+    const s = tit[1].match(/\\\\\[\d+pt\]\s*([\s\S]*?)\\\\\[\d+pt\]/);
     subtitulo = s ? s[1].trim() : "";
     cuerpo = cuerpo.slice(tit.index + tit[0].length);
   }
@@ -270,7 +326,11 @@ ${usadas.size ? "\\clearpage\n\\addcontentsline{toc}{chapter}{\\bibname}\n\\bibl
   return { doc, usadas: [...usadas.values()] };
 }
 async function descargarZipProyecto(id) {
-  const p = await Proyectos.obtener(id);
+  try { await armarZipProyecto(id); }
+  catch (e) { alert(`No se pudo generar la memoria del proyecto: ${textoError(e)}`); }
+}
+async function armarZipProyecto(id) {
+  const p = await almacen().obtener(id);
   if (!p) return;
   if (!p.elementos.length) { alert("El proyecto aún no tiene elementos. Agregue cálculos desde las páginas de cálculo."); return; }
   const { doc, usadas } = documentoProyecto(p);
@@ -278,7 +338,11 @@ async function descargarZipProyecto(id) {
   const archivos = [{ nombre: `${base}.tex`, datos: texUnicode(doc) }];
   if (usadas.length) archivos.push({ nombre: "referencias.bib", datos: usadas.map(u => u.bib).join("\n\n") + "\n" });
   for (const e of p.elementos)
-    for (const f of e.figuras || []) archivos.push({ nombre: f.nombre, datos: new Uint8Array(await (await Proyectos.figura(f)).arrayBuffer()) });
+    for (const f of e.figuras || []) {
+      let blob;
+      try { blob = await Proyectos.figura(f); } catch (err) { throw new Error(`falta la figura ${f.nombre} del elemento «${e.nombre}»; vuelva a guardar ese elemento desde su página (${textoError(err)})`); }
+      archivos.push({ nombre: f.nombre, datos: new Uint8Array(await blob.arrayBuffer()) });
+    }
   descargarBlob(crearZip(archivos), `${base}.zip`);
 }
 
@@ -354,7 +418,7 @@ async function pintarPanel() {
         </div>` : `<div class="ap-vacio" style="padding:0">Abra una herramienta de cálculo para agregar elementos al proyecto.</div>`}
         <button class="ap-b sec" id="apZip" ${p.elementos.length ? "" : "disabled"}>Descargar memoria del proyecto (.zip)</button>
       </div>
-      ${p.elementos.length ? `<ol class="ap-lista">${p.elementos.map((e, i) => `<li class="${e.id === panelEditando ? "ed" : ""}" data-id="${e.id}">
+      ${p.elementos.length ? `<ol class="ap-lista">${p.elementos.map((e, i) => `<li class="${e.id === panelEditando ? "ed" : ""}" data-id="${esc(e.id)}">
           <a href="${esc(urlElemento(p, e))}" title="Abrir el cálculo">${i + 1}. ${esc(e.nombre)}</a>
           <small>${esc(e.tipo || "")} · ${fechaCorta(e.fecha)}${e.estado?.texto ? " · " + esc(e.estado.texto) : ""}</small>
           <div class="ap-fila"><button data-acc="sub" title="Subir">↑</button><button data-acc="baj" title="Bajar">↓</button><button data-acc="ren" title="Renombrar">✎</button><button data-acc="del" title="Quitar del proyecto">✕</button>
@@ -366,15 +430,26 @@ async function pintarPanel() {
     document.getElementById("apGuardar")?.addEventListener("click", () => guardarCalculo(nombre(), panelEditando));
     document.getElementById("apZip")?.addEventListener("click", () => descargarZipProyecto(p.id));
     panel.querySelectorAll(".ap-fila button").forEach(b => b.addEventListener("click", async () => {
-      const id = b.closest("li").dataset.id, q = await Proyectos.obtener(p.id), i = q.elementos.findIndex(e => e.id === id);
-      if (i < 0) return;
-      const acc = b.dataset.acc;
-      if (acc === "sub" && i > 0) [q.elementos[i - 1], q.elementos[i]] = [q.elementos[i], q.elementos[i - 1]];
-      else if (acc === "baj" && i < q.elementos.length - 1) [q.elementos[i + 1], q.elementos[i]] = [q.elementos[i], q.elementos[i + 1]];
-      else if (acc === "ren") { const nv = prompt("Nombre del elemento:", q.elementos[i].nombre); if (!nv) return; q.elementos[i].nombre = nv.trim(); }
-      else if (acc === "del") { if (!confirm(`¿Quitar «${q.elementos[i].nombre}» del proyecto?`)) return; q.elementos.splice(i, 1); if (panelEditando === id) panelEditando = null; }
-      else return;
-      await Proyectos.guardar(q);
+      const id = b.closest("li").dataset.id, acc = b.dataset.acc;
+      const actual = p.elementos.find(e => e.id === id);
+      if (!actual) return;
+      // Las preguntas se hacen antes de leer la versión más reciente, para no retener datos viejos
+      let nv = null;
+      if (acc === "ren") { nv = prompt("Nombre del elemento:", actual.nombre); if (!nv || !nv.trim()) return; }
+      if (acc === "del" && !confirm(`¿Quitar «${actual.nombre}» del proyecto?`)) return;
+      let quitadas = [];
+      try {
+        await modificarProyecto(p.id, (q) => {
+          const i = q.elementos.findIndex(e => e.id === id);
+          if (i < 0) return false;
+          if (acc === "sub" && i > 0) [q.elementos[i - 1], q.elementos[i]] = [q.elementos[i], q.elementos[i - 1]];
+          else if (acc === "baj" && i < q.elementos.length - 1) [q.elementos[i + 1], q.elementos[i]] = [q.elementos[i], q.elementos[i + 1]];
+          else if (acc === "ren") q.elementos[i].nombre = nv.trim();
+          else if (acc === "del") { quitadas = q.elementos[i].figuras.map(f => f.ruta).filter(Boolean); q.elementos.splice(i, 1); }
+          else return false;
+        });
+        if (acc === "del") { if (panelEditando === id) panelEditando = null; await Proyectos.borrarFiguras(quitadas); }
+      } catch (e) { alert(e instanceof ConflictoVersion ? e.message : `No se pudo modificar el proyecto: ${textoError(e)}`); }
       pintarPanel();
     }));
   }
@@ -397,9 +472,11 @@ async function iniciarPanel() {
   // Cálculo abierto desde el panel: proyecto y elemento en la URL
   const q = new URLSearchParams(location.search);
   if (q.get("proyecto") && q.get("el")) {
-    const p = await Proyectos.obtener(q.get("proyecto"));
+    let p = null;
+    try { p = await almacen().obtener(q.get("proyecto")); } catch { /* sin conexión: se abre la página sin restaurar */ }
     const e = p && p.elementos.find(x => x.id === q.get("el"));
-    if (e && window.AURA_MEMO) {
+    // Solo se restaura en la página que generó el elemento (otra página tiene campos distintos)
+    if (e && window.AURA_MEMO && e.pagina === paginaActual()) {
       fijarProyectoActivo(p.id);
       panelEditando = e.id;
       restaurarFormulario(e.datos);
@@ -431,10 +508,14 @@ async function guardarFormularioProyecto(ev) {
   const datos = { nombre: f.pNombre.value.trim(), calculista: f.pCalculista.value.trim(), oficina: f.pOficina.value.trim(), mandante: f.pMandante.value.trim(), fecha: f.pFecha.value };
   if (!datos.nombre) return;
   ls.set("auraCalculista", datos.calculista); ls.set("auraOficina", datos.oficina);
-  let p = id ? await Proyectos.obtener(id) : null;
-  if (p) Object.assign(p, datos);
-  else { p = { id: proyId(), creado: Date.now(), elementos: [], ...datos }; fijarProyectoActivo(p.id); abrirPanel(true); }
-  await Proyectos.guardar(p);
+  try {
+    if (id) await modificarProyecto(id, (p) => { Object.assign(p, datos); });
+    else {
+      const p = { id: proyId(), creado: Date.now(), elementos: [], ...datos };
+      await almacen().guardar(p);
+      fijarProyectoActivo(p.id); abrirPanel(true);
+    }
+  } catch (e) { alert(e instanceof ConflictoVersion ? e.message : `No se pudo guardar el proyecto: ${textoError(e)}`); return; }
   document.getElementById("dlgProyecto").close();
   await pintarProyectos();
   await pintarPanel();
@@ -444,7 +525,7 @@ async function pintarProyectos() {
   const cont = document.getElementById("listaProyectos");
   if (!cont) return;
   const lista = await Proyectos.listar(), act = proyectoActivoId();
-  cont.innerHTML = lista.length ? lista.map(p => `<article class="proy${p.id === act ? " activo" : ""}" data-id="${p.id}">
+  cont.innerHTML = lista.length ? lista.map(p => `<article class="proy${p.id === act ? " activo" : ""}" data-id="${esc(p.id)}">
       <div class="proy-t"><h3>${esc(p.nombre)}</h3>${p.id === act ? '<span class="proy-act">Activo</span>' : ""}</div>
       <p>${p.mandante ? `Mandante: <b>${esc(p.mandante)}</b><br>` : ""}${p.calculista ? `Calculista: ${esc(p.calculista)}` : ""}${p.oficina ? ` · ${esc(p.oficina)}` : ""}</p>
       <p class="proy-m">${p.elementos.length} ${p.elementos.length === 1 ? "elemento" : "elementos"} · modificado ${fechaCorta(p.modificado || p.creado)}</p>
@@ -481,11 +562,15 @@ async function ofrecerMigracion() {
   let locales = [];
   try { locales = await ProyectosLocal.listar(); } catch { return; }
   if (!locales.length) { ls.set(marca, "1"); return; }
-  if (confirm(`Hay ${locales.length} ${locales.length === 1 ? "proyecto guardado" : "proyectos guardados"} en este navegador. ¿Subirlos a su cuenta para tenerlos en todos sus dispositivos?`)) {
-    for (const p of locales) await Proyectos.guardar(p);
-    alert("Proyectos subidos a su cuenta.");
+  if (!confirm(`Hay ${locales.length} ${locales.length === 1 ? "proyecto guardado" : "proyectos guardados"} en este navegador. ¿Subirlos a su cuenta para tenerlos en todos sus dispositivos?`)) { ls.set(marca, "1"); return; }
+  // Uno por uno: los subidos se quitan del navegador (no quedan para otro usuario de este equipo); los fallidos se informan
+  const fallidos = [];
+  for (const p of locales) {
+    try { delete p.version; await ProyectosNube.guardar(p); await ProyectosLocal.borrar(p.id); }
+    catch (e) { fallidos.push(`${p.nombre}: ${textoError(e)}`); }
   }
-  ls.set(marca, "1");
+  if (fallidos.length) alert(`No se pudieron subir ${fallidos.length} proyecto(s); quedan en este navegador y se volverá a ofrecer subirlos:\n\n${fallidos.join("\n")}`);
+  else { alert("Proyectos subidos a su cuenta."); ls.set(marca, "1"); }
 }
 // Usuario y botón de cierre de sesión en el encabezado
 function pintarUsuario() {
@@ -502,6 +587,11 @@ function pintarUsuario() {
   h.appendChild(d);
 }
 
-(typeof sesionLista !== "undefined" ? sesionLista : Promise.resolve(null))
-  .then(() => { pintarUsuario(); return iniciarPanel(); })
-  .then(async () => { await ofrecerMigracion(); iniciarInicio(); });
+// Cada paso se aísla: un error (sin conexión, migración fallida) no deja la página sin lista ni botones
+(async () => {
+  try { await (typeof sesionLista !== "undefined" ? sesionLista : null); } catch { /* sin sesión */ }
+  try { pintarUsuario(); } catch (e) { console.error(e); }
+  try { await iniciarPanel(); } catch (e) { console.error(e); }
+  try { await ofrecerMigracion(); } catch (e) { console.error(e); }
+  iniciarInicio();
+})();

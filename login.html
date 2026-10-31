@@ -40,8 +40,8 @@
   .hidden { display: none !important; }
   footer { text-align: center; color: var(--muted); font-size: 12px; padding: 10px 0 24px; }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js"></script>
-<script src="nube.js?v=26"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js" integrity="sha384-K0oxqktRvaThvYgGL4G+OK2Ih6VS6Uyu7j3+7WJgp/uWM0Yv6Xi4YEiw0BB+mPfi" crossorigin="anonymous"></script>
+<script src="nube.js?v=27"></script>
 </head>
 <body>
 <header>
@@ -111,7 +111,19 @@ async function enviar(form, fn) {
   b.disabled = true; mensaje("");
   try { await fn(); } catch (e) { mensaje(errorEnEspanol(e)); } finally { b.disabled = false; }
 }
-const destino = () => { const v = new URLSearchParams(location.search).get("volver"); return v && !/^(https?:)?\/\//i.test(v) ? v : "index.html"; };
+// Solo se vuelve a páginas propias de la app (lista blanca); cualquier otro valor va al inicio
+const PAGINAS_APP = ["index.html", "acero.html", "hormigon.html", "madera.html", "mle.html", "espectros.html", "vial.html", "rigido.html"];
+const destino = () => {
+  const v = new URLSearchParams(location.search).get("volver");
+  if (!v) return "index.html";
+  try {
+    const u = new URL(v, location.href);
+    const pag = u.pathname.split("/").pop();
+    if (u.origin === location.origin && u.pathname.startsWith(new URL(".", location.href).pathname) && PAGINAS_APP.includes(pag))
+      return pag + u.search.replace(/[^\w=&%.\-+?]/g, "");
+  } catch { /* URL inválida */ }
+  return "index.html";
+};
 
 document.querySelectorAll("#tabs button").forEach(b => b.addEventListener("click", () => mostrar(b.dataset.modo)));
 $("btnOlvido").addEventListener("click", () => { $("fOlvido").email.value = $("fEntrar").email.value; mostrar("olvido"); });
