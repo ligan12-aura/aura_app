@@ -11,6 +11,8 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js"></script>
+<script src="nube.js?v=26"></script>
 <style>
   /* PWA: sin zoom automático de iOS al enfocar campos y texto estable al rotar */
   html { -webkit-text-size-adjust: 100%; }
@@ -367,7 +369,7 @@
 </main>
 <footer>Herramienta de apoyo académico. Las solicitaciones deben corresponder a la envolvente de combinaciones mayoradas. Verifique siempre los resultados.</footer>
 
-<script src="memo.js?v=25"></script>
+<script src="memo.js?v=26"></script>
 <script>
 "use strict";
 // ---------------------------------------------------------------------------
@@ -1698,7 +1700,7 @@ window.AURA_MEMO = {
   recalcular: () => (elActual() === "losa" ? calcularLosa() : calcularViga()),
 };
 </script>
-<script src="proyectos.js?v=25"></script>
+<script src="proyectos.js?v=26"></script>
 <script>
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
 </script>

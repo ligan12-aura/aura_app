@@ -27,11 +27,72 @@ async function proyTx(modo, fn) {
     tx.onerror = () => mal(tx.error);
   });
 }
-const Proyectos = {
+// Copia local en el navegador (modo sin sesión y origen de la migración a la nube)
+const ProyectosLocal = {
   listar: async () => (await proyTx("readonly", s => s.getAll())).sort((a, b) => (b.modificado || 0) - (a.modificado || 0)),
   obtener: (id) => proyTx("readonly", s => s.get(id)),
   guardar: (p) => { p.modificado = Date.now(); return proyTx("readwrite", s => s.put(p)); },
   borrar: (id) => proyTx("readwrite", s => s.delete(id)),
+  figura: async (f) => f.blob,
+};
+// Proyectos del usuario en Supabase: fila en «proyectos» (JSON) y figuras PNG en el bucket «figuras»
+const ProyectosNube = {
+  async listar() {
+    const { data, error } = await sb.from("proyectos").select("datos").order("modificado", { ascending: false });
+    if (error) throw error;
+    return data.map(r => r.datos);
+  },
+  async obtener(id) {
+    const { data, error } = await sb.from("proyectos").select("datos").eq("id", id).maybeSingle();
+    if (error) throw error;
+    return data ? data.datos : undefined;
+  },
+  async guardar(p) {
+    p.modificado = Date.now();
+    const carpeta = `${usuarioActual.id}/${p.id}`, usadas = new Set();
+    for (const e of p.elementos || []) for (const f of e.figuras || []) {
+      if (f.blob && !f.ruta) {
+        const ruta = `${carpeta}/${f.nombre.split("/").pop()}`;
+        const { error } = await sb.storage.from("figuras").upload(ruta, f.blob, { upsert: true, contentType: "image/png" });
+        if (error) throw error;
+        f.ruta = ruta;
+      }
+      if (f.ruta) usadas.add(f.ruta);
+    }
+    const datos = JSON.parse(JSON.stringify(p, (k, v) => (k === "blob" ? undefined : v)));
+    const { error } = await sb.from("proyectos").upsert({ id: p.id, nombre: p.nombre, calculista: p.calculista, oficina: p.oficina, mandante: p.mandante, fecha: p.fecha, datos, modificado: new Date().toISOString() });
+    if (error) throw error;
+    // Figuras de elementos quitados del proyecto
+    const { data: lista } = await sb.storage.from("figuras").list(carpeta, { limit: 1000 });
+    const sobran = (lista || []).map(o => `${carpeta}/${o.name}`).filter(r => !usadas.has(r));
+    if (sobran.length) await sb.storage.from("figuras").remove(sobran);
+  },
+  async borrar(id) {
+    const carpeta = `${usuarioActual.id}/${id}`;
+    const { data: lista } = await sb.storage.from("figuras").list(carpeta, { limit: 1000 });
+    if (lista && lista.length) await sb.storage.from("figuras").remove(lista.map(o => `${carpeta}/${o.name}`));
+    const { error } = await sb.from("proyectos").delete().eq("id", id);
+    if (error) throw error;
+  },
+  async figura(f) {
+    if (f.blob) return f.blob;
+    const { data, error } = await sb.storage.from("figuras").download(f.ruta);
+    if (error) throw error;
+    return data;
+  },
+};
+// Con sesión iniciada se usa la nube; sin sesión (o sin conexión al cargar la librería), el navegador
+const almacen = () => (typeof sb !== "undefined" && sb && usuarioActual ? ProyectosNube : ProyectosLocal);
+const conAviso = (fn) => async (...a) => {
+  try { return await fn(...a); }
+  catch (e) { alert(`No se pudo acceder a los proyectos: ${typeof errorEnEspanol === "function" ? errorEnEspanol(e) : e.message}`); throw e; }
+};
+const Proyectos = {
+  listar: conAviso(() => almacen().listar()),
+  obtener: conAviso((id) => almacen().obtener(id)),
+  guardar: conAviso((p) => almacen().guardar(p)),
+  borrar: conAviso((id) => almacen().borrar(id)),
+  figura: (f) => almacen().figura(f),
 };
 const proyId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const ls = {
@@ -217,7 +278,7 @@ async function descargarZipProyecto(id) {
   const archivos = [{ nombre: `${base}.tex`, datos: texUnicode(doc) }];
   if (usadas.length) archivos.push({ nombre: "referencias.bib", datos: usadas.map(u => u.bib).join("\n\n") + "\n" });
   for (const e of p.elementos)
-    for (const f of e.figuras || []) archivos.push({ nombre: f.nombre, datos: new Uint8Array(await f.blob.arrayBuffer()) });
+    for (const f of e.figuras || []) archivos.push({ nombre: f.nombre, datos: new Uint8Array(await (await Proyectos.figura(f)).arrayBuffer()) });
   descargarBlob(crearZip(archivos), `${base}.zip`);
 }
 
@@ -412,4 +473,35 @@ function iniciarInicio() {
   pintarProyectos();
 }
 
-iniciarPanel().then(iniciarInicio);
+// Proyectos guardados en este navegador antes de iniciar sesión: se ofrece subirlos a la cuenta una vez
+async function ofrecerMigracion() {
+  if (almacen() !== ProyectosNube) return;
+  const marca = `auraMigrado_${usuarioActual.id}`;
+  if (ls.get(marca)) return;
+  let locales = [];
+  try { locales = await ProyectosLocal.listar(); } catch { return; }
+  if (!locales.length) { ls.set(marca, "1"); return; }
+  if (confirm(`Hay ${locales.length} ${locales.length === 1 ? "proyecto guardado" : "proyectos guardados"} en este navegador. ¿Subirlos a su cuenta para tenerlos en todos sus dispositivos?`)) {
+    for (const p of locales) await Proyectos.guardar(p);
+    alert("Proyectos subidos a su cuenta.");
+  }
+  ls.set(marca, "1");
+}
+// Usuario y botón de cierre de sesión en el encabezado
+function pintarUsuario() {
+  if (!usuarioActual || document.getElementById("auraUsuario")) return;
+  const h = document.querySelector("header");
+  if (!h) return;
+  const d = document.createElement("div");
+  d.id = "auraUsuario";
+  d.style.cssText = "margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12.5px;color:#c9ced6";
+  const nombre = usuarioActual.user_metadata?.nombre || usuarioActual.email;
+  d.innerHTML = `<span title="${esc(usuarioActual.email)}">${esc(nombre)}</span><button type="button" style="font:inherit;color:#fff;background:none;border:1px solid #6b7380;border-radius:4px;padding:3px 9px;cursor:pointer">Cerrar sesión</button>`;
+  d.querySelector("button").addEventListener("click", cerrarSesion);
+  if (getComputedStyle(h).display !== "flex") { h.style.display = "flex"; h.style.flexWrap = "wrap"; h.style.alignItems = "baseline"; h.style.gap = "6px 16px"; }
+  h.appendChild(d);
+}
+
+(typeof sesionLista !== "undefined" ? sesionLista : Promise.resolve(null))
+  .then(() => { pintarUsuario(); return iniciarPanel(); })
+  .then(async () => { await ofrecerMigracion(); iniciarInicio(); });

@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#3d4450">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AURA">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<title>Acceso — AURA</title>
+<style>
+  html { -webkit-text-size-adjust: 100%; }
+  @media (max-width: 900px) { input { font-size: 16px !important; } }
+  :root { --bg: #f4f5f7; --panel: #fff; --ink: #1d2330; --muted: #5f6b7a; --line: #dde1e7; --head: #3d4450; --calc: #e8711c; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--ink); font: 14px/1.45 "Segoe UI", system-ui, -apple-system, sans-serif; display: flex; flex-direction: column; }
+  header { background: var(--head); color: #fff; padding: 14px 24px; }
+  header h1 { margin: 0; font-size: 19px; font-weight: 600; }
+  header span { color: #c9ced6; font-size: 13px; }
+  main { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 48px 16px; }
+  .caja { width: min(400px, 100%); background: var(--panel); border: 1px solid var(--line); border-top: 4px solid var(--calc); border-radius: 10px; padding: 22px 24px 20px; }
+  .caja h2 { margin: 0 0 4px; font-size: 19px; }
+  .caja p.sub { margin: 0 0 16px; color: var(--muted); font-size: 13px; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--line); }
+  .tabs button { font: inherit; background: none; border: none; padding: 8px 12px; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tabs button.on { color: var(--ink); border-bottom-color: var(--calc); font-weight: 600; }
+  form { display: grid; gap: 12px; }
+  label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+  input { font: inherit; padding: 9px 11px; border: 1px solid var(--line); border-radius: 6px; color: var(--ink); }
+  input:focus { outline: 2px solid var(--calc); outline-offset: -1px; }
+  .btn { font: inherit; font-weight: 600; padding: 10px 14px; border-radius: 6px; border: 1px solid var(--calc); background: var(--calc); color: #fff; cursor: pointer; }
+  .btn:disabled { opacity: .6; cursor: default; }
+  .link { background: none; border: none; color: #2a6fb0; cursor: pointer; font: inherit; font-size: 13px; padding: 0; justify-self: start; }
+  .msg { font-size: 13px; padding: 9px 11px; border-radius: 6px; display: none; }
+  .msg.err { display: block; background: #fdecea; color: #b3261e; border: 1px solid #f3c2bd; }
+  .msg.ok { display: block; background: #e3f3ea; color: #1e7a46; border: 1px solid #bfe3cd; }
+  .hidden { display: none !important; }
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 10px 0 24px; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js"></script>
+<script src="nube.js?v=26"></script>
+</head>
+<body>
+<header>
+  <h1>AURA — Ingeniería estructural</h1>
+  <span>Cálculo de elementos, espectros de diseño sísmico y diseño vial</span>
+</header>
+<main>
+  <div class="caja">
+    <h2 id="titulo">Bienvenido</h2>
+    <p class="sub" id="subtitulo">Ingrese con su cuenta para acceder a sus proyectos.</p>
+    <div class="tabs" id="tabs">
+      <button type="button" class="on" data-modo="entrar">Iniciar sesión</button>
+      <button type="button" data-modo="registro">Crear cuenta</button>
+    </div>
+    <div class="msg" id="msg" role="status"></div>
+
+    <form id="fEntrar" autocomplete="on">
+      <label>Correo electrónico<input name="email" type="email" required autocomplete="username"></label>
+      <label>Contraseña<input name="clave" type="password" required autocomplete="current-password"></label>
+      <button class="btn" type="submit">Iniciar sesión</button>
+      <button class="link" type="button" id="btnOlvido">¿Olvidó su contraseña?</button>
+    </form>
+
+    <form id="fRegistro" class="hidden" autocomplete="on">
+      <label>Nombre<input name="nombre" maxlength="80" autocomplete="name"></label>
+      <label>Correo electrónico<input name="email" type="email" required autocomplete="username"></label>
+      <label>Contraseña (mínimo 8 caracteres)<input name="clave" type="password" required minlength="8" autocomplete="new-password"></label>
+      <label>Repetir contraseña<input name="clave2" type="password" required minlength="8" autocomplete="new-password"></label>
+      <button class="btn" type="submit">Crear cuenta</button>
+    </form>
+
+    <form id="fOlvido" class="hidden">
+      <label>Correo electrónico<input name="email" type="email" required autocomplete="username"></label>
+      <button class="btn" type="submit">Enviar enlace de recuperación</button>
+      <button class="link" type="button" data-volver>Volver a iniciar sesión</button>
+    </form>
+
+    <form id="fNueva" class="hidden">
+      <label>Nueva contraseña (mínimo 8 caracteres)<input name="clave" type="password" required minlength="8" autocomplete="new-password"></label>
+      <label>Repetir contraseña<input name="clave2" type="password" required minlength="8" autocomplete="new-password"></label>
+      <button class="btn" type="submit">Guardar nueva contraseña</button>
+    </form>
+  </div>
+</main>
+<footer>Herramienta de apoyo académico. Verifique siempre los resultados.</footer>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const formularios = { entrar: "fEntrar", registro: "fRegistro", olvido: "fOlvido", nueva: "fNueva" };
+const textos = {
+  entrar: ["Bienvenido", "Ingrese con su cuenta para acceder a sus proyectos."],
+  registro: ["Crear cuenta", "Cada usuario tiene sus propios proyectos y memorias."],
+  olvido: ["Recuperar contraseña", "Le enviaremos un enlace para crear una nueva contraseña."],
+  nueva: ["Nueva contraseña", "Ingrese su nueva contraseña."],
+};
+function mostrar(modo) {
+  for (const [m, id] of Object.entries(formularios)) $(id).classList.toggle("hidden", m !== modo);
+  $("tabs").classList.toggle("hidden", modo === "olvido" || modo === "nueva");
+  document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.modo === modo));
+  [$("titulo").textContent, $("subtitulo").textContent] = textos[modo];
+  mensaje("");
+}
+function mensaje(t, ok = false) { const m = $("msg"); m.textContent = t; m.className = "msg" + (t ? (ok ? " ok" : " err") : ""); }
+async function enviar(form, fn) {
+  const b = form.querySelector('button[type="submit"]');
+  b.disabled = true; mensaje("");
+  try { await fn(); } catch (e) { mensaje(errorEnEspanol(e)); } finally { b.disabled = false; }
+}
+const destino = () => { const v = new URLSearchParams(location.search).get("volver"); return v && !/^(https?:)?\/\//i.test(v) ? v : "index.html"; };
+
+document.querySelectorAll("#tabs button").forEach(b => b.addEventListener("click", () => mostrar(b.dataset.modo)));
+$("btnOlvido").addEventListener("click", () => { $("fOlvido").email.value = $("fEntrar").email.value; mostrar("olvido"); });
+document.querySelector("[data-volver]").addEventListener("click", () => mostrar("entrar"));
+
+$("fEntrar").addEventListener("submit", (ev) => { ev.preventDefault(); const f = ev.target; enviar(f, async () => {
+  const { error } = await sb.auth.signInWithPassword({ email: f.email.value.trim(), password: f.clave.value });
+  if (error) throw error;
+  location.replace(destino());
+}); });
+
+$("fRegistro").addEventListener("submit", (ev) => { ev.preventDefault(); const f = ev.target; enviar(f, async () => {
+  if (f.clave.value !== f.clave2.value) throw new Error("Las contraseñas no coinciden.");
+  const { data, error } = await sb.auth.signUp({ email: f.email.value.trim(), password: f.clave.value,
+    options: { data: { nombre: f.nombre.value.trim() }, emailRedirectTo: baseApp + "index.html" } });
+  if (error) throw error;
+  if (data.session) { location.replace("index.html"); return; }
+  mostrar("entrar");
+  $("fEntrar").email.value = f.email.value.trim();
+  mensaje("Cuenta creada. Le enviamos un correo para confirmarla; después podrá iniciar sesión.", true);
+}); });
+
+$("fOlvido").addEventListener("submit", (ev) => { ev.preventDefault(); const f = ev.target; enviar(f, async () => {
+  const { error } = await sb.auth.resetPasswordForEmail(f.email.value.trim(), { redirectTo: baseApp + "login.html?modo=nueva" });
+  if (error) throw error;
+  mensaje("Si el correo está registrado, recibirá un enlace para crear una nueva contraseña.", true);
+}); });
+
+$("fNueva").addEventListener("submit", (ev) => { ev.preventDefault(); const f = ev.target; enviar(f, async () => {
+  if (f.clave.value !== f.clave2.value) throw new Error("Las contraseñas no coinciden.");
+  const { error } = await sb.auth.updateUser({ password: f.clave.value });
+  if (error) throw error;
+  mensaje("Contraseña actualizada. Ingresando…", true);
+  setTimeout(() => location.replace("index.html"), 900);
+}); });
+
+// Enlace de recuperación de contraseña: Supabase abre esta página con una sesión temporal
+sb?.auth.onAuthStateChange((evento) => { if (evento === "PASSWORD_RECOVERY") mostrar("nueva"); });
+sesionLista.then((u) => {
+  if (!sb) { mensaje("No se pudo cargar el servicio de acceso. Revise su conexión a internet."); return; }
+  if (new URLSearchParams(location.search).get("modo") === "nueva" || /type=recovery/.test(location.hash)) mostrar("nueva");
+  else if (u) location.replace(destino());
+});
+</script>
+<script>
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+</script>
+</body>
+</html>

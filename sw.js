@@ -1,6 +1,6 @@
 // Service worker de AURA: guarda la app completa para uso sin conexión.
 // Al publicar cambios, incremente VERSION para que los dispositivos descarguen la nueva versión.
-const VERSION = "aura-v25";
+const VERSION = "aura-v26";
 const ARCHIVOS = [
   "./",
   "./index.html",
@@ -13,6 +13,8 @@ const ARCHIVOS = [
   "./rigido.html",
   "./memo.js",
   "./proyectos.js",
+  "./nube.js",
+  "./login.html",
   "./manifest.webmanifest",
   "./icons/apple-touch-icon.png",
   "./icons/icon-192.png",
@@ -23,6 +25,7 @@ const ARCHIVOS = [
 const KATEX = [
   "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css",
   "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js",
+  "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js",
 ];
 
 self.addEventListener("install", (e) => {
@@ -47,7 +50,7 @@ self.addEventListener("fetch", (e) => {
   const req = e.request;
   // Propios y KaTeX (cdnjs) para que las ecuaciones también se vean sin conexión.
   const url = new URL(req.url);
-  if (req.method !== "GET" || (url.origin !== self.location.origin && url.hostname !== "cdnjs.cloudflare.com")) return;
+  if (req.method !== "GET" || (url.origin !== self.location.origin && url.hostname !== "cdnjs.cloudflare.com" && url.hostname !== "cdn.jsdelivr.net")) return;
   // no-cache: revalida con el servidor y evita mezclar una página nueva con un memo.js viejo de la caché HTTP
   e.respondWith(
     fetch(req.mode === "navigate" ? req : new Request(req, { cache: "no-cache" }))
