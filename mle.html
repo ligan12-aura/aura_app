@@ -278,7 +278,7 @@
 </main>
 <footer>Herramienta de apoyo académico basada en NCh 2165:2023, NCh 1198:2024 y la planilla «MLE v4». Verifique siempre los resultados.</footer>
 
-<script src="memo.js?v=23"></script>
+<script src="memo.js?v=24"></script>
 <script>
 "use strict";
 // ---------------------------------------------------------------------------
@@ -729,6 +729,7 @@ function calcularColumna(d, m) {
   m.p(L`\textbf{Cargas.} La carga axial es la descarga de las vigas por el ancho tributario $B = ${tn(d.B, 2)}$ m más el peso propio de la columna (densidad promedio $${tn(P.rhoP, 0)}$ kg/m$^3$). Cada combinación usa el $K_D$ de su carga de menor duración:`);
   m.eq(L`P_{pp} = \rho_{mle,prom}\,b\,h\,L = ${tn(P.rhoP, 0)}\cdot ${tn(d.b / 1000, 3)}\cdot ${tn(d.h / 1000, 3)}\cdot ${tn(d.Lm, 2)} = ${tn(ppc, 2)}\ \mathrm{kgf}`);
   combos.forEach(c => m.eq(L`P_{${c.n}} = (${c.tex.replace(/PP/g, "q_{PP}").replace(/SC_\{piso\}/g, "q_{SC,p}").replace(/SC_\{techo\}/g, "q_{SC,t}").replace(/ \+ V/, "")})\,B + P_{pp} = ${tn(c.q, 2)}\cdot ${tn(d.B, 2)} + ${tn(ppc, 2)} = ${tn(c.P, 1)}\ \mathrm{kgf}`));
+  if (d.w > 0) m.p(L`El viento lateral $w = ${tn(d.w, 1)}$ kgf/m sobre la columna se obtiene de las presiones de viento de NCh 432 Of.1971; con la columna simplemente apoyada:`);
   if (d.w > 0) m.eq(L`M_V = \frac{w\,L^2}{8} = \frac{${tn(d.w, 2)}\cdot ${tn(d.Lm, 2)}^2}{8} = ${tn(MV / 100, 2)}\ \mathrm{kgf\cdot m} \qquad V_V = \frac{w\,L}{2} = ${tn(VV, 2)}\ \mathrm{kgf}`);
 
   const f = factores(d, m, d.Lm, `${fmt(d.KDpp, 2)} / ${fmt(d.KDsc, 2)} / ${fmt(d.KDt, 2)} / ${fmt(d.KDv, 2)} (PP / SC piso / SC techo / viento)`, r, combos);

@@ -439,6 +439,12 @@ const REFERENCIAS = [
   address      = {Santiago, Chile},
   year         = {2009}
 }` },
+  { clave: "nch432", patron: /NCh\s?432(?:\s?Of\.?\s?(?:19)?71)?/, bib: String.raw`@manual{nch432,
+  title        = {{NCh 432.Of1971. Cálculo de la acción del viento sobre las construcciones}},
+  organization = {Instituto Nacional de Normalización (INN)},
+  address      = {Santiago, Chile},
+  year         = {1971}
+}` },
   { clave: "aisc360", patron: /AISC\s?360(?:-16)?/, bib: String.raw`@manual{aisc360,
   title        = {{ANSI/AISC 360-16. Specification for Structural Steel Buildings}},
   organization = {American Institute of Steel Construction},
