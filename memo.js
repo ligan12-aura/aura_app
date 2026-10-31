@@ -341,9 +341,8 @@ function elegirCombinacion(combos, valor) {
 function combosMemoria(combos, crit) {
   return combos.filter(c => c.n !== "C1" || c === crit);
 }
-// Tabla resumen de combinaciones: en pantalla todas (marca la analizada); en el .tex las de la memoria (cT).
-// s: símbolos { f, F, ftex, Ftex }
-function tablaCombinaciones(m, combos, sel, crit, elemento, s, cT = combos) {
+// Tabla resumen de combinaciones en pantalla (marca la crítica y la analizada). s: símbolos { f, F }
+function tablaCombinaciones(m, combos, sel, crit, elemento, s) {
   const hayV = combos.some(c => c.viento);
   const f3 = (x) => (Number.isFinite(x) ? fmt(x, 3) : "∞");
   m.out.push(`<div class="combWrap"><table class="comb"><tr><th>Comb.</th><th>Incluye</th><th>K<sub>D</sub></th><th>P [kgf]</th><th>${s.f} [kgf/cm²]</th><th>${s.F} [kgf/cm²]</th><th>${s.f}/${s.F}</th>${hayV ? "<th>Flexocomp.</th>" : ""}<th>Razón máx.</th></tr>` +
@@ -352,22 +351,68 @@ function tablaCombinaciones(m, combos, sel, crit, elemento, s, cT = combos) {
       `<td class="num">${fmt(c.fc, 2)}</td><td class="num">${fmt(c.Fcl, 2)}</td><td class="num">${fmt(c.ratio, 3)}</td>` +
       (hayV ? `<td class="num">${c.viento ? f3(c.inter) : "—"}</td>` : "") + `<td class="num">${f3(c.max)}</td></tr>`).join("") +
     `</table></div><div class="unit" style="margin-top:4px">Combinación crítica: <b>${crit.n}</b> (razón máxima ${f3(crit.max)}). Combinación analizada: <b>${sel.n}</b>. La razón máxima de cada combinación es la de compresión paralela${hayV ? " o, en las combinaciones con viento, la mayor entre compresión paralela, flexión, cizalle y flexocompresión" : ""}.${hayV ? "" : " Sin viento no se generan las combinaciones C4 y C5."}</div>`);
-  const t3 = (x) => (Number.isFinite(x) ? tn(x, 3) : L`$\infty$`);
-  const hayVT = cT.some(c => c.viento);
-  const lista = cT.map(c => c.n).join(", ").replace(/, ([^,]*)$/, " y $1");
-  memoTexCerrar(m);
-  m.tex.push(L`\begin{table}[H]
-\centering\footnotesize\setlength{\tabcolsep}{4pt}
-\caption{Resumen de las combinaciones de carga ${elemento} (${lista}): tensiones de trabajo ($${s.ftex}$) y de diseño con pandeo ($${s.Ftex}$) en kgf/cm$^2$. Combinación crítica: ${crit.n}.}
-\begin{tabular}{ll${"r".repeat(hayVT ? 7 : 6)}}
+}
+// .tex: tabla de las combinaciones consideradas (al inicio de la memoria)
+function tablaCombinacionesDefTex(cT) {
+  return String.raw`\begin{table}[H]
+\centering
+\caption{Combinaciones de carga verificadas. Cada combinación usa el $K_D$ de su carga de menor duración (NCh 1198:2024, Anexo G).}
+\begin{tabular}{lll}
 \toprule
-Comb. & Incluye & $K_D$ & $P$ [kgf] & $${s.ftex}$ & $${s.Ftex}$ & Comp. par. & ${hayVT ? "Flexocomp. & " : ""}Razón máx.\\
+Comb. & Cargas que incluye & Expresión\\
 \midrule
-${cT.map(c => `${c === crit ? `\\textbf{${c.n}} (crítica)` : c.n} & $${c.tex}$ & ${tn(c.KD, 2)} & ${tn(c.P, 1)} & ${tn(c.fc, 3)} & ${tn(c.Fcl, 2)} & ${tn(c.ratio, 3)} & ${hayVT ? `${c.viento ? t3(c.inter) : "---"} & ` : ""}${t3(c.max)}\\\\`).join("\n")}
+${cT.map(c => `${c.n} & ${c.desc} & $${c.tex}$\\\\`).join("\n")}
+\bottomrule
+\end{tabular}
+\end{table}
+`;
+}
+// Factor de duración por combinación: tabla en pantalla y en el .tex (viñeta propia)
+const KD_DURACION = { permanente: "Peso propio (permanente)", "SC de piso": "Sobrecarga de piso", "SC de techo": "Sobrecarga de techo", viento: "Viento" };
+function tablaKD(m, combos) {
+  if (m.enT) {
+    m.p(String.raw`\textbf{Factor de modificación por duración de la carga} (Anexo G). Cada combinación usa el $K_D$ de su carga de menor duración; las combinaciones con viento usan el $K_D$ de viento en todas sus verificaciones, incluida la compresión paralela:`, true);
+    m.tex.push(String.raw`\begin{table}[H]
+\centering
+\caption{Factor de modificación por duración de la carga para cada combinación.}
+\begin{tabular}{llc}
+\toprule
+Comb. & Carga de menor duración & $K_D$\\
+\midrule
+${combos.map(c => `${c.n} ($${c.tex}$) & ${KD_DURACION[c.kdTxt] || c.kdTxt} & ${tn(c.KD, 2)}\\\\`).join("\n")}
 \bottomrule
 \end{tabular}
 \end{table}
 `);
-  m.tex.push(L`Cada combinación usa el $K_D$ de su carga de menor duración. La razón máxima de cada combinación es la de compresión paralela${hayVT ? " o, en las combinaciones con viento, la mayor entre compresión paralela, flexión, cizalle y flexocompresión" : ""}. La combinación crítica es ${crit.n} (${crit.desc.toLowerCase()}). En las secciones siguientes se desarrollan completas las verificaciones de las combinaciones ${lista}${hayVT ? "; las verificaciones por viento corresponden a las combinaciones que lo incluyen" : ""}.
-`);
+  }
+  if (m.enP) m.out.push(`<table class="prop"><tr><th>Combinación</th><th>Carga de menor duración</th><th>K<sub>D</sub></th></tr>` +
+    combos.map(c => `<tr><td>${c.n} — ${c.txt}</td><td>${KD_DURACION[c.kdTxt] || c.kdTxt}</td><td class="num">${fmt(c.KD, 2)}</td></tr>`).join("") + `</table>`);
+}
+// .tex: resumen de las combinaciones verificadas (al final de la memoria). s: { ftex, Ftex }
+function tablaCombinacionesTex(cT, crit, elemento, s) {
+  const t3 = (x) => (Number.isFinite(x) ? tn(x, 3) : String.raw`$\infty$`);
+  const hayVT = cT.some(c => c.viento);
+  return String.raw`\begin{table}[H]
+\centering\footnotesize\setlength{\tabcolsep}{3pt}
+\caption{Resumen por combinación de carga ${elemento}: tensiones de trabajo ($${s.ftex}$) y de diseño con pandeo ($${s.Ftex}$) en kgf/cm$^2$. Combinación crítica: ${crit.n}.}
+\begin{tabular}{ll${"r".repeat(hayVT ? 8 : 7)}}
+\toprule
+Comb. & Expresión & $K_D$ & $P$ [kgf] & $${s.ftex}$ & $${s.Ftex}$ & C. paralela & C. normal & ${hayVT ? "Flexocomp. & " : ""}Máx.\\
+\midrule
+${cT.map(c => `${c === crit ? `\\textbf{${c.n}} (crítica)` : c.n} & $${c.tex}$ & ${tn(c.KD, 2)} & ${tn(c.P, 1)} & ${tn(c.fc, 3)} & ${tn(c.Fcl, 2)} & ${tn(c.ratio, 3)} & ${tn(c.rcn, 3)} & ${hayVT ? `${c.viento ? t3(c.inter) : "---"} & ` : ""}${t3(Math.max(c.max, c.rcn))}\\\\`).join("\n")}
+\bottomrule
+\end{tabular}
+\end{table}
+`;
+}
+// Máximos: [id, máximo, texto]. Marca el campo y devuelve los mensajes (solo campos visibles).
+function datosSobreMaximo(reglas) {
+  const malos = [];
+  for (const [id, max, txt] of reglas) {
+    const el = document.getElementById(id);
+    if (!el || el.offsetParent === null || el.value.trim() === "") continue;
+    const v = parseFloat(el.value);
+    if (Number.isFinite(v) && v > max + 1e-9) { el.classList.add("invalido"); malos.push(txt); }
+  }
+  return malos;
 }

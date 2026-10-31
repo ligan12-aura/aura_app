@@ -180,7 +180,7 @@
 </main>
 <footer>Herramienta de apoyo académico basada en la planilla «Espectros Chile». Verifique siempre los parámetros con la norma vigente.</footer>
 
-<script src="memo.js?v=19"></script>
+<script src="memo.js?v=21"></script>
 <script>
 "use strict";
 // ---------------------------------------------------------------------------
@@ -243,7 +243,7 @@ const fmt = (x, d = 3) => Number.isFinite(x) ? x.toLocaleString("es-CL", { minim
 const num = (id) => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : 0; };
 const L = String.raw;
 // Número para KaTeX: coma decimal {,} y espacio fino en miles
-const tn = (x, d = 3) => Number.isFinite(x) ? fmt(x, d).replace(/,/g, "{,}").replace(/(\d)\.(\d{3})/g, "$1\\,$2") : "\\infty";
+const tn = (x, d = 3) => Number.isFinite(x) ? fmt(x, d).replace(/,/g, "{,}").replace(/(\d)\.(?=\d{3}(?!\d))/g, "$1\\,") : "\\infty";
 const ALFA = (r, q) => L`\frac{1 + ${r}\left(\frac{T}{T_0}\right)^{p}}{1 + \left(\frac{T}{T_0}\right)^{${q}}}`;
 const ALFAV = (r, T0, p, q) => L`\frac{1 + ${r}\left(\frac{T}{${T0}}\right)^{${p}}}{1 + \left(\frac{T}{${T0}}\right)^{${q}}}`;
 
