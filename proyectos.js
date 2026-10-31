@@ -371,6 +371,8 @@ function estilosPanel() {
   #auraPanel button.ap-b.sec { background: #fff; color: #3d4450; border-color: #c9ced6; }
   #auraPanel button.ap-b:disabled { opacity: .5; cursor: default; }
   #auraPanel .ap-nuevo { display: grid; gap: 6px; }
+  #auraPanel .ap-sal { display: flex; gap: 6px; }
+  #auraPanel .ap-sal .ap-b { flex: 1; font-size: 12.5px; padding: 6px 8px; }
   #auraPanel .ap-nuevo input { font: inherit; padding: 6px 8px; border: 1px solid #c9ced6; border-radius: 5px; }
   #auraPanel .ap-lista { list-style: none; margin: 0; padding: 6px 8px; overflow-y: auto; flex: 1; }
   #auraPanel .ap-lista li { border: 1px solid #eef0f3; border-radius: 6px; padding: 8px 9px; margin: 6px 0; }
@@ -417,6 +419,10 @@ async function pintarPanel() {
             : `<button class="ap-b" id="apAgregar">+ Agregar este cálculo al proyecto</button>`}
         </div>` : `<div class="ap-vacio" style="padding:0">Abra una herramienta de cálculo para agregar elementos al proyecto.</div>`}
         <button class="ap-b sec" id="apZip" ${p.elementos.length ? "" : "disabled"}>Descargar memoria del proyecto (.zip)</button>
+        <div class="ap-sal">
+          ${editando ? `<button class="ap-b sec" id="apSalirEd" title="Deja de editar el elemento sin guardar y vuelve a la herramienta con sus valores por defecto">Salir de la edición</button>` : ""}
+          <button class="ap-b sec" id="apCerrar" title="Desactiva el proyecto; sigue guardado en Mis proyectos">Cerrar proyecto</button>
+        </div>
       </div>
       ${p.elementos.length ? `<ol class="ap-lista">${p.elementos.map((e, i) => `<li class="${e.id === panelEditando ? "ed" : ""}" data-id="${esc(e.id)}">
           <a href="${esc(urlElemento(p, e))}" title="Abrir el cálculo">${i + 1}. ${esc(e.nombre)}</a>
@@ -429,6 +435,8 @@ async function pintarPanel() {
     document.getElementById("apAgregar")?.addEventListener("click", () => guardarCalculo(nombre()));
     document.getElementById("apGuardar")?.addEventListener("click", () => guardarCalculo(nombre(), panelEditando));
     document.getElementById("apZip")?.addEventListener("click", () => descargarZipProyecto(p.id));
+    document.getElementById("apSalirEd")?.addEventListener("click", () => salirEdicion());
+    document.getElementById("apCerrar")?.addEventListener("click", () => cerrarProyecto());
     panel.querySelectorAll(".ap-fila button").forEach(b => b.addEventListener("click", async () => {
       const id = b.closest("li").dataset.id, acc = b.dataset.acc;
       const actual = p.elementos.find(e => e.id === id);
@@ -454,6 +462,27 @@ async function pintarPanel() {
     }));
   }
   panel.querySelector(".ap-min").addEventListener("click", () => abrirPanel(false));
+}
+// La página quedó cargada con los datos de un elemento (parámetros proyecto/el): se vuelve a cargar limpia
+function recargarSinElemento() {
+  const q = new URLSearchParams(location.search);
+  if (!q.has("proyecto") && !q.has("el")) return false;
+  q.delete("proyecto"); q.delete("el");
+  location.replace(`${paginaActual()}${q.toString() ? "?" + q : ""}`);
+  return true;
+}
+// Termina la edición del elemento abierto sin guardar; el proyecto sigue activo
+function salirEdicion() {
+  panelEditando = null;
+  if (!recargarSinElemento()) pintarPanel();
+}
+// Desactiva el proyecto: las herramientas quedan independientes (el proyecto sigue en «Mis proyectos»)
+async function cerrarProyecto() {
+  fijarProyectoActivo(null);
+  panelEditando = null;
+  if (recargarSinElemento()) return;
+  await pintarPanel();
+  if (typeof pintarProyectos === "function") await pintarProyectos();
 }
 async function iniciarPanel() {
   if (document.getElementById("auraPanel")) return;
