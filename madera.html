@@ -115,6 +115,7 @@
       <div class="tabs">
         <button id="tabEnv" class="on" type="button">Envigado</button>
         <button id="tabTab" type="button">Pie derecho (tabique)</button>
+        <button id="tabMuro" type="button">Muro de corte</button>
       </div>
       <div id="inEnv">
       <fieldset>
@@ -295,6 +296,96 @@
         <div class="unit" style="margin-top:6px">C1 PP · C2 PP + SC piso · C3 PP + SC piso + SC techo · C4 PP + SC piso + V · C5 PP + SC piso + SC techo + V. Las verificaciones por viento (flexión, cizalle y flexocompresión) se desarrollan solo si la combinación elegida incluye viento.</div>
       </fieldset>
       </div>
+
+      <!-- Muro de corte (NCh 1198:2024, cláusula 12; planilla FULL MADERA, hoja Muro corte) -->
+      <div id="inMuro" class="hidden">
+      <fieldset>
+        <legend>Pie derecho de borde</legend>
+        <div class="row2">
+          <div><label for="mGrado">Grado (pino radiata)</label>
+            <select id="mGrado"><option>GS</option><option>G1+</option><option selected>G1</option><option>G2</option><option>C24</option><option>C16</option><option>MGP10</option><option>MGP12</option></select></div>
+          <div><label for="mH">Humedad H <span class="unit">[%]</span></label><input id="mH" type="number" step="1" min="12" max="40" value="18"></div>
+        </div>
+        <label for="mEsc">Escuadría de cada pieza</label>
+        <select id="mEsc"></select>
+        <div class="row2" id="mgCustom">
+          <div><label for="mb">b (en el plano del muro) <span class="unit">[mm]</span></label><input id="mb" type="number" step="1" min="20" value="45"></div>
+          <div><label for="mh">h (espesor del muro) <span class="unit">[mm]</span></label><input id="mh" type="number" step="1" min="20" value="70"></div>
+        </div>
+        <div class="row2">
+          <div><label for="mn">Piezas en el pie de borde n</label><input id="mn" type="number" step="1" min="1" value="3"></div>
+          <div><label for="mB">Ancho tributario del pie de borde <span class="unit">[m]</span></label><input id="mB" type="number" step="0.01" min="0" value="0.2"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Geometría del muro</legend>
+        <div class="row2">
+          <div><label for="mPisos">Número de pisos</label>
+            <select id="mPisos"><option value="1">1 piso</option><option value="2" selected>2 pisos</option></select></div>
+          <div><label for="mhm">Altura del muro (por piso) h <span class="unit">[m]</span></label><input id="mhm" type="number" step="0.01" min="0.5" value="2.44"></div>
+          <div><label for="mbm">Largo del muro b <span class="unit">[m]</span></label><input id="mbm" type="number" step="0.01" min="0.3" value="2.38"></div>
+          <div><label for="mL">Altura del pie derecho L <span class="unit">[cm]</span></label><input id="mL" type="number" step="0.5" min="10" value="228.5"></div>
+          <div><label for="mLpx">L<sub>p,x</sub> pandeo fuera del plano <span class="unit">[cm]</span></label><input id="mLpx" type="number" step="0.5" min="0" placeholder="auto: L"></div>
+          <div><label for="mLpy">L<sub>p,y</sub> entre cadenetas <span class="unit">[cm]</span></label><input id="mLpy" type="number" step="0.5" min="0" value="115"></div>
+        </div>
+        <label for="mKp">Condición de apoyo (factor de longitud efectiva K<sub>p</sub>)</label>
+        <select id="mKp"></select>
+        <label for="mKpTipo">Valores de K<sub>p</sub></label>
+        <select id="mKpTipo"><option value="1">Teóricos</option><option value="2">Recomendados de diseño</option></select>
+        <div class="unit" style="margin-top:6px">Con 2 pisos se verifica el muro del primer piso, que recibe el viento de ambos pisos y del techo. Ambos pisos tienen la altura h.</div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Cargas gravitacionales (por metro de muro)</legend>
+        <div class="row3">
+          <div><label for="mPP">q<sub>PP</sub> <span class="unit">[kgf/m]</span></label><input id="mPP" type="number" step="any" min="0" value="54.863"></div>
+          <div><label for="mSCp">q<sub>SC,piso</sub> <span class="unit">[kgf/m]</span></label><input id="mSCp" type="number" step="any" min="0" value="0"></div>
+          <div><label for="mSCt">q<sub>SC,techo</sub> <span class="unit">[kgf/m]</span></label><input id="mSCt" type="number" step="any" min="0" value="0"></div>
+        </div>
+        <div class="unit" style="margin-top:6px">El pie de borde recibe q·B. Para la tracción solo se descuenta el peso propio (q<sub>PP</sub>·B), que es la carga gravitacional siempre presente.</div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Viento</legend>
+        <label for="mqf">Viento en fachada q<sub>f</sub> (presión + succión, horizontal) <span class="unit">[kgf/m²]</span></label>
+        <input id="mqf" type="number" step="any" min="0" value="84">
+        <label for="mAnch">Ancho aportante al muro <span class="unit">[m]</span></label>
+        <input id="mAnch" type="number" step="0.01" min="0" value="3.985">
+        <div class="row2">
+          <div><label for="mAlfa">Inclinación del techo α <span class="unit">[°]</span></label><input id="mAlfa" type="number" step="0.1" min="0" max="80" value="40.6"></div>
+          <div><label for="mLf">Largo del faldón (inclinado) <span class="unit">[m]</span></label><input id="mLf" type="number" step="0.01" min="0" value="1.83"></div>
+          <div><label for="mqtb">Techo barlovento, perpendicular <span class="unit">[kgf/m²]</span></label><input id="mqtb" type="number" step="any" value="26.67"></div>
+          <div><label for="mqts">Techo sotavento, perpendicular <span class="unit">[kgf/m²]</span></label><input id="mqts" type="number" step="any" value="28"></div>
+        </div>
+        <div class="unit" style="margin-top:6px">Presiones perpendiculares a cada faldón: barlovento (1,2·sen α − 0,4)·q, positiva hacia el techo; sotavento 0,4·q de succión. Se usa su componente horizontal, q·sen α. En fachada se ingresa la presión total horizontal (0,8 + 0,4)·q.</div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Corte en el plano y desplazamiento (cláusula 12)</legend>
+        <label for="mTabla">Tablero y clavado</label>
+        <select id="mTabla"><option value="42">Tabla 42 — 1 a 2 pisos: OSB 9,5 mm, clavo 2,9 ≤ D &lt; 3,1 mm</option><option value="43">Tabla 43 — 1 a 6 pisos: OSB 11,1 mm, clavo 3,1 ≤ D &lt; 3,8 mm</option></select>
+        <div class="row2">
+          <div><label for="mSct">Espaciamiento perimetral S<sub>ct</sub></label>
+            <select id="mSct"><option value="150">150 mm</option><option value="100" selected>100 mm</option><option value="75">75 mm</option><option value="50">50 mm</option></select></div>
+          <div><label for="mCaras">Caras arriostradas</label>
+            <select id="mCaras"><option value="1">1 cara (K<sub>n</sub> = 1)</option><option value="2">2 caras (K<sub>n</sub> = 2)</option></select></div>
+          <div><label for="mDa">Alargamiento del anclaje Δ<sub>a</sub> <span class="unit">[mm]</span></label><input id="mDa" type="number" step="0.5" min="0" value="5"></div>
+          <div><label for="mDesp">Desplazamiento admisible</label>
+            <select id="mDesp"><option value="0">Solo calcular</option><option value="500">h/500 (0,002·h)</option><option value="300">h/300</option></select></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Factores</legend>
+        <div class="row2">
+          <div><label for="mKDv">K<sub>D</sub> viento</label><input id="mKDv" type="number" step="0.05" min="0.5" value="1.6"></div>
+          <div><label for="mKcn">K<sub>cn</sub> solera inferior (8.5)</label><input id="mKcn" type="number" step="0.05" min="0.5" max="1.8" value="0.8"></div>
+        </div>
+        <label for="mKct">Debilitamiento en tracción (Tabla 11, K<sub>ct</sub>)</label>
+        <select id="mKct"></select>
+      </fieldset>
+      </div>
     </div>
   </section>
 
@@ -302,6 +393,7 @@
     <h2 id="resTitle">Resultados</h2>
     <div class="summary" id="summary"></div>
     <div id="verdict"></div>
+    <div id="figMuro" class="figMuro hidden"></div>
     <div class="toolbar">
       <button class="btn sec" type="button" onclick="window.print()">Imprimir</button>
       <button class="btn" type="button" id="btnTex">Descargar memoria (.tex)</button>
@@ -311,7 +403,7 @@
 </main>
 <footer>Herramienta de apoyo académico basada en NCh 1198:2024 y en la planilla «FULL MADERA». Verifique siempre los resultados.</footer>
 
-<script src="memo.js?v=21"></script>
+<script src="memo.js?v=22"></script>
 <script>
 "use strict";
 // ---------------------------------------------------------------------------
@@ -326,8 +418,22 @@ const U1 = {
   "MGP10": [8.4, 10, 4.0, 2.5, 1.3, 10000], "MGP12": [13.5, 15.5, 6.0, 2.5, 1.3, 12700],
 };
 // Factor de humedad: ΔR por punto de humedad (H ≤ 18 %) y factores de madera verde de la Tabla 4 (H > 18 %) — pino radiata
-const DR = { Ff: 0.025, Fcp: 0.048, Fcz: 0.015, Fcn: 0, Ef: 0.017 };
-const VERDE = { Ff: 0.75, Fcp: 0.52, Fcz: 0.85, Fcn: 0.67, Ef: 0.83 };
+const DR = { Ff: 0.025, Fcp: 0.048, Ftp: 0.025, Fcz: 0.015, Fcn: 0, Ef: 0.017 };
+const VERDE = { Ff: 0.75, Fcp: 0.52, Ftp: 0.75, Fcz: 0.85, Fcn: 0.67, Ef: 0.83 };
+// Tabla 11 — factor por concentración de tensiones K_ct (madera aserrada)
+const KCT = {
+  clavos: ["Perforaciones pequeñas y uniformemente distribuidas (clavos)", 0.8],
+  pernos: ["Perforaciones individuales mayores (pernos)", 0.7],
+  anillo: ["Conectores de anillo", 0.5],
+  dentado: ["Conectores dentados", 0.6],
+  ranura5: ["Ranuras longitudinales: espesor ≤ 5 mm", 0.8],
+  ranura10: ["Ranuras longitudinales: espesor ≤ 10 mm", 0.7],
+};
+// Tablas 42 y 43 — corte unitario admisible V_c y rigidez aparente G_a [N/mm] según S_ct [mm]
+const TABLA_MURO = {
+  42: { txt: "Tabla 42 (edificaciones de 1 a 2 pisos; OSB 9,5 mm; clavo 2,9 ≤ D < 3,1 mm, largo ≥ 51 mm)", vc: { 150: 2.9, 100: 4.4, 75: 5.7, 50: 7.4 }, ga: { 150: 1927, 100: 2628, 75: 3504, 50: 5606 } },
+  43: { txt: "Tabla 43 (edificaciones de 1 a 6 pisos; OSB 11,1 mm; clavo 3,1 ≤ D < 3,8 mm, largo ≥ 64 mm)", vc: { 150: 3.5, 100: 5.1, 75: 6.6, 50: 8.5 }, ga: { 150: 2628, 100: 3854, 75: 4905, 50: 7358 } },
+};
 const factorKH = (H, k) => (H <= 18 ? 1 - (H - 12) * DR[k] : VERDE[k]);
 // Factor de longitud efectiva de pandeo K_p: [condición, teórico, recomendado]
 const KP = {
@@ -431,7 +537,7 @@ Valores de la Tabla U.1 convertidos con 1 MPa $= 10$ kgf/cm$^2$.
 }
 
 // K_H por propiedad: ΔR de cada una (H ≤ 18 %) o factor verde de la Tabla 4 (H > 18 %)
-const NOMK = { Ff: "F_f", Fcp: "F_{cp}", Fcz: "F_{cz}", Fcn: "F_{cn}", Ef: "E_f" };
+const NOMK = { Ff: "F_f", Fcp: "F_{cp}", Ftp: "F_{tp}", Fcz: "F_{cz}", Fcn: "F_{cn}", Ef: "E_f" };
 function bloqueKH(m, H, claves) {
   if (H <= 18) {
     m.p(L`\textbf{Factor de modificación por humedad} (7.1.1). ${H > 12 ? L`Dado que el contenido de humedad $H = ${tn(H, 1)}\,\%$ supera el 12\,\%, se aplican los factores de reducción de la Tabla 3 con $\Delta H = ${tn(H, 1)} - 12 = ${tn(H - 12, 1)}\,\%$` : L`La madera opera en estado seco ($H = 12\,\%$), por lo que los factores resultan unitarios`}:`, true);
@@ -1061,6 +1167,336 @@ function calcular(d, m) {
 }
 
 // ---------------------------------------------------------------------------
+// Muro de corte en sistema marco plataforma (NCh 1198:2024, cláusula 12; planilla FULL MADERA, hoja Muro corte)
+// ---------------------------------------------------------------------------
+function leerMuro() {
+  const esc = $("mEsc").value;
+  const [b, h] = esc === "custom" ? [num("mb"), num("mh")] : ESCUADRIAS[esc];
+  const kp = KP[$("mKp").value], tipo = +$("mKpTipo").value;
+  return {
+    grado: $("mGrado").value, H: Math.max(12, num("mH")), esc, b, h, n: Math.max(1, Math.round(num("mn"))), B: num("mB"),
+    pisos: +$("mPisos").value, hm: num("mhm"), bm: num("mbm"), L: num("mL"),
+    Lpx: $("mLpx").value.trim() === "" ? num("mL") : num("mLpx"), Lpy: num("mLpy"),
+    Kp: kp[tipo], kpTxt: `${kp[0]} (${tipo === 1 ? "teórico" : "recomendado"})`,
+    qPP: num("mPP"), qSCp: num("mSCp"), qSCt: num("mSCt"),
+    qf: num("mqf"), anch: num("mAnch"), alfa: num("mAlfa"), Lf: num("mLf"), qtb: num("mqtb"), qts: num("mqts"),
+    tabla: $("mTabla").value, Sct: +$("mSct").value, caras: +$("mCaras").value, Da: num("mDa"), desp: +$("mDesp").value,
+    KDv: num("mKDv"), Kcn: num("mKcn"), kct: $("mKct").value,
+  };
+}
+function reglasMuro() {
+  const r = [["mH", 0, true], ["mn", 1], ["mB", 0], ["mhm", 0, true], ["mbm", 0, true], ["mL", 0, true], ["mLpy", 0],
+    ["mPP", 0], ["mSCp", 0], ["mSCt", 0], ["mqf", 0], ["mAnch", 0], ["mAlfa", 0], ["mLf", 0], ["mqtb", -1e9], ["mqts", -1e9],
+    ["mDa", 0], ["mKDv", 0, true], ["mKcn", 0, true]];
+  if ($("mEsc").value === "custom") r.push(["mb", 0, true], ["mh", 0, true]);
+  if ($("mLpx").value.trim() !== "") r.push(["mLpx", 0, true]);
+  return r;
+}
+
+function calcularMuro(d, m) {
+  const r = { avisos: [] };
+  const bc = d.b / 10, hc = d.h / 10, A1 = bc * hc, An = d.n * A1;          // cm, cm²
+  const [FfM, FcpM, FtpM, FcnM] = U1[d.grado];
+  const Fcp = FcpM * MPA, Ftp = FtpM * MPA, Fcn = FcnM * MPA, Ef = U1[d.grado][5] * MPA;
+  const mgp = d.grado.startsWith("MGP");
+  const KH = (k) => factorKH(d.H, k);
+  const sa = Math.sin(d.alfa * Math.PI / 180);
+
+  // ---- Cargas y solicitaciones ----
+  m.h("Cargas y solicitaciones");
+  const V1 = d.qf * d.anch * d.hm;                         // viento en fachada del 1.er piso, kgf
+  const V2 = d.pisos === 2 ? V1 : 0;                        // 2.º piso
+  const qtn = d.qtb + d.qts;                                // presión neta perpendicular a los faldones, kgf/m²
+  const qth = qtn * sa;                                     // componente horizontal, kgf/m²
+  const Pt = qtn * d.anch * d.Lf, Vt = qth * d.anch * d.Lf; // fuerza perpendicular y su componente horizontal, kgf
+  const zt = d.pisos * d.hm + d.Lf * sa / 2;                // altura de aplicación del viento de techo, m
+  const M1 = V1 * d.hm / 2, M2 = V2 * 1.5 * d.hm, Mt = Vt * zt;
+  const M = M1 + M2 + Mt, V = V1 + V2 + Vt;
+  const C = M / d.bm, T = C;                                // par de fuerzas en los pies de borde, kgf
+  const q = d.qPP + d.qSCp + d.qSCt;
+  const Pg = q * d.B, Ppp = d.qPP * d.B;
+  const Pc = C + Pg, Tt = Math.max(0, T - Ppp);
+  m.row("Viento en fachada por piso: V<sub>1</sub> = q<sub>f</sub>·a·h" + (d.pisos === 2 ? " ; V<sub>2</sub>" : ""), `${fmt(V1, 1)}${d.pisos === 2 ? ` ; ${fmt(V2, 1)}` : ""} kgf`);
+  m.row("Presión neta perpendicular al techo ; componente horizontal: q<sub>t</sub> ; q<sub>t</sub>·sen α", `${fmt(qtn, 2)} ; ${fmt(qth, 2)} kgf/m²`);
+  m.row("Viento de techo (horizontal): V<sub>t</sub>", `${fmt(Vt, 1)} kgf`);
+  m.row("Corte total en la base del muro: V", `${fmt(V, 1)} kgf`);
+  m.row("Momento volcante en la base: M", `${fmt(M, 1)} kgf·m`);
+  m.row("<b>Par en los pies de borde: C = T = M/b</b>", `<b>${fmt(C, 1)} kgf</b>`);
+  m.row("Carga gravitacional en el pie de borde: (q<sub>PP</sub> + q<sub>SC</sub>)·B ; q<sub>PP</sub>·B", `${fmt(Pg, 2)} ; ${fmt(Ppp, 2)} kgf`);
+  m.p(L`El muro de corte se modela como un voladizo empotrado en su base (12.3.3 y 12.3.4). Recibe el viento de ${d.pisos === 2 ? "la fachada de los dos pisos" : "la fachada"} y del techo sobre el ancho aportante $a = ${tn(d.anch, 3)}$ m; cada fuerza se aplica en el centro de su superficie: a media altura de cada piso y, en el techo, en la mitad del largo del faldón.`);
+  m.p(L`\textbf{Viento en fachada.} Con la presión horizontal total (presión más succión) $q_f = ${tn(d.qf, 1)}$ kgf/m$^2$ y la altura de piso $h = ${tn(d.hm, 2)}$ m:`);
+  m.eq(L`V_1 = q_f\,a\,h = ${tn(d.qf, 1)}\cdot ${tn(d.anch, 3)}\cdot ${tn(d.hm, 2)} = ${tn(V1, 2)}\ \mathrm{kgf}${d.pisos === 2 ? L` \qquad V_2 = V_1 = ${tn(V2, 2)}\ \mathrm{kgf}` : ""}`);
+  m.p(L`\textbf{Viento en el techo.} Las presiones actúan perpendiculares a cada faldón (inclinación $\alpha = ${tn(d.alfa, 1)}^\circ$): en barlovento $q_{t,b} = ${tn(d.qtb, 2)}$ kgf/m$^2$ (positiva hacia el techo) y en sotavento una succión $q_{t,s} = ${tn(d.qts, 2)}$ kgf/m$^2$. La fuerza normal a un faldón tiene una componente horizontal igual a la fuerza por $\sin\alpha$, ya que la normal al faldón forma el ángulo $\alpha$ con la vertical; ambas componentes empujan en el sentido del viento:`);
+  m.eq(L`q_t = q_{t,b} + q_{t,s} = ${tn(d.qtb, 2)} + ${tn(d.qts, 2)} = ${tn(qtn, 2)}\ \mathrm{kgf/m^2} \qquad q_{t,h} = q_t\,\sin\alpha = ${tn(qtn, 2)}\cdot \sin ${tn(d.alfa, 1)}^\circ = ${tn(qth, 2)}\ \mathrm{kgf/m^2}`);
+  m.eq(L`V_t = q_{t,h}\,a\,L_f = ${tn(qth, 2)}\cdot ${tn(d.anch, 3)}\cdot ${tn(d.Lf, 2)} = ${tn(Vt, 2)}\ \mathrm{kgf}`);
+  m.p(L`\textbf{Corte y momento volcante en la base.} Las alturas de aplicación son ${d.pisos === 2 ? L`$h/2$ y $1{,}5\,h$ para los dos pisos y` : L`$h/2$ para la fachada y`} $z_t = ${d.pisos}\,h + \tfrac{1}{2}L_f\sin\alpha$ para el techo:`);
+  m.eq(L`V = ${d.pisos === 2 ? "V_1 + V_2 + V_t" : "V_1 + V_t"} = ${d.pisos === 2 ? L`${tn(V1, 2)} + ${tn(V2, 2)} + ${tn(Vt, 2)}` : L`${tn(V1, 2)} + ${tn(Vt, 2)}`} = ${tn(V, 2)}\ \mathrm{kgf}`);
+  m.eq(L`z_t = ${d.pisos}\cdot ${tn(d.hm, 2)} + \frac{${tn(d.Lf, 2)}\cdot \sin ${tn(d.alfa, 1)}^\circ}{2} = ${tn(zt, 3)}\ \mathrm{m}`);
+  m.eq(L`M = V_1\,\frac{h}{2}${d.pisos === 2 ? L` + V_2\cdot 1{,}5\,h` : ""} + V_t\,z_t = ${tn(V1, 2)}\cdot ${tn(d.hm / 2, 2)}${d.pisos === 2 ? L` + ${tn(V2, 2)}\cdot ${tn(1.5 * d.hm, 2)}` : ""} + ${tn(Vt, 2)}\cdot ${tn(zt, 3)} = ${tn(M, 1)}\ \mathrm{kgf\cdot m}`);
+  m.p(L`\textbf{Fuerzas en los pies derechos de borde.} El momento volcante se equilibra con un par de compresión y tracción en los pies de borde, separados por el largo del muro $b = ${tn(d.bm, 2)}$ m. Al pie comprimido se suma la carga gravitacional de su ancho tributario $B = ${tn(d.B, 2)}$ m, y al traccionado se le descuenta solo el peso propio:`);
+  m.eq(L`C = T = \frac{M}{b} = \frac{${tn(M, 1)}}{${tn(d.bm, 2)}} = ${tn(C, 2)}\ \mathrm{kgf}`);
+  m.eq(L`P_c = C + (q_{PP} + q_{SC,piso} + q_{SC,techo})\,B = ${tn(C, 2)} + ${tn(q, 3)}\cdot ${tn(d.B, 2)} = ${tn(Pc, 2)}\ \mathrm{kgf}`);
+  m.eq(L`T_t = T - q_{PP}\,B = ${tn(T, 2)} - ${tn(d.qPP, 3)}\cdot ${tn(d.B, 2)} = ${tn(T - Ppp, 2)}\ \mathrm{kgf}${T - Ppp < 0 ? L` \;\Rightarrow\; T_t = 0` : ""}`);
+
+  tablaProps(m, d.grado, false);
+
+  // ---- Factores de modificación ----
+  const Khf = mgp ? (d.h > 160 ? (160 / d.h) ** (d.grado === "MGP10" ? 1 / 3 : 1 / 2) : 1) : (d.h > 90 ? (90 / d.h) ** 0.2 : 1);
+  const KhE = (dim) => !mgp && dim < 180 ? Math.max((dim / 180) ** 0.25, 0.67) : 1;
+  const KhEx = KhE(d.h), KhEy = KhE(d.b);
+  const Ex = Ef * KH("Ef") * KhEx, Ey = Ef * KH("Ef") * KhEy;
+  const [kctTxt, Kct] = KCT[d.kct];
+  m.h("Factores de modificación y propiedades de diseño");
+  m.row("Factor de humedad (c. paralela ; t. paralela ; c. normal ; E): K<sub>H</sub>", ["Fcp", "Ftp", "Fcn", "Ef"].map(k => fmt(KH(k), 3)).join(" ; "), "7.1.1");
+  m.row("Factor de duración de la carga (viento): K<sub>D</sub>", fmt(d.KDv, 2), "Anexo G");
+  m.row("Factor de altura ; concentración de tensiones: K<sub>hf</sub> ; K<sub>ct</sub>", `${fmt(Khf, 3)} ; ${fmt(Kct, 2)}`, "8.2.2.3 / Tabla 11");
+  m.row("Módulos de elasticidad de diseño: E<sub>x,dis</sub> ; E<sub>y,dis</sub>", `${fmt(Ex, 0)} ; ${fmt(Ey, 0)} kgf/cm²`);
+  bloqueKH(m, d.H, ["Fcp", "Ftp", "Fcn", "Ef"]);
+  m.p(L`\textbf{Factor de modificación por duración de la carga} (Anexo G). Las solicitaciones en los pies de borde y en el muro provienen del viento, la carga de menor duración de la combinación $PP + SC_{piso} + SC_{techo} + V$, por lo que en todas las verificaciones se usa:`);
+  m.eq(L`K_D = ${tn(d.KDv, 2)}`, "Anexo G");
+  m.p(L`\textbf{Factor de modificación por altura} (8.2.2.3), aplicado a la tracción paralela (8.4.2). ${Khf < 1 ? `Como h = ${tn(d.h, 0)} mm supera los ${mgp ? 160 : 90} mm:` : `Como h = ${tn(d.h, 0)} mm no supera los ${mgp ? 160 : 90} mm:`}`);
+  m.eq(Khf < 1 ? L`K_{hf} = ${mgp ? L`\left(\frac{160}{${tn(d.h, 0)}}\right)^{${d.grado === "MGP10" ? "1/3" : "1/2"}}` : L`\left(\frac{90}{${tn(d.h, 0)}}\right)^{1/5}`} = ${tn(Khf, 3)}` : L`K_{hf} = 1`, "8.2.2.3");
+  m.p(L`\textbf{Factor por concentración de tensiones} (8.4.3, Tabla 11), para ${kctTxt.toLowerCase().replace(/≤/g, L`$\le$`)}:`);
+  m.eq(L`K_{ct} = ${tn(Kct, 2)}`, "Tabla 11");
+  m.p(L`\textbf{Ajuste del módulo de elasticidad.} ${KhEx < 1 || KhEy < 1 ? "Como las dimensiones de la pieza son menores a 180 mm, se aplica el factor de modificación por altura (con mínimo 0{,}67) en cada dirección:" : "La sección no requiere reducir el módulo de elasticidad por altura:"}`);
+  m.eq(L`E_{x,dis} = E_f\,K_H\,K_{hE,x} = ${tn(Ef, 0)}\cdot ${tn(KH("Ef"), 3)}\cdot ${tn(KhEx, 3)} = ${tn(Ex, 0)} \qquad E_{y,dis} = E_f\,K_H\,K_{hE,y} = ${tn(Ef, 0)}\cdot ${tn(KH("Ef"), 3)}\cdot ${tn(KhEy, 3)} = ${tn(Ey, 0)}\ \mathrm{kgf/cm^2}`);
+
+  // ---- Compresión paralela en el pie de borde (12.4.1 → 8.3) ----
+  m.h("Compresión paralela en el pie derecho de borde — 12.4.1 y 8.3");
+  const lx = d.Kp * d.Lpx / (0.289 * hc), ly = d.Kp * d.Lpy / (0.289 * bc);
+  const lam = Math.max(lx, ly), ejeY = ly > lx, Ec = ejeY ? Ey : Ex;
+  const FcE = 3.6 * Ec / lam ** 2;
+  const cc = ["G2", "C16"].includes(d.grado) ? 0.80 : 0.85;
+  const fcp = Pc / An;
+  const Fcpd = Fcp * KH("Fcp") * d.KDv;
+  let Ac = null, Bc = null, Kl = 1;
+  if (lam >= 10) { Ac = ((FcE / Fcpd) * (1 + lam / 200) + 1) / (2 * cc); Bc = FcE / (cc * Fcpd); Kl = Ac - Math.sqrt(Ac ** 2 - Bc); }
+  const Fcl = Fcpd * Kl;
+  r.comp = fcp / Fcl; r.lam = lam;
+  m.row("Área del pie de borde (n piezas): A = n·b·h", `${d.n} · ${fmt(A1, 2)} = ${fmt(An, 2)} cm²`);
+  m.row("Esbelteces ; controlante: λ<sub>x</sub> ; λ<sub>y</sub> ; λ ≤ 170", `${fmt(lx, 2)} ; ${fmt(ly, 2)} ; ${fmt(lam, 2)} ${okTxt(lam <= 170)}`);
+  m.row("Tensión crítica de pandeo ; factor de pandeo: F<sub>cE</sub> ; K<sub>λ</sub>", `${fmt(FcE, 2)} kgf/cm² ; ${fmt(Kl, 4)}`, "8.3");
+  m.row("<b>Compresión paralela: f<sub>cp</sub> / F<sub>cp,λ,dis</sub></b>", `<b>${fmt(fcp, 2)} / ${fmt(Fcl, 2)} = ${fmt(r.comp, 3)}</b> ${okTxt(r.comp <= 1)}`);
+  m.p(L`Según 12.4.1, el pie derecho de borde comprimido por el momento volcante y las cargas gravitacionales se diseña como elemento en compresión paralela (8.3). Está formado por $n = ${d.n}$ piezas de $${tn(d.b, 0)} \times ${tn(d.h, 0)}$ mm; el pandeo se evalúa en cada pieza:`);
+  m.eq(L`f_{cp} = \frac{P_c}{n\,b\,h} = \frac{${tn(Pc, 2)}}{${d.n}\cdot ${tn(bc, 1)}\cdot ${tn(hc, 1)}} = ${tn(fcp, 3)}\ \mathrm{kgf/cm^2}`);
+  m.eq(L`\lambda_x = \frac{K_p\,L_{p,x}}{0{,}289\,h} = \frac{${tn(d.Kp, 2)}\cdot ${tn(d.Lpx, 1)}}{0{,}289\cdot ${tn(hc, 1)}} = ${tn(lx, 2)} \qquad \lambda_y = \frac{K_p\,L_{p,y}}{0{,}289\,b} = \frac{${tn(d.Kp, 2)}\cdot ${tn(d.Lpy, 1)}}{0{,}289\cdot ${tn(bc, 1)}} = ${tn(ly, 2)}`);
+  m.eq(L`\lambda = \max(\lambda_x,\ \lambda_y) = ${tn(lam, 2)} \;${lam <= 170 ? L`\le` : ">"}\; 170 \qquad F_{cE} = \frac{3{,}6\,E_{${ejeY ? "y" : "x"},dis}}{\lambda^2} = \frac{3{,}6\cdot ${tn(Ec, 0)}}{${tn(lam, 2)}^2} = ${tn(FcE, 3)}\ \mathrm{kgf/cm^2}`, "8.3");
+  m.eq(L`F_{cp,dis} = F_{cp}\,K_H\,K_D = ${tn(Fcp, 1)}\cdot ${tn(KH("Fcp"), 3)}\cdot ${tn(d.KDv, 2)} = ${tn(Fcpd, 2)}\ \mathrm{kgf/cm^2} \qquad c = ${tn(cc, 2)}`);
+  if (lam >= 10) {
+    m.eq(L`A = \frac{\frac{F_{cE}}{F_{cp,dis}}\left(1 + \frac{\lambda}{200}\right) + 1}{2c} = \frac{\frac{${tn(FcE, 3)}}{${tn(Fcpd, 2)}}\left(1 + \frac{${tn(lam, 2)}}{200}\right) + 1}{2\cdot ${tn(cc, 2)}} = ${tn(Ac, 4)} \qquad B = \frac{F_{cE}}{c\,F_{cp,dis}} = ${tn(Bc, 4)}`, "8.3");
+    m.eq(L`K_\lambda = A - \sqrt{A^2 - B} = ${tn(Ac, 4)} - \sqrt{${tn(Ac, 4)}^2 - ${tn(Bc, 4)}} = ${tn(Kl, 4)}`);
+  } else m.p(L`Como $\lambda < 10$, no hay reducción por pandeo: $K_\lambda = 1$.`);
+  m.eq(L`F_{cp,\lambda,dis} = F_{cp,dis}\,K_\lambda = ${tn(Fcpd, 2)}\cdot ${tn(Kl, 4)} = ${tn(Fcl, 2)}\ \mathrm{kgf/cm^2}`);
+  m.eq(chequeo("f_{cp}", fcp, L`F_{cp,\lambda,dis}`, Fcl, UKG, 3));
+
+  // ---- Tracción paralela en el pie de borde (12.4.2 → 8.4) ----
+  m.h("Tracción paralela en el pie derecho de borde — 12.4.2 y 8.4");
+  const ftp = Tt / An;
+  const Ftpd = Ftp * KH("Ftp") * d.KDv * Khf * Kct;
+  r.trac = ftp / Ftpd;
+  m.row("Tracción neta ; área neta: T<sub>t</sub> ; A<sub>n</sub>", `${fmt(Tt, 2)} kgf ; ${fmt(An, 2)} cm²`);
+  m.row("<b>Tracción paralela: f<sub>tp</sub> / F<sub>tp,dis</sub></b>", `<b>${fmt(ftp, 2)} / ${fmt(Ftpd, 2)} = ${fmt(r.trac, 3)}</b> ${okTxt(r.trac <= 1)}`, "8.4");
+  m.p(L`El pie de borde opuesto queda traccionado por el momento volcante (12.4.2) y se diseña según 8.4. Se considera el área neta igual al área bruta de las $n$ piezas ($A_n/A = 100\,\% \ge 75\,\%$); el efecto de las perforaciones de los clavos se considera con $K_{ct}$:`);
+  m.eq(L`f_{tp} = \frac{T_t}{A_n} = \frac{${tn(Tt, 2)}}{${tn(An, 2)}} = ${tn(ftp, 3)}\ \mathrm{kgf/cm^2}`, "8.4.1");
+  m.eq(L`F_{tp,dis} = F_{tp}\,K_H\,K_D\,K_{hf}\,K_{ct} = ${tn(Ftp, 1)}\cdot ${tn(KH("Ftp"), 3)}\cdot ${tn(d.KDv, 2)}\cdot ${tn(Khf, 3)}\cdot ${tn(Kct, 2)} = ${tn(Ftpd, 2)}\ \mathrm{kgf/cm^2}`, "8.4.2");
+  m.eq(chequeo("f_{tp}", ftp, L`F_{tp,dis}`, Ftpd, UKG, 3));
+
+  // ---- Corte en el plano (12.4.7 a 12.4.10) ----
+  m.h("Corte en el plano del muro — 12.4.7 a 12.4.10");
+  const tab = TABLA_MURO[d.tabla];
+  const VcN = tab.vc[d.Sct], GaN = tab.ga[d.Sct];
+  const hb = d.hm / d.bm;
+  let KFRA = 1;
+  if (hb > 2) KFRA = (hb <= 3.5 && d.pisos <= 2) ? 1.25 - 0.125 * hb : 0;
+  if (!KFRA) r.avisos.push(`La relación de aspecto h/b = ${fmt(hb, 2)} supera el máximo de 12.3.5 (2,0, o 3,5 en edificaciones de 1 y 2 pisos): el muro no califica como muro de corte.`);
+  const Kn = d.caras === 2 ? 2 : 1;
+  const VcdN = VcN * KFRA * Kn;                             // N/mm
+  const vc = V / d.bm;                                      // kgf/m
+  const vcN = vc / 100;                                     // N/mm (1 N = 0,1 kgf)
+  r.corte = KFRA ? vcN / VcdN : Infinity;
+  m.row("Solicitación de corte unitario: v<sub>c</sub> = V/b", `${fmt(vc, 1)} kgf/m = ${fmt(vcN, 3)} N/mm`);
+  m.row(`Capacidad admisible (${tab.txt.split(" (")[0]}, S<sub>ct</sub> = ${d.Sct} mm): V<sub>c</sub>`, `${fmt(VcN, 1)} N/mm`, "12.4.7");
+  m.row("Relación de aspecto ; factores: h/b ; K<sub>FRA</sub> ; K<sub>n</sub>", `${fmt(hb, 3)} ; ${fmt(KFRA, 3)} ; ${fmt(Kn, 0)}`, "12.4.9 / 12.4.10");
+  m.row("<b>Corte en el plano: v<sub>c</sub> / V<sub>c,dis</sub></b>", `<b>${fmt(vcN, 3)} / ${fmt(VcdN, 3)} = ${Number.isFinite(r.corte) ? fmt(r.corte, 3) : "∞"}</b> ${okTxt(r.corte <= 1)}`, "12.4.8");
+  m.p(L`El corte total en la base se reparte uniformemente en el largo del muro. Se usa la conversión 1 N $= 0{,}1$ kgf, coherente con 1 MPa $= 10$ kgf/cm$^2$:`);
+  m.eq(L`v_c = \frac{V}{b} = \frac{${tn(V, 2)}}{${tn(d.bm, 2)}} = ${tn(vc, 2)}\ \mathrm{kgf/m} = ${tn(vcN, 3)}\ \mathrm{N/mm}`);
+  m.p(L`\textbf{Capacidad admisible.} De la ${tab.txt.replace(/(\d),(\d)/g, "$1{,}$2").replace(/≤/g, L`$\le$`).replace(/</g, L`$<$`)} con espaciamiento perimetral $S_{ct} = ${d.Sct}$ mm se obtiene $V_c = ${tn(VcN, 1)}$ N/mm (12.4.7). El factor por razón de aspecto (12.4.9) y el factor por caras arriostradas (12.4.10, ${Kn === 2 ? "tablero en ambas caras" : "tablero en una cara"}) son:`);
+  m.eq(L`\frac{h}{b} = \frac{${tn(d.hm * 1000, 0)}}{${tn(d.bm * 1000, 0)}} = ${tn(hb, 3)} \qquad K_{FRA} = ${hb <= 2 ? L`1{,}0 \quad (h/b \le 2{,}0)` : KFRA ? L`1{,}25 - 0{,}125\,\frac{h}{b} = ${tn(KFRA, 3)}` : L`\text{no aplica}`} \qquad K_n = ${tn(Kn, 2)}`, "12.4.9");
+  m.eq(L`V_{c,dis} = V_c\,K_{FRA}\,K_n = ${tn(VcN, 1)}\cdot ${tn(KFRA, 3)}\cdot ${tn(Kn, 2)} = ${tn(VcdN, 3)}\ \mathrm{N/mm}`, "12.4.8");
+  m.eq(chequeo("v_c", vcN, L`V_{c,dis}`, VcdN, L`\ \mathrm{N/mm}`, 3));
+
+  // ---- Desplazamiento lateral (12.5) ----
+  m.h("Desplazamiento lateral del muro — 12.5");
+  const KHG = d.H > 19 ? 0.5 : 1;
+  const Gad = GaN * Kn * KHG;                               // N/mm
+  const hmm = d.hm * 1000, bmm = d.bm * 1000, Amm = An * 100, EdisMPa = Ex / MPA;
+  const d1 = 2 * vcN * hmm ** 3 / (3 * EdisMPa * Amm * bmm), d2 = vcN * hmm / Gad, d3 = hmm * d.Da / bmm;
+  const dmc = d1 + d2 + d3;
+  const limD = d.desp ? hmm / d.desp : null;
+  if (limD) r.desp = dmc / limD;
+  Object.assign(r, { dmc, limD });
+  m.row("Rigidez aparente de diseño: G<sub>a,dis</sub> = G<sub>a</sub>·K<sub>n</sub>·K<sub>HG</sub>", `${fmt(GaN, 0)} · ${fmt(Kn, 0)} · ${fmt(KHG, 2)} = ${fmt(Gad, 0)} N/mm`, "12.5.1");
+  m.row("Flexión ; corte ; anclaje", `${fmt(d1, 2)} ; ${fmt(d2, 2)} ; ${fmt(d3, 2)} mm`);
+  m.row(limD ? `<b>Desplazamiento lateral: δ<sub>mc</sub> ≤ h/${d.desp}</b>` : "<b>Desplazamiento lateral: δ<sub>mc</sub></b>", limD ? `<b>${fmt(dmc, 2)} ≤ ${fmt(limD, 2)} mm</b> ${okTxt(dmc <= limD)}` : `<b>${fmt(dmc, 2)} mm</b>`, "12.5");
+  m.p(L`El desplazamiento lateral considera la flexión del muro, la deformación por corte del tablero y los clavos, y el alargamiento del anclaje antilevantamiento (12.5). $E_{dis}$ es el módulo de diseño de los pies de borde en MPa, $A$ el área de los pies derechos de borde de un extremo del muro ($n$ piezas) y $\Delta_a = ${tn(d.Da, 1)}$ mm el alargamiento vertical total del anclaje:`);
+  m.eq(L`G_{a,dis} = G_a\,K_n\,K_{HG} = ${tn(GaN, 0)}\cdot ${tn(Kn, 0)}\cdot ${tn(KHG, 2)} = ${tn(Gad, 0)}\ \mathrm{N/mm} \qquad K_{HG} = ${KHG < 1 ? L`0{,}50 \quad (H > 19\,\%)` : L`1 \quad (H \le 19\,\%)`}`, "12.5.1");
+  m.eq(L`\delta_{mc} = \frac{2\,v_c\,h^3}{3\,E_{dis}\,A\,b} + \frac{v_c\,h}{G_{a,dis}} + \frac{h\,\Delta_a}{b}`, "12.5");
+  m.eq(L`\delta_{mc} = \frac{2\cdot ${tn(vcN, 3)}\cdot ${tn(hmm, 0)}^3}{3\cdot ${tn(EdisMPa, 1)}\cdot ${tn(Amm, 0)}\cdot ${tn(bmm, 0)}} + \frac{${tn(vcN, 3)}\cdot ${tn(hmm, 0)}}{${tn(Gad, 0)}} + \frac{${tn(hmm, 0)}\cdot ${tn(d.Da, 1)}}{${tn(bmm, 0)}} = ${tn(d1, 3)} + ${tn(d2, 3)} + ${tn(d3, 3)} = ${tn(dmc, 2)}\ \mathrm{mm}`);
+  if (limD) m.eq(L`\delta_{mc} = ${tn(dmc, 2)}\ \mathrm{mm} \;${cmp(dmc, limD)}\; \frac{h}{${d.desp}} = ${tn(limD, 2)}\ \mathrm{mm} \hspace{2em}\textbf{${dmc <= limD ? "¡CUMPLE!" : "¡NO CUMPLE!"}}`);
+  else m.p(L`La cláusula 12 no fija un desplazamiento admisible; el valor se informa para compararlo con el límite que corresponda al proyecto.`);
+
+  // ---- Compresión normal en la solera inferior (12.4.4 → 8.5) ----
+  m.h("Compresión normal en la solera inferior — 12.4.4 y 8.5");
+  const fcn = Pc / An, Fcnd = Fcn * KH("Fcn") * d.Kcn;
+  r.cn = fcn / Fcnd;
+  m.row("<b>Compresión normal: f<sub>cn</sub> / F<sub>cn,dis</sub></b>", `<b>${fmt(fcn, 2)} / ${fmt(Fcnd, 2)} = ${fmt(r.cn, 3)}</b> ${okTxt(r.cn <= 1)}`, "8.5");
+  m.p(L`El pie de borde comprimido apoya sobre la solera inferior en el área de contacto de sus $n$ piezas (12.4.4); la tensión de diseño no se afecta por $K_D$:`);
+  m.eq(L`f_{cn} = \frac{P_c}{n\,b\,h} = \frac{${tn(Pc, 2)}}{${tn(An, 2)}} = ${tn(fcn, 3)}\ \mathrm{kgf/cm^2}`, "8.5.1");
+  m.eq(L`F_{cn,dis} = F_{cn}\,K_H\,K_{cn} = ${tn(Fcn, 1)}\cdot ${tn(KH("Fcn"), 3)}\cdot ${tn(d.Kcn, 2)} = ${tn(Fcnd, 2)}\ \mathrm{kgf/cm^2}`, "8.5.2");
+  m.eq(chequeo("f_{cn}", fcn, L`F_{cn,dis}`, Fcnd, UKG, 3));
+
+  Object.assign(r, { V1, V2, Vt, qtn, qth, zt, V, M, C, T, Pc, Tt, Pg, fcp, Fcl, ftp, Ftpd, vc, vcN, VcdN, hb, KFRA, fcn, Fcnd, sa });
+  return r;
+}
+
+// Dibujo del muro con las cargas de viento y las fuerzas en los pies de borde
+function muroSVG(d, r) {
+  const W = 640, H = 430, x0 = 170, wm = 250, base = 380;
+  const hp = d.pisos === 2 ? 120 : 170;                     // alto de cada piso en el dibujo
+  const top = base - d.pisos * hp;
+  const ang = Math.min(Math.max(d.alfa, 5), 60) * Math.PI / 180;
+  const half = wm / 2, hr = Math.min(half * Math.tan(ang), 110);
+  let g = `<rect x="${x0}" y="${top}" width="${wm}" height="${base - top}" fill="#f3e3c4" stroke="#1d2330" stroke-width="2"/>`;
+  for (let i = 1; i < d.pisos; i++) g += `<line x1="${x0}" x2="${x0 + wm}" y1="${base - i * hp}" y2="${base - i * hp}" stroke="#1d2330" stroke-width="2"/>`;
+  for (let i = 1; i < 6; i++) g += `<line x1="${x0 + i * wm / 6}" x2="${x0 + i * wm / 6}" y1="${base - hp}" y2="${base}" stroke="#b08850" stroke-width="1"/>`;
+  g += `<rect x="${x0}" y="${base - hp}" width="10" height="${hp}" fill="#c9a26a" stroke="#1d2330"/><rect x="${x0 + wm - 10}" y="${base - hp}" width="10" height="${hp}" fill="#c9a26a" stroke="#1d2330"/>`;
+  g += `<polygon points="${x0 - 12},${top} ${x0 + half},${top - hr} ${x0 + wm + 12},${top}" fill="#e9e1d2" stroke="#1d2330" stroke-width="2"/>`;
+  g += `<line x1="20" x2="${W - 20}" y1="${base}" y2="${base}" stroke="#1d2330" stroke-width="3"/>`;
+  // viento en fachada
+  const flecha = (x1, y, x2, col, txt, ty) => `<path d="M ${x1} ${y} L ${x2} ${y}" stroke="${col}" stroke-width="2.4" marker-end="url(#fv)"/><text x="${x1}" y="${ty ?? y - 6}" font-size="12.5" fill="${col}">${txt}</text>`;
+  g += flecha(70, base - hp / 2, x0 - 6, "#2a6fb0", `V<tspan font-size="9" dy="3">1</tspan><tspan dy="-3"> = ${fmt(r.V1, 0)} kgf</tspan>`);
+  if (d.pisos === 2) g += flecha(70, base - 1.5 * hp, x0 - 6, "#2a6fb0", `V<tspan font-size="9" dy="3">2</tspan><tspan dy="-3"> = ${fmt(r.V2, 0)} kgf</tspan>`);
+  // viento en techo: perpendicular al faldón de barlovento y su componente horizontal en la mitad del faldón
+  const xm = x0 + half / 2 - 6, ym = top - hr / 2 - 3;
+  const nx = -Math.sin(ang), ny = -Math.cos(ang);           // normal exterior del faldón de barlovento
+  g += `<path d="M ${xm + nx * 60} ${ym + ny * 60} L ${xm + nx * 6} ${ym + ny * 6}" stroke="#c62828" stroke-width="2.2" marker-end="url(#fr)"/>`;
+  g += `<text x="${xm + nx * 62 - 40}" y="${ym + ny * 62 - 6}" font-size="12" fill="#c62828">q<tspan font-size="9" dy="3">t</tspan><tspan dy="-3"> ⊥ faldón</tspan></text>`;
+  g += flecha(70, ym, xm - 8, "#2a6fb0", `V<tspan font-size="9" dy="3">techo</tspan><tspan dy="-3"> = ${fmt(r.Vt, 0)} kgf</tspan>`, ym - 8);
+  // fuerzas en los pies de borde
+  g += `<path d="M ${x0 + 5} ${base + 2} L ${x0 + 5} ${base - 40}" stroke="#2f7d6d" stroke-width="2.6" marker-end="url(#fg)"/><text x="${x0 - 8}" y="${base - 10}" font-size="12.5" fill="#2f7d6d" text-anchor="end">T = ${fmt(r.T, 0)} kgf</text>`;
+  g += `<path d="M ${x0 + wm - 5} ${base - 42} L ${x0 + wm - 5} ${base}" stroke="#c62828" stroke-width="2.6" marker-end="url(#fr)"/><text x="${x0 + wm + 8}" y="${base - 10}" font-size="12.5" fill="#c62828">P<tspan font-size="9" dy="3">c</tspan><tspan dy="-3"> = ${fmt(r.Pc, 0)} kgf</tspan></text>`;
+  // cotas
+  g += `<line x1="${x0}" x2="${x0 + wm}" y1="${base + 26}" y2="${base + 26}" stroke="#1d2330" marker-start="url(#fc)" marker-end="url(#fc)"/><text x="${x0 + half}" y="${base + 42}" font-size="13" text-anchor="middle">b = ${fmt(d.bm, 2)} m</text>`;
+  g += `<line x1="${x0 + wm + 118}" x2="${x0 + wm + 118}" y1="${base - hp}" y2="${base}" stroke="#1d2330" marker-start="url(#fc)" marker-end="url(#fc)"/><text x="${x0 + wm + 124}" y="${base - hp / 2 + 4}" font-size="13">h = ${fmt(d.hm, 2)} m</text>`;
+  g += `<text x="${x0 + half + 22}" y="${top - 8}" font-size="12" fill="#5f6b7a">α = ${fmt(d.alfa, 1)}°</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Muro de corte con cargas de viento" style="width:100%;max-width:640px;display:block;margin:6px auto">
+  <defs>
+    <marker id="fv" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#2a6fb0"/></marker>
+    <marker id="fr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#c62828"/></marker>
+    <marker id="fg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#2f7d6d"/></marker>
+    <marker id="fc" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#1d2330"/></marker>
+  </defs>
+  ${g}
+</svg>`;
+}
+function muroTikz(d, r) {
+  const f = (x) => x.toFixed(3);
+  const wm = 5, hp = d.pisos === 2 ? 2.4 : 3.4, top = d.pisos * hp;
+  const ang = Math.min(Math.max(d.alfa, 5), 60) * Math.PI / 180, half = wm / 2, hr = Math.min(half * Math.tan(ang), 2.2);
+  let s = `\\fill[brown!15] (0,0) rectangle (${wm},${f(top)});\n\\draw[thick] (0,0) rectangle (${wm},${f(top)});\n`;
+  for (let i = 1; i < d.pisos; i++) s += `\\draw[thick] (0,${f(i * hp)}) -- (${wm},${f(i * hp)});\n`;
+  s += `\\draw[thick, fill=gray!10] (-0.25,${f(top)}) -- (${f(half)},${f(top + hr)}) -- (${f(wm + 0.25)},${f(top)}) -- cycle;\n\\draw[very thick] (-2.6,0) -- (${wm + 2.2},0);\n`;
+  s += `\\draw[->, thick, blue!60!black] (-2.4,${f(hp / 2)}) -- node[above, font=\\small] {$V_1 = ${tn(r.V1, 0)}$ kgf} (-0.1,${f(hp / 2)});\n`;
+  if (d.pisos === 2) s += `\\draw[->, thick, blue!60!black] (-2.4,${f(1.5 * hp)}) -- node[above, font=\\small] {$V_2 = ${tn(r.V2, 0)}$ kgf} (-0.1,${f(1.5 * hp)});\n`;
+  const ym = top + hr / 2;
+  s += `\\draw[->, thick, blue!60!black] (-2.4,${f(ym)}) -- node[above, font=\\small] {$V_t = ${tn(r.Vt, 0)}$ kgf} (${f(half / 2 - 0.15)},${f(ym)});\n`;
+  s += `\\draw[->, thick, green!40!black] (0.1,0.02) -- node[left, font=\\small] {$T = ${tn(r.T, 0)}$ kgf} (0.1,0.9);\n`;
+  s += `\\draw[->, thick, red!70!black] (${wm - 0.1},0.9) -- node[right, font=\\small] {$P_c = ${tn(r.Pc, 0)}$ kgf} (${wm - 0.1},0.02);\n`;
+  s += `\\draw[<->, >=stealth] (0,-0.5) -- node[below, font=\\small] {$b = ${tn(d.bm, 2)}$ m} (${wm},-0.5);\n`;
+  s += `\\draw[<->, >=stealth] (${wm + 2.8},0) -- node[right, font=\\small] {$h = ${tn(d.hm, 2)}$ m} (${wm + 2.8},${f(hp)});\n`;
+  s += `\\node[font=\\small, gray!70!black] at (${f(half + 0.9)},${f(top + 0.25)}) {$\\alpha = ${tn(d.alfa, 1)}^\\circ$};\n`;
+  return L`\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=0.85]
+${s}\end{tikzpicture}
+\caption{Muro de corte de ${d.pisos === 2 ? "dos pisos" : "un piso"}: fuerzas de viento (componentes horizontales) y fuerzas en los pies derechos de borde.}
+\end{figure}`;
+}
+
+function actualizarMuro() {
+  $("mgCustom").classList.toggle("hidden", $("mEsc").value !== "custom");
+  limpiarInvalidos($("inputs"));
+  const malos = datosInvalidos(reglasMuro());
+  if (!malos.length) malos.push(...datosSobreMaximo([["mKcn", 1.8, "K<sub>cn</sub> no puede superar 1,8 (8.5.3)"], ["mL", num("mhm") * 100, "La altura del pie derecho no puede superar la altura del muro"]]));
+  if (malos.length) return sinCalculo(malos);
+  const d = leerMuro();
+  const m = new Memo();
+  const r = calcularMuro(d, m);
+  const items = [
+    ["Compresión paralela pie de borde", r.comp, `${fmt(r.fcp, 2)} / ${fmt(r.Fcl, 2)} kgf/cm²`],
+    ["Tracción paralela pie de borde", r.trac, `${fmt(r.ftp, 2)} / ${fmt(r.Ftpd, 2)} kgf/cm²`],
+    ["Corte en el plano v<sub>c</sub>/V<sub>c,dis</sub>", r.corte, `${fmt(r.vcN, 3)} / ${fmt(r.VcdN, 3)} N/mm`],
+  ];
+  if (r.limD) items.push([`Desplazamiento lateral δ/(h/${d.desp})`, r.desp, `${fmt(r.dmc, 2)} / ${fmt(r.limD, 2)} mm`]);
+  items.push(["Compresión normal solera", r.cn, `${fmt(r.fcn, 2)} / ${fmt(r.Fcnd, 2)} kgf/cm²`], ["Esbeltez λ/170", r.lam / 170, `λ = ${fmt(r.lam, 1)}`]);
+  tarjetas(items);
+  const dc = Math.max(...items.map(i => i[1]));
+  const ok = dc <= 1;
+  const nombre = d.esc === "custom" ? `${d.b}×${d.h} mm` : `${d.esc} (${d.b}×${d.h} mm)`;
+  $("resTitle").textContent = `Resultados — muro de corte ${fmt(d.bm, 2)} × ${fmt(d.hm, 2)} m · ${d.pisos} piso${d.pisos > 1 ? "s" : ""} · borde ${d.n}×${nombre}`;
+  $("verdict").innerHTML = `<div class="verdict ${ok ? "ok" : "bad"}">${ok ? "✔ El muro de corte CUMPLE" : "✘ El muro de corte NO CUMPLE"} — razón máxima = ${Number.isFinite(dc) ? fmt(dc, 3) : "∞"}${r.limD ? "" : `<div style="font-weight:400;font-size:13px;margin-top:4px">Desplazamiento lateral δ<sub>mc</sub> = ${fmt(r.dmc, 2)} mm (sin límite seleccionado)</div>`}</div>` +
+    r.avisos.map(a => `<div class="note">${a}</div>`).join("");
+  $("figMuro").innerHTML = muroSVG(d, r);
+  $("memo").innerHTML = m.html();
+  const datos = [
+    L`Especie y grado estructural & Pino radiata ${d.grado}`,
+    L`Contenido de humedad $H$ & ${tn(d.H, 0)}\,\%`,
+    L`Escuadría de cada pieza $b \times h$ & ${tn(d.b, 0)} $\times$ ${tn(d.h, 0)} mm`,
+    L`Piezas en el pie derecho de borde $n$ & ${d.n}`,
+    L`Ancho tributario del pie de borde $B$ & ${tn(d.B, 2)} m`,
+    L`Número de pisos & ${d.pisos}`,
+    L`Altura del muro (por piso) $h$ & ${tn(d.hm, 2)} m`,
+    L`Largo del muro $b$ & ${tn(d.bm, 2)} m`,
+    L`Altura del pie derecho $L$ & ${tn(d.L, 1)} cm`,
+    L`Longitud de pandeo fuera del plano $L_{p,x}$ & ${tn(d.Lpx, 1)} cm`,
+    L`Longitud de pandeo en el plano $L_{p,y}$ & ${tn(d.Lpy, 1)} cm`,
+    L`Factor de longitud efectiva $K_p$ & ${tn(d.Kp, 2)}`,
+    L`Tablero y clavado & ${d.tabla === "42" ? "Tabla 42 (OSB 9{,}5 mm)" : "Tabla 43 (OSB 11{,}1 mm)"}`,
+    L`Espaciamiento perimetral de clavos $S_{ct}$ & ${d.Sct} mm`,
+    L`Caras arriostradas & ${d.caras}`,
+    L`Alargamiento del anclaje $\Delta_a$ & ${tn(d.Da, 1)} mm`,
+    L`Factor de duración de la carga $K_D$ (viento) & ${tn(d.KDv, 2)}`,
+    L`Factor de compresión normal en la solera $K_{cn}$ & ${tn(d.Kcn, 2)}`,
+  ];
+  const cargas = [
+    L`Peso propio $q_{PP}$ & ${tn(d.qPP, 3)} kgf/m`,
+    L`Sobrecarga de piso $q_{SC,piso}$ & ${tn(d.qSCp, 2)} kgf/m`,
+    L`Sobrecarga de techo $q_{SC,techo}$ & ${tn(d.qSCt, 2)} kgf/m`,
+    L`Viento en fachada (horizontal) $q_f$ & ${tn(d.qf, 1)} kgf/m$^2$`,
+    L`Ancho aportante $a$ & ${tn(d.anch, 3)} m`,
+    L`Viento en techo, barlovento (perpendicular) $q_{t,b}$ & ${tn(d.qtb, 2)} kgf/m$^2$`,
+    L`Viento en techo, sotavento (perpendicular) $q_{t,s}$ & ${tn(d.qts, 2)} kgf/m$^2$`,
+    L`Inclinación del techo $\alpha$ & ${tn(d.alfa, 1)}$^\circ$`,
+    L`Largo del faldón $L_f$ & ${tn(d.Lf, 2)} m`,
+  ];
+  const combos = L`\begin{table}[H]
+\centering
+\caption{Combinación de carga verificada.}
+\begin{tabular}{lll}
+\toprule
+Combinación & Cargas que incluye & $K_D$\\
+\midrule
+$PP + SC_{piso} + SC_{techo} + V$ & Gravitacionales y viento (fachada${d.pisos === 2 ? " de dos pisos" : ""} y techo) & ${tn(d.KDv, 2)}\\
+\bottomrule
+\end{tabular}
+\end{table}
+`;
+  ultimoTex = documentoTex("Muro de corte", `Marco plataforma de pino radiata ${d.grado}, muro de ${tn(d.bm, 2)} $\times$ ${tn(d.hm, 2)} m, ${d.pisos === 2 ? "2 pisos" : "1 piso"}`,
+    datos, m.texto(), items, dc, ok, "el muro de corte", { cargas, combos, figura: muroTikz(d, r) });
+  ultimoNombre = `memoria_muro_corte_${d.grado}_${d.n}x${d.b}x${d.h}.tex`;
+}
+
+// ---------------------------------------------------------------------------
 // Interfaz y memoria
 // ---------------------------------------------------------------------------
 let ultimoTex = "", ultimoNombre = "memoria_envigado.tex";
@@ -1069,9 +1505,12 @@ let modo = "env";
 function actualizar() {
   $("inEnv").classList.toggle("hidden", modo !== "env");
   $("inTab").classList.toggle("hidden", modo !== "tab");
+  $("inMuro").classList.toggle("hidden", modo !== "muro");
   $("tabEnv").classList.toggle("on", modo === "env");
   $("tabTab").classList.toggle("on", modo === "tab");
-  if (modo === "env") actualizarEnv(); else actualizarTab();
+  $("tabMuro").classList.toggle("on", modo === "muro");
+  $("figMuro").classList.toggle("hidden", modo !== "muro");
+  if (modo === "env") actualizarEnv(); else if (modo === "tab") actualizarTab(); else actualizarMuro();
 }
 
 // Tarjetas de resumen: [título, razón, detalle]
@@ -1085,7 +1524,7 @@ const texCelda = (s) => s.replace(/λ/g, "$\\lambda$").replace(/δ/g, "$\\delta$
 
 // Muestra el aviso de datos inválidos y vacía los resultados (no se genera .tex)
 function sinCalculo(malos) {
-  $("summary").innerHTML = ""; $("memo").innerHTML = "";
+  $("summary").innerHTML = ""; $("memo").innerHTML = ""; $("figMuro").innerHTML = "";
   $("resTitle").textContent = "Resultados";
   $("verdict").innerHTML = avisoInvalidos(malos);
   ultimoTex = "";
@@ -1106,6 +1545,7 @@ ${TEX_ESTILO}
 \geometry{margin=2.2cm}
 \usepackage{booktabs}
 \usepackage{float}
+\usepackage{tikz}
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 \fancyhf{}
@@ -1146,6 +1586,7 @@ ${extra.cargas.join("\\\\\n")}\\
 \end{table}
 ` : ""}
 ${extra.combos || ""}
+${extra.figura || ""}
 
 ${cuerpo}
 
@@ -1362,7 +1803,14 @@ function init() {
   $("tKp").value = "C4";
   $("tabEnv").addEventListener("click", () => { modo = "env"; actualizar(); });
   $("tabTab").addEventListener("click", () => { modo = "tab"; actualizar(); });
-  if (new URLSearchParams(location.search).get("elemento") === "tabique") modo = "tab";
+  $("tabMuro").addEventListener("click", () => { modo = "muro"; actualizar(); });
+  const elem = new URLSearchParams(location.search).get("elemento");
+  if (elem === "tabique") modo = "tab"; else if (elem === "muro") modo = "muro";
+  $("mEsc").innerHTML = $("esc").innerHTML;
+  $("mEsc").value = "custom";
+  $("mKp").innerHTML = $("tKp").innerHTML;
+  $("mKp").value = "C4";
+  $("mKct").innerHTML = Object.entries(KCT).map(([k, [n, v]]) => `<option value="${k}">${n} — ${fmt(v, 2)}</option>`).join("");
   $("uso").innerHTML = Object.keys(TABLA6).map(k => `<option>${k}</option>`).join("");
   const panel = $("inputs");
   panel.addEventListener("input", actualizar);
