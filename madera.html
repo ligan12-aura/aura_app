@@ -309,7 +309,7 @@
 </main>
 <footer>Herramienta de apoyo académico basada en NCh 1198:2024 y en la planilla «FULL MADERA». Verifique siempre los resultados.</footer>
 
-<script src="memo.js?v=18"></script>
+<script src="memo.js?v=19"></script>
 <script>
 "use strict";
 // ---------------------------------------------------------------------------
@@ -374,15 +374,21 @@ const MECANICOS = ["C24", "C16", "MGP10", "MGP12"];
 const CfE = (grado) => (MECANICOS.includes(grado) ? 0.561 : 0.439);
 
 class Memo {
-  constructor() { this.out = []; this.tex = []; this.n = 0; }
-  h(t) { memoTexCerrar(this); this.n++; this.out.push(`<h3>${this.n}. ${t}</h3>`); this.tex.push(`\\section{${t.replace(/—/g, "---")}}`); }
+  // modo: "ambos" (pantalla y .tex), "pantalla" o "tex" (contenido solo en uno de los dos)
+  constructor() { this.out = []; this.tex = []; this.n = 0; this.modo = "ambos"; }
+  get enP() { return this.modo !== "tex"; }
+  get enT() { return this.modo !== "pantalla"; }
+  h(t) {
+    if (this.enT) { memoTexCerrar(this); this.tex.push(`\\section{${t.replace(/—/g, "---")}}`); }
+    if (this.enP) { this.n++; this.out.push(`<h3>${this.n}. ${t}</h3>`); }
+  }
   // Subsección solo del .tex (en pantalla el paso ya queda bajo su título)
-  sub(t) { memoTexCerrar(this); this.tex.push(`\\subsection{${t.replace(/—/g, "---")}}`); }
-  row(k, v, ref) { this.out.push({ k, v, ref }); }
-  note(t, tt) { this.out.push(`<div class="note">${t}</div>`); this.tex.push(`\\textit{${tt || t}}\n`); }
-  eq(s, ref) { this.tex.push(texDisplay(s, ref)); this.out.push({ tex: s + (ref ? `\\tag*{(${ref})}` : ""), eq: true }); }
+  sub(t) { if (this.enT) { memoTexCerrar(this); this.tex.push(`\\subsection{${t.replace(/—/g, "---")}}`); } }
+  row(k, v, ref) { if (this.enP) this.out.push({ k, v, ref }); }
+  note(t, tt) { if (this.enP) this.out.push(`<div class="note">${t}</div>`); if (this.enT) this.tex.push(`\\textit{${tt || t}}\n`); }
+  eq(s, ref) { if (this.enT) this.tex.push(texDisplay(s, ref)); if (this.enP) this.out.push({ tex: s + (ref ? `\\tag*{(${ref})}` : ""), eq: true }); }
   // soloTex: comentario del paso a paso que va solo en la memoria .tex
-  p(s, soloTex) { memoTexP(this, s); if (!soloTex) this.out.push({ tex: s }); }
+  p(s, soloTex) { if (this.enT) memoTexP(this, s); if (!soloTex && this.enP) this.out.push({ tex: s }); }
   texto() { memoTexCerrar(this); return this.tex.join("\n"); }
   html() { return memoHTML(this.out); }
 }
@@ -582,37 +588,35 @@ function calcularTabique(d, m) {
     c.max = Math.max(...v);
   }
   const { sel, crit } = elegirCombinacion(combos, d.comb);
+  const cT = combosMemoria(combos, crit);                       // combinaciones desarrolladas en el .tex
+  const cV = cT.filter(c => c.viento);
+  const lista = cT.map(c => c.n).join(", ").replace(/, ([^,]*)$/, " y $1");
+  r.flexV = ff / Fdis; r.cizV = fcz / Fczd;
+  if (necesitaKlv) r.lamvV = lamv;
 
   m.h("Resumen de combinaciones de carga");
-  tablaCombinaciones(m, combos, sel, crit, "del pie derecho", { f: "f<sub>cp</sub>", F: "F<sub>cp,λ,dis</sub>", ftex: "f_{cp}", Ftex: L`F_{cp,\lambda,dis}` });
+  tablaCombinaciones(m, combos, sel, crit, "del pie derecho", { f: "f<sub>cp</sub>", F: "F<sub>cp,λ,dis</sub>", ftex: "f_{cp}", Ftex: L`F_{cp,\lambda,dis}` }, cT);
 
-  m.h(`Compresión paralela — combinación ${sel.n} (8.3)`);
-  m.row("Factor de longitud efectiva: K<sub>p</sub>", `${fmt(d.Kp, 2)} — ${d.kpTxt}`);
-  m.row("Esbeltez fuera del plano ; en el plano: λ<sub>x</sub> ; λ<sub>y</sub>", `${fmt(lx, 2)} ; ${fmt(ly, 2)}`);
-  m.row("Esbeltez controlante: λ ≤ 170", `${fmt(lam, 2)} ${okTxt(lam <= 170)}`);
-  m.row(`Tensión crítica de pandeo (eje ${ejeY ? "y" : "x"}) ; coeficiente de proporcionalidad: F<sub>cE</sub> ; c`, `${fmt(FcE, 2)} kgf/cm² ; ${fmt(cc, 2)}`);
-  m.row(`<b>Combinación analizada ${sel.n} (K<sub>D</sub> = ${fmt(sel.KD, 2)}): f<sub>cp</sub> / F<sub>cp,λ,dis</sub></b>`, `<b>${fmt(sel.fc, 3)} / ${fmt(sel.Fcl, 2)} = ${fmt(sel.ratio, 3)}</b> ${okTxt(sel.ratio <= 1)}`);
-  m.p(L`\textbf{Esbelteces.} La longitud de pandeo fuera del plano del tabique es $L_{p,x} = ${tn(d.Lpx, 1)}$ cm y en el plano $L_{p,y} = ${tn(d.Lpy, 1)}$ cm (distancia entre cadenetas). Con la condición de apoyo ${d.kpTxt.replace(/–/g, "--")}, el coeficiente de longitud efectiva según la Tabla J.1 es $K_p = ${tn(d.Kp, 2)}$. El radio de giro de una sección rectangular es $i = 0{,}29$ veces la dimensión en la dirección del pandeo:`, true);
-  m.eq(L`\lambda_x = \frac{K_p L_{p,x}}{0{,}29\,h} = \frac{${tn(d.Kp, 2)}\cdot ${tn(d.Lpx, 1)}}{0{,}29\cdot ${tn(hc, 1)}} = ${tn(lx, 2)} \qquad \lambda_y = \frac{K_p L_{p,y}}{0{,}29\,b} = \frac{${tn(d.Kp, 2)}\cdot ${tn(d.Lpy, 1)}}{0{,}29\cdot ${tn(bc, 1)}} = ${tn(ly, 2)}`);
-  m.eq(L`\lambda = \max(\lambda_x,\ \lambda_y) = ${tn(lam, 2)} \;${lam <= 170 ? L`\le` : ">"}\; 170 \qquad F_{cE} = \frac{3{,}6\,E_{${ejeY ? "y" : "x"},dis}}{\lambda^2} = \frac{3{,}6\cdot ${tn(Ec, 0)}}{${tn(lam, 2)}^2} = ${tn(FcE, 3)}\ \mathrm{kgf/cm^2}`, "8.3");
-  m.p(L`De acuerdo con la Tabla 9 de la NCh 1198, el coeficiente de proporcionalidad para el grado ${d.grado} es $c = ${tn(cc, 2)}$.`, true);
-  m.p(L`\textbf{Desarrollo de la combinación ${sel.n}} ($${sel.tex}$, $K_D = ${tn(sel.KD, 2)}$, ${sel.kdTxt}):`);
-  m.eq(L`f_{cp} = \frac{P}{b\,h} = \frac{${tn(sel.P, 2)}}{${tn(bc, 1)}\cdot ${tn(hc, 1)}} = ${tn(sel.fc, 3)}\ \mathrm{kgf/cm^2}`);
-  m.eq(L`F_{cp,dis} = F_{cp}\,K_H\,K_D = ${tn(Fcp, 1)}\cdot ${tn(KH("Fcp"), 3)}\cdot ${tn(sel.KD, 2)} = ${tn(sel.Fcpd, 2)}\ \mathrm{kgf/cm^2}`);
-  if (lam >= 10) {
-    m.eq(L`A = \frac{\frac{F_{cE}}{F_{cp,dis}}\left(1 + \frac{\lambda}{200}\right) + 1}{2c} = \frac{\frac{${tn(FcE, 3)}}{${tn(sel.Fcpd, 2)}}\left(1 + \frac{${tn(lam, 2)}}{200}\right) + 1}{2\cdot ${tn(cc, 2)}} = ${tn(sel.Ac, 4)}`, "8.3");
-    m.eq(L`B = \frac{F_{cE}}{c\,F_{cp,dis}} = \frac{${tn(FcE, 3)}}{${tn(cc, 2)}\cdot ${tn(sel.Fcpd, 2)}} = ${tn(sel.Bc, 4)}`);
-    m.eq(L`K_\lambda = A - \sqrt{A^2 - B} = ${tn(sel.Ac, 4)} - \sqrt{${tn(sel.Ac, 4)}^2 - ${tn(sel.Bc, 4)}} = ${tn(sel.Kl, 4)}`);
-  }
-  m.eq(L`F_{cp,\lambda,dis} = F_{cp,dis}\,K_\lambda = ${tn(sel.Fcpd, 2)}\cdot ${tn(sel.Kl, 4)} = ${tn(sel.Fcl, 2)}\ \mathrm{kgf/cm^2}`);
-  m.eq(chequeo("f_{cp}", sel.fc, L`F_{cp,\lambda,dis}`, sel.Fcl, UKG, 3));
-  r.comp = sel.ratio;
-
-  if (sel.viento) {
-    // Flexión por viento
+  // Bloques de la memoria (combinación analizada en pantalla; todas las combinaciones en el .tex)
+  const secEsbeltez = () => {
+    m.p(L`\textbf{Esbelteces.} La longitud de pandeo fuera del plano del tabique es $L_{p,x} = ${tn(d.Lpx, 1)}$ cm y en el plano $L_{p,y} = ${tn(d.Lpy, 1)}$ cm (distancia entre cadenetas). Con la condición de apoyo ${d.kpTxt.replace(/–/g, "--")}, el coeficiente de longitud efectiva según la Tabla J.1 es $K_p = ${tn(d.Kp, 2)}$. El radio de giro de una sección rectangular es $i = 0{,}29$ veces la dimensión en la dirección del pandeo:`, true);
+    m.eq(L`\lambda_x = \frac{K_p L_{p,x}}{0{,}29\,h} = \frac{${tn(d.Kp, 2)}\cdot ${tn(d.Lpx, 1)}}{0{,}29\cdot ${tn(hc, 1)}} = ${tn(lx, 2)} \qquad \lambda_y = \frac{K_p L_{p,y}}{0{,}29\,b} = \frac{${tn(d.Kp, 2)}\cdot ${tn(d.Lpy, 1)}}{0{,}29\cdot ${tn(bc, 1)}} = ${tn(ly, 2)}`);
+    m.eq(L`\lambda = \max(\lambda_x,\ \lambda_y) = ${tn(lam, 2)} \;${lam <= 170 ? L`\le` : ">"}\; 170 \qquad F_{cE} = \frac{3{,}6\,E_{${ejeY ? "y" : "x"},dis}}{\lambda^2} = \frac{3{,}6\cdot ${tn(Ec, 0)}}{${tn(lam, 2)}^2} = ${tn(FcE, 3)}\ \mathrm{kgf/cm^2}`, "8.3");
+    m.p(L`De acuerdo con la Tabla 9 de la NCh 1198, el coeficiente de proporcionalidad para el grado ${d.grado} es $c = ${tn(cc, 2)}$.`, true);
+  };
+  const eqComp = (c) => {
+    m.eq(L`f_{cp} = \frac{P_{${c.n}}}{b\,h} = \frac{${tn(c.P, 2)}}{${tn(bc, 1)}\cdot ${tn(hc, 1)}} = ${tn(c.fc, 3)}\ \mathrm{kgf/cm^2}`);
+    m.eq(L`F_{cp,dis} = F_{cp}\,K_H\,K_D = ${tn(Fcp, 1)}\cdot ${tn(KH("Fcp"), 3)}\cdot ${tn(c.KD, 2)} = ${tn(c.Fcpd, 2)}\ \mathrm{kgf/cm^2}`);
+    if (lam >= 10) {
+      m.eq(L`A = \frac{\frac{F_{cE}}{F_{cp,dis}}\left(1 + \frac{\lambda}{200}\right) + 1}{2c} = \frac{\frac{${tn(FcE, 3)}}{${tn(c.Fcpd, 2)}}\left(1 + \frac{${tn(lam, 2)}}{200}\right) + 1}{2\cdot ${tn(cc, 2)}} = ${tn(c.Ac, 4)}`, "8.3");
+      m.eq(L`B = \frac{F_{cE}}{c\,F_{cp,dis}} = \frac{${tn(FcE, 3)}}{${tn(cc, 2)}\cdot ${tn(c.Fcpd, 2)}} = ${tn(c.Bc, 4)}`);
+      m.eq(L`K_\lambda = A - \sqrt{A^2 - B} = ${tn(c.Ac, 4)} - \sqrt{${tn(c.Ac, 4)}^2 - ${tn(c.Bc, 4)}} = ${tn(c.Kl, 4)}`);
+    }
+    m.eq(L`F_{cp,\lambda,dis} = F_{cp,dis}\,K_\lambda = ${tn(c.Fcpd, 2)}\cdot ${tn(c.Kl, 4)} = ${tn(c.Fcl, 2)}\ \mathrm{kgf/cm^2}`);
+    m.eq(chequeo("f_{cp}", c.fc, L`F_{cp,\lambda,dis}`, c.Fcl, UKG, 3));
+  };
+  const secViento = () => {
     m.h("Flexión por viento — 8.2.2");
-    r.flex = ff / Fdis;
-    if (necesitaKlv) r.lamv = lamv;
     m.row("Módulo resistente ; tensión de trabajo en flexión: W ; f<sub>f</sub>", `${fmt(W, 2)} cm³ ; ${fmt(ff, 2)} kgf/cm²`);
     m.row("Tensión de diseño en flexión (borde traccionado): F<sub>ft,dis</sub>", `${fmt(Fft, 2)} kgf/cm²`);
     if (necesitaKlv) {
@@ -620,7 +624,7 @@ function calcularTabique(d, m) {
       m.row("Esbeltez de volcamiento: λ<sub>v</sub> ≤ 50", `${fmt(lamv, 2)} ${okTxt(lamv <= 50)}`, "8.2.2.4");
     } else m.row("Factor de modificación por volcamiento: K<sub>λv</sub>", `1 (${d.apoyoLat === "ac" || !(d.la > 0) ? "apoyo lateral continuo" : "h/b ≤ 2"})`, "8.2.2.4");
     m.row("Tensión de diseño en flexión (borde comprimido): F<sub>fv,dis</sub>", `${fmt(Ffv, 2)} kgf/cm²`);
-    m.row("<b>Razón de flexión: f<sub>f</sub> / F<sub>f,dis</sub></b>", `<b>${fmt(r.flex, 3)}</b> ${okTxt(r.flex <= 1)}`);
+    m.row("<b>Razón de flexión: f<sub>f</sub> / F<sub>f,dis</sub></b>", `<b>${fmt(r.flexV, 3)}</b> ${okTxt(r.flexV <= 1)}`);
     m.p(L`\textbf{Tensión de trabajo en flexión.} El empuje del viento genera flexión en el pie derecho; con el módulo resistente de la sección:`, true);
     m.eq(L`W = \frac{b\,h^2}{6} = \frac{${tn(bc, 1)}\cdot ${tn(hc, 1)}^2}{6} = ${tn(W, 2)}\ \mathrm{cm^3}`);
     m.eq(L`f_f = \frac{M_V}{W} = \frac{${tn(MV, 1)}}{${tn(W, 2)}} = ${tn(ff, 2)}\ \mathrm{kgf/cm^2}`);
@@ -643,48 +647,95 @@ function calcularTabique(d, m) {
     m.eq(L`F_{f,dis} = \min(F_{fv,dis},\ F_{ft,dis}) = \min(${tn(Ffv, 2)},\ ${tn(Fft, 2)}) = ${tn(Fdis, 2)}\ \mathrm{kgf/cm^2}`);
     m.eq(chequeo("f_f", ff, "F_{f,dis}", Fdis));
 
-    // Cizalle por viento (sin rebaje)
     m.h("Cizalle por viento — 8.2.3");
-    r.ciz = fcz / Fczd;
     m.row("Tensión de trabajo en cizalle: f<sub>cz</sub>", `${fmt(fcz, 3)} kgf/cm²`);
     m.row("Tensión de diseño en cizalle: F<sub>cz,dis</sub>", `${fmt(Fczd, 2)} kgf/cm²`, "8.2.3");
-    m.row("<b>Razón de cizalle: f<sub>cz</sub> / F<sub>cz,dis</sub></b>", `<b>${fmt(r.ciz, 3)}</b> ${okTxt(r.ciz <= 1)}`);
+    m.row("<b>Razón de cizalle: f<sub>cz</sub> / F<sub>cz,dis</sub></b>", `<b>${fmt(r.cizV, 3)}</b> ${okTxt(r.cizV <= 1)}`);
     m.p(L`Con el corte máximo producido por el viento en los apoyos del pie derecho se calcula la tensión de cizalle, y se compara con la tensión de diseño con $K_D = ${tn(d.KDv, 2)}$ (sin rebajes, $K_r = 1$):`, true);
     m.eq(L`f_{cz} = \frac{1{,}5\,V_V}{b\,h} = \frac{1{,}5\cdot ${tn(VV, 2)}}{${tn(bc, 1)}\cdot ${tn(hc, 1)}} = ${tn(fcz, 3)}\ \mathrm{kgf/cm^2}`, "8.2.3");
     m.eq(L`F_{cz,dis} = F_{cz}\,K_H\,K_D = ${tn(Fcz, 1)}\cdot ${tn(KH("Fcz"), 3)}\cdot ${tn(d.KDv, 2)} = ${tn(Fczd, 2)}\ \mathrm{kgf/cm^2}`);
     m.eq(chequeo("f_{cz}", fcz, "F_{cz,dis}", Fczd, UKG, 3));
+  };
+  const eqFcEx = () => m.eq(L`F_{cE,x} = \frac{3{,}6\,E_{x,dis}}{\lambda_x^2} = \frac{3{,}6\cdot ${tn(Ex, 0)}}{${tn(lx, 2)}^2} = ${tn(FcEx, 3)}\ \mathrm{kgf/cm^2}`);
+  const eqInter = (c) => {
+    if (!(c.amp > 0)) m.note(`${c.n}: f<sub>cp</sub> ≥ F<sub>cE,x</sub>, el pie derecho es inestable fuera del plano (interacción = ∞).`,
+      L`${c.n}: $f_{cp} \ge F_{cE,x}$, el pie derecho es inestable fuera del plano (interacción $= \infty$).`);
+    m.eq(L`f_{cp} = ${tn(c.fc, 3)}\ \mathrm{kgf/cm^2} \;${c.amp > 0 ? "<" : L`\ge`}\; F_{cE,x} = ${tn(FcEx, 3)}\ \mathrm{kgf/cm^2} \hspace{2em}\textbf{${c.amp > 0 ? "¡CUMPLE!" : "¡NO CUMPLE!"}}`);
+    m.eq(L`\begin{aligned}&\left(\frac{f_{cp}}{F_{cp,\lambda,dis}}\right)^2 + \frac{f_f}{\left(1 - \frac{f_{cp}}{F_{cE,x}}\right)F_{f,dis}}\\ &= \left(\frac{${tn(c.fc, 3)}}{${tn(c.Fcl, 2)}}\right)^2 + \frac{${tn(ff, 2)}}{\left(1 - \frac{${tn(c.fc, 3)}}{${tn(FcEx, 2)}}\right)\cdot ${tn(Fdis, 2)}} = ${tn(c.inter, 3)}\end{aligned} \;${cmp(c.inter, 1)}\; 1`);
+  };
+  const eqFcn = () => {
+    m.p(L`La tensión de diseño aplica el factor de humedad y el factor por longitud de aplastamiento $K_{cn} = ${tn(d.Kcn, 2)}$ (sin $K_D$):`, true);
+    m.eq(L`F_{cn,dis} = F_{cn}\,K_H\,K_{cn} = ${tn(Fcn, 1)}\cdot ${tn(KH("Fcn"), 3)}\cdot ${tn(d.Kcn, 2)} = ${tn(Fcnd, 2)}\ \mathrm{kgf/cm^2}`, "8.5");
+  };
+  const eqCn = (c) => {
+    m.eq(L`f_{cn} = \frac{P_{${c.n}}}{b\,h} = \frac{${tn(c.P, 2)}}{${tn(A, 2)}} = ${tn(c.fcn, 3)}\ \mathrm{kgf/cm^2}`);
+    m.eq(chequeo("f_{cn}", c.fcn, "F_{cn,dis}", Fcnd, UKG, 3));
+  };
 
-    // Flexocompresión de la combinación seleccionada
+  // ---- En pantalla: solo la combinación analizada ----
+  m.modo = "pantalla";
+  m.h(`Compresión paralela — combinación ${sel.n} (8.3)`);
+  m.row("Factor de longitud efectiva: K<sub>p</sub>", `${fmt(d.Kp, 2)} — ${d.kpTxt}`);
+  m.row("Esbeltez fuera del plano ; en el plano: λ<sub>x</sub> ; λ<sub>y</sub>", `${fmt(lx, 2)} ; ${fmt(ly, 2)}`);
+  m.row("Esbeltez controlante: λ ≤ 170", `${fmt(lam, 2)} ${okTxt(lam <= 170)}`);
+  m.row(`Tensión crítica de pandeo (eje ${ejeY ? "y" : "x"}) ; coeficiente de proporcionalidad: F<sub>cE</sub> ; c`, `${fmt(FcE, 2)} kgf/cm² ; ${fmt(cc, 2)}`);
+  m.row(`<b>Combinación analizada ${sel.n} (K<sub>D</sub> = ${fmt(sel.KD, 2)}): f<sub>cp</sub> / F<sub>cp,λ,dis</sub></b>`, `<b>${fmt(sel.fc, 3)} / ${fmt(sel.Fcl, 2)} = ${fmt(sel.ratio, 3)}</b> ${okTxt(sel.ratio <= 1)}`);
+  secEsbeltez();
+  m.p(L`\textbf{Desarrollo de la combinación ${sel.n}} ($${sel.tex}$, $K_D = ${tn(sel.KD, 2)}$, ${sel.kdTxt}):`);
+  eqComp(sel);
+  r.comp = sel.ratio;
+  if (sel.viento) {
+    r.flex = r.flexV; r.ciz = r.cizV; r.fc = sel.inter;
+    if (necesitaKlv) r.lamv = lamv;
+    secViento();
     m.h(`Flexión y compresión combinadas — combinación ${sel.n}`);
-    r.fc = sel.inter;
-    if (!(sel.amp > 0)) m.note("f<sub>cp</sub> ≥ F<sub>cE,x</sub>: el pie derecho es inestable fuera del plano (interacción = ∞).",
-      L`$f_{cp} \ge F_{cE,x}$: el pie derecho es inestable fuera del plano (interacción $= \infty$).`);
     m.row("Tensión crítica de pandeo fuera del plano: F<sub>cE,x</sub>", `${fmt(FcEx, 2)} kgf/cm²`);
     m.row("Tensión de compresión ; tensión de diseño con pandeo: f<sub>cp</sub> ; F<sub>cp,λ,dis</sub>", `${fmt(sel.fc, 3)} ; ${fmt(sel.Fcl, 2)} kgf/cm²`);
     m.row("<b>Interacción flexocompresión</b>", `<b>${fmt(r.fc, 3)}</b> ${okTxt(r.fc <= 1 && sel.amp > 0)}`);
-    m.p(L`En la combinación ${sel.n} actúan simultáneamente la compresión de las cargas gravitacionales y la flexión del viento. Antes de aplicar la ecuación de interacción se verifica que la tensión de compresión sea menor que la tensión crítica de pandeo en el plano de flexión (eje x):`, true);
-    m.eq(L`F_{cE,x} = \frac{3{,}6\,E_{x,dis}}{\lambda_x^2} = \frac{3{,}6\cdot ${tn(Ex, 0)}}{${tn(lx, 2)}^2} = ${tn(FcEx, 3)}\ \mathrm{kgf/cm^2}`);
-    m.eq(L`f_{cp} = ${tn(sel.fc, 3)}\ \mathrm{kgf/cm^2} \;${sel.amp > 0 ? "<" : L`\ge`}\; F_{cE,x} = ${tn(FcEx, 3)}\ \mathrm{kgf/cm^2} \hspace{2em}\textbf{${sel.amp > 0 ? "¡CUMPLE!" : "¡NO CUMPLE!"}}`);
-    m.eq(L`\left(\frac{f_{cp}}{F_{cp,\lambda,dis}}\right)^2 + \frac{f_f}{\left(1 - \frac{f_{cp}}{F_{cE,x}}\right)F_{f,dis}} = \left(\frac{${tn(sel.fc, 3)}}{${tn(sel.Fcl, 2)}}\right)^2 + \frac{${tn(ff, 2)}}{\left(1 - \frac{${tn(sel.fc, 3)}}{${tn(FcEx, 2)}}\right)\cdot ${tn(Fdis, 2)}} = ${tn(r.fc, 3)} ${cmp(r.fc, 1)} 1`);
-    m.p(L`Dado que el índice resultante ${r.fc <= 1 ? L`$${tn(r.fc, 3)} \le 1$, el pie derecho sometido a flexocompresión \textbf{cumple}` : L`$${tn(r.fc, 3)} > 1$, el pie derecho sometido a flexocompresión \textbf{no cumple}`} bajo la acción simultánea de las cargas de la combinación y el viento.`, true);
+    eqFcEx();
+    eqInter(sel);
   } else {
     m.p(L`La combinación ${sel.n} no incluye viento, por lo que no corresponden las verificaciones de flexión, cizalle ni flexocompresión por viento.`);
   }
-
-  // Compresión normal en la solera inferior (carga de la combinación analizada)
   m.h("Compresión normal en la solera inferior — 8.5");
-  const fcn = sel.fcn;
   r.cn = sel.rcn;
-  m.row("Área de contacto ; tensión de trabajo en compresión normal: A<sub>n</sub> ; f<sub>cn</sub>", `${fmt(A, 2)} cm² ; ${fmt(fcn, 3)} kgf/cm²`);
+  m.row("Área de contacto ; tensión de trabajo en compresión normal: A<sub>n</sub> ; f<sub>cn</sub>", `${fmt(A, 2)} cm² ; ${fmt(sel.fcn, 3)} kgf/cm²`);
   m.row("Tensión de diseño en compresión normal: F<sub>cn,dis</sub>", `${fmt(Fcnd, 2)} kgf/cm²`, "8.5");
   m.row("<b>Razón de compresión normal: f<sub>cn</sub> / F<sub>cn,dis</sub></b>", `<b>${fmt(r.cn, 3)}</b> ${okTxt(r.cn <= 1)}`);
-  m.p(L`La reacción del pie derecho se transmite a la solera inferior por aplastamiento sobre el área de contacto $b\,h$, con la carga axial de la combinación ${sel.n}:`, true);
-  m.eq(L`f_{cn} = \frac{P_{${sel.n}}}{b\,h} = \frac{${tn(sel.P, 2)}}{${tn(A, 2)}} = ${tn(fcn, 3)}\ \mathrm{kgf/cm^2}`);
-  m.p(L`La tensión de diseño aplica el factor de humedad y el factor por longitud de aplastamiento $K_{cn} = ${tn(d.Kcn, 2)}$ (sin $K_D$):`, true);
-  m.eq(L`F_{cn,dis} = F_{cn}\,K_H\,K_{cn} = ${tn(Fcn, 1)}\cdot ${tn(KH("Fcn"), 3)}\cdot ${tn(d.Kcn, 2)} = ${tn(Fcnd, 2)}\ \mathrm{kgf/cm^2}`, "8.5");
-  m.eq(chequeo("f_{cn}", fcn, "F_{cn,dis}", Fcnd, UKG, 3));
+  eqCn(sel);
+  eqFcn();
 
-  Object.assign(r, { combos, sel, crit, ff, Fdis, fcz, Fczd, fcn, Fcnd, w });
+  // ---- En la memoria .tex: desarrollo completo de cada combinación (C2 a C5) ----
+  m.modo = "tex";
+  m.h("Compresión paralela — esbeltez y tensión crítica (8.3)");
+  secEsbeltez();
+  m.p(L`La tensión de diseño de cada combinación es $F_{cp,dis} = F_{cp}\,K_H\,K_D$ con el $K_D$ de su carga de menor duración; el factor de pandeo $K_\lambda$ y la verificación de cada combinación se desarrollan en la sección de verificación por combinación.`);
+  if (cV.length) {
+    secViento();
+    m.h("Flexión y compresión combinadas — tensión crítica");
+    m.p(L`En las combinaciones con viento (${cV.map(c => c.n).join(" y ")}) actúan simultáneamente la compresión de las cargas gravitacionales y la flexión del viento. Antes de aplicar la ecuación de interacción se verifica que la tensión de compresión sea menor que la tensión crítica de pandeo en el plano de flexión (eje x):`);
+    eqFcEx();
+  }
+  m.h("Compresión normal en la solera inferior — 8.5");
+  m.p(L`La reacción del pie derecho se transmite a la solera inferior por aplastamiento sobre el área de contacto $b\,h = ${tn(A, 2)}$ cm$^2$, con la carga axial de cada combinación.`);
+  eqFcn();
+  m.h(`Verificación de las combinaciones ${lista}`);
+  for (const c of cT) {
+    m.sub(`Combinación ${c.n}: ${c.desc.toLowerCase().replace(/^./, s => s.toUpperCase())} ($K_D = ${tn(c.KD, 2)}$, ${c.kdTxt})`);
+    m.p(L`\textbf{Compresión paralela.} Carga axial $P_{${c.n}} = ${tn(c.P, 2)}$ kgf ($${c.tex}$):`);
+    eqComp(c);
+    if (c.viento) {
+      m.p(L`\textbf{Flexión y cizalle por viento} (ver secciones de viento, $K_D = ${tn(d.KDv, 2)}$):`);
+      m.eq(L`\frac{f_f}{F_{f,dis}} = \frac{${tn(ff, 2)}}{${tn(Fdis, 2)}} = ${tn(r.flexV, 3)} \;${r.flexV <= 1 ? LE : ">"}\; 1 \qquad \frac{f_{cz}}{F_{cz,dis}} = \frac{${tn(fcz, 3)}}{${tn(Fczd, 2)}} = ${tn(r.cizV, 3)} \;${r.cizV <= 1 ? LE : ">"}\; 1`);
+      m.p(L`\textbf{Flexocompresión:}`);
+      eqInter(c);
+    }
+    m.p(L`\textbf{Compresión normal en la solera inferior} (8.5):`);
+    eqCn(c);
+  }
+  m.modo = "ambos";
+
+  Object.assign(r, { combos, sel, crit, cT, ff, Fdis, fcz, Fczd, fcn: sel.fcn, Fcnd, w });
   return r;
 }
 
@@ -1106,10 +1157,21 @@ function actualizarTab() {
     L`$L_{p,x}$ ; $L_{p,y}$ ; $K_p$ & ${tn(d.Lpx, 1)} ; ${tn(d.Lpy, 1)} cm ; ${tn(d.Kp, 2)}`,
     L`$q_{PP}$ ; $q_{SC,piso}$ ; $q_{SC,techo}$ & ${tn(d.qPP, 2)} ; ${tn(d.qSCp, 2)} ; ${tn(d.qSCt, 2)} kgf/m`,
     L`Viento $q_v$ & ${tn(d.qv, 1)} kgf/m$^2$`,
-    s === r.crit ? L`Combinación analizada & ${s.n} ($${s.tex}$), crítica` : L`Combinación analizada ; crítica & ${s.n} ; ${r.crit.n} ($${r.crit.tex}$)`,
+    L`Combinaciones verificadas ; crítica & ${r.cT.map(c => c.n).join(", ")} ; ${r.crit.n} ($${r.crit.tex}$)`,
   ];
+  // Resumen del .tex: todas las combinaciones desarrolladas en la memoria
+  const itemsTex = r.cT.map(c => [`Compresión paralela (${c.n})`, c.ratio, `${fmt(c.fc, 2)} / ${fmt(c.Fcl, 2)} kgf/cm²`]);
+  if (r.cT.some(c => c.viento)) {
+    itemsTex.push(["Flexión por viento (C4, C5)", r.flexV, `${fmt(r.ff, 1)} / ${fmt(r.Fdis, 1)} kgf/cm²`],
+      ["Cizalle por viento (C4, C5)", r.cizV, `${fmt(r.fcz, 2)} / ${fmt(r.Fczd, 2)} kgf/cm²`]);
+    r.cT.filter(c => c.viento).forEach(c => itemsTex.push([`Flexocompresión (${c.n})`, c.inter, "interacción con K<sub>D</sub> de viento"]));
+  }
+  r.cT.forEach(c => itemsTex.push([`Compresión normal solera (${c.n})`, c.rcn, `${fmt(c.fcn, 2)} / ${fmt(r.Fcnd, 2)} kgf/cm²`]));
+  itemsTex.push(["Esbeltez λ/170", r.lam / 170, `λ = ${fmt(r.lam, 1)}`]);
+  if (r.lamvV !== undefined && r.cT.some(c => c.viento)) itemsTex.push(["Volcamiento λ<sub>v</sub>/50", r.lamvV / 50, `λ<sub>v</sub> = ${fmt(r.lamvV, 1)}`]);
+  const dcT = Math.max(...itemsTex.map(i => i[1]));
   ultimoTex = documentoTex("Pie derecho de tabique", `Pino radiata ${d.grado}, escuadría ${nombre.replace(/×/g, L`$\times$`)}, altura $L = ${tn(d.L, 1)}$ cm`,
-    datos, m.texto(), items, dc, ok, "el pie derecho");
+    datos, m.texto(), itemsTex, dcT, dcT <= 1, "el pie derecho");
   ultimoNombre = `memoria_tabique_${d.grado}_${d.b}x${d.h}.tex`;
 }
 

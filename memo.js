@@ -337,8 +337,13 @@ function elegirCombinacion(combos, valor) {
   const crit = combos.reduce((a, c) => (c.max > a.max ? c : a));
   return { sel: combos.find(c => c.n === valor) || crit, crit };
 }
-// Tabla resumen de combinaciones (pantalla y .tex). s: símbolos { f, F, ftex, Ftex }
-function tablaCombinaciones(m, combos, sel, crit, elemento, s) {
+// Combinaciones que se desarrollan completas en la memoria .tex: C2 a C5 (y C1 solo si resulta crítica)
+function combosMemoria(combos, crit) {
+  return combos.filter(c => c.n !== "C1" || c === crit);
+}
+// Tabla resumen de combinaciones: en pantalla todas (marca la analizada); en el .tex las de la memoria (cT).
+// s: símbolos { f, F, ftex, Ftex }
+function tablaCombinaciones(m, combos, sel, crit, elemento, s, cT = combos) {
   const hayV = combos.some(c => c.viento);
   const f3 = (x) => (Number.isFinite(x) ? fmt(x, 3) : "∞");
   m.out.push(`<div class="combWrap"><table class="comb"><tr><th>Comb.</th><th>Incluye</th><th>K<sub>D</sub></th><th>P [kgf]</th><th>${s.f} [kgf/cm²]</th><th>${s.F} [kgf/cm²]</th><th>${s.f}/${s.F}</th>${hayV ? "<th>Flexocomp.</th>" : ""}<th>Razón máx.</th></tr>` +
@@ -348,19 +353,21 @@ function tablaCombinaciones(m, combos, sel, crit, elemento, s) {
       (hayV ? `<td class="num">${c.viento ? f3(c.inter) : "—"}</td>` : "") + `<td class="num">${f3(c.max)}</td></tr>`).join("") +
     `</table></div><div class="unit" style="margin-top:4px">Combinación crítica: <b>${crit.n}</b> (razón máxima ${f3(crit.max)}). Combinación analizada: <b>${sel.n}</b>. La razón máxima de cada combinación es la de compresión paralela${hayV ? " o, en las combinaciones con viento, la mayor entre compresión paralela, flexión, cizalle y flexocompresión" : ""}.${hayV ? "" : " Sin viento no se generan las combinaciones C4 y C5."}</div>`);
   const t3 = (x) => (Number.isFinite(x) ? tn(x, 3) : L`$\infty$`);
+  const hayVT = cT.some(c => c.viento);
+  const lista = cT.map(c => c.n).join(", ").replace(/, ([^,]*)$/, " y $1");
   memoTexCerrar(m);
   m.tex.push(L`\begin{table}[H]
 \centering\footnotesize\setlength{\tabcolsep}{4pt}
-\caption{Combinaciones de carga ${elemento}: tensiones de trabajo ($${s.ftex}$) y de diseño con pandeo ($${s.Ftex}$) en kgf/cm$^2$. Combinación crítica: ${crit.n}; combinación analizada: ${sel.n}.}
-\begin{tabular}{ll${"r".repeat(hayV ? 7 : 6)}}
+\caption{Resumen de las combinaciones de carga ${elemento} (${lista}): tensiones de trabajo ($${s.ftex}$) y de diseño con pandeo ($${s.Ftex}$) en kgf/cm$^2$. Combinación crítica: ${crit.n}.}
+\begin{tabular}{ll${"r".repeat(hayVT ? 7 : 6)}}
 \toprule
-Comb. & Incluye & $K_D$ & $P$ [kgf] & $${s.ftex}$ & $${s.Ftex}$ & Comp. par. & ${hayV ? "Flexocomp. & " : ""}Razón máx.\\
+Comb. & Incluye & $K_D$ & $P$ [kgf] & $${s.ftex}$ & $${s.Ftex}$ & Comp. par. & ${hayVT ? "Flexocomp. & " : ""}Razón máx.\\
 \midrule
-${combos.map(c => `${c === sel ? `\\textbf{${c.n}}` : c.n}${c === crit ? " (crítica)" : ""} & $${c.tex}$ & ${tn(c.KD, 2)} & ${tn(c.P, 1)} & ${tn(c.fc, 3)} & ${tn(c.Fcl, 2)} & ${tn(c.ratio, 3)} & ${hayV ? `${c.viento ? t3(c.inter) : "---"} & ` : ""}${t3(c.max)}\\\\`).join("\n")}
+${cT.map(c => `${c === crit ? `\\textbf{${c.n}} (crítica)` : c.n} & $${c.tex}$ & ${tn(c.KD, 2)} & ${tn(c.P, 1)} & ${tn(c.fc, 3)} & ${tn(c.Fcl, 2)} & ${tn(c.ratio, 3)} & ${hayVT ? `${c.viento ? t3(c.inter) : "---"} & ` : ""}${t3(c.max)}\\\\`).join("\n")}
 \bottomrule
 \end{tabular}
 \end{table}
 `);
-  m.tex.push(L`La razón máxima de cada combinación es la de compresión paralela${hayV ? " o, en las combinaciones con viento, la mayor entre compresión paralela, flexión, cizalle y flexocompresión" : ""}. La combinación crítica es ${crit.n} (${crit.desc.toLowerCase()}); a continuación se desarrolla la combinación ${sel.n} (${sel.desc.toLowerCase()})${sel === crit ? ", que corresponde a la crítica" : ""}.
+  m.tex.push(L`Cada combinación usa el $K_D$ de su carga de menor duración. La razón máxima de cada combinación es la de compresión paralela${hayVT ? " o, en las combinaciones con viento, la mayor entre compresión paralela, flexión, cizalle y flexocompresión" : ""}. La combinación crítica es ${crit.n} (${crit.desc.toLowerCase()}). En las secciones siguientes se desarrollan completas las verificaciones de las combinaciones ${lista}${hayVT ? "; las verificaciones por viento corresponden a las combinaciones que lo incluyen" : ""}.
 `);
 }
