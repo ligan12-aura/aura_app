@@ -278,7 +278,7 @@
 </main>
 <footer>Herramienta de apoyo académico basada en NCh 2165:2023, NCh 1198:2024 y la planilla «MLE v4». Verifique siempre los resultados.</footer>
 
-<script src="memo.js?v=24"></script>
+<script src="memo.js?v=25"></script>
 <script>
 "use strict";
 // ---------------------------------------------------------------------------
@@ -1280,7 +1280,14 @@ function init() {
   else actualizar();
 }
 init();
+// Integración con proyectos (proyectos.js): datos para guardar y restaurar este cálculo
+window.AURA_MEMO = {
+  get tipo() { return modo === "col" ? "Madera laminada MLE — columna" : "Madera laminada MLE — viga"; },
+  elemento: () => (modo === "col" ? "columna" : "viga"), tex: () => ultimoTex, nombre: () => ultimoNombre,
+  recalcular: () => actualizar(),
+};
 </script>
+<script src="proyectos.js?v=25"></script>
 <script>
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
 </script>

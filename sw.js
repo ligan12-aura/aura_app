@@ -1,6 +1,6 @@
 // Service worker de AURA: guarda la app completa para uso sin conexión.
 // Al publicar cambios, incremente VERSION para que los dispositivos descarguen la nueva versión.
-const VERSION = "aura-v24";
+const VERSION = "aura-v25";
 const ARCHIVOS = [
   "./",
   "./index.html",
@@ -12,6 +12,7 @@ const ARCHIVOS = [
   "./vial.html",
   "./rigido.html",
   "./memo.js",
+  "./proyectos.js",
   "./manifest.webmanifest",
   "./icons/apple-touch-icon.png",
   "./icons/icon-192.png",

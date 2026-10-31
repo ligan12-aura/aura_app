@@ -367,7 +367,7 @@
 </main>
 <footer>Herramienta de apoyo académico. Las solicitaciones deben corresponder a la envolvente de combinaciones mayoradas. Verifique siempre los resultados.</footer>
 
-<script src="memo.js?v=24"></script>
+<script src="memo.js?v=25"></script>
 <script>
 "use strict";
 // ---------------------------------------------------------------------------
@@ -1689,7 +1689,16 @@ function init() {
   setElemento(new URLSearchParams(location.search).get("elemento"));
 }
 init();
+// Integración con proyectos (proyectos.js): datos para guardar y restaurar este cálculo
+const elActual = () => document.querySelector(".tabs button.on")?.dataset.el || "viga";
+window.AURA_MEMO = {
+  get tipo() { return elActual() === "losa" ? "Hormigón armado — losa" : "Hormigón armado — viga"; },
+  elemento: () => elActual(), tex: () => (elActual() === "losa" ? ultimoTexLosa : elActual() === "viga" ? ultimoTex : ""),
+  nombre: () => (elActual() === "losa" ? ultimoNombreLosa : ultimoNombre),
+  recalcular: () => (elActual() === "losa" ? calcularLosa() : calcularViga()),
+};
 </script>
+<script src="proyectos.js?v=25"></script>
 <script>
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
 </script>

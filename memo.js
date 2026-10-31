@@ -489,36 +489,39 @@ const REFERENCIAS = [
 }` },
 ];
 
-// Cita cada norma en su primera mención dentro del texto (título y cuerpo), fuera de ecuaciones,
-// y agrega la bibliografía al final. Devuelve { tex, usadas }.
-function conCitas(tex) {
-  const ini = tex.indexOf("\\begin{document}");
-  if (ini < 0) return { tex, usadas: [] };
-  let cuerpo = tex.slice(ini);
+// Cita cada norma en su primera mención dentro de un texto LaTeX, fuera de ecuaciones, figuras TikZ y títulos.
+// Devuelve { texto, usadas }.
+function citarTexto(texto) {
   const usadas = [];
-  // Zonas donde no se puede citar: ecuaciones en bloque, entornos tikz y matemática en línea
+  // Zonas donde no se puede citar: ecuaciones en bloque, entornos tikz, matemática en línea y títulos
   const prohibidas = () => {
     const z = [];
-    for (const re of [/(?<!\\)\\\[[\s\S]*?(?<!\\)\\\]/g, /\\begin\{tikzpicture\}[\s\S]*?\\end\{tikzpicture\}/g, /\$[^$]*\$/g, /\\(?:section|subsection)\{[^}]*\}/g])
-      for (const mm of cuerpo.matchAll(re)) z.push([mm.index, mm.index + mm[0].length]);
+    for (const re of [/(?<!\\)\\\[[\s\S]*?(?<!\\)\\\]/g, /\\begin\{tikzpicture\}[\s\S]*?\\end\{tikzpicture\}/g, /\$[^$]*\$/g, /\\(?:chapter|section|subsection)\{[^}]*\}/g])
+      for (const mm of texto.matchAll(re)) z.push([mm.index, mm.index + mm[0].length]);
     return z;
   };
   for (const ref of REFERENCIAS) {
     const z = prohibidas();
     const re = new RegExp(ref.patron.source, "g");
     let mm, pos = -1;
-    while ((mm = re.exec(cuerpo))) {
-      const a = mm.index, b = a + mm[0].length;
-      if (!z.some(([x, y]) => a >= x && a < y)) { pos = b; break; }
+    while ((mm = re.exec(texto))) {
+      const a = mm.index;
+      if (!z.some(([x, y]) => a >= x && a < y)) { pos = a + mm[0].length; break; }
     }
     if (pos < 0) continue;
-    cuerpo = cuerpo.slice(0, pos) + `~\\cite{${ref.clave}}` + cuerpo.slice(pos);
+    texto = texto.slice(0, pos) + `~\\cite{${ref.clave}}` + texto.slice(pos);
     usadas.push(ref);
   }
+  return { texto, usadas };
+}
+// Documento completo: cita en el cuerpo y agrega la bibliografía al final. Devuelve { tex, usadas }.
+function conCitas(tex) {
+  const ini = tex.indexOf("\\begin{document}");
+  if (ini < 0) return { tex, usadas: [] };
+  let { texto: cuerpo, usadas } = citarTexto(tex.slice(ini));
   if (usadas.length) cuerpo = cuerpo.replace(/\\end\{document\}\s*$/, "\\bibliographystyle{unsrt}\n\\bibliography{referencias}\n\\end{document}\n");
   return { tex: tex.slice(0, ini) + cuerpo, usadas };
 }
-
 // SVG en pantalla → PNG (fondo blanco, 2× de resolución)
 function svgAPng(svg, escala = 2) {
   return new Promise((ok, mal) => {
@@ -574,20 +577,16 @@ function crearZip(archivos) {
   return new Blob([...partes, ...central, new Uint8Array(fin.buffer)], { type: "application/zip" });
 }
 
-// Arma y descarga el .zip: las figuras TikZ del .tex se reemplazan, en orden, por los dibujos de pantalla en PNG
-async function descargarZipMemoria(tex, nombre, contenedor) {
-  if (!tex) { alert("Corrija los datos inválidos antes de descargar la memoria."); return; }
-  const base = nombre.replace(/\.tex$/i, "");
+// Figuras TikZ del .tex → dibujos de pantalla en PNG, en orden. Devuelve { tex, archivos: [{ nombre, datos }] }.
+async function prepararFiguras(tex, contenedor, prefijo = "figura") {
   const svgs = contenedor ? [...contenedor.querySelectorAll('svg[role="img"]')].filter(s => s.getBoundingClientRect().width > 0) : [];
   const archivos = [];
   let i = 0;
-  const bloques = [...tex.matchAll(/\\begin\{tikzpicture\}[\s\S]*?\\end\{tikzpicture\}/g)];
-  for (const b of bloques) {
+  for (const b of [...tex.matchAll(/\\begin\{tikzpicture\}[\s\S]*?\\end\{tikzpicture\}/g)]) {
     if (i >= svgs.length) break;
     try {
-      const png = await svgAPng(svgs[i]);
-      const ruta = `figuras/figura${i + 1}.png`;
-      archivos.push({ nombre: ruta, datos: png });
+      const ruta = `figuras/${prefijo}${i + 1}.png`;
+      archivos.push({ nombre: ruta, datos: await svgAPng(svgs[i]) });
       tex = tex.replace(b[0], `\\includegraphics[width=0.85\\linewidth]{${ruta}}`);
       i++;
     } catch (e) { break; }
@@ -598,12 +597,22 @@ async function descargarZipMemoria(tex, nombre, contenedor) {
     return k > 1 ? fig.replaceAll("\\includegraphics[width=0.85\\linewidth]", `\\includegraphics[width=${(0.9 / k - 0.04).toFixed(2)}\\linewidth]`) : fig;
   });
   if (i && !/\\usepackage\{graphicx\}/.test(tex)) tex = tex.replace(/\\begin\{document\}/, "\\usepackage{graphicx}\n\\begin{document}");
-  const { tex: conRef, usadas } = conCitas(tex);
-  archivos.unshift({ nombre: `${base}.tex`, datos: texUnicode(conRef) });
-  if (usadas.length) archivos.splice(1, 0, { nombre: "referencias.bib", datos: usadas.map(u => u.bib).join("\n\n") + "\n" });
+  return { tex, archivos };
+}
+function descargarBlob(blob, nombre) {
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(crearZip(archivos));
-  a.download = `${base}.zip`;
+  a.href = URL.createObjectURL(blob);
+  a.download = nombre;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+// Arma y descarga el .zip de una memoria: .tex con citas, referencias.bib y figuras PNG
+async function descargarZipMemoria(tex, nombre, contenedor) {
+  if (!tex) { alert("Corrija los datos inválidos antes de descargar la memoria."); return; }
+  const base = nombre.replace(/\.tex$/i, "");
+  const fig = await prepararFiguras(tex, contenedor);
+  const { tex: conRef, usadas } = conCitas(fig.tex);
+  const archivos = [{ nombre: `${base}.tex`, datos: texUnicode(conRef) }];
+  if (usadas.length) archivos.push({ nombre: "referencias.bib", datos: usadas.map(u => u.bib).join("\n\n") + "\n" });
+  descargarBlob(crearZip([...archivos, ...fig.archivos]), `${base}.zip`);
 }

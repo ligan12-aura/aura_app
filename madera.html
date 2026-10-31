@@ -404,7 +404,7 @@
 </main>
 <footer>Herramienta de apoyo académico basada en NCh 1198:2024 y en la planilla «FULL MADERA». Verifique siempre los resultados.</footer>
 
-<script src="memo.js?v=24"></script>
+<script src="memo.js?v=25"></script>
 <script>
 "use strict";
 // ---------------------------------------------------------------------------
@@ -1823,7 +1823,14 @@ function init() {
   actualizar();
 }
 init();
+// Integración con proyectos (proyectos.js): datos para guardar y restaurar este cálculo
+window.AURA_MEMO = {
+  get tipo() { return { env: "Madera aserrada — envigado", tab: "Madera aserrada — pie derecho de tabique", muro: "Madera aserrada — muro de corte" }[modo]; },
+  elemento: () => ({ env: "envigado", tab: "tabique", muro: "muro" }[modo]), tex: () => ultimoTex, nombre: () => ultimoNombre,
+  recalcular: () => actualizar(),
+};
 </script>
+<script src="proyectos.js?v=25"></script>
 <script>
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
 </script>

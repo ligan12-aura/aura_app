@@ -76,6 +76,31 @@
   .subopts { display: none; margin: 2px 0 4px 20px; border-left: 2px solid var(--line); padding-left: 6px; }
   .grupo.open .subopts { display: block; }
   footer { text-align: center; color: var(--muted); font-size: 12px; padding: 10px 0 24px; }
+  /* Mis proyectos */
+  h2.secc { font-size: 17px; margin: 0 0 12px; display: flex; align-items: center; gap: 12px; }
+  h2.secc .pb { margin-left: auto; }
+  .pb { font: inherit; font-size: 13px; padding: 7px 12px; border-radius: 6px; border: 1px solid var(--calc); background: var(--calc); color: #fff; cursor: pointer; }
+  .pb.sec { background: #fff; color: var(--head); border-color: var(--line); }
+  .pb:disabled { opacity: .5; cursor: default; }
+  #listaProyectos { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-bottom: 34px; }
+  .proy { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--head); border-radius: 8px; padding: 14px 16px; }
+  .proy.activo { border-left-color: var(--calc); box-shadow: 0 0 0 1px var(--calc) inset; }
+  .proy-t { display: flex; align-items: center; gap: 8px; }
+  .proy h3 { margin: 0; font-size: 16px; }
+  .proy-act { font-size: 11px; font-weight: 700; color: #fff; background: var(--calc); border-radius: 3px; padding: 1px 6px; }
+  .proy p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+  .proy p b { color: var(--ink); }
+  .proy .proy-m { font-size: 12px; }
+  .proy-acc { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .proy-acc .pb { padding: 5px 10px; font-size: 12.5px; }
+  .proy-vacio { grid-column: 1 / -1; background: var(--panel); border: 1px dashed var(--line); border-radius: 8px; padding: 18px; color: var(--muted); }
+  dialog { border: none; border-radius: 10px; padding: 0; width: min(440px, 92vw); box-shadow: 0 18px 50px rgba(0,0,0,.25); }
+  dialog::backdrop { background: rgba(29,35,48,.45); }
+  dialog form { padding: 18px 20px; display: grid; gap: 10px; }
+  dialog h2 { margin: 0 0 4px; font-size: 18px; }
+  dialog label { font-size: 12px; color: var(--muted); display: grid; gap: 4px; }
+  dialog input { font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; }
+  dialog .dlg-acc { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
 </style>
 </head>
 <body>
@@ -85,7 +110,13 @@
 </header>
 
 <main>
-  <p class="intro">Seleccione una herramienta.</p>
+  <section id="misProyectos">
+    <h2 class="secc">Mis proyectos <button class="pb" type="button" id="btnNuevoProyecto">+ Nuevo proyecto</button></h2>
+    <div id="listaProyectos"></div>
+  </section>
+
+  <h2 class="secc" id="herramientas">Herramientas de cálculo</h2>
+  <p class="intro">Seleccione una herramienta. Con un proyecto activo, cada cálculo se puede agregar al proyecto desde el panel lateral.</p>
   <div class="grid">
 
     <section class="mat calculo">
@@ -153,6 +184,20 @@
   </div>
 </main>
 <footer>Herramienta de apoyo académico. Verifique siempre los resultados.</footer>
+
+<dialog id="dlgProyecto">
+  <form method="dialog" autocomplete="on">
+    <h2>Nuevo proyecto</h2>
+    <label>Nombre del proyecto<input name="pNombre" required maxlength="120" placeholder="Ej.: Casa de madera Los Aromos"></label>
+    <label>Nombre del calculista<input name="pCalculista" maxlength="80" autocomplete="name"></label>
+    <label>Oficina de cálculo<input name="pOficina" maxlength="100" autocomplete="organization"></label>
+    <label>Mandante<input name="pMandante" maxlength="100"></label>
+    <label>Fecha de la memoria<input name="pFecha" type="date"></label>
+    <div class="dlg-acc"><button type="button" class="pb sec" id="dlgCancelar">Cancelar</button><button type="submit" class="pb">Guardar proyecto</button></div>
+  </form>
+</dialog>
+<script src="memo.js?v=25"></script>
+<script src="proyectos.js?v=25"></script>
 
 <script>
 "use strict";
