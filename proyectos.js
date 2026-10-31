@@ -259,17 +259,27 @@ function documentoProyecto(p) {
 ${pre.join("\n")}
 \usepackage{geometry}
 \geometry{margin=2.2cm}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{setspace}
+\setlength{\parindent}{0pt}
+\singlespacing
 \allowdisplaybreaks
 \definecolor{aurabase}{HTML}{3D4450}
 \definecolor{auraacento}{HTML}{E8711C}
 \definecolor{auragris}{HTML}{5F6B7A}
+% Encabezado: nombre del capítulo al centro; pie: oficina de cálculo al centro y número de página a la derecha
+\renewcommand{\chaptermark}[1]{\markboth{#1}{}}
 \pagestyle{fancy}
 \fancyhf{}
-\lhead{\small ${escTex(p.nombre)}}
-\rhead{\small\nouppercase{\leftmark}}
-\lfoot{\small Memoria de cálculo estructural}
+\chead{\small\nouppercase{\leftmark}}
+\cfoot{\small ${escTex(p.oficina || "")}}
 \rfoot{\small\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
+\fancypagestyle{plain}{\fancyhf{}\cfoot{\small ${escTex(p.oficina || "")}}\rfoot{\small\thepage}\renewcommand{\headrulewidth}{0pt}}
+% Índice con hipervínculos (al final del preámbulo)
+\usepackage[hidelinks]{hyperref}
+\hypersetup{pdftitle={${escTex(p.nombre)}}, pdfauthor={${escTex(p.calculista || "")}}}
 
 \begin{document}
 \begin{titlepage}
@@ -320,7 +330,7 @@ ${filas}
 \end{table}
 
 ${capitulos.join("\n\\clearpage\n")}
-${usadas.size ? "\\clearpage\n\\addcontentsline{toc}{chapter}{\\bibname}\n\\bibliographystyle{unsrt}\n\\bibliography{referencias}" : ""}
+${usadas.size ? "\\clearpage\n\\phantomsection\n\\addcontentsline{toc}{chapter}{\\bibname}\n\\bibliographystyle{unsrt}\n\\bibliography{referencias}" : ""}
 \end{document}
 `;
   return { doc, usadas: [...usadas.values()] };
