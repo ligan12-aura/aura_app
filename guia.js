@@ -132,6 +132,14 @@ const Guia = (() => {
       { en: "t:2. Materiales", titulo: "2 · Materiales y armadura", texto: "Hormigón, acero y armadura horizontal de los muros." },
       { en: "t:3. Geometría", titulo: "3 · Geometría", texto: "Largo y espesor de cada muro; con ellos se verifica el corte y la armadura horizontal." },
     ],
+    "columna.html": [
+      { en: "t:1. Sección", titulo: "1 · Sección", texto: "Forma rectangular o circular, dimensiones, recubrimiento libre hasta el estribo, altura libre ℓu y tamaño máximo del árido." },
+      { en: "t:2. Armaduras", titulo: "2 · Armaduras", texto: "Barras longitudinales por cara (o el total en la circular), estribos o espiral, ramas en cada dirección y separaciones dentro y fuera de la zona de confinamiento ℓo." },
+      { en: "t:3. Materiales", titulo: "3 · Materiales", texto: "Grado del hormigón y acero longitudinal y transversal." },
+      { en: "t:4. Esbeltez", titulo: "4 · Esbeltez", texto: "Para cada dirección, si el pórtico está arriostrado y el factor k. En pórticos no arriostrados indique si el análisis ya incluye P-Δ o si se calcula δs con el índice Q." },
+      { en: "t:5. Disposiciones", titulo: "5 · Disposiciones sísmicas", texto: "Pórtico especial, intermedio (estructuras mixtas según el DS 60) o sin disposiciones. En el especial, ingrese la suma de momentos nominales de las vigas para la columna fuerte – viga débil." },
+      { en: "t:6. Cargas", titulo: "6 · Cargas sin mayorar", texto: "Esfuerzos de cada estado de carga (D, L y sismo Ex, Ey de la NCh 433 sin mayorar): P, momentos en los extremos superior e inferior y cortes. AURA arma las combinaciones de la NCh 3171 con el factor 1.4 del sismo." },
+    ],
     "zapata.html": [
       { en: "t:1. Geometría", titulo: "1 · Geometría", texto: "Elija si calcula el ancho B con el largo L fijo (como el ejercicio del curso) o verifica B y L dados. Ingrese la altura hc, el sello Df, la altura ht de la carga sobre el terreno y la columna a × b con la barra que se ancla." },
       { en: "t:2. Suelo", titulo: "2 · Suelo", texto: "Tensión admisible y pesos específicos del suelo y del hormigón. Con γ = 0 se desprecian los pesos, como en el curso." },

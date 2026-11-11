@@ -400,7 +400,8 @@ const Zona2D3D = (() => {
   function montar(op) {
     try { return montarZona(op); } catch (e) { console.error(e); return { actualizar() {}, capturar: () => null }; }
   }
-  function montarZona({ antes, fuente2D, construir, observar = [], capas = [], titulo = "Vista del elemento", nota = "" }) {
+  // solo3D: la zona muestra solo el modelo 3D (el dibujo 2D de la página queda arriba, sin copia ni botones de modo)
+  function montarZona({ antes, fuente2D, construir, observar = [], capas = [], titulo = "Vista del elemento", nota = "", solo3D = false }) {
     const z = document.createElement("section");
     z.className = "zona23"; z.setAttribute("data-sin-figura", "");          // la copia 2D no cuenta como figura de la memoria
     z.innerHTML = `<div class="z23-cab"><b>${titulo}</b>
@@ -427,7 +428,8 @@ const Zona2D3D = (() => {
     // Modo de vista: en pantallas angostas se parte en 3D para no duplicar el dibujo de la página
     const modo = (m) => { z.dataset.modo = m; z.querySelectorAll(".z23-modo button").forEach(b => b.setAttribute("aria-pressed", b.dataset.m === m)); };
     z.querySelectorAll(".z23-modo button").forEach(b => b.addEventListener("click", () => modo(b.dataset.m)));
-    modo(matchMedia("(max-width: 900px)").matches ? "3d" : "ambos");
+    modo(solo3D || matchMedia("(max-width: 900px)").matches ? "3d" : "ambos");
+    if (solo3D) { fuente2D = null; z.querySelector(".z23-modo").style.display = "none"; }
     z.querySelectorAll("[data-v]").forEach(b => b.addEventListener("click", () => visor?.vista?.(b.dataset.v)));
     z.querySelectorAll("[data-z]").forEach(b => b.addEventListener("click", () => visor?.acercar?.(+b.dataset.z)));
     z.querySelectorAll("[data-g]").forEach(c => c.addEventListener("change", () => visor?.mostrar?.(c.dataset.g, c.checked)));

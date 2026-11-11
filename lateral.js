@@ -44,6 +44,7 @@
     base: svg('<path d="M10 3h4v12h-4z"/><path d="M5 15h14v2H5z"/><path d="M3 17h18v4H3z"/><path d="M7 15v6M17 15v6"/>'),
     conexion: svg('<path d="M3 3v18M6 3v18"/><path d="M9 8h12M9 16h12"/><path d="M6 10h6v4H6z"/>'),
     zapata: svg('<path d="M10 3h4v10h-4z"/><path d="M3 13h18v6H3z"/>'),
+    colHA: svg('<path d="M8 2h8v20H8z"/><path d="M8 7h8M8 12h8M8 17h8"/>'),
     rigido: svg('<rect x="2" y="8" width="20" height="8" rx="1"/><path d="M9 8v8M15 8v8"/>'),
     secAcero: svg('<path d="M5 4h14v3h-5v10h5v3H5v-3h5V7H5z"/>'),
     secHormigon: svg('<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>'),
@@ -85,6 +86,7 @@
     R("hormigon", "Hormigón", "secHormigon", [
       E("hormigon.html?elemento=viga", "Vigas", "hormigon", { tab: "tabViga" }),
       E("hormigon.html?elemento=losa", "Losas", "losa", { tab: "tabLosa" }),
+      E("columna.html", "Columnas", "colHA"),
       E("piers.html", "Muros de corte", "pier"),
       E("muro.html", "Muros de contención", "muro"),
       R("fundaciones", "Fundaciones", "fundaciones", [E("zapata.html", "Zapata aislada", "zapata")]),

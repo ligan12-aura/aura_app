@@ -55,6 +55,7 @@ const TEX_UNICODE = {
   "03A3": "\\Sigma", "03A6": "\\Phi", "2264": "\\le", "2265": "\\ge", "2260": "\\ne", "2248": "\\approx",
   "2192": "\\rightarrow", "21D2": "\\Rightarrow", "221E": "\\infty", "221A": "\\surd", "2212": "-",
   "2211": "\\sum", "2202": "\\partial", "2074": "^{4}", "2076": "^{6}", "2080": "_{0}", "2081": "_{1}",
+  "2113": "\\ell", "2225": "\\parallel",
   "2082": "_{2}", "2033": "''", "2032": "'",
 };
 function texUnicode(doc) {
@@ -505,6 +506,17 @@ const REFERENCIAS = [
   organization = {American Concrete Institute},
   address      = {Farmington Hills, MI},
   year         = {2014}
+}` },
+  { clave: "aci31819", patron: /ACI\s?318-19/, bib: String.raw`@manual{aci31819,
+  title        = {{ACI 318-19. Requisitos de Reglamento para Concreto Estructural y Comentario (versión en español y en sistema métrico SI)}},
+  organization = {American Concrete Institute},
+  address      = {Farmington Hills, MI},
+  year         = {2019}
+}` },
+  { clave: "ds60", patron: /DS\s?60\b/, bib: String.raw`@misc{ds60,
+  title        = {{Decreto Supremo N.º 60. Reglamento que fija los requisitos de diseño y cálculo para el hormigón armado}},
+  howpublished = {Ministerio de Vivienda y Urbanismo, Diario Oficial del 13 de diciembre de 2011},
+  year         = {2011}
 }` },
   { clave: "ich2019", patron: /Manual de Detallamiento(?: para Elementos de Hormigón Armado\})?/, bib: String.raw`@manual{ich2019,
   title        = {{Manual de Detallamiento para Elementos de Hormigón Armado}},
