@@ -23,7 +23,7 @@
   .memo, .tablaWrap { overflow-x: auto; }
   svg { max-width: 100%; }
 </style>
-<title>Ingeniería Estructural</title>
+<title>structura — Ingeniería estructural</title>
 <style>
   :root { --ink: #141a26; --muted: #556070; --line: #d9dde3; }
   * { box-sizing: border-box; }
@@ -38,7 +38,6 @@
   .inicio-in { max-width: 1240px; margin: 0 auto; padding: 34px 24px 40px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px;
                grid-template-areas: "cab" "herr"; align-items: start; }
   .cab { grid-area: cab; }
-  .eyebrow { margin: 0 0 6px; font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--naranja); }
   .cab h1 { margin: 0; font-size: 30px; line-height: 1.15; letter-spacing: -.02em; color: var(--tinta); }
   .cab p.lead { margin: 8px 0 18px; color: var(--muted); font-size: 15px; max-width: 620px; }
 
@@ -47,25 +46,26 @@
   .buscar input { width: 100%; font: inherit; font-size: 15px; padding: 13px 14px 13px 42px; border: 1px solid #cfd5dd; border-radius: var(--r-m); background: #fff; }
   .buscar input:focus { outline: none; border-color: var(--azul); box-shadow: 0 0 0 4px rgba(0,0,139,.13); }
   .filtros { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 0; }
-  .filtros button { font: inherit; font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: var(--r-m); border: 1px solid #cfd5dd; background: #fff; color: #3b4556; cursor: pointer; transition: all .15s; }
+  .filtros button { font: inherit; font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: var(--r-m); border: 1px solid #cfd5dd; background: #fff; color: #3b4556; cursor: pointer; transition: background-color .15s, border-color .15s, color .15s, scale .12s var(--e-out); }
   .filtros button:hover { border-color: var(--azul); color: var(--azul); }
   .filtros button[aria-pressed="true"] { background: var(--azul); border-color: var(--azul); color: #fff; }
 
   .herr { grid-area: herr; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
   .tool { position: relative; display: flex; gap: 14px; align-items: flex-start; padding: 16px; background: #fff; border: 1px solid var(--line); border-radius: var(--r-l);
-          text-decoration: none; color: var(--ink); transition: border-color .15s, background .15s; }
+          text-decoration: none; color: var(--ink); transition: border-color .15s, background .15s, scale .12s var(--e-out); }
   a.tool:hover, a.tool:focus-visible { border-color: var(--azul); background: #fbfbff; outline: none; }
   .tool .ico { flex: 0 0 44px; width: 44px; height: 44px; border-radius: var(--r-m); background: var(--azul-tinte); display: grid; place-items: center; }
   .tool .ico svg { width: 28px; height: 28px; }
   .tool .tx { flex: 1; min-width: 0; }
   .tool b { display: block; font-size: 15px; }
   .tool small { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
-  .tool .norma { display: inline-block; margin-top: 8px; font-size: 11px; font-weight: 700; letter-spacing: .03em; color: var(--azul); background: var(--azul-tinte); border-radius: var(--r-s); padding: 2px 7px; }
-  a.tool::after { content: "→"; position: absolute; right: 14px; top: 14px; color: #a3abb8; font-weight: 700; transition: color .15s, transform .15s; }
-  a.tool:hover::after { color: var(--azul); transform: translateX(3px); }
+  .tool .norma { display: inline-block; margin-top: 8px; font-size: 12px; font-weight: 700; letter-spacing: .03em; color: var(--azul); background: var(--azul-tinte); border-radius: var(--r-s); padding: 2px 7px; }
+  a.tool::after { content: "→"; position: absolute; right: 14px; top: 14px; color: var(--texto-3); font-weight: 700; transition: color .15s, transform .15s var(--e-out); }
+  a.tool:hover::after { color: var(--azul); }
+  @media (hover: hover) and (pointer: fine) { a.tool:hover::after { transform: translateX(3px); } }
   .tool .normas { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-  .tool .normas a { font-size: 12px; font-weight: 600; text-decoration: none; color: var(--azul); border: 1px solid #c5cae9; border-radius: var(--r-s); padding: 4px 9px; background: #fff; transition: all .15s; }
+  .tool .normas a { font-size: 12px; font-weight: 600; text-decoration: none; color: var(--azul); border: 1px solid #c5cae9; border-radius: var(--r-s); padding: 4px 9px; background: #fff; transition: background-color .15s, border-color .15s, color .15s, scale .12s var(--e-out); }
   .tool .normas a:hover, .tool .normas a:focus-visible { background: var(--azul); color: #fff; border-color: var(--azul); outline: none; }
   .tool.ancha { grid-column: 1 / -1; }
   .tool[hidden] { display: none; }
@@ -85,7 +85,7 @@
   .zona-cab p { margin: 0; color: var(--muted); font-size: 13px; flex-basis: 100%; order: 3; }
   .zona-cab .pb { margin-left: auto; }
 
-  .pb { font: inherit; font-size: 13px; font-weight: 600; padding: 8px 15px; border-radius: var(--r-m); border: 1px solid var(--azul); background: var(--azul); color: #fff; cursor: pointer; transition: background .15s; }
+  .pb { font: inherit; font-size: 13px; font-weight: 600; padding: 8px 15px; border-radius: var(--r-m); border: 1px solid var(--azul); background: var(--azul); color: #fff; cursor: pointer; transition: background .15s, scale .12s var(--e-out); }
   .pb:hover:not(:disabled) { background: var(--azul-hover); }
   .pb.sec { background: #fff; color: var(--azul); border-color: var(--acero-osc); font-weight: 500; }
   .pb.sec:hover:not(:disabled) { background: var(--azul-tinte); }
@@ -97,7 +97,7 @@
   .proy.activo::before { background: var(--naranja); }
   .proy-t { display: flex; align-items: center; gap: 8px; }
   .proy h3 { margin: 0; font-size: 16px; }
-  .proy-act { font-size: 11px; font-weight: 700; color: #fff; background: var(--naranja); border-radius: var(--r-s); padding: 2px 8px; }
+  .proy-act { font-size: 12px; font-weight: 700; color: #fff; background: var(--naranja-tx); border-radius: var(--r-s); padding: 2px 8px; }
   .proy p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
   .proy p b { color: var(--ink); }
   .proy .proy-m { font-size: 12px; }
@@ -117,7 +117,7 @@
   dialog input:focus { outline: none; border-color: var(--azul); box-shadow: 0 0 0 3px rgba(0,0,139,.15); }
   dialog .dlg-acc { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
 </style>
-<link rel="stylesheet" href="aura.css?v=19">
+<link rel="stylesheet" href="aura.css?v=20">
 <script src="lateral.js?v=15"></script>
 <script src="asistente.js?v=8" defer></script>
 </head>
@@ -129,7 +129,6 @@
 <section class="inicio" id="herramientas">
   <div class="inicio-in">
     <div class="cab">
-      <p class="eyebrow">Ingeniería estructural</p>
       <h1>¿Qué desea calcular hoy?</h1>
       <p class="lead">Elementos de acero, hormigón y madera, espectros sísmicos, cargas de viento y pavimentos, con memoria de cálculo según normas chilenas y AISC.</p>
       <label class="buscar">
@@ -167,19 +166,19 @@
         </a>
         <a class="tool" href="base.html" data-cat="acero hormigon" data-q="placa base columna pernos de anclaje traccion levantamiento pedestal aplastamiento llave de corte soldadura design guide 1 aci apendice d prueba">
           <span class="ico"><svg viewBox="0 0 32 32" fill="none" stroke="#00008B" stroke-width="2" stroke-linejoin="round"><path d="M13 3h6v16h-6z"/><path d="M6 19h20v3H6z"/><path d="M4 22h24v7H4z" stroke-width="1.4"/><path d="M9 19v10M23 19v10" stroke-dasharray="2 2"/></svg></span>
-          <span class="tx"><b>Placa base <small style="color:#9a6400">(versión de prueba)</small></b><small>Base articulada · aplastamiento, espesor, pernos a corte y tracción, llave de corte y soldadura</small><span class="norma">AISC DG1 · ACI 318-08 Ap. D</span></span>
+          <span class="tx"><b>Placa base <small class="prueba">(versión de prueba)</small></b><small>Base articulada · aplastamiento, espesor, pernos a corte y tracción, llave de corte y soldadura</small><span class="norma">AISC DG1 · ACI 318-08 Ap.&nbsp;D</span></span>
         </a>
         <a class="tool" href="conexion.html?tipo=corte" data-cat="acero" data-q="conexion union viga columna placa de corte shear tab pernos aplastamiento desgarre bloque de corte soldadura prueba">
           <span class="ico"><svg viewBox="0 0 32 32" fill="none" stroke="#00008B" stroke-width="2" stroke-linejoin="round"><path d="M4 3v26M8 3v26"/><path d="M12 10h17M12 22h17"/><path d="M8 13h8v6H8z"/><circle cx="13" cy="16" r="1" fill="#00008B"/></svg></span>
-          <span class="tx"><b>Conexión de corte <small style="color:#9a6400">(versión de prueba)</small></b><small>Placa simple viga–columna · pernos, bloque de corte y soldadura</small><span class="norma">AISC 360-16 Cap. J</span></span>
+          <span class="tx"><b>Conexión de corte <small class="prueba">(versión de prueba)</small></b><small>Placa simple viga–columna · pernos, bloque de corte y soldadura</small><span class="norma">AISC 360-16 Cap. J</span></span>
         </a>
         <a class="tool" href="conexion.html?tipo=momento" data-cat="acero" data-q="conexion union viga columna momento rigida placas de ala apernadas empotramiento pernos zona panel atiesadores j10 prueba">
           <span class="ico"><svg viewBox="0 0 32 32" fill="none" stroke="#00008B" stroke-width="2" stroke-linejoin="round"><path d="M4 3v26M8 3v26"/><path d="M12 10h17M12 22h17"/><path d="M8 7h12v3H8zM8 22h12v3H8z"/><path d="M8 13h6v6H8z"/></svg></span>
-          <span class="tx"><b>Conexión de momento <small style="color:#9a6400">(versión de prueba)</small></b><small>Placas de ala apernadas y placa de corte · columna (J10)</small><span class="norma">AISC 360-16 Cap. J</span></span>
+          <span class="tx"><b>Conexión de momento <small class="prueba">(versión de prueba)</small></b><small>Placas de ala apernadas y placa de corte · columna (J10)</small><span class="norma">AISC 360-16 Cap. J</span></span>
         </a>
         <a class="tool" href="diagonal.html" data-cat="acero" data-q="conexion diagonal arriostramiento traccion tubo placa nodal gusset ranura pernos bloque de corte whitmore soldadura prueba">
           <span class="ico"><svg viewBox="0 0 32 32" fill="none" stroke="#00008B" stroke-width="2" stroke-linejoin="round"><path d="M4 3v26M4 5h25"/><path d="M4 5h12l-6 12H4z"/><path d="M11 13l14 10"/><path d="M17 15l8 6l-2 3l-8-6z"/></svg></span>
-          <span class="tx"><b>Conexión de diagonal <small style="color:#9a6400">(versión de prueba)</small></b><small>Tubo con placa ranurada a placa nodal · tracción, pernos, bloque de corte, Whitmore y soldaduras</small><span class="norma">AISC 360-16 Cap. D y J</span></span>
+          <span class="tx"><b>Conexión de diagonal <small class="prueba">(versión de prueba)</small></b><small>Tubo con placa ranurada a placa nodal · tracción, pernos, bloque de corte, Whitmore y soldaduras</small><span class="norma">AISC 360-16 Cap. D y J</span></span>
         </a>
         <a class="tool" href="hormigon.html?elemento=viga" data-cat="hormigon" data-q="vigas hormigon armado flexion corte estribos aci">
           <span class="ico"><svg viewBox="0 0 32 32" fill="none" stroke="#00008B" stroke-width="2"><rect x="6" y="4" width="20" height="24" rx="1.5"/><g fill="#00008B" stroke="none"><circle cx="11" cy="23" r="1.8"/><circle cx="16" cy="23" r="1.8"/><circle cx="21" cy="23" r="1.8"/><circle cx="11" cy="9" r="1.4"/><circle cx="21" cy="9" r="1.4"/></g></svg></span>
@@ -211,7 +210,7 @@
         </a>
         <a class="tool" href="viento.html" data-cat="cargas" data-q="cargas de viento nch 432 2025 presion de velocidad direccional envolvente componentes revestimientos costaneras marco galpon fuerzas por piso corte basal prueba">
           <span class="ico"><svg viewBox="0 0 32 32" fill="none" stroke="#00008B" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 27V15l8-5 8 5v12z"/><path d="M3 9h8M3 14h5M3 19h6" stroke="#e65c00"/></svg></span>
-          <span class="tx"><b>Cargas de viento (prueba)</b><small>Presión de velocidad, sistema principal, componentes y revestimientos · carga sobre un marco y fuerzas por piso</small><span class="norma">NCh 432:2025</span></span>
+          <span class="tx"><b>Cargas de viento <small class="prueba">(versión de prueba)</small></b><small>Presión de velocidad, sistema principal, componentes y revestimientos · carga sobre un marco y fuerzas por piso</small><span class="norma">NCh 432:2025</span></span>
         </a>
         <a class="tool" href="vial.html" data-cat="vial" data-q="pavimento flexible asfalto paquete estructural manual de carreteras aashto 93">
           <span class="ico"><svg viewBox="0 0 32 32" fill="none" stroke="#00008B" stroke-width="2"><path d="M3 8h26M3 14h26M3 20h26M3 26h26"/><path d="M8 11h4M16 11h4M24 11h3" stroke="#e65c00"/></svg></span>

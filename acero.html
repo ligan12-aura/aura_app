@@ -23,7 +23,7 @@
   .memo, .tablaWrap { overflow-x: auto; }
   svg { max-width: 100%; }
 </style>
-<title>Verificación Perfiles Acero</title>
+<title>Verificación Perfiles Acero — structura</title>
 <style>
   :root {
     --bg: #e3e6ea;
@@ -126,7 +126,7 @@
     table.calc tr { break-inside: avoid; }
   }
 </style>
-<link rel="stylesheet" href="aura.css?v=19">
+<link rel="stylesheet" href="aura.css?v=20">
 <script src="lateral.js?v=15"></script>
 <script src="asistente.js?v=8" defer></script>
 </head>
@@ -1270,7 +1270,7 @@ function setModo(m) {
   document.querySelectorAll("[data-modo]").forEach(b => b.classList.toggle("on", b.dataset.modo === m));
   const titulo = m === "viga" ? "Vigas de acero" : "Columnas de acero";
   $("tituloEl").textContent = titulo;
-  document.title = titulo;
+  document.title = titulo + " — structura";
   // Conserva los demás parámetros (proyecto y elemento abiertos desde el panel de proyectos)
   const q = new URLSearchParams(location.search); q.set("elemento", m);
   history.replaceState(null, "", `?${q}`);

@@ -23,7 +23,7 @@
   .memo, .tablaWrap { overflow-x: auto; }
   svg { max-width: 100%; }
 </style>
-<title>Vigas de Hormigón</title>
+<title>Vigas de Hormigón — structura</title>
 <style>
   :root {
     --bg: #e3e6ea;
@@ -128,7 +128,7 @@
     table.calc tr { break-inside: avoid; }
   }
 </style>
-<link rel="stylesheet" href="aura.css?v=19">
+<link rel="stylesheet" href="aura.css?v=20">
 <script src="lateral.js?v=15"></script>
 <script src="asistente.js?v=8" defer></script>
 </head>
@@ -1656,7 +1656,7 @@ function setElemento(el) {
   $("resViga").classList.toggle("hidden", el !== "viga");
   $("resLosa").classList.toggle("hidden", el !== "losa");
   $("tituloEl").textContent = e.titulo;
-  document.title = e.pestana;
+  document.title = e.pestana + " — structura";
   // Conserva los demás parámetros (proyecto y elemento abiertos desde el panel de proyectos)
   const q = new URLSearchParams(location.search); q.set("elemento", el);
   history.replaceState(null, "", `?${q}`);
