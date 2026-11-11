@@ -6,12 +6,12 @@ Documentos: Manual técnico Instadeck (Cintac); Ficha técnica Instadeck (Cintac
 
 ## Criterios y límites
 
-- Las tablas I a IV son del fabricante, no de una norma. AURA no recalcula sus valores.
+- Las tablas I a IV son del fabricante, no de una norma. structura no recalcula sus valores.
 - Página del manual según el punto: Tabla I, punto 5; Tabla II, punto 3; Tabla III, punto 2; Tabla IV, punto 4.
 
 ## Referencias usadas por el cálculo
 
-| Parte del cálculo | Resultado en AURA | Referencia | Documento | Pág. PDF |
+| Parte del cálculo | Resultado en structura | Referencia | Documento | Pág. PDF |
 |---|---|---|---|---|
 |  | Módulo elástico del hormigón: Ec | 8.5.1 | ACI 318-08 (español) | 115 |
 |  | Rg (… por valle) ; Rp (posición …) | I8.2a | AISC 360-16 (español) | 160 |

@@ -41,6 +41,14 @@ html.lat-corta { --ancho-lat: 64px; }
 .logo img { position: absolute; width: 107.97%; left: -4.93%; top: -28.52%; height: auto; max-width: none; }
 .logo-tile { display: inline-flex; background: #fff; border-radius: var(--r-m); padding: 5px 9px; }
 
+/* ---------- Marca structura: isotipo (S de pórticos con nudo) + nombre. Los colores siguen el tema ---------- */
+.marca-s { display: inline-flex; align-items: center; gap: 9px; flex: 0 0 auto; color: var(--tinta); }
+.marca-s .iso { width: 30px; height: 30px; flex: 0 0 auto; display: block; }
+.marca-s .iso-f { fill: var(--azul); }
+.marca-s .iso-s { fill: none; stroke: #fff; stroke-width: 3.2; stroke-linecap: square; }
+.marca-s .iso-n { fill: var(--naranja-iso, #e65c00); }
+.marca-s .marca-t { font: 700 20px/1 "Segoe UI", system-ui, -apple-system, sans-serif; letter-spacing: -.03em; color: inherit; }
+
 @media screen {
   /* Verde y gris de las páginas con contraste de al menos 4,5:1 (la memoria impresa conserva los de cada página) */
   :root { --ok: #17713d; --muted: #4f5a68; }
@@ -54,6 +62,11 @@ html.lat-corta { --ancho-lat: 64px; }
   .lat-cab { display: flex; align-items: center; gap: 8px; padding: 14px 14px 12px; border-bottom: 1px solid rgba(255,255,255,.12); }
   .lat-marca { display: inline-flex; text-decoration: none; }
   .lat-marca .logo { height: 30px; }
+  .lat-marca .marca-s { color: #fff; }
+  .lat-marca .iso-f { fill: #fff; }
+  .lat-marca .iso-s { stroke: var(--azul); }
+  html[data-tema="oscuro"] .lat-marca .iso-f { fill: var(--azul); }
+  html[data-tema="oscuro"] .lat-marca .iso-s { stroke: #fff; }
   .lat-cerrar { display: none; margin-left: auto; }
   .lat-nav { flex: 1; overflow-y: auto; padding: 6px 8px 10px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.25) transparent; }
   .lat-nav ul { list-style: none; margin: 0; padding: 0; }
@@ -99,6 +112,7 @@ html.lat-corta { --ancho-lat: 64px; }
   html.lat-corta .lat-cab { padding: 14px 8px 12px; justify-content: center; }
   html.lat-corta .lat-marca .logo-tile { padding: 4px 5px; }
   html.lat-corta .lat-marca .logo { height: 13px; }
+  html.lat-corta .lat-marca .marca-t { display: none; }
   html.lat-corta .lat-pie #auraUsuario { grid-template-columns: 1fr; padding: 4px 0; justify-items: center; }
   html.lat-corta .lat-pie #auraUsuario span { display: none; }
   html.lat-corta .lat-pie #auraUsuario button { font-size: 10.5px !important; padding: 2px 4px !important; }
@@ -118,6 +132,7 @@ html.lat-corta { --ancho-lat: 64px; }
     html.lat-corta .lat-tx { display: revert; }
     html.lat-corta .lat-nav a, html.lat-corta .lat-rama, html.lat-corta .lat-proy { justify-content: flex-start; padding: 7px 10px; }
     html.lat-corta .lat-marca .logo { height: 30px; }
+    html.lat-corta .lat-marca .marca-t { display: revert; }
     html.lat-corta .lat-cab { padding: 14px 14px 12px; justify-content: flex-start; }
     html.lat-corta .lat-marca .logo-tile { padding: 5px 9px; }
     .lateral .lat-cerrar { display: flex; width: auto; padding: 6px; margin-left: auto; }
@@ -137,6 +152,8 @@ html.lat-corta { --ancho-lat: 64px; }
   header .marca { display: flex; align-items: center; gap: 12px; color: inherit; text-decoration: none; }
   header .marca .logo-tile { padding: 2px 0; }
   header .marca .logo { height: 28px; }
+  header .marca .iso { width: 28px; height: 28px; }
+  header .marca .marca-t { font-size: 19px; }
   header h1 { margin: 0; font-size: 18px; font-weight: 650; letter-spacing: -.01em; color: var(--tinta); }
   header > span { color: var(--tenue); font-size: 12.5px; flex-basis: 100%; order: 9; }
   header a.home { color: var(--acento); text-decoration: none; font-size: 13px; border: 1px solid var(--linea); border-radius: var(--r-m); padding: 4px 10px; }
@@ -422,7 +439,7 @@ html.lat-corta { --ancho-lat: 64px; }
     color-scheme: dark;
     --azul: #2c3cc8; --azul-hover: #3a4ad6; --azul-tinte: #1d2250;
     --acero: #0f1217; --acero-osc: #3b4351; --nieve: #161a21;
-    --naranja: #ff8a3d; --verde: #45bd78; --ambar: #e3aa2e;
+    --naranja: #ff8a3d; --naranja-iso: #ff8a3d; --verde: #45bd78; --ambar: #e3aa2e;
     --tinta: #e7eaf0; --tenue: #a6aebb; --linea: #2d3440; --linea-suave: #242a34;
     --sup: #1b2028; --sup-2: #20262f; --sup-3: #262c37; --texto-2: #c8ced8; --texto-3: #8f98a7;
     --acento: #9fb0ff; --campo-borde: #3b4351; --hover-fila: #20262f; --eq-fondo: #1a1f33;

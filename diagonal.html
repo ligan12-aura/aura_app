@@ -7,12 +7,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="AURA">
+<meta name="apple-mobile-web-app-title" content="structura">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/svg+xml" href="icons/structura.svg">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js" integrity="sha384-K0oxqktRvaThvYgGL4G+OK2Ih6VS6Uyu7j3+7WJgp/uWM0Yv6Xi4YEiw0BB+mPfi" crossorigin="anonymous"></script>
-<script src="nube.js?v=31"></script>
+<script src="nube.js?v=32"></script>
 <style>
   /* PWA: sin zoom automático de iOS al enfocar campos y texto estable al rotar */
   html { -webkit-text-size-adjust: 100%; }
@@ -115,13 +116,13 @@
     table.calc tr { break-inside: avoid; }
   }
 </style>
-<link rel="stylesheet" href="aura.css?v=18">
-<script src="lateral.js?v=14"></script>
-<script src="asistente.js?v=7" defer></script>
+<link rel="stylesheet" href="aura.css?v=19">
+<script src="lateral.js?v=15"></script>
+<script src="asistente.js?v=8" defer></script>
 </head>
 <body>
 <header>
-  <a class="marca" href="index.html" aria-label="Inicio"><span class="logo-tile"><span class="logo"><img src="icons/logo-mmp.webp" alt="MMP"></span></span></a>
+  <a class="marca" href="index.html" aria-label="Inicio"><span class="marca-s"><svg class="iso" viewBox="0 0 32 32" aria-hidden="true"><rect class="iso-f" width="32" height="32" rx="7"/><path class="iso-s" d="M22 9H10V16H22V23H10"/><circle class="iso-n" cx="22" cy="16" r="2.6"/></svg><span class="marca-t">structura</span></span></a>
   <a class="home" href="index.html">← Inicio</a>
   <h1>Conexión de diagonal a tracción <span class="chipPrueba">VERSIÓN DE PRUEBA</span></h1>
   <span>Tubo rectangular con placa ranurada apernada a una placa nodal · Tracción del tubo (D2, D3), soldaduras, pernos, bloque de corte y Whitmore · AISC 360-16 y Manual ICHA</span>
@@ -248,10 +249,10 @@
 </main>
 <footer>Versión de prueba. Herramienta de apoyo para conexiones de diagonales de acero a tracción (AISC 360-16 y Manual ICHA). No reemplaza la memoria de cálculo del ingeniero del proyecto. Verifique siempre los resultados.</footer>
 
-<script src="memo.js?v=41"></script>
+<script src="memo.js?v=42"></script>
 <script src="tablero.js?v=7"></script>
-<script src="guia.js?v=6"></script>
-<script src="dxf.js?v=2"></script>
+<script src="guia.js?v=7"></script>
+<script src="dxf.js?v=3"></script>
 <script src="modelo3d.js?v=6"></script>
 <script>
 "use strict";
@@ -519,7 +520,7 @@ function verificar(d, m) {
   const Ag = 2 * d.t * (d.B + d.H - 2 * d.t);
   const phiTy = 0.90 * d.FyT * Ag, dcTy = fila("Fluencia en la sección bruta", phiTy, "AISC 360-16 D2-1");
   m.eq(L`A_g = 2t(B + H - 2t) = 2\cdot ${tn(d.t, 2)}\cdot(${tn(d.B, 1)} + ${tn(d.H, 1)} - 2\cdot ${tn(d.t, 2)}) = ${tn(Ag, 2)}\ \mathrm{cm^2} \qquad \phi P_n = 0.90\,F_yA_g = 0.90\cdot ${tn(d.FyT, 0)}\cdot ${tn(Ag, 2)} = ${tn(T(phiTy), 2)}\ \mathrm{tf} \qquad ${cociente(phiTy)}`, "D2-1");
-  m.p(L`El área bruta se toma con esquinas rectas, sin los radios de plegado (criterio de AURA).`);
+  m.p(L`El área bruta se toma con esquinas rectas, sin los radios de plegado (criterio de structura).`);
   ck("Fluencia en tracción de la diagonal", PuT, cap(phiTy), dcTy, "d");
   const An = Ag - 2 * d.t * (d.tp + d.hr);
   const xb = (d.B ** 2 + 2 * d.B * d.H) / (4 * (d.B + d.H));
@@ -642,7 +643,7 @@ function verificar(d, m) {
   let phiWh = Infinity, dcWh = 0;
   if (Lw > 0) {
     phiWh = 0.90 * d.FyP * Lw * d.tn; dcWh = fila("Fluencia en la sección de Whitmore", phiWh, "Criterio Whitmore");
-    m.p(L`Sección de Whitmore (criterio de AURA, del Manual AISC Parte 9, que no está en el proyecto): la fuerza se reparte en 30° desde la primera fila de pernos hasta la última; su ancho no se limita por los bordes de la placa nodal, porque la página no conoce su forma.`);
+    m.p(L`Sección de Whitmore (criterio de structura, del Manual AISC Parte 9, que no está en el proyecto): la fuerza se reparte en 30° desde la primera fila de pernos hasta la última; su ancho no se limita por los bordes de la placa nodal, porque la página no conoce su forma.`);
     m.eq(L`L_w = (n_l - 1)g + 2(n_f - 1)s\tan 30^\circ = ${tn(MM(Lw), 1)}\ \mathrm{mm} \qquad \phi R_n = 0.90\,F_y\,L_w\,t_n = 0.90\cdot ${tn(d.FyP, 0)}\cdot ${tn(Lw, 2)}\cdot ${tn(d.tn, 2)} = ${tn(T(phiWh), 2)}\ \mathrm{tf} \qquad ${cociente(phiWh)}`, "J4-1");
     ck("Placa nodal en la sección de Whitmore", PuT, cap(phiWh), dcWh, "n");
   } else m.p(L`Con un solo perno no hay sección de Whitmore: rige el aplastamiento del perno.`);
@@ -650,7 +651,7 @@ function verificar(d, m) {
   // ---------- 7. Soldadura de la placa nodal ----------
   m.h("Soldadura de la placa nodal");
   const al = d.alfa * Math.PI / 180, Ph = Pu * Math.cos(al), Pv = Pu * Math.sin(al);
-  m.p(L`La tracción se descompone en $P_{u,h} = P_u\cos\alpha = ${tn(T(Ph), 2)}$ tf y $P_{u,v} = P_u\sin\alpha = ${tn(T(Pv), 2)}$ tf. Cada borde soldado se verifica para la fuerza completa $P_u$, con dos filetes (uno por cara) en todo su largo (criterio de AURA, del lado seguro; no se usa el método de las fuerzas uniformes).`);
+  m.p(L`La tracción se descompone en $P_{u,h} = P_u\cos\alpha = ${tn(T(Ph), 2)}$ tf y $P_{u,v} = P_u\sin\alpha = ${tn(T(Pv), 2)}$ tf. Cada borde soldado se verifica para la fuerza completa $P_u$, con dos filetes (uno por cara) en todo su largo (criterio de structura, del lado seguro; no se usa el método de las fuerzas uniformes).`);
   const apoyos = d.apoyo === "ambos" ? ["columna", "viga"] : [d.apoyo];
   const phiWN = {};
   for (const a of apoyos) {
@@ -876,7 +877,7 @@ function documentoTex(d, r, cuerpo) {
     L`\textbf{Versión de prueba}: la herramienta está en desarrollo y sus resultados aún no se han validado contra ejemplos publicados.`,
     L`Solo tracción con la fuerza mayorada ingresada (LRFD). No se verifica la diagonal ni la placa nodal en compresión (pandeo), ni el diseño por capacidad de arriostramientos sísmicos (AISC 341, NCh 2369).`,
     L`Conexión tipo aplastamiento con perforaciones estándar; la deformación de la perforación es una consideración de diseño. No se verifica el deslizamiento crítico.`,
-    L`El eje de la diagonal pasa por la esquina de la placa nodal; cada borde soldado de la placa nodal toma la fuerza completa (criterio de AURA). No se verifican los efectos locales en el ala de la columna ni en la viga.`,
+    L`El eje de la diagonal pasa por la esquina de la placa nodal; cada borde soldado de la placa nodal toma la fuerza completa (criterio de structura). No se verifican los efectos locales en el ala de la columna ni en la viga.`,
     L`La sección de Whitmore es un criterio del Manual AISC (Parte 9), que no está en el proyecto.`,
   ].map(x => `\\item ${x}`).join("\n");
   const concl = L`Por lo tanto, como la relación demanda-capacidad máxima es $D/C = ${tn(r.dcMax, 3)}$ ${r.dcMax <= 1 + 1e-9 ? L`$\le 1.0$` : L`$> 1.0$`}${r.motivos.length ? ` y ${r.motivos.join(", ")}` : ""}, la conexión \textbf{${r.falla ? "no cumple" : r.ok ? "cumple" : "queda sin verificar"}} con las verificaciones indicadas.`;

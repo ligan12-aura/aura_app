@@ -23,7 +23,7 @@ const Guia = (() => {
       { en: "t:1. Geometría", titulo: "1 · Geometría", texto: "Defina el tipo de reticulada (Pratt, Howe, Warren…), la luz, la altura, el número de paneles y el acero." },
       { en: "t:2. Cargas", titulo: "2 · Cargas", texto: "Ingrese las cargas de servicio sobre el cordón superior (D, L, Lr, S y W) y si las costaneras caen sobre los nudos (barras articuladas) o entre nudos (cordones a flexocompresión)." },
       { en: "t:3. Perfiles", titulo: "3 · Perfiles y longitudes", texto: "Asigne un perfil a cada grupo de barras (cordones, diagonales y montantes) y sus longitudes de pandeo. Si reduce Ly del cordón inferior, debe arriostrarlo lateralmente." },
-      { en: "t:4. Solicitaciones", titulo: "4 · Solicitaciones", texto: "Por defecto AURA analiza el modelo plano y arma las envolventes NCh 3171. También puede ingresarlas desde un modelo externo y comprobar el .s2k en SAP2000." },
+      { en: "t:4. Solicitaciones", titulo: "4 · Solicitaciones", texto: "Por defecto structura analiza el modelo plano y arma las envolventes NCh 3171. También puede ingresarlas desde un modelo externo y comprobar el .s2k en SAP2000." },
     ],
     "placa.html": [
       { en: "t:1. Geometría", titulo: "1 · Geometría", texto: "Ingrese la separación entre las vigas de apoyo, los tramos continuos de placa y el espesor de hormigón sobre la cresta, automático (el menor que cumple) o fijo." },

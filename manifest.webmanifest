@@ -1,6 +1,6 @@
 {
-  "name": "AURA — Ingeniería Estructural",
-  "short_name": "AURA",
+  "name": "structura — Ingeniería Estructural",
+  "short_name": "structura",
   "description": "Verificación de elementos de acero, hormigón armado y madera, y espectros de diseño sísmico según normas chilenas.",
   "lang": "es-CL",
   "start_url": "./index.html",

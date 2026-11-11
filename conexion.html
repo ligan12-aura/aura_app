@@ -7,12 +7,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="AURA">
+<meta name="apple-mobile-web-app-title" content="structura">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/svg+xml" href="icons/structura.svg">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js" integrity="sha384-K0oxqktRvaThvYgGL4G+OK2Ih6VS6Uyu7j3+7WJgp/uWM0Yv6Xi4YEiw0BB+mPfi" crossorigin="anonymous"></script>
-<script src="nube.js?v=31"></script>
+<script src="nube.js?v=32"></script>
 <style>
   /* PWA: sin zoom automático de iOS al enfocar campos y texto estable al rotar */
   html { -webkit-text-size-adjust: 100%; }
@@ -115,13 +116,13 @@
     table.calc tr { break-inside: avoid; }
   }
 </style>
-<link rel="stylesheet" href="aura.css?v=18">
-<script src="lateral.js?v=14"></script>
-<script src="asistente.js?v=7" defer></script>
+<link rel="stylesheet" href="aura.css?v=19">
+<script src="lateral.js?v=15"></script>
+<script src="asistente.js?v=8" defer></script>
 </head>
 <body>
 <header>
-  <a class="marca" href="index.html" aria-label="Inicio"><span class="logo-tile"><span class="logo"><img src="icons/logo-mmp.webp" alt="MMP"></span></span></a>
+  <a class="marca" href="index.html" aria-label="Inicio"><span class="marca-s"><svg class="iso" viewBox="0 0 32 32" aria-hidden="true"><rect class="iso-f" width="32" height="32" rx="7"/><path class="iso-s" d="M22 9H10V16H22V23H10"/><circle class="iso-n" cx="22" cy="16" r="2.6"/></svg><span class="marca-t">structura</span></span></a>
   <a class="home" href="index.html">← Inicio</a>
   <h1>Conexión viga–columna <span class="chipPrueba">VERSIÓN DE PRUEBA</span></h1>
   <span>Placa de corte simple o doble en el alma y placas de ala apernadas · Pernos, aplastamiento, bloque de corte, soldaduras y alas y alma de la columna · AISC 360-16 Cap. J y Manual ICHA</span>
@@ -282,10 +283,10 @@
 </main>
 <footer>Versión de prueba. Herramienta de apoyo para conexiones viga–columna de acero (AISC 360-16 y Manual ICHA). No reemplaza la memoria de cálculo del ingeniero del proyecto. Verifique siempre los resultados.</footer>
 
-<script src="memo.js?v=41"></script>
+<script src="memo.js?v=42"></script>
 <script src="tablero.js?v=7"></script>
-<script src="guia.js?v=6"></script>
-<script src="dxf.js?v=2"></script>
+<script src="guia.js?v=7"></script>
+<script src="dxf.js?v=3"></script>
 <script src="modelo3d.js?v=6"></script>
 <script>
 "use strict";
@@ -854,7 +855,7 @@ function verificar(d, m) {
   ck(`Bloque de corte ${dePl}`, L`$V_u = ${tn(T(d.Vu), 2)}$ tf`, L`$\phi R_n = ${tn(T(phiBl), 2)}$ tf`, dcBl, "pl");
   // Flexión de la placa con la excentricidad a
   const MuP = d.Vu * d.a, phiMp = nP * 0.90 * d.FyP * d.tp * Lp * Lp / 4, dcMp = MuP / phiMp;
-  m.p(L`Flexión ${dePl} en la soldadura con la excentricidad $a$ (criterio de AURA, como en la práctica del Manual AISC para placas simples; no es una cláusula de la AISC 360-16): $M_u = V_u\,a$ y $\phi M_n = 0.90\,F_y\,${npTxt}Z$ con $Z = t_pL_p^2/4$.`);
+  m.p(L`Flexión ${dePl} en la soldadura con la excentricidad $a$ (criterio de structura, como en la práctica del Manual AISC para placas simples; no es una cláusula de la AISC 360-16): $M_u = V_u\,a$ y $\phi M_n = 0.90\,F_y\,${npTxt}Z$ con $Z = t_pL_p^2/4$.`);
   m.row(dos ? "Flexión de las placas: φM<sub>n</sub> ≥ V<sub>u</sub>·a" : "Flexión de la placa: φM<sub>n</sub> ≥ V<sub>u</sub>·a", `${fmt(MuP / 1e5, 3)} ≤ ${fmt(phiMp / 1e5, 3)} tf·m ${tagDC(dcMp)}`);
   m.eq(L`M_u = ${tn(d.Vu, 0)}\cdot ${tn(d.a, 1)} = ${tn(MuP, 0)}\ \mathrm{kgf\,cm} \qquad \phi M_n = 0.90\cdot ${tn(d.FyP, 0)}\cdot ${npNum}\frac{${tn(d.tp, 2)}\cdot ${tn(Lp, 1)}^2}{4} = ${tn(phiMp, 0)}\ \mathrm{kgf\,cm} \qquad \frac{M_u}{\phi M_n} = ${tn(dcMp, 3)} ${cmp(dcMp)} 1.0`);
   ck(dos ? "Flexión de las placas de corte" : "Flexión de la placa de corte", L`$M_u = ${tn(MuP / 1e5, 3)}$ tf·m`, L`$\phi M_n = ${tn(phiMp / 1e5, 3)}$ tf·m`, dcMp, "pl");
@@ -884,7 +885,7 @@ function verificar(d, m) {
     m.row("Filetes interiores en la ranura entre placas: 2w ≤ t<sub>w</sub>", `${fmt(MM(2 * d.w), 0)} ${okRan ? "≤" : ">"} ${fmt(MM(v.tw), 1)} mm ${tagW(okRan, okRan ? "Cumple" : "criterio no cumplido")}`);
     texGeo(okRan, L`Filetes interiores en la ranura entre placas: $2w = ${tn(MM(2 * d.w), 0)} \le t_w = ${tn(MM(v.tw), 1)}$ mm (criterio informativo, sin razón D/C)`, true);
     if (!okRan) avisos.push("los filetes interiores de las placas de corte no caben en la ranura de ancho t<sub>w</sub>");
-    m.p(L`Los filetes interiores quedan en una ranura de ancho $t_w = ${tn(MM(v.tw), 1)}$ mm entre las dos placas, con acceso muy limitado para soldar: revise con el fabricante cómo se ejecutan (por ejemplo, soldar una placa antes de presentar la otra). Criterio de AURA: se informa y no entra en la razón D/C.`);
+    m.p(L`Los filetes interiores quedan en una ranura de ancho $t_w = ${tn(MM(v.tw), 1)}$ mm entre las dos placas, con acceso muy limitado para soldar: revise con el fabricante cómo se ejecutan (por ejemplo, soldar una placa antes de presentar la otra). Criterio de structura: se informa y no entra en la razón D/C.`);
   }
 
   // ---------- 5. Viga ----------
@@ -909,7 +910,7 @@ function verificar(d, m) {
   const aAgv = (lvA + (d.nb - 1) * d.s) * v.tw, aAnv = aAgv - (d.nb - 0.5) * d.dhn * v.tw;
   const aAgt = d.lehV * v.tw, aAnt = (d.lehV - d.dhn / 2) * v.tw;
   const phiBa = EL.bloque(aAgv, aAnv, aAgt, aAnt, d.FyV, d.FuV, d.crit), dcBa = d.Vu / phiBa;
-  m.p(L`Bloque de corte en el alma de la viga: los pernos empujan el alma hacia arriba y el bloque queda entre la línea de pernos y el extremo de la viga, con corte a lo largo de la línea de pernos desde el perno inferior hasta el borde superior y tracción horizontal desde ese perno hasta el extremo de la viga ($U_{bs} = 1$). Como el ala superior no está destajada, se toma como borde superior la cara interior del ala, sin contar el aporte del ala que el bloque tendría que cortar (criterio de AURA, del lado seguro).`);
+  m.p(L`Bloque de corte en el alma de la viga: los pernos empujan el alma hacia arriba y el bloque queda entre la línea de pernos y el extremo de la viga, con corte a lo largo de la línea de pernos desde el perno inferior hasta el borde superior y tracción horizontal desde ese perno hasta el extremo de la viga ($U_{bs} = 1$). Como el ala superior no está destajada, se toma como borde superior la cara interior del ala, sin contar el aporte del ala que el bloque tendría que cortar (criterio de structura, del lado seguro).`);
   m.eq(L`l_v = \frac{d}{2} - t_f - y_{sup} = ${tn(MM(lvA), 1)}\ \mathrm{mm} \qquad A_{gv} = (l_v + (n-1)s)\,t_w = ${tn(aAgv, 2)} \qquad A_{nv} = A_{gv} - (n - 0.5)\,d_h'\,t_w = ${tn(aAnv, 2)} \qquad A_{gt} = l_{e,viga}t_w = ${tn(aAgt, 2)} \qquad A_{nt} = (l_{e,viga} - d_h'/2)\,t_w = ${tn(aAnt, 2)}\ \mathrm{cm^2}`);
   m.row("Bloque de corte del alma de la viga: φR<sub>n</sub> ≥ V<sub>u</sub>", `${fmt(T(phiBa), 2)} tf ${tagDC(dcBa)}`, refBloque(d.crit));
   m.eq(L`${texBloque(aAgv, aAnv, aAgt, aAnt, d.FyV, d.FuV, d.crit)} = ${tn(T(phiBa), 2)}\ \mathrm{tf} \qquad \frac{V_u}{\phi R_n} = ${tn(dcBa, 3)} ${cmp(dcBa)} 1.0`, d.crit === "icha" ? "13.4.3" : "J4-5");
@@ -1267,7 +1268,7 @@ function documentoTex(d, r, cuerpo) {
     L`\textbf{Versión de prueba}: la herramienta está en desarrollo y sus resultados aún no se han validado contra ejemplos publicados.`,
     L`Diseño por resistencia con las solicitaciones ingresadas (LRFD). No es una conexión precalificada para marcos sísmicos: no se aplican AISC 358, AISC 341 ni NCh 2369 (diseño por capacidad, momento probable de la viga).`,
     L`Conexión tipo aplastamiento con perforaciones estándar; la deformación de la perforación es una consideración de diseño. No se verifica el deslizamiento crítico.`,
-    L`${d.nPl === 2 ? "Las dos placas de corte, iguales y una a cada lado del alma, toman solo el corte, con los pernos a corte doble" : "La placa de corte toma solo el corte"}; ${d.ePer > 0 ? L`el grupo de pernos considera la excentricidad $e = ${tn(MM(d.ePer), 0)}$ mm con el método elástico` : "no se considera excentricidad en el grupo de pernos"}. La flexión de la placa con la excentricidad $a$ es un criterio de AURA.`,
+    L`${d.nPl === 2 ? "Las dos placas de corte, iguales y una a cada lado del alma, toman solo el corte, con los pernos a corte doble" : "La placa de corte toma solo el corte"}; ${d.ePer > 0 ? L`el grupo de pernos considera la excentricidad $e = ${tn(MM(d.ePer), 0)}$ mm con el método elástico` : "no se considera excentricidad en el grupo de pernos"}. La flexión de la placa con la excentricidad $a$ es un criterio de structura.`,
     d.mom ? L`Las placas de ala toman el momento como un par de fuerzas $M_u/(d + t_{fp})$; la flexión de la viga supone sección compacta y arriostramiento lateral suficiente. En la columna se verifican J10.1, J10.2, J10.3 y J10.6 (con $P_r \le 0.4P_c$); no se diseñan atiesadores ni planchas de refuerzo.` : "",
     L`No se verifican la estabilidad del ala comprimida de la viga en el voladizo de la placa, la interacción con la carga axial de la columna ni las tolerancias de montaje.`,
   ].filter(Boolean).map(x => `\\item ${x}`).join("\n");

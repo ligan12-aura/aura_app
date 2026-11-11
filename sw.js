@@ -1,6 +1,6 @@
 // Service worker de AURA: guarda la app completa para uso sin conexión.
 // Al publicar cambios, incremente VERSION para que los dispositivos descarguen la nueva versión.
-const VERSION = "aura-v109";
+const VERSION = "aura-v110";
 const ARCHIVOS = [
   "./",
   "./index.html",
@@ -30,6 +30,7 @@ const ARCHIVOS = [
   "./icons/icon-512.png",
   "./icons/icon-maskable-512.png",
   "./icons/logo-mmp.webp",
+  "./icons/structura.svg",
   "./icons/hormi.svg",
   "./aura.css",
   "./modelo3d.js",

@@ -11,7 +11,7 @@ Documentos: ACI 318-08 (español).
 
 ## Referencias usadas por el cálculo
 
-| Parte del cálculo | Resultado en AURA | Referencia | Documento | Pág. PDF |
+| Parte del cálculo | Resultado en structura | Referencia | Documento | Pág. PDF |
 |---|---|---|---|---|
 |  | Cuantía calculada ; cuantía mínima: ρ ; ρmín | criterio del curso | Criterio |  |
 |  | Separación calculada ; separación máxima → armadura adoptada: s ; smáx | 7.6.5 | ACI 318-08 (español) | 96 |

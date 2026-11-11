@@ -68,7 +68,7 @@
   function construir() {
     const boton = document.createElement("button");
     boton.type = "button"; boton.className = "as-abrir"; boton.setAttribute("aria-expanded", "false"); boton.setAttribute("aria-controls", "asPanel");
-    boton.title = "Hormi, asistente de AURA";
+    boton.title = "Hormi, asistente de structura";
     boton.innerHTML = `<span class="as-cara-boton">${hormi("normal", 32)}</span><span>Hormi</span>`;
     const caraBoton = boton.firstElementChild;
     let caraActual = "normal";
@@ -79,7 +79,7 @@
     const main = document.querySelector("main");
     if (main) { actualizarCara(); new MutationObserver(actualizarCara).observe(main, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["class"] }); }
     const panel = document.createElement("section");
-    panel.id = "asPanel"; panel.className = "as-panel"; panel.hidden = true; panel.setAttribute("aria-label", "Hormi, asistente de AURA");
+    panel.id = "asPanel"; panel.className = "as-panel"; panel.hidden = true; panel.setAttribute("aria-label", "Hormi, asistente de structura");
     panel.innerHTML = `<header class="as-cab"><span class="as-cara-cab">${hormi("normal", 30)}</span><b>Hormi</b><button type="button" class="as-limpiar">Limpiar</button><button type="button" class="as-cerrar" aria-label="Cerrar a Hormi">×</button></header>
       <p class="as-aviso">Resuelve dudas de uso y de cálculo, pero puede equivocarse: compruebe sus respuestas. No ve los datos de su cálculo. <b>No escriba datos de clientes:</b> las preguntas se envían a servicios de IA externos (Groq y, de respaldo, Google Gemini); en su plan gratis, Google puede revisar lo que recibe y usarlo para mejorar sus productos.</p>
       <div class="as-chat" role="log" aria-live="polite"></div>

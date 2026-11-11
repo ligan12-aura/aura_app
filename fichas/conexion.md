@@ -15,19 +15,19 @@ Documentos: AISC 360-16 (español, archivo AISC360-16.pdf); Manual de Diseño IC
 - Pernos en conexión tipo aplastamiento, perforaciones estándar (Tabla J3.3), deformación de la perforación como consideración de diseño (J3-6a y J3-6c). No se verifica el deslizamiento crítico.
 - La resistencia de cada grupo de pernos es la suma, perno a perno, del menor valor entre el corte del perno y el aplastamiento o desgarre en cada parte conectada. Con excentricidad en el grupo de la placa de corte se usa el método elástico con la menor resistencia de un perno (conservador).
 - En las áreas netas el ancho de la perforación se aumenta en 1.6 mm (B4.3b).
-- Con doble placa de corte, cada perno tiene dos planos de corte (J3-1 con n<sub>s</sub> = 2) y apoya en las dos placas; la fluencia, la ruptura, el bloque de corte, la flexión y la soldadura de las placas se suman para las dos (cada una toma V<sub>u</sub>/2). Los filetes interiores quedan en una ranura de ancho t<sub>w</sub>: si 2w > t<sub>w</sub> se avisa (criterio de AURA, sin razón D/C), y su ejecución debe revisarse con el fabricante.
-- Bloque de corte del alma de la viga: los pernos empujan el alma hacia arriba; el bloque va de la línea de pernos al extremo de la viga, con corte desde el perno inferior hasta la cara interior del ala superior y tracción hasta el extremo. Sin destaje, no cuenta el aporte del ala (criterio de AURA, conservador).
+- Con doble placa de corte, cada perno tiene dos planos de corte (J3-1 con n<sub>s</sub> = 2) y apoya en las dos placas; la fluencia, la ruptura, el bloque de corte, la flexión y la soldadura de las placas se suman para las dos (cada una toma V<sub>u</sub>/2). Los filetes interiores quedan en una ranura de ancho t<sub>w</sub>: si 2w > t<sub>w</sub> se avisa (criterio de structura, sin razón D/C), y su ejecución debe revisarse con el fabricante.
+- Bloque de corte del alma de la viga: los pernos empujan el alma hacia arriba; el bloque va de la línea de pernos al extremo de la viga, con corte desde el perno inferior hasta la cara interior del ala superior y tracción hasta el extremo. Sin destaje, no cuenta el aporte del ala (criterio de structura, conservador).
 - Bloque de corte de la placa de corte por dos caminos: en L y 1-2-3 (solo corte por la línea de pernos en todo el alto, A<sub>gt</sub> = A<sub>nt</sub> = 0, como el Trabajo Práctico 3 del curso); rige el menor.
 - Bloque de corte: por defecto la AISC 360-16 J4-5 con U<sub>bs</sub> = 1; como opción, el criterio anterior de la Especificación ICHA (13.4.3 y 13.4.4), que usan las planillas del curso.
-- La flexión de la placa de corte con la excentricidad a (M<sub>u</sub> = V<sub>u</sub>·a, φM<sub>n</sub> = 0.90 F<sub>y</sub> t<sub>p</sub> L<sub>p</sub>²/4) y el filete ≥ ⅝ t<sub>p</sub> son criterios de AURA tomados de la práctica del Manual AISC; el segundo se informa y no entra en la razón D/C.
+- La flexión de la placa de corte con la excentricidad a (M<sub>u</sub> = V<sub>u</sub>·a, φM<sub>n</sub> = 0.90 F<sub>y</sub> t<sub>p</sub> L<sub>p</sub>²/4) y el filete ≥ ⅝ t<sub>p</sub> son criterios de structura tomados de la práctica del Manual AISC; el segundo se informa y no entra en la razón D/C.
 - La flexión de la viga revisa la compacidad (Tabla B4.1b): ala compacta con F2-1 y no compacta con F3-1; un ala esbelta, un perfil soldado no compacto o un alma no compacta dejan la flexión SIN VERIFICAR. Supone arriostramiento lateral suficiente.
 - Columna: J10.1 (flexión local del ala), J10.2 (fluencia local del alma), J10.3 (aplastamiento del alma) y J10.6 (zona panel) con P<sub>r</sub> ≤ 0.4P<sub>c</sub>, despreciando el corte de la columna. No se diseñan atiesadores ni planchas de refuerzo; J10.5 no aplica (carga en una sola ala). En perfiles soldados ("otro") k = t<sub>f</sub>.
-- La traducción al español de la AISC 360-16 (pág. 191 del PDF) escribe 2,1 y 2,5 en J3-6c y J3-6d; el original en inglés y la Especificación ICHA (13.3.4, pág. 540) usan 1.2 y 1.5. AURA usa 1.2.
+- La traducción al español de la AISC 360-16 (pág. 191 del PDF) escribe 2,1 y 2,5 en J3-6c y J3-6d; el original en inglés y la Especificación ICHA (13.3.4, pág. 540) usan 1.2 y 1.5. structura usa 1.2.
 - La Especificación ICHA usa φ = 0.90 para el corte de elementos de conexión (13.5.3, pág. 544); la AISC 360-16 J4-3 usa φ = 1.00.
 
 ## Referencias usadas por el cálculo
 
-| Parte del cálculo | Resultado en AURA | Referencia | Documento | Pág. PDF |
+| Parte del cálculo | Resultado en structura | Referencia | Documento | Pág. PDF |
 |---|---|---|---|---|
 | Pernos | F<sub>nv</sub> y F<sub>nt</sub> por grado | Tabla J3.2 | AISC 360-16 (español) | 185 |
 | Pernos | Perforación estándar | Tabla J3.3 | AISC 360-16 (español) | 186 |

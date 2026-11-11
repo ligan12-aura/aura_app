@@ -20,7 +20,7 @@ Documentos: AISC 360-16 (español, archivo AISC360-16.pdf); Manual de Diseño IC
 
 ## Referencias usadas por el cálculo
 
-| Parte del cálculo | Resultado en AURA | Referencia | Documento | Pág. PDF |
+| Parte del cálculo | Resultado en structura | Referencia | Documento | Pág. PDF |
 |---|---|---|---|---|
 | Diagonal | Fluencia en la sección bruta | D2-1 | AISC 360-16 (español) | 77 |
 | Diagonal | Ruptura en la sección neta efectiva | D2-2, D3-1 | AISC 360-16 (español) | 77, 78 |
@@ -44,4 +44,4 @@ Documentos: AISC 360-16 (español, archivo AISC360-16.pdf); Manual de Diseño IC
 
 ## Comparación con el Trabajo Práctico 3 (sección 9)
 
-Con los datos del TP (P<sub>u</sub> = 20.275 tf, 4 pernos A325 de 5/8", placas de 115 × 10 mm y nodal de 10 mm, bordes de 30 mm), AURA difiere en: F<sub>nv</sub> = 3800 kgf/cm² (el TP usa 3720), la perforación más 1.6 mm en las áreas netas, el bloque exterior además del central, la soldadura de la placa nodal con θ distinto en cada borde (el TP usa α en ambos) y la verificación del tubo, que el TP no hace.
+Con los datos del TP (P<sub>u</sub> = 20.275 tf, 4 pernos A325 de 5/8", placas de 115 × 10 mm y nodal de 10 mm, bordes de 30 mm), structura difiere en: F<sub>nv</sub> = 3800 kgf/cm² (el TP usa 3720), la perforación más 1.6 mm en las áreas netas, el bloque exterior además del central, la soldadura de la placa nodal con θ distinto en cada borde (el TP usa α en ambos) y la verificación del tubo, que el TP no hace.

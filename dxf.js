@@ -34,7 +34,7 @@ class DxfR12 {
   // h: alineación horizontal (0 izq, 1 centro, 2 der); v: vertical (0 base, 1 abajo, 2 medio, 3 arriba)
   text(ly, x, y, alto, txt, h = 0, v = 0, rot = 0) {
     if (txt === "" || txt == null) return;               // algunos lectores rechazan TEXT vacíos
-    this._p(0, "TEXT", 8, ly, 10, x, 20, y, 30, 0, 40, alto, 1, txt, 50, rot, 7, "AURA");
+    this._p(0, "TEXT", 8, ly, 10, x, 20, y, 30, 0, 40, alto, 1, txt, 50, rot, 7, "STRUCTURA");
     if (h || v) this._p(72, h, 11, x, 21, y, 31, 0, 73, v);
   }
   archivo(capas) {
@@ -51,7 +51,7 @@ class DxfR12 {
     p(0, "TABLE", 2, "LAYER", 70, capas.length);
     for (const [n, col, lt] of capas) p(0, "LAYER", 2, n, 70, 0, 62, col, 6, lt || "CONTINUOUS");
     p(0, "ENDTAB");
-    p(0, "TABLE", 2, "STYLE", 70, 1, 0, "STYLE", 2, "AURA", 70, 0, 40, 0, 41, 0.9, 50, 0, 71, 0, 42, 2.5, 3, "romans", 4, "", 0, "ENDTAB");
+    p(0, "TABLE", 2, "STYLE", 70, 1, 0, "STYLE", 2, "STRUCTURA", 70, 0, 40, 0, 41, 0.9, 50, 0, 71, 0, 42, 2.5, 3, "romans", 4, "", 0, "ENDTAB");
     p(0, "ENDSEC");
     c.push("0", "SECTION", "2", "ENTITIES", ...this.e, "0", "ENDSEC", "0", "EOF");
     // Windows-1252. Diámetro y grado con los códigos de AutoCAD (%%c, %%d); símbolos sin equivalente se simplifican
@@ -185,7 +185,7 @@ class PlanoDXF {
     campo(75, 7, 25, 9, "UNIDAD", "mm");
     campo(100, 7, 40, 9, "LÁMINA N°", info.lamina || "1 de 1");
     campo(140, 7, 40, 9, "REVISIÓN", "0");
-    dx.text("ROTULO", ...R(1.5, 2.2), 1.8 * S, "Generado con AURA. Verifique el cálculo y las cotas antes de construir. No medir sobre el plano.");
+    dx.text("ROTULO", ...R(1.5, 2.2), 1.8 * S, "Generado con structura. Verifique el cálculo y las cotas antes de construir. No medir sobre el plano.");
     caja(0, 0, 180, 7);
 
     // Notas generales sobre la viñeta

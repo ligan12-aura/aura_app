@@ -13,7 +13,7 @@ Documentos: AISC 360-16 (español).
 
 ## Referencias usadas por el cálculo
 
-| Parte del cálculo | Resultado en AURA | Referencia | Documento | Pág. PDF |
+| Parte del cálculo | Resultado en structura | Referencia | Documento | Pág. PDF |
 |---|---|---|---|---|
 |  | Área bruta ; área neta: Ag ; An | B4.3 | AISC 360-16 (español) | 78 |
 |  | Factor de corte diferido U (…) | D3 | AISC 360-16 (español) | 77 |

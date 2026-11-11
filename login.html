@@ -6,13 +6,14 @@
 <meta name="theme-color" content="#00008B">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="AURA">
+<meta name="apple-mobile-web-app-title" content="structura">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-<title>Acceso — AURA</title>
+<link rel="icon" type="image/svg+xml" href="icons/structura.svg">
+<title>Acceso — structura</title>
 <!-- Antes de los estilos propios: los botones de esta página tienen su propio tamaño -->
-<link rel="stylesheet" href="aura.css?v=18">
+<link rel="stylesheet" href="aura.css?v=19">
 <script>
 // Tema claro u oscuro, igual que en el resto de la app (lateral.js): la elección guardada o la del sistema
 try { const t = localStorage.getItem("auraTema"); document.documentElement.dataset.tema = t === "claro" || t === "oscuro" ? t : (matchMedia("(prefers-color-scheme: dark)").matches ? "oscuro" : "claro"); } catch { /* sin almacenamiento */ }
@@ -32,6 +33,9 @@ try { const t = localStorage.getItem("auraTema"); document.documentElement.datas
   @keyframes sube { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
   @media (prefers-reduced-motion: reduce) { .caja { animation: none; } }
   .caja .logo { margin: 0 auto 18px; height: 56px; align-self: center; }
+  .caja .marca-s { margin: 0 auto 20px; gap: 14px; }
+  .caja .marca-s .iso { width: 52px; height: 52px; }
+  .caja .marca-s .marca-t { font-size: 34px; }
   .caja h1 { margin: 0; font-size: 24px; letter-spacing: -.01em; color: var(--tinta); }
   .caja p.sub { margin: 6px 0 26px; color: var(--muted); font-size: 14.5px; }
   .btn { width: 100%; min-height: 52px; display: flex; align-items: center; justify-content: center; gap: 12px;
@@ -59,16 +63,16 @@ try { const t = localStorage.getItem("auraTema"); document.documentElement.datas
   footer { margin-top: 22px; color: rgba(255,255,255,.6); font-size: 12px; text-align: center; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js" integrity="sha384-K0oxqktRvaThvYgGL4G+OK2Ih6VS6Uyu7j3+7WJgp/uWM0Yv6Xi4YEiw0BB+mPfi" crossorigin="anonymous"></script>
-<script src="nube.js?v=31"></script>
+<script src="nube.js?v=32"></script>
 </head>
 <body>
 <main class="caja" id="cajaCarga" aria-busy="true">
-  <span class="logo"><img src="icons/logo-mmp.webp" alt="MMP"></span>
+  <span class="marca-s"><svg class="iso" viewBox="0 0 32 32" aria-hidden="true"><rect class="iso-f" width="32" height="32" rx="7"/><path class="iso-s" d="M22 9H10V16H22V23H10"/><circle class="iso-n" cx="22" cy="16" r="2.6"/></svg><span class="marca-t">structura</span></span>
   <p class="sub" style="margin:0">Comprobando la sesión…</p>
 </main>
 
 <main class="caja hidden" id="cajaEntrar">
-  <span class="logo"><img src="icons/logo-mmp.webp" alt="MMP"></span>
+  <span class="marca-s"><svg class="iso" viewBox="0 0 32 32" aria-hidden="true"><rect class="iso-f" width="32" height="32" rx="7"/><path class="iso-s" d="M22 9H10V16H22V23H10"/><circle class="iso-n" cx="22" cy="16" r="2.6"/></svg><span class="marca-t">structura</span></span>
   <h1>Ingeniería estructural</h1>
   <p class="sub">Ingrese con su cuenta de Google para acceder a sus proyectos.</p>
   <button class="btn btn-google" type="button" id="btnGoogle">
@@ -89,7 +93,7 @@ try { const t = localStorage.getItem("auraTema"); document.documentElement.datas
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
   </div>
   <h1 style="font-size:20px">Su cuenta no tiene acceso</h1>
-  <p class="sub" style="margin-bottom:0"><span class="correo" id="correoSinAcceso"></span> no está autorizada para usar AURA. Pídale al administrador que la agregue.</p>
+  <p class="sub" style="margin-bottom:0"><span class="correo" id="correoSinAcceso"></span> no está autorizada para usar structura. Pídale al administrador que la agregue.</p>
   <button class="btn btn-oscuro" type="button" id="btnOtra">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
     Usar otra cuenta

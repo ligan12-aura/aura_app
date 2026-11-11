@@ -11,7 +11,7 @@ Documentos: NCh 1198:2024; NCh 2165:2023.
 
 ## Referencias usadas por el cálculo
 
-| Parte del cálculo | Resultado en AURA | Referencia | Documento | Pág. PDF |
+| Parte del cálculo | Resultado en structura | Referencia | Documento | Pág. PDF |
 |---|---|---|---|---|
 | Propiedades del material — NCh 2165 | Láminas …: Rtp,l,k ; Etp,l,prom ; ρl,k | Tabla 1 | NCh 2165:2023 | 19 |
 | Propiedades del material — NCh 2165 | Resistencia de los empalmes por unión dentada: Rf,j,k | Tabla 6 | NCh 2165:2023 | 23 |

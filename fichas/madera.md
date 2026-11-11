@@ -22,7 +22,7 @@ Documentos: NCh 1198:2024.
 
 ## Referencias usadas por el cálculo
 
-| Parte del cálculo | Resultado en AURA | Referencia | Documento | Pág. PDF |
+| Parte del cálculo | Resultado en structura | Referencia | Documento | Pág. PDF |
 |---|---|---|---|---|
 | Factores de modificación y propiedades de diseño | Factor de modificación por duración de la carga (PP ; SC piso ; SC techo…): KD | Anexo G | NCh 1198:2024 | 185 |
 | Factores de modificación y propiedades de diseño | Factores por trabajo conjunto ; altura en flexión: Kc ; Khf | 7.1.3 | NCh 1198:2024 | 20 |

@@ -7,12 +7,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="AURA">
+<meta name="apple-mobile-web-app-title" content="structura">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/svg+xml" href="icons/structura.svg">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js" integrity="sha384-K0oxqktRvaThvYgGL4G+OK2Ih6VS6Uyu7j3+7WJgp/uWM0Yv6Xi4YEiw0BB+mPfi" crossorigin="anonymous"></script>
-<script src="nube.js?v=31"></script>
+<script src="nube.js?v=32"></script>
 <style>
   /* PWA: sin zoom automático de iOS al enfocar campos y texto estable al rotar */
   html { -webkit-text-size-adjust: 100%; }
@@ -125,13 +126,13 @@
     table.calc tr { break-inside: avoid; }
   }
 </style>
-<link rel="stylesheet" href="aura.css?v=18">
-<script src="lateral.js?v=14"></script>
-<script src="asistente.js?v=7" defer></script>
+<link rel="stylesheet" href="aura.css?v=19">
+<script src="lateral.js?v=15"></script>
+<script src="asistente.js?v=8" defer></script>
 </head>
 <body>
 <header>
-  <a class="marca" href="index.html" aria-label="Inicio"><span class="logo-tile"><span class="logo"><img src="icons/logo-mmp.webp" alt="MMP"></span></span></a>
+  <a class="marca" href="index.html" aria-label="Inicio"><span class="marca-s"><svg class="iso" viewBox="0 0 32 32" aria-hidden="true"><rect class="iso-f" width="32" height="32" rx="7"/><path class="iso-s" d="M22 9H10V16H22V23H10"/><circle class="iso-n" cx="22" cy="16" r="2.6"/></svg><span class="marca-t">structura</span></span></a>
   <a class="home" href="index.html">← Inicio</a>
   <h1 id="tituloEl">Vigas de acero</h1>
   <span>AISC 360-16 · LRFD · Perfiles laminados catálogo Cintac (HEA, HEB, IPE, IPN) · Unidades kgf – cm</span>
@@ -321,10 +322,10 @@
 </main>
 <footer>Herramienta de apoyo académico. Las solicitaciones deben provenir de un análisis que considere efectos de segundo orden (AISC 360-16, Cap. C). Verifique siempre los resultados.</footer>
 
-<script src="memo.js?v=41"></script>
+<script src="memo.js?v=42"></script>
 <script src="tablero.js?v=7"></script>
-<script src="guia.js?v=6"></script>
-<script src="dxf.js?v=2"></script>
+<script src="guia.js?v=7"></script>
+<script src="dxf.js?v=3"></script>
 <script src="modelo3d.js?v=6"></script>
 <script>
 "use strict";

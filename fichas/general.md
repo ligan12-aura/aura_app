@@ -1,4 +1,4 @@
-# Documentos de referencia de AURA
+# Documentos de referencia de structura
 
 Las fichas registran dónde buscar cada referencia. El texto de las normas no está disponible para el asistente.
 
@@ -20,4 +20,4 @@ Las fichas registran dónde buscar cada referencia. El texto de las normas no es
 | Espectros de diseño | NCh 433 Of.1996; DS 117 (2011); NCh 433:2026; NCh 2369:2025 |
 | Cargas de viento (versión de prueba) | NCh 432:2025 |
 
-Documentos que AURA menciona y que no están en el proyecto: NCh 3171, NCh 432 Of.1971, NCh 1537, NCh 427, AISC Design Guide 1, AISC Steel Construction Manual (15.ª ed.), AISC 358, AISI S100, DS 60 y DS 61.
+Documentos que structura menciona y que no están en el proyecto: NCh 3171, NCh 432 Of.1971, NCh 1537, NCh 427, AISC Design Guide 1, AISC Steel Construction Manual (15.ª ed.), AISC 358, AISI S100, DS 60 y DS 61.

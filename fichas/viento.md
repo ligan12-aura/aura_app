@@ -14,7 +14,7 @@ Documentos: NCh 432:2025.
 - La presión interna se evalúa con q_h; no se aplica el factor R_i (5.11.1).
 - Direccional: no se aplica la reducción por área del coeficiente −1.3 del techo (Figura 4, nota b).
 - Envolvente: solo edificios de baja altura con techo plano o a dos aguas; los casos de torsión se informan por zona, sin desarrollar.
-- Fuerzas por piso: altura tributaria hasta la mitad de los pisos vecinos; si rige la carga mínima, las fuerzas se amplifican en proporción (criterio de AURA).
+- Fuerzas por piso: altura tributaria hasta la mitad de los pisos vecinos; si rige la carga mínima, las fuerzas se amplifican en proporción (criterio de structura).
 - Carga mínima con viento paralelo a la cumbrera: el frontón es parte del muro extremo y se carga con 0.25 kN/m² (6.1.5, 7.3.6).
 - Si el edificio no es de baja altura, la memoria advierte que G = 0.85 exige demostrar que es rígido (f ≥ 1 Hz, 3.20) con un análisis (5.9.1); si es flexible, G_f (5.9.3) no está implementado.
 - Componentes: Parte 1 (h ≤ 18.3 m) y Parte 2 (h > 18.3 m, con q_h en todas las zonas). Pendiente única con θ > 30° queda sin verificar.
@@ -23,7 +23,7 @@ Documentos: NCh 432:2025.
 
 ## Referencias usadas por el cálculo
 
-| Parte del cálculo | Resultado en AURA | Referencia | Documento | Pág. PDF |
+| Parte del cálculo | Resultado en structura | Referencia | Documento | Pág. PDF |
 |---|---|---|---|---|
 | Parámetros del sitio | Velocidad básica del viento: V | Tabla 1 | NCh 432:2025 | 21 |
 | Parámetros del sitio | Velocidad básica del viento: V (estudio de viento) | 5.3.2 | NCh 432:2025 | 26 |

@@ -11,7 +11,7 @@ Documentos: ACI 318-08 (español); Manual ICH (hormigón).
 
 ## Referencias usadas por el cálculo
 
-| Parte del cálculo | Resultado en AURA | Referencia | Documento | Pág. PDF |
+| Parte del cálculo | Resultado en structura | Referencia | Documento | Pág. PDF |
 |---|---|---|---|---|
 |  | Momento último ; momento nominal requerido: Mu ; Mn | 9.3.2.1 | ACI 318-08 (español) | 126 |
 |  | Cuantía mínima: ρmín | 10.5.1 | ACI 318-08 (español) | 145 |

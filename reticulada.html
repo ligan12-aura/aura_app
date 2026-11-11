@@ -7,12 +7,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="AURA">
+<meta name="apple-mobile-web-app-title" content="structura">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/svg+xml" href="icons/structura.svg">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js" integrity="sha384-K0oxqktRvaThvYgGL4G+OK2Ih6VS6Uyu7j3+7WJgp/uWM0Yv6Xi4YEiw0BB+mPfi" crossorigin="anonymous"></script>
-<script src="nube.js?v=31"></script>
+<script src="nube.js?v=32"></script>
 <style>
   /* PWA: sin zoom automático de iOS al enfocar campos y texto estable al rotar */
   html { -webkit-text-size-adjust: 100%; }
@@ -130,13 +131,13 @@
   .esqWrap svg { display: block; width: 100%; max-width: 760px; margin: 0 auto; }
   @media print { .esqWrap svg { max-width: 100%; } }
 </style>
-<link rel="stylesheet" href="aura.css?v=18">
-<script src="lateral.js?v=14"></script>
-<script src="asistente.js?v=7" defer></script>
+<link rel="stylesheet" href="aura.css?v=19">
+<script src="lateral.js?v=15"></script>
+<script src="asistente.js?v=8" defer></script>
 </head>
 <body>
 <header>
-  <a class="marca" href="index.html" aria-label="Inicio"><span class="logo-tile"><span class="logo"><img src="icons/logo-mmp.webp" alt="MMP"></span></span></a>
+  <a class="marca" href="index.html" aria-label="Inicio"><span class="marca-s"><svg class="iso" viewBox="0 0 32 32" aria-hidden="true"><rect class="iso-f" width="32" height="32" rx="7"/><path class="iso-s" d="M22 9H10V16H22V23H10"/><circle class="iso-n" cx="22" cy="16" r="2.6"/></svg><span class="marca-t">structura</span></span></a>
   <a class="home" href="index.html">← Inicio</a>
   <h1>Verificación de vigas reticuladas de acero</h1>
   <span>AISC 360-16 · LRFD · Análisis del modelo plano y verificación de barras · Comprobación opcional en SAP2000 · Unidades kgf – cm</span>
@@ -147,7 +148,7 @@
   <section class="panel" id="inputs">
     <h2>Datos de entrada</h2>
     <div class="body">
-      <div class="unit" style="margin-bottom:6px">Complete los pasos en orden. AURA resuelve el modelo de la reticulada con estos datos y verifica cada grupo de barras; el modelo para SAP2000 es opcional, para comprobar los resultados.</div>
+      <div class="unit" style="margin-bottom:6px">Complete los pasos en orden. structura resuelve el modelo de la reticulada con estos datos y verifica cada grupo de barras; el modelo para SAP2000 es opcional, para comprobar los resultados.</div>
       <fieldset style="margin-top:0">
         <legend>1. Geometría de la reticulada</legend>
         <label for="gTipo">Tipo</label>
@@ -207,7 +208,7 @@
         <legend>4. Solicitaciones</legend>
         <label for="fuente">Origen de las fuerzas en las barras</label>
         <select id="fuente">
-          <option value="aura" selected>Calculadas por AURA (análisis elástico lineal del modelo plano)</option>
+          <option value="aura" selected>Calculadas por structura (análisis elástico lineal del modelo plano)</option>
           <option value="ext">Ingresadas desde un modelo externo (SAP2000 / ETABS)</option>
         </select>
         <div class="unit" id="fuenteInfo"></div>
@@ -235,17 +236,17 @@
         <button class="btn sec" type="button" onclick="window.print()">Imprimir</button>
         <button class="btn" type="button" onclick="descargarZipMemoria(ultimoTex, ultimoNombre, document.body)">Descargar memoria (.zip)</button>
         <button class="btn sec" type="button" onclick="descargarDXF()" title="Plano en formato DXF (AutoCAD), en milímetros y por capas">Descargar plano (.dxf)</button>
-        <button class="btn sec" type="button" onclick="descargarS2K()" title="Mismo modelo que resuelve AURA, para comprobar en SAP2000: File → Import → SAP2000 .s2k Text File">Comprobar en SAP2000 (.s2k)</button>
+        <button class="btn sec" type="button" onclick="descargarS2K()" title="Mismo modelo que resuelve structura, para comprobar en SAP2000: File → Import → SAP2000 .s2k Text File">Comprobar en SAP2000 (.s2k)</button>
       </div>
       <div class="memo" id="memo"></div>
     </div>
   </section>
 </main>
-<footer>Herramienta de apoyo académico. Las solicitaciones las calcula AURA con un análisis elástico lineal del modelo plano de la reticulada (o se ingresan desde un modelo externo); el modelo se puede comprobar en SAP2000. Las propiedades de las secciones se calculan con esquinas rectas; para perfiles plegados de pared delgada rige además AISI S100 / NCh 427. Verifique siempre los resultados.</footer>
+<footer>Herramienta de apoyo académico. Las solicitaciones las calcula structura con un análisis elástico lineal del modelo plano de la reticulada (o se ingresan desde un modelo externo); el modelo se puede comprobar en SAP2000. Las propiedades de las secciones se calculan con esquinas rectas; para perfiles plegados de pared delgada rige además AISI S100 / NCh 427. Verifique siempre los resultados.</footer>
 
-<script src="memo.js?v=41"></script>
+<script src="memo.js?v=42"></script>
 <script src="tablero.js?v=7"></script>
-<script src="guia.js?v=6"></script>
+<script src="guia.js?v=7"></script>
 <script src="modelo3d.js?v=6"></script>
 <script>
 "use strict";
@@ -1103,7 +1104,7 @@ function flexoCordon(s, Fy, d, c, t, m, dem, nom = "cordón superior", conCargas
   if (dem.origen === "aura") {
     pares = dem.pares;
     const mx = pares.reduce((a, b) => (b.M > a.M ? b : a), pares[0]);
-    m.p(L`Las solicitaciones del ${nom} provienen del análisis de AURA con el cordón continuo${conCargas ? " y la carga distribuida" : ""}, por lo que el momento incluye la flexión local de cada tramo y los momentos secundarios por la deformación de la reticulada. Para cada combinación y cada barra del cordón se evalúa la interacción con su propia fuerza axial y su propio momento.`, true);
+    m.p(L`Las solicitaciones del ${nom} provienen del análisis de structura con el cordón continuo${conCargas ? " y la carga distribuida" : ""}, por lo que el momento incluye la flexión local de cada tramo y los momentos secundarios por la deformación de la reticulada. Para cada combinación y cada barra del cordón se evalúa la interacción con su propia fuerza axial y su propio momento.`, true);
     m.row(`Momento máximo del ${nom} (${mx.combo}, barra ${mx.barra}) ; momento local de un tramo`, `${fmt(mx.M / 100, 1)} ; ${fmt(Mloc / 100, 1)} kgf·m`);
     m.p(L`\textbf{Solicitaciones de flexión.} Momento máximo del cordón continuo $M_u = ${tn(mx.M / 100, 1)}$ kgf$\cdot$m (combinación ${mx.combo}, barra ${mx.barra}), frente al momento local de un tramo simplemente apoyado $w_ua^2/8 = ${tn(Mloc / 100, 1)}$ kgf$\cdot$m con $w_u = ${tn(wu.w, 1)}$ kgf/m (${wu.c.replace(/:.*/, "")}).`);
   } else {
@@ -1507,7 +1508,7 @@ function calcular() {
     }
     GRUPOS.forEach(g => {
       const v = sol.env[g.id];
-      document.querySelector(`#fs_${g.id} .grpSol`).innerHTML = `Del análisis de AURA: tracción máx. <b>${fmt(v.T, 0)}</b> kgf (${v.cT}) · compresión máx. <b>${fmt(v.C, 0)}</b> kgf (${v.cC})${(g.id === "cs" || g.id === "ci") && $("sModo").value === "tramo" ? ` · momento máx. <b>${fmt(v.M, 1)}</b> kgf·m (${v.cM})` : ""}`;
+      document.querySelector(`#fs_${g.id} .grpSol`).innerHTML = `Del análisis de structura: tracción máx. <b>${fmt(v.T, 0)}</b> kgf (${v.cT}) · compresión máx. <b>${fmt(v.C, 0)}</b> kgf (${v.cC})${(g.id === "cs" || g.id === "ci") && $("sModo").value === "tramo" ? ` · momento máx. <b>${fmt(v.M, 1)}</b> kgf·m (${v.cM})` : ""}`;
     });
   }
   const tipo = $("gTipo").value, Lt = num("gL"), h = num("gH"), n = Math.round(num("gN"));
@@ -1529,7 +1530,7 @@ function calcular() {
   m.p(modoC === "nudos"
     ? L`\textbf{Cargas.} Las costaneras se apoyan sobre los nudos: las cargas llegan como fuerzas puntuales a los nudos superiores y todas las barras se consideran articuladas, por lo que se verifican como miembros cargados axialmente (Capítulos D y E). Se desprecian los momentos secundarios y el momento del peso propio de cada barra entre nudos.`
     : L`\textbf{Cargas.} Las costaneras se apoyan entre nudos y los cordones son continuos: el cordón superior recibe carga transversal y ambos cordones toman los momentos de continuidad, por lo que se verifican a flexocompresión (Capítulos F, G y H, con amplificación $B_1$ del Anexo 8). Las diagonales y los montantes se verifican como miembros cargados axialmente (Capítulos D y E).`);
-  m.p(L`\textbf{Análisis.} ${ext ? "Las solicitaciones provienen de un modelo externo (SAP2000 / ETABS) con análisis elástico lineal de primer orden." : "Las solicitaciones provienen del análisis elástico lineal de primer orden del modelo plano de la reticulada realizado por AURA (sección siguiente); se pueden comprobar exportando el modelo a SAP2000."} En una viga reticulada simplemente apoyada que no forma parte del sistema sismorresistente los efectos de segundo orden globales son despreciables; ${modoC === "tramo" ? L`el efecto local $P$-$\delta$ del cordón superior se considera con $B_1$.` : L`no hay efecto $P$-$\delta$ local porque las barras no tienen carga transversal.`}`);
+  m.p(L`\textbf{Análisis.} ${ext ? "Las solicitaciones provienen de un modelo externo (SAP2000 / ETABS) con análisis elástico lineal de primer orden." : "Las solicitaciones provienen del análisis elástico lineal de primer orden del modelo plano de la reticulada realizado por structura (sección siguiente); se pueden comprobar exportando el modelo a SAP2000."} En una viga reticulada simplemente apoyada que no forma parte del sistema sismorresistente los efectos de segundo orden globales son despreciables; ${modoC === "tramo" ? L`el efecto local $P$-$\delta$ del cordón superior se considera con $B_1$.` : L`no hay efecto $P$-$\delta$ local porque las barras no tienen carga transversal.`}`);
   m.p(L`\textbf{No incluido.} No se verifican las conexiones (soldaduras, pernos, cartelas, bloque de corte), el arriostramiento lateral de los cordones ni los apoyos.${hayL ? L` Para los ángulos con la Sección E5 se supone que se cumplen las condiciones (1) a (3): carga por la misma ala en ambos extremos, conexión soldada o con al menos dos pernos y sin cargas transversales intermedias.` : ""}`);
   if (plegado) m.p(L`\textbf{Perfiles plegados.} Hay perfiles plegados en frío: su diseño corresponde a AISI S100 / NCh 427. Esta memoria aplica AISC 360-16 como referencia y no reemplaza esa verificación.`);
   m.p(L`\textbf{Combinaciones.} Se usan las combinaciones LRFD de la NCh 3171 con D, L, L$_r$, S y W. No se incluyen las combinaciones sísmicas (C5 y 0.9D + 1.4E): en una viga de techo simplemente apoyada que no forma parte del sistema sismorresistente el sismo horizontal no la solicita y C5 queda cubierta por C2 o C3; si la viga forma parte de un marco o se exige sismo vertical, deben agregarse. El factor de L en C3 y C4 se toma igual a 1.0 (conservador).`);
@@ -1569,7 +1570,7 @@ ${pl.map(([, kt, v, dd, u]) => `${kt} & ${v === null ? uTex(u).replace(/\u00a0/g
 \bottomrule
 \end{tabular}
 \end{table}`);
-    m.p(L`Solicitaciones últimas del grupo (envolvente de las combinaciones NCh 3171${sol ? `, análisis de AURA: tracción en ${sol.env[g.id].cT} y compresión en ${sol.env[g.id].cC}` : " del modelo externo"}): $T_u = ${tn(d.Tu, 0)}$ kgf y $P_u = ${tn(d.Pu, 0)}$ kgf. Longitudes: ${s.tipo === "L" ? (d.E5 !== "no" ? L`$L = ${tn(d.Lx, 1)}$ cm entre puntos de trabajo (E5)` : L`$L = ${tn(d.Lx, 1)}$ cm, $K = ${tn(d.Kx, 2)}$`) : L`$L_x = ${tn(d.Lx, 1)}$ cm, $K_x = ${tn(d.Kx, 2)}$, $L_y = ${tn(d.Ly, 1)}$ cm, $K_y = ${tn(d.Ky, 2)}$`}.`, true);
+    m.p(L`Solicitaciones últimas del grupo (envolvente de las combinaciones NCh 3171${sol ? `, análisis de structura: tracción en ${sol.env[g.id].cT} y compresión en ${sol.env[g.id].cC}` : " del modelo externo"}): $T_u = ${tn(d.Tu, 0)}$ kgf y $P_u = ${tn(d.Pu, 0)}$ kgf. Longitudes: ${s.tipo === "L" ? (d.E5 !== "no" ? L`$L = ${tn(d.Lx, 1)}$ cm entre puntos de trabajo (E5)` : L`$L = ${tn(d.Lx, 1)}$ cm, $K = ${tn(d.Kx, 2)}$`) : L`$L_x = ${tn(d.Lx, 1)}$ cm, $K_x = ${tn(d.Kx, 2)}$, $L_y = ${tn(d.Ly, 1)}$ cm, $K_y = ${tn(d.Ky, 2)}$`}.`, true);
     const t = traccion(s, Fy, Fu, d, m);
     const c = compresion(s, Fy, d, m);
     let fx = null;
@@ -1586,7 +1587,7 @@ ${pl.map(([, kt, v, dd, u]) => `${kt} & ${v === null ? uTex(u).replace(/\u00a0/g
   m.h("Verificación de deformaciones");
   m.row(`Flecha admisible L/${lim}`, `${fmt(Dadm, 2)} cm`);
   m.row("<b>Razón Δ/Δ<sub>adm</sub></b>", `<b>${fmt(dcF, 3)}</b> ${tag(dcF <= 1, dcF <= 1 ? "CUMPLE" : "NO CUMPLE")}`);
-  m.p(sol ? L`La flecha máxima de servicio del análisis de AURA (combinación ${sol.cF}) es $\Delta = ${tn(D, 2)}$ cm:` : L`La flecha máxima de servicio obtenida del modelo externo es $\Delta = ${tn(D, 2)}$ cm:`);
+  m.p(sol ? L`La flecha máxima de servicio del análisis de structura (combinación ${sol.cF}) es $\Delta = ${tn(D, 2)}$ cm:` : L`La flecha máxima de servicio obtenida del modelo externo es $\Delta = ${tn(D, 2)}$ cm:`);
   m.eq(L`\Delta_{adm} = \frac{L}{${lim}} = \frac{${tn(Lt * 100, 1)}}{${lim}} = ${tn(Dadm, 2)}${CM} \qquad \frac{\Delta}{\Delta_{adm}} = \frac{${tn(D, 2)}}{${tn(Dadm, 2)}} = ${tn(dcF, 3)} ${cmp(dcF, 1)} 1.0`);
 
   // Resumen en pantalla
@@ -1664,7 +1665,7 @@ F_u &= ${tn(o.Fu, 0)}${KGCM2}\\
 G &= ${tn(G, 0)}${KGCM2}
 \end{aligned}
 \]
-El diseño se realiza por el método LRFD, con $\phi_t = 0.90$ (fluencia) y $0.75$ (ruptura) en tracción y $\phi_c = 0.90$ en compresión. Las solicitaciones de cada grupo de barras corresponden a la envolvente de las combinaciones LRFD de la NCh 3171, ${o.ext ? `obtenidas de un modelo externo (SAP2000 / ETABS)${o.f === 1000 ? " e ingresadas en tf" : ""}` : "calculadas por AURA con un análisis elástico lineal del modelo plano"}, y se expresan en kgf. ${o.modoC === "nudos" ? "Las costaneras se apoyan sobre los nudos y las barras se verifican como miembros cargados axialmente (Capítulos D y E)." : "Las costaneras se apoyan entre nudos: los cordones se verifican a flexocompresión (Capítulos F, G y H) y las diagonales y los montantes como miembros cargados axialmente (Capítulos D y E)."} Las hipótesis y limitaciones se detallan en la sección siguiente.
+El diseño se realiza por el método LRFD, con $\phi_t = 0.90$ (fluencia) y $0.75$ (ruptura) en tracción y $\phi_c = 0.90$ en compresión. Las solicitaciones de cada grupo de barras corresponden a la envolvente de las combinaciones LRFD de la NCh 3171, ${o.ext ? `obtenidas de un modelo externo (SAP2000 / ETABS)${o.f === 1000 ? " e ingresadas en tf" : ""}` : "calculadas por structura con un análisis elástico lineal del modelo plano"}, y se expresan en kgf. ${o.modoC === "nudos" ? "Las costaneras se apoyan sobre los nudos y las barras se verifican como miembros cargados axialmente (Capítulos D y E)." : "Las costaneras se apoyan entre nudos: los cordones se verifican a flexocompresión (Capítulos F, G y H) y las diagonales y los montantes como miembros cargados axialmente (Capítulos D y E)."} Las hipótesis y limitaciones se detallan en la sección siguiente.
 
 \section{Geometría de la reticulada}
 ${tikzReticulada(o.tipo, o.n, o.Lt, o.h)}
@@ -1819,11 +1820,11 @@ function generarS2K() {
     : { ComboName: "ENV", CaseType: "Response Combo", CaseName: nombre.split(":")[0], ScaleFactor: 1 }));
   const fecha = new Date();
   const E2 = E * 1e4, G2 = G * 1e4;                        // kgf/cm² → kgf/m²
-  return `File ${ultimoNombre.replace(/\.tex$/, ".s2k").replace("memoria_", "modelo_")} generado por AURA el ${fecha.toLocaleDateString("es-CL")}
+  return `File ${ultimoNombre.replace(/\.tex$/, ".s2k").replace("memoria_", "modelo_")} generado por structura el ${fecha.toLocaleDateString("es-CL")}
  
 ` + tabla("PROGRAM CONTROL", [{ ProgramName: "SAP2000", Version: "26.0.0", CurrUnits: "Kgf, m, C", SteelCode: "AISC 360-16", ConcCode: "ACI 318-19", AlumCode: "AA 2015", ColdCode: "AISI-16", ConcSCode: "Eurocode 2-2004", RegenHinge: "Yes" }])
     + tabla("ACTIVE DEGREES OF FREEDOM", [{ UX: "Yes", UY: "No", UZ: "Yes", RX: "No", RY: "Yes", RZ: "No" }])
-    + tabla("MATERIAL PROPERTIES 01 - GENERAL", [{ Material: mat, Type: "Steel", SymType: "Isotropic", TempDepend: "No", Color: "Blue", Notes: "Acero chileno exportado desde AURA" }])
+    + tabla("MATERIAL PROPERTIES 01 - GENERAL", [{ Material: mat, Type: "Steel", SymType: "Isotropic", TempDepend: "No", Color: "Blue", Notes: "Acero chileno exportado desde structura" }])
     + tabla("MATERIAL PROPERTIES 02 - BASIC MECHANICAL PROPERTIES", [{ Material: mat, UnitWeight: 7850, UnitMass: q(7850 / 9.80665), E1: q(E2), G12: q(G2), U12: q(E2 / (2 * G2) - 1), A1: 0.0000117 }])
     + tabla("MATERIAL PROPERTIES 03A - STEEL DATA", [{ Material: mat, Fy: q(Fy * 1e4), Fu: q(Fu * 1e4), EffFy: q(Fy * 1e4), EffFu: q(Fu * 1e4), SSCurveOpt: "Simple", SSHysType: "Kinematic", SHard: 0.02, SMax: 0.14, SRup: 0.2, FinalSlope: -0.1, CoupModType: "Von Mises" }])
     + tabla("FRAME SECTION PROPERTIES 01 - GENERAL", Object.values(secs))
@@ -2088,7 +2089,7 @@ function generarDXF() {
     ...(R ? R.res.map(r => `${r.g.nombre}: ${r.s.nombre}  -  razón D/C = ${Number.isFinite(r.dc) ? fmt(r.dc, 3) : "sin verificar"}`) : []),
     ...(R ? [`Flecha de servicio ${fmt(R.D, 2)} cm  (admisible L/${R.lim}).`] : []),
     "Uniones (cartelas, soldaduras, pernos) no diseñadas en este plano: detallar según su cálculo.",
-    `Generado por AURA - ${new Date().toLocaleDateString("es-CL")}`,
+    `Generado por structura - ${new Date().toLocaleDateString("es-CL")}`,
   ];
   dx.text("TEXTOS", xN, yT + th * 1.5, th * 1.2, "NOTAS");
   notas.forEach((t, k) => dx.text("TEXTOS", xN, yT - th * (1.2 + k * 1.5), th * 0.7, t));
@@ -2113,7 +2114,7 @@ function pintarFuente() {
   document.querySelectorAll(".soloTramo").forEach(el => el.classList.toggle("hidden", !tramo));
   $("fuenteInfo").innerHTML = ext
     ? "Ingrese en cada grupo la tracción y compresión máximas de la envolvente de su modelo (y, con costaneras entre nudos, el momento y el corte máximos de cada cordón). Puede exportar el modelo a SAP2000 con el botón de resultados."
-    : "AURA arma el modelo con la geometría, los perfiles y las cargas, y calcula las fuerzas de cada barra con las combinaciones NCh 3171. Para comprobarlas, exporte el modelo a SAP2000 con el botón de resultados.";
+    : "structura arma el modelo con la geometría, los perfiles y las cargas, y calcula las fuerzas de cada barra con las combinaciones NCh 3171. Para comprobarlas, exporte el modelo a SAP2000 con el botón de resultados.";
 }
 function pintarModo() {
   const tramo = $("sModo").value === "tramo";

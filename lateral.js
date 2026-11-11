@@ -143,8 +143,8 @@
       saltar = el("a", { class: "lat-saltar", href: "#" + main.id, text: "Saltar al contenido" });
     }
     const cab = el("div", { class: "lat-cab" });
-    cab.append(el("a", { class: "lat-marca", href: "index.html", "aria-label": "MMP, inicio",
-      html: '<span class="logo-tile"><span class="logo"><img src="icons/logo-mmp.webp" alt=""></span></span>' }));
+    cab.append(el("a", { class: "lat-marca", href: "index.html", "aria-label": "structura, inicio",
+      html: '<span class="marca-s"><svg class="iso" viewBox="0 0 32 32" aria-hidden="true"><rect class="iso-f" width="32" height="32" rx="7"/><path class="iso-s" d="M22 9H10V16H22V23H10"/><circle class="iso-n" cx="22" cy="16" r="2.6"/></svg><span class="marca-t">structura</span></span>' }));
     const btnCerrar = el("button", { type: "button", class: "lat-cerrar", "aria-label": "Cerrar menú", html: ICO.cerrar });
     cab.append(btnCerrar);
     lat.append(cab);

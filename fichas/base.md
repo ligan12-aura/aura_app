@@ -14,11 +14,11 @@ Documentos: AISC 360-16 (español); ACI 318-08 (español); Manual de Diseño ICH
 - Flexión de la placa por la tracción de los pernos: voladizo de brazo x hasta la cara del perfil más cercana (ala o alma) y ancho efectivo a 45°, hasta x por lado, limitado por la mitad de la separación al perno vecino y por el borde de la placa; t_req = √(4 N_ua x / (φ F_y b_ef)).
 - En sismo el hormigón se supone fisurado (D.3.3.3): la página bloquea la opción "no fisurado".
 - Desprendimiento lateral: D-17 con el coeficiente 13 de la versión métrica; en el grupo (D-18) N_sb va sin el factor de esquina; con s ≥ 6c_a1 los pernos se toman individuales, con ese factor.
-- Llave de corte (AISC Design Guide 1, 2.ª ed., 3.5): aplastamiento φ 0.85 f'c b_L d_L con φ = 0.65 y d_L = H_L − grout; flexión con M_u = V_u (grout + d_L/2) y Z = b t²/4; soldadura con el momento como par de fuerzas de brazo t_L (criterio de AURA, conservador); arrancamiento del hormigón 0.33 φ √f'c A_V (MPa) con φ = 0.75 y A_V a 45° descontando el área de apoyo (criterio de ACI 349 que usa la DG1).
+- Llave de corte (AISC Design Guide 1, 2.ª ed., 3.5): aplastamiento φ 0.85 f'c b_L d_L con φ = 0.65 y d_L = H_L − grout; flexión con M_u = V_u (grout + d_L/2) y Z = b t²/4; soldadura con el momento como par de fuerzas de brazo t_L (criterio de structura, conservador); arrancamiento del hormigón 0.33 φ √f'c A_V (MPa) con φ = 0.75 y A_V a 45° descontando el área de apoyo (criterio de ACI 349 que usa la DG1).
 - Las expresiones del Apéndice D del ACI 318-08 se evalúan en N, mm y MPa y se convierten a tf.
 - El arrancamiento por corte se revisa con dos casos: fila frontal con la mitad del corte y fila trasera con todo el corte (perforaciones sobredimensionadas).
 - φc de aplastamiento: 0.65 (AISC 360-16 J8) o 0.60 (Especificación ICHA 13.9), a elección.
-- La golilla (cuadrada, lado y espesor de la Tabla 2.3 de la AISC Design Guide 1 llevada a mm) debe quedar fuera del perfil y de su soldadura: la distancia libre debe ser al menos el tamaño del filete (criterio constructivo de AURA).
+- La golilla (cuadrada, lado y espesor de la Tabla 2.3 de la AISC Design Guide 1 llevada a mm) debe quedar fuera del perfil y de su soldadura: la distancia libre debe ser al menos el tamaño del filete (criterio constructivo de structura).
 - Sin torque, la distancia mínima al borde (D.8.2) usa el recubrimiento de 7.7.1c (hormigón expuesto): 50 mm para pernos de más de 16 mm y 40 mm hasta 16 mm, medido a la superficie del perno.
 - El aplastamiento en la perforación (J3.10) se verifica en la golilla soldada, porque la perforación de la placa está sobredimensionada. Con el corte por los pernos, la soldadura de cada golilla (filete en su contorno, 4 a_g) toma V_u/4 (J2-4), con mínimo de la Tabla J2.4 y máximo de J2.2b (el filete corre por el borde de la golilla).
 - El tamaño máximo de J2.2b no se verifica: se refiere a uniones traslapadas, no a la unión en T columna–placa.
@@ -26,7 +26,7 @@ Documentos: AISC 360-16 (español); ACI 318-08 (español); Manual de Diseño ICH
 
 ## Referencias usadas por el cálculo
 
-| Parte del cálculo | Resultado en AURA | Referencia | Documento | Pág. PDF |
+| Parte del cálculo | Resultado en structura | Referencia | Documento | Pág. PDF |
 |---|---|---|---|---|
 | Aplastamiento del hormigón | Resistencia al aplastamiento: φcPp | J8-2 | AISC 360-16 (español) |  |
 | Aplastamiento del hormigón | Resistencia al aplastamiento: φcPp (φc = 0.60) | 13.9.2 | Manual de Diseño ICHA 2000, Cap. 5 | 546 |

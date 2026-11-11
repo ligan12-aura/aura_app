@@ -10,7 +10,7 @@ Documentos: Manual de Carreteras Vol. 3 (jun. 2025).
 
 ## Referencias usadas por el cálculo
 
-| Parte del cálculo | Resultado en AURA | Referencia | Documento | Pág. PDF |
+| Parte del cálculo | Resultado en structura | Referencia | Documento | Pág. PDF |
 |---|---|---|---|---|
 | Solicitaciones — ejes equivalentes (3.603.202) | Factor direccional ; factor de pista: FD ; FP | 3.603.202(5)(6) | Manual de Carreteras Vol. 3 (jun. 2025) | 480 |
 | Serviciabilidad y confiabilidad (3.604.102 y 3.604.104) | Índices de serviciabilidad inicial ; final ; pérdida: pi ; pf ; ΔPSI | Tabla 3.604.102.A | Manual de Carreteras Vol. 3 (jun. 2025) | 579 |

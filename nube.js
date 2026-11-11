@@ -83,7 +83,7 @@ async function cerrarSesion() {
 // Mensajes de error de Supabase en español
 function errorEnEspanol(e) {
   const m = (e && (e.message || e.error_description || String(e))) || "";
-  if (/correo no autorizado|not authorized|no está autorizado/i.test(m)) return "Este correo no está autorizado para usar AURA. Pídale al administrador que lo agregue.";
+  if (/correo no autorizado|not authorized|no está autorizado/i.test(m)) return "Este correo no está autorizado para usar structura. Pídale al administrador que lo agregue.";
   if (/Invalid login credentials/i.test(m)) return "Correo o contraseña incorrectos.";
   if (/Email not confirmed/i.test(m)) return "Debe confirmar su correo antes de iniciar sesión. Revise su bandeja de entrada.";
   if (/already registered|already been registered/i.test(m)) return "Ya existe una cuenta con ese correo.";

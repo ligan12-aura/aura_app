@@ -12,7 +12,7 @@ Documentos: ACI 318-08 (español).
 
 ## Referencias usadas por el cálculo
 
-| Parte del cálculo | Resultado en AURA | Referencia | Documento | Pág. PDF |
+| Parte del cálculo | Resultado en structura | Referencia | Documento | Pág. PDF |
 |---|---|---|---|---|
 | Cargas y momentos a nivel de sello | Solicitaciones mayoradas (LRFD): Pu ; Mxu ; Myu | 9-1 | ACI 318-08 (español) | 123 |
 | Peralte por transferencia de carga columna – zapata | Longitud de desarrollo con gancho: ldh | 12.5.2 | ACI 318-08 (español) | 220 |

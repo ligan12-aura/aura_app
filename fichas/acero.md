@@ -11,7 +11,7 @@ Documentos: AISC 360-16 (español).
 
 ## Referencias usadas por el cálculo
 
-| Parte del cálculo | Resultado en AURA | Referencia | Documento | Pág. PDF |
+| Parte del cálculo | Resultado en structura | Referencia | Documento | Pág. PDF |
 |---|---|---|---|---|
 |  | Momento plástico (fluencia): Mp | F2-1 | AISC 360-16 (español) | 96 |
 |  | Longitud límite para el estado límite de fluencia: Lp | F2-5 | AISC 360-16 (español) | 97 |
