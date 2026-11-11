@@ -590,7 +590,7 @@ function marcoDireccional(d, g, dr) {
     if (x.id === "L") {
       // Viento paralelo a la cumbrera: las dos columnas son muros laterales (C_p = −0.7) y toda la viga del techo
       // recibe la presión de la zona en que cae el marco, según su distancia al extremo de barlovento
-      const barras = [barra(`Columnas izquierda y derecha (muros laterales, altura ${fmt(d.he, 2)} m)`, k => x.pS - k.pi),
+      const barras = [barra(d.techo === "una" ? `Columnas izquierda y derecha (muros laterales, alturas ${fmt(d.he, 2)} y ${fmt(g.hTop, 2)} m)` : `Columnas izquierda y derecha (muros laterales, altura ${fmt(d.he, 2)} m)`, k => x.pS - k.pi),
         ...x.techo.map(t => barra(`Techo completo, marco a ${fmt(t.x0, 2)} a ${fmt(t.x1, 2)} m del extremo de barlovento`, k => t.pe[k.c] - k.pi))];
       const peor = x.techo.reduce((a, t) => (t.pe[0] < a.pe[0] ? t : a), x.techo[0]);
       return { id: x.id, nombre: x.nombre, casos, barras, longitudinal: true,
@@ -800,7 +800,7 @@ function calcularViento(d, m) {
   }
   m.p(d.proc === "dir"
     ? L`En la columna de barlovento la carga varía con la altura como $q_z$: es constante hasta $z_{min}$ y crece hasta el alero. Los marcos de los extremos reciben la mitad del ancho tributario.`
-    : L`Los marcos dentro de la franja de extremo ($2a = ${tn(2 * g.a, 2)}$ m) reciben las presiones de las zonas 1E a 4E en la parte de su ancho tributario que cae en esa franja.`);
+    : L`Los marcos dentro de la franja de extremo ($2a = ${tn(2 * g.a, 2)}$ m) reciben las presiones de las zonas 1E a 4E en la parte de su ancho tributario que cae en esa franja, tanto en el caso de carga 1 como en el caso 2 (columnas en 1E y 4E, techo en 2E y 3E).`);
 
   // ---------- 6) Fuerzas por piso ----------
   m.h("Fuerzas por piso, corte basal y momento volcante");
