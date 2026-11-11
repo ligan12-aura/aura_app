@@ -399,9 +399,11 @@ ${filas.map(f => f.map(T).join(" & ") + "\\\\").join("\n")}
 // ---------------------------------------------------------------------------
 // Datos
 // ---------------------------------------------------------------------------
+// Separadores: coma, punto y coma o espacios. Una coma entre dígitos ("3,5") se toma como coma decimal y se rechaza
+// (la app usa punto decimal), para no leerla en silencio como dos niveles.
 function leerNiveles(txt) {
-  const partes = txt.split(/[;,\s]+/).filter(Boolean).map(s => parseFloat(s.replace(",", ".")));
-  return partes;
+  if (/\d,\d/.test(txt)) return [NaN];
+  return txt.split(/[;,\s]+/).filter(Boolean).map(s => /^\d*\.?\d+$/.test(s) ? parseFloat(s) : NaN);
 }
 function leerDatos() {
   const zona = $("zona").value, techo = $("techo").value;
@@ -575,27 +577,55 @@ function fuerzasEnvolvente(d, g, ev, niveles) {
 // ---------------------------------------------------------------------------
 // Carga sobre un marco transversal interior, con la separación s [N/m]. Casos: techo (A, B) × presión interna (+, −)
 // ---------------------------------------------------------------------------
+// Cada marco entrega casos (columnas de la tabla) y barras ({ nombre, v: carga por caso [N/m] }); prim es la fila
+// que se desarrolla en la memoria ({ nombre, p: presión neta [N/m²], w: carga [N/m] }).
+const casoNom = (letra, sI) => ({ nombre: `${letra}${sI > 0 ? "+" : "−"}`, tex: `${letra}${sI > 0 ? "+" : "-"}` });
 function marcoDireccional(d, g, dr) {
-  return dr.dirs.filter(x => x.id !== "L").map(x => {
-    const casos = [];
+  return dr.dirs.map(x => {
     const dosTecho = x.techo.some(t => Math.abs(t.cp[0] - t.cp[1]) > 1e-9);
-    for (const c of dosTecho ? [0, 1] : [0]) for (const sI of [1, -1]) {
-      const pi = sI * x.pi;
-      casos.push({ nombre: `${dosTecho ? (c ? "B" : "A") : "A"}${sI > 0 ? "+" : "−"}`, tex: `${dosTecho ? (c ? "B" : "A") : "A"}${sI > 0 ? "+" : "-"}`,
-        base: (x.pW(0) - pi) * d.s, alto: (x.pW(x.hw) - pi) * d.s, sot: (x.pL - pi) * d.s, techo: x.techo.map(t => (t.pe[c] - pi) * d.s) });
+    const comb = [];
+    for (const c of dosTecho ? [0, 1] : [0]) for (const sI of [1, -1]) comb.push({ c, pi: sI * x.pi, ...casoNom(dosTecho ? (c ? "B" : "A") : "A", sI) });
+    const casos = comb.map(({ nombre, tex }) => ({ nombre, tex }));
+    const barra = (nombre, f) => ({ nombre, v: comb.map(k => f(k) * d.s) });
+    if (x.id === "L") {
+      // Viento paralelo a la cumbrera: las dos columnas son muros laterales (C_p = −0.7) y toda la viga del techo
+      // recibe la presión de la zona en que cae el marco, según su distancia al extremo de barlovento
+      const barras = [barra(`Columnas izquierda y derecha (muros laterales, altura ${fmt(d.he, 2)} m)`, k => x.pS - k.pi),
+        ...x.techo.map(t => barra(`Techo completo, marco a ${fmt(t.x0, 2)} a ${fmt(t.x1, 2)} m del extremo de barlovento`, k => t.pe[k.c] - k.pi))];
+      const peor = x.techo.reduce((a, t) => (t.pe[0] < a.pe[0] ? t : a), x.techo[0]);
+      return { id: x.id, nombre: x.nombre, casos, barras, longitudinal: true,
+        prim: { nombre: `Viga del techo, marco a ${fmt(peor.x0, 2)} a ${fmt(peor.x1, 2)} m del extremo, caso ${casos[0].nombre}`, p: peor.pe[0] - comb[0].pi, w: (peor.pe[0] - comb[0].pi) * d.s } };
     }
-    return { id: x.id, nombre: x.nombre, hw: x.hw, hl: x.hl, tramos: x.techo, casos };
+    const barras = [barra("Columna de barlovento, base", k => x.pW(0) - k.pi), barra(`Columna de barlovento, z = ${fmt(x.hw, 2)} m`, k => x.pW(x.hw) - k.pi),
+      barra(`Columna de sotavento (altura ${fmt(x.hl, 2)} m)`, k => x.pL - k.pi),
+      ...x.techo.map(t => barra(`${t.nombre} (${fmt(t.x0, 2)} a ${fmt(t.x1, 2)} m)`, k => t.pe[k.c] - k.pi))];
+    return { id: x.id, nombre: x.nombre, casos, barras, tramos: x.techo,
+      prim: { nombre: `Columna de barlovento en el alero, caso ${casos[0].nombre}`, p: x.pW(x.hw) - comb[0].pi, w: (x.pW(x.hw) - comb[0].pi) * d.s } };
   });
 }
 function marcoEnvolvente(d, g, ev) {
-  const c = ev.c1, k = ev.k;
+  const c = ev.c1, c2 = F12_2, k = ev.k, sIs = [1, -1];
+  const barra = (nombre, gc) => ({ nombre, v: sIs.map(sI => k * (gc - sI * d.gcpi) * d.s) });
+  // Caso de carga 1 (viento transversal)
   const tramos = d.techo === "plano" || d.theta === 0
     ? [{ nombre: "Techo, zona 2", x0: 0, x1: d.W / 2, gc: c["2"], s: 0 }, { nombre: "Techo, zona 3", x0: d.W / 2, x1: d.W, gc: c["3"], s: 0 }]
     : [{ nombre: "Techo a barlovento, zona 2", x0: 0, x1: d.W / 2, gc: c["2"], s: 1 }, { nombre: "Techo a sotavento, zona 3", x0: d.W / 2, x1: d.W, gc: c["3"], s: -1 }];
   if (ev.corta2) tramos.splice(0, 1, { ...tramos[0], x1: ev.x2 }, { ...tramos[0], nombre: "Techo a barlovento, resto (coef. zona 3)", x0: ev.x2, gc: c["3"] });
-  const casos = [1, -1].map(sI => ({ nombre: `1${sI > 0 ? "+" : "−"}`, tex: `1${sI > 0 ? "+" : "-"}`,
-    base: k * (c["1"] - sI * d.gcpi) * d.s, alto: k * (c["1"] - sI * d.gcpi) * d.s, sot: k * (c["4"] - sI * d.gcpi) * d.s, techo: tramos.map(t => k * (t.gc - sI * d.gcpi) * d.s) }));
-  return [{ id: "T", nombre: "Viento transversal (caso de carga 1, zonas 1 a 4)", hw: d.he, hl: d.he, tramos, casos }];
+  const m1 = { id: "T", nombre: "Viento transversal (caso de carga 1, zonas 1 a 4)", casos: sIs.map(sI => casoNom("1", sI)), tramos,
+    barras: [barra("Columna de barlovento (zona 1)", c["1"]), barra(`Columna de sotavento (zona 4)`, c["4"]),
+      ...tramos.map(t => barra(`${t.nombre} (${fmt(t.x0, 2)} a ${fmt(t.x1, 2)} m)`, t.gc))],
+    prim: { nombre: "Columna de barlovento, caso 1+", p: k * (c["1"] - d.gcpi), w: k * (c["1"] - d.gcpi) * d.s } };
+  // Caso de carga 2 (viento paralelo a la cumbrera): columnas en las zonas 1 y 4 de la Figura 12 (muros laterales) y
+  // techo en las zonas 2 y 3; la zona 2 negativa llega hasta mín(0.5 L_e ; 2.5 h_e) del extremo de barlovento (7.3.2.1)
+  const x2L = Math.min(0.5 * d.Le, 2.5 * d.he);
+  const [izq, der] = d.techo === "plano" ? ["Techo, mitad izquierda", "Techo, mitad derecha"] : ["Faldón izquierdo", "Faldón derecho"];
+  const m2 = { id: "L", nombre: "Viento longitudinal (caso de carga 2)", casos: sIs.map(sI => casoNom("2", sI)), longitudinal: true,
+    barras: [barra("Columna izquierda (zona 1)", c2["1"]), barra("Columna derecha (zona 4)", c2["4"]),
+      barra(`${izq} (zona 2), marco a menos de ${fmt(x2L, 2)} m del extremo de barlovento`, c2["2"]),
+      barra(`${der} (zona 3), marco a menos de ${fmt(x2L, 2)} m del extremo`, c2["3"]),
+      ...(x2L < d.Le - 1e-9 ? [barra(`Techo completo (coef. zona 3), marco a más de ${fmt(x2L, 2)} m del extremo`, c2["3"])] : [])],
+    prim: { nombre: `${izq} (zona 2), caso 2+`, p: k * (c2["2"] - d.gcpi), w: k * (c2["2"] - d.gcpi) * d.s }, x2L };
+  return [m1, m2];
 }
 
 // ---------------------------------------------------------------------------
@@ -738,7 +768,7 @@ function calcularViento(d, m) {
     m.h("Sistema principal: procedimiento envolvente — cláusula 7");
     m.p(L`La presión de diseño de cada zona es $p = q_h\,K_d\,[(GC_{pf}) - (GC_{pi})]$ (Ec. (7)), con los coeficientes $(GC_{pf})$ de la Figura 12, interpolados con el ángulo del techo.`);
     m.row("Ancho de las zonas de extremo: 2a", `${fmt(2 * g.a, 2)} m`, "Figura 12");
-    m.eq(L`a = \min(0.1 \cdot ${tn(g.minDim, 2)}\ ;\ 0.4 \cdot ${tn(g.h, 2)}) = ${tn(Math.min(0.1 * g.minDim, 0.4 * g.h), 2)}\ \mathrm{m} \ \ge\ \max(0.04 \cdot ${tn(g.minDim, 2)}\ ;\ 0.9) = ${tn(Math.max(0.04 * g.minDim, 0.9), 2)}\ \mathrm{m} \quad\Rightarrow\quad a = ${tn(g.a, 2)}\ \mathrm{m}`, "Figura 12");
+    m.eq(L`a = \min(0.1 \cdot ${tn(g.minDim, 2)}\ ;\ 0.4 \cdot ${tn(g.h, 2)}) = ${tn(Math.min(0.1 * g.minDim, 0.4 * g.h), 2)}\ \mathrm{m} \ \ge\ \max(0.04 \cdot ${tn(g.minDim, 2)}\ ;\ 0.9) = ${tn(Math.max(0.04 * g.minDim, 0.9), 2)}\ \mathrm{m} \;\Rightarrow\; a = ${tn(g.a, 2)}\ \mathrm{m}`, "Figura 12");
     m.row("Presión de referencia: q<sub>h</sub> K<sub>d</sub>", `${fmt(kg(ev.k), 1)} kgf/m²`, "Ec. (7)");
     m.eq(L`q_h\,K_d = ${tn(kg(qh), 1)} \cdot ${tn(KD, 2)} = ${tn(kg(ev.k), 1)}${U}`, "Ec. (7)");
     const tab = (titulo, lista, ref) => m.tabla(titulo, cabP(["GC<sub>pf</sub>", "$GC_{pf}$"]).map((c, i) => i === 0 ? ["Zona", "Zona"] : c),
@@ -756,19 +786,17 @@ function calcularViento(d, m) {
 
   // ---------- 5) Carga sobre un marco ----------
   m.h("Carga sobre un marco transversal interior");
-  m.p(L`Cargas por metro de barra, iguales a la presión de diseño por la separación entre marcos $s = ${tn(d.s, 2)}$ m. Actúan normales a cada superficie: positivas hacia ella y negativas alejándose (succión). Los casos combinan ${d.proc === "dir" ? "los dos valores del techo (A y B) con " : ""}la presión interna positiva ($+$) y negativa ($-$).`);
+  m.p(L`Cargas por metro de barra, iguales a la presión de diseño por la separación entre marcos $s = ${tn(d.s, 2)}$ m. Actúan normales a cada superficie: positivas hacia ella y negativas alejándose (succión). Se incluyen el viento transversal y el longitudinal (paralelo a la cumbrera), que suele gobernar el levantamiento de la viga del techo. Los casos combinan ${d.proc === "dir" ? "los dos valores del techo (A y B) con " : ""}la presión interna positiva ($+$) y negativa ($-$).`);
+  const refM = d.proc === "dir" ? "Ec. (4)" : "Ec. (7)";
   for (const mc of marcos) {
     m.sub(mc.nombre);
-    const c0 = mc.casos[0];
-    m.row(`Columna de barlovento en el alero, caso ${c0.nombre}: w`, `${sg(kg(c0.alto), 0)} kgf/m`, d.proc === "dir" ? "Ec. (4)" : "Ec. (7)");
-    m.eq(L`w = p \cdot s = ${sgT(kg(c0.alto / d.s), 1)} \cdot ${tn(d.s, 2)} = ${sgT(kg(c0.alto), 0)}\ \mathrm{kgf/m}`);
-    const filas = [];
-    const fl = (nombre, get) => filas.push([nombre, ...mc.casos.map(c => sg(kg(get(c)), 0).replace("-", "−"))]);
-    if (d.proc === "dir") { fl("Columna de barlovento, base", c => c.base); fl(`Columna de barlovento, z = ${fmt(mc.hw, 2)} m`, c => c.alto); }
-    else fl("Columna de barlovento", c => c.alto);
-    fl(`Columna de sotavento (altura ${fmt(mc.hl, 2)} m)`, c => c.sot);
-    mc.tramos.forEach((t, i) => fl(`${t.nombre} (${fmt(t.x0, 2)} a ${fmt(t.x1, 2)} m)`, c => c.techo[i]));
-    m.tabla(`Cargas sobre el marco [kgf/m], ${mc.nombre.toLowerCase()}`, [["Barra", "Barra"], ...mc.casos.map(c => [`Caso ${c.nombre}`, `Caso ${c.tex}`])], filas, d.proc === "dir" ? "Ec. (4)" : "Ec. (7)");
+    m.row(`${mc.prim.nombre}: w`, `${sg(kg(mc.prim.w), 0)} kgf/m`, refM);
+    m.eq(L`w = p \cdot s = ${sgT(kg(mc.prim.p), 1)} \cdot ${tn(d.s, 2)} = ${sgT(kg(mc.prim.w), 0)}\ \mathrm{kgf/m}`);
+    const filas = mc.barras.map(b => [b.nombre, ...b.v.map(v => sg(kg(v), 0).replace("-", "−"))]);
+    m.tabla(`Cargas sobre el marco [kgf/m], ${mc.nombre.toLowerCase()}`, [["Barra", "Barra"], ...mc.casos.map(c => [`Caso ${c.nombre}`, `Caso ${c.tex}`])], filas, refM);
+    if (mc.longitudinal) m.p(d.proc === "dir"
+      ? L`Con viento paralelo a la cumbrera, la viga del techo del marco recibe en todo su largo la presión de la zona en que cae el marco, medida desde el extremo de barlovento; cada marco interior se diseña con la fila que le corresponde. Ambas columnas son muros laterales.`
+      : L`Con viento paralelo a la cumbrera, el coeficiente negativo de la zona 2 se aplica solo a los marcos a menos de $\min(0.5\,L_e\ ;\ 2.5\,h_e) = ${tn(mc.x2L, 2)}$ m del extremo de barlovento (7.3.2.1); los demás usan el de la zona 3 en todo el techo. Cada extremo del edificio se debe considerar como extremo de barlovento.`);
   }
   m.p(d.proc === "dir"
     ? L`En la columna de barlovento la carga varía con la altura como $q_z$: es constante hasta $z_{min}$ y crece hasta el alero. Los marcos de los extremos reciben la mitad del ancho tributario.`
@@ -812,7 +840,7 @@ function calcularViento(d, m) {
   const peor = [...cr.techo, ...cr.muro].reduce((a, c) => (!a || c.pn < a.pn ? c : a), null);
   if (peor) {
     m.row(`Mayor succión: ${peor.donde.toLowerCase()}, zona ${peor.zona}`, `${sg(kg(peor.pn))} kgf/m²`, cr.alto ? "Ec. (20)" : "Ec. (19)");
-    m.eq(L`p = q_h\,K_d\,[(GC_p) - (GC_{pi})] = ${tn(kg(qh), 1)} \cdot ${tn(KD, 2)} \cdot (${tn(peor.gn, 3)} - ${tn(d.gcpi, 2)}) = ${tn(kg(qh * KD * (peor.gn - d.gcpi)), 1)}${U}`, cr.alto ? "Ec. (20)" : "Ec. (19)");
+    m.eq(L`p = q_h\,K_d\,[(GC_p) - (GC_{pi})] = ${tn(kg(qh), 1)} \cdot ${tn(KD, 2)} \cdot (${tn(peor.gn, 3)} - ${tn(d.gcpi, 2)}) = ${tn(kg(qh * KD * (peor.gn - d.gcpi)), 1)}${U}${peor.minN ? L` \;\Rightarrow\; p = ${tn(kg(peor.pn), 1)}${U}\ \text{(mínimo de 9.2.2)}` : ""}`, cr.alto ? "Ec. (20)" : "Ec. (19)");
   }
   const cabC = [["Zona", "Zona"], ["GC<sub>p</sub> −", "$GC_p^-$"], ["GC<sub>p</sub> +", "$GC_p^+$"], ["p − [kgf/m²]", "$p^-$"], ["p + [kgf/m²]", "$p^+$"], ["w − [kgf/m]", "$w^-$ [kgf/m]"], ["w + [kgf/m]", "$w^+$ [kgf/m]"]];
   const filC = (l) => l.map(c => [c.zona, sg(c.gn, 3), c.gp === null ? "—" : sg(c.gp, 3), sg(kg(c.pn)) + (c.minN ? " *" : ""), sg(kg(c.pp)) + (c.minP ? " *" : ""), sg(kg(c.wn), 0), sg(kg(c.wp), 0)].map((c2, i) => i === 0 ? c2 : c2.replace("-", "−")));
@@ -1043,12 +1071,19 @@ function calcular() {
     ultimoTex = ""; ultimoR = null; ultimoD = null;
   };
   if (malos.length) { limpiar(avisoInvalidos(malos)); return; }
+  // Listas sin una opción válida (por ejemplo, un valor restaurado que ya no existe): no se calcula
+  const listasMal = [...$("inputs").querySelectorAll("select")].filter(s => s.selectedIndex < 0 || s.value === "");
+  listasMal.forEach(s => s.classList.add("invalido"));
+  if (listasMal.length) { limpiar(avisoInvalidos(listasMal.map(s => `${(document.querySelector(`label[for="${s.id}"]`)?.textContent || s.id).trim()}: elija una opción`))); return; }
   const d = leerDatos();
-  // Elevaciones de los pisos: números positivos, crecientes y no mayores que la altura del edificio
+  if (![d.V, d.I, d.gcpi].every(Number.isFinite) || !EXPO[d.expo]) { limpiar(avisoInvalidos(["Zona de viento, categoría de ocupación, exposición o cerramiento sin un valor válido"])); return; }
+  // Elevaciones de los pisos: números positivos y crecientes; el último entre el alero y la altura máxima, para que
+  // ningún nivel quede bajo la carga del techo (si no, el momento volcante se subestima)
   const hTop = geometria(d).hTop, nv = d.niveles;
-  const nivMal = nv.some(z => !Number.isFinite(z) || z <= 0) || nv.some((z, i) => i && z <= nv[i - 1]) || (nv.length && nv[nv.length - 1] > hTop + 1e-6);
+  const nivMal = nv.some(z => !Number.isFinite(z) || z <= 0) || nv.some((z, i) => i && z <= nv[i - 1])
+    || (nv.length && (nv[nv.length - 1] > hTop + 1e-6 || nv[nv.length - 1] < d.he - 1e-6));
   $("niveles").classList.toggle("invalido", nivMal);
-  if (nivMal) { limpiar(avisoInvalidos([`Elevación de los pisos: valores positivos, crecientes y no mayores que la altura del edificio (${fmt(hTop, 2)} m)`])); return; }
+  if (nivMal) { limpiar(avisoInvalidos([`Elevación de los pisos: valores positivos y crecientes, separados por comas o espacios y con punto decimal; el último nivel debe estar entre el alero (${fmt(d.he, 2)} m) y la altura máxima (${fmt(hTop, 2)} m)`])); return; }
   const m = new Memo();
   const r = calcularViento(d, m);
   if (r.error) { limpiar(`<div class="verdict bad">✘ ${r.error} Datos inválidos para el cálculo.</div>`); return; }
@@ -1066,7 +1101,8 @@ function calcular() {
   $("summary").innerHTML = cards.map(c => `<div class="card"><div class="t">${c.t}</div><div class="v">${c.v}</div><div class="s">${c.s}</div></div>`).join("");
   $("resTitle").textContent = `Resultados — Viento NCh 432 · techo ${NOM_TECHO[d.techo]} ${fmt(d.W, 1)} × ${fmt(d.Le, 1)} × ${fmt(d.he, 1)} m`;
   const sinTecho = !r.cr.techo.length;
-  $("verdict").innerHTML = `<div class="verdict ok">✔ Cargas de viento determinadas — V = ${fmt(d.V, 0)} m/s · q<sub>h</sub> = ${fmt(kg(r.qh), 1)} kgf/m² · corte basal ${fmt(kg(fT.total) / 1000, 2)} tf transversal y ${fmt(kg(fL.total) / 1000, 2)} tf longitudinal${sinTecho ? " · componente de techo SIN VERIFICAR" : ""}</div>`
+  // Clase "info": proyectos.js lo guarda sin estado (la página no verifica elementos, no es un CUMPLE)
+  $("verdict").innerHTML = `<div class="verdict ok info">✔ Cargas de viento determinadas — V = ${fmt(d.V, 0)} m/s · q<sub>h</sub> = ${fmt(kg(r.qh), 1)} kgf/m² · corte basal ${fmt(kg(fT.total) / 1000, 2)} tf transversal y ${fmt(kg(fL.total) / 1000, 2)} tf longitudinal${sinTecho ? " · componente de techo SIN VERIFICAR" : ""}</div>`
     + `<div class="note">Versión de prueba: compruebe el resultado a mano antes de usarlo. Son cargas de servicio (factor 1.6 en LRFD y 1.0 en ASD, NCh 3171); la página no verifica elementos.</div>`
     + (sinTecho ? `<div class="note">⚠ ${r.cr.aviso}</div>` : "");
   $("dibujo").innerHTML = svgViento(d, r);
@@ -1114,7 +1150,7 @@ window.AURA_MEMO = {
   recalcular: () => calcular(),
 };
 </script>
-<script src="proyectos.js?v=46"></script>
+<script src="proyectos.js?v=47"></script>
 <script>
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
 </script>

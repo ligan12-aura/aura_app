@@ -1,6 +1,6 @@
 # Ficha normativa: Cargas de viento (versión de prueba)
 
-Determina cargas de viento sobre edificios de planta rectangular según la NCh 432:2025: presión de velocidad, sistema principal (procedimiento direccional o envolvente), carga sobre un marco transversal, fuerzas por piso y componentes y revestimientos. No verifica elementos: entrega cargas de servicio.
+Determina cargas de viento sobre edificios de planta rectangular según la NCh 432:2025: presión de velocidad, sistema principal (procedimiento direccional o envolvente), carga sobre un marco transversal interior (con viento transversal y paralelo a la cumbrera), fuerzas por piso y componentes y revestimientos. No verifica elementos: entrega cargas de servicio.
 
 Documentos: NCh 432:2025.
 

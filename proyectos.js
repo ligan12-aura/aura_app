@@ -297,6 +297,8 @@ function estadoActual() {
   if (!ver) return { ok: null, texto: "" };
   const m = ver.textContent.match(/razón máxima = ([\d.,\u00a0∞]+)/);
   const razon = m ? `razón máx. ${m[1]}` : "";
+  // Páginas que solo entregan cargas (viento.html: veredicto "info"): no verifican nada, se guardan sin estado
+  if (ver.classList.contains("info")) return { ok: null, texto: "" };
   // "Sin verificar" no es cumple ni no cumple: el panel y la memoria no muestran ninguno de los dos
   // "NO CUMPLE" manda sobre "SIN VERIFICAR" (un elemento que falla se guarda como no cumple)
   if (/NO CUMPLE/.test(ver.textContent)) return { ok: false, texto: razon };
