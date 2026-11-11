@@ -297,6 +297,8 @@ function estadoActual() {
   if (!ver) return { ok: null, texto: "" };
   const m = ver.textContent.match(/razón máxima = ([\d.,\u00a0∞]+)/);
   const razon = m ? `razón máx. ${m[1]}` : "";
+  // Páginas que solo entregan cargas (viento.html: veredicto "info"): no verifican nada, se guardan sin estado
+  if (ver.classList.contains("info")) return { ok: null, texto: "" };
   // "Sin verificar" no es cumple ni no cumple: el panel y la memoria no muestran ninguno de los dos
   // "NO CUMPLE" manda sobre "SIN VERIFICAR" (un elemento que falla se guarda como no cumple)
   if (/NO CUMPLE/.test(ver.textContent)) return { ok: false, texto: razon };
@@ -309,7 +311,7 @@ function tituloSugerido() {
 }
 const paginaActual = () => location.pathname.split("/").pop() || "index.html";
 // Solo páginas propias de la app (un dato manipulado no puede convertirse en un enlace javascript: u otro sitio)
-const PAGINAS_CALCULO = ["acero.html", "reticulada.html", "placa.html", "hormigon.html", "muro.html", "madera.html", "mle.html", "vial.html", "rigido.html", "zapata.html", "piers.html", "base.html", "conexion.html", "diagonal.html"];
+const PAGINAS_CALCULO = ["acero.html", "reticulada.html", "placa.html", "hormigon.html", "muro.html", "madera.html", "mle.html", "vial.html", "rigido.html", "zapata.html", "piers.html", "base.html", "conexion.html", "diagonal.html", "viento.html"];
 function urlElemento(p, e) {
   const q = new URLSearchParams();
   if (e.elemento) q.set("elemento", e.elemento);
