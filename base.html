@@ -48,6 +48,7 @@
   header h1 { margin: 0; font-size: 19px; font-weight: 600; }
   header a.home { color: #fff; text-decoration: none; font-size: 13px; border: 1px solid rgba(255,255,255,.35); border-radius: 4px; padding: 3px 9px; }
   header span { color: #c8cbe8; font-size: 13px; }
+  header h1 #titBase { color: inherit; font-size: inherit; }
   header .chipPrueba { display: inline-block; vertical-align: middle; margin-left: 6px; background: var(--warn-bg); color: var(--warn); font-size: 11.5px; font-weight: 700; border-radius: 10px; padding: 1px 9px; letter-spacing: .03em; }
   .prueba { max-width: 1400px; margin: 14px auto 0; padding: 0 24px; }
   .prueba > div { padding: 10px 14px; border-radius: 6px; background: var(--warn-bg); color: var(--warn); border: 1px solid #f0d9a6; font-size: 13px; }
@@ -115,23 +116,28 @@
   }
 </style>
 <link rel="stylesheet" href="aura.css?v=19">
-<script src="lateral.js?v=15"></script>
+<script src="lateral.js?v=16"></script>
 <script src="asistente.js?v=8" defer></script>
 </head>
 <body>
 <header>
   <a class="marca" href="index.html" aria-label="Inicio"><span class="marca-s"><svg class="iso" viewBox="0 0 32 32" aria-hidden="true"><rect class="iso-f" width="32" height="32" rx="7"/><path class="iso-s" d="M22 9H10V16H22V23H10"/><circle class="iso-n" cx="22" cy="16" r="2.6"/></svg><span class="marca-t">structura</span></span></a>
   <a class="home" href="index.html">← Inicio</a>
-  <h1>Placa base articulada <span class="chipPrueba">VERSIÓN DE PRUEBA</span></h1>
-  <span>Columna de acero sobre pedestal · Aplastamiento, espesor, corte y tracción en los pernos, llave de corte y soldadura · AISC 360-16, Design Guide 1 y ACI 318-08 Apéndice D</span>
+  <h1><span id="titBase">Placa base articulada</span> <span class="chipPrueba">VERSIÓN DE PRUEBA</span></h1>
+  <span id="subBase">Columna de acero sobre pedestal · Aplastamiento, espesor, corte y tracción en los pernos, llave de corte y soldadura · AISC 360-16, Design Guide 1 y ACI 318-08 Apéndice D</span>
 </header>
-<div class="prueba"><div>⚠ <b>Versión de prueba.</b> Esta herramienta está en desarrollo y sus resultados aún no se han validado contra ejemplos publicados. Úsela como apoyo y compruebe el cálculo a mano. Solo cubre bases articuladas (compresión o tracción concéntrica y corte): no verifica momento en la base ni las armaduras del pedestal.</div></div>
+<div class="prueba"><div>⚠ <b>Versión de prueba.</b> Esta herramienta está en desarrollo y sus resultados aún no se han validado contra ejemplos publicados. Úsela como apoyo y compruebe el cálculo a mano. <span id="alcBase">Solo cubre bases articuladas (compresión o tracción concéntrica y corte): no verifica momento en la base ni las armaduras del pedestal.</span></div></div>
 
 <main>
   <!-- ===================== ENTRADAS ===================== -->
   <section class="panel" id="inputs">
     <h2>Datos de entrada</h2>
     <div class="body">
+      <label for="tipo">Tipo de base</label>
+      <select id="tipo">
+        <option value="articulada" selected>Articulada: compresión o tracción y corte</option>
+        <option value="empotrada">Empotrada: compresión, momento y corte</option>
+      </select>
       <svg class="esquema" viewBox="0 0 330 200" aria-label="Esquema de la placa base">
         <rect x="20" y="20" width="150" height="150" fill="#e3e8ee" stroke="#8a93a0" stroke-dasharray="4 3"/>
         <rect x="45" y="40" width="100" height="110" fill="#c3c9d1" stroke="#3d4450" stroke-width="1.4"/>
@@ -156,7 +162,7 @@
           <text x="240" y="170">h<tspan font-size="7" dy="2">ef</tspan></text>
         </g>
       </svg>
-      <div class="unit" style="text-align:center">Planta (N según el alto d del perfil, B según el ala) y elevación · 4 pernos en (±s<sub>1</sub>/2, ±s<sub>2</sub>/2)</div>
+      <div class="unit" style="text-align:center" id="esqNota">Planta (N según el alto d del perfil, B según el ala) y elevación · 4 pernos en (±s<sub>1</sub>/2, ±s<sub>2</sub>/2)</div>
 
       <fieldset>
         <legend>1. Columna</legend>
@@ -192,6 +198,7 @@
 
       <fieldset>
         <legend>3. Cargas mayoradas</legend>
+        <div id="cargasArt">
         <div class="row3">
           <div><label for="Pu">Compresión P<sub>u</sub> <span class="unit">[tf]</span></label><input id="Pu" type="number" step="1" value="80"></div>
           <div><label for="Pmin">P<sub>u,mín</sub> con el corte <span class="unit">[tf]</span></label><input id="Pmin" type="number" step="0.5" value="15"></div>
@@ -199,6 +206,45 @@
           <div><label for="Tu">Tracción T<sub>u</sub> (levantamiento) <span class="unit">[tf]</span></label><input id="Tu" type="number" step="0.5" value="0"></div>
         </div>
         <div class="unit" style="margin-top:4px">El corte actúa según el alto d del perfil (paralelo al alma). P<sub>u,mín</sub> es la menor compresión que acompaña al corte (0 si hay levantamiento). T<sub>u</sub> es la tracción concéntrica de la combinación de levantamiento; se supone concomitante con V<sub>u</sub> y se reparte por igual entre los 4 pernos.</div>
+        </div>
+        <div id="cargasEmp">
+          <label for="nComb">Número de combinaciones</label>
+          <select id="nComb"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select>
+          <div class="row3" style="margin-top:6px">
+            <div class="unit">P<sub>u</sub> [tf]</div><div class="unit">M<sub>u</sub> [tf·m]</div><div class="unit">V<sub>u</sub> [tf]</div>
+          </div>
+          <div class="row3 comb" id="combRow1">
+            <div><label for="cP1" class="sr-only">Comb. 1: P<sub>u</sub> [tf]</label><input id="cP1" type="number" step="1" value="80"></div>
+            <div><label for="cM1" class="sr-only">Comb. 1: M<sub>u</sub> [tf·m]</label><input id="cM1" type="number" step="0.5" value="6"></div>
+            <div><label for="cV1" class="sr-only">Comb. 1: V<sub>u</sub> [tf]</label><input id="cV1" type="number" step="0.5" value="4"></div>
+          </div>
+          <div class="row3 comb" id="combRow2">
+            <div><label for="cP2" class="sr-only">Comb. 2: P<sub>u</sub> [tf]</label><input id="cP2" type="number" step="1" value="30"></div>
+            <div><label for="cM2" class="sr-only">Comb. 2: M<sub>u</sub> [tf·m]</label><input id="cM2" type="number" step="0.5" value="8"></div>
+            <div><label for="cV2" class="sr-only">Comb. 2: V<sub>u</sub> [tf]</label><input id="cV2" type="number" step="0.5" value="5"></div>
+          </div>
+          <div class="row3 comb" id="combRow3">
+            <div><label for="cP3" class="sr-only">Comb. 3: P<sub>u</sub> [tf]</label><input id="cP3" type="number" step="1" value="60"></div>
+            <div><label for="cM3" class="sr-only">Comb. 3: M<sub>u</sub> [tf·m]</label><input id="cM3" type="number" step="0.5" value="4"></div>
+            <div><label for="cV3" class="sr-only">Comb. 3: V<sub>u</sub> [tf]</label><input id="cV3" type="number" step="0.5" value="3"></div>
+          </div>
+          <div class="row3 comb" id="combRow4">
+            <div><label for="cP4" class="sr-only">Comb. 4: P<sub>u</sub> [tf]</label><input id="cP4" type="number" step="1" value="20"></div>
+            <div><label for="cM4" class="sr-only">Comb. 4: M<sub>u</sub> [tf·m]</label><input id="cM4" type="number" step="0.5" value="3"></div>
+            <div><label for="cV4" class="sr-only">Comb. 4: V<sub>u</sub> [tf]</label><input id="cV4" type="number" step="0.5" value="2"></div>
+          </div>
+          <div class="row3 comb" id="combRow5">
+            <div><label for="cP5" class="sr-only">Comb. 5: P<sub>u</sub> [tf]</label><input id="cP5" type="number" step="1" value="10"></div>
+            <div><label for="cM5" class="sr-only">Comb. 5: M<sub>u</sub> [tf·m]</label><input id="cM5" type="number" step="0.5" value="2"></div>
+            <div><label for="cV5" class="sr-only">Comb. 5: V<sub>u</sub> [tf]</label><input id="cV5" type="number" step="0.5" value="1"></div>
+          </div>
+          <div class="row3 comb" id="combRow6">
+            <div><label for="cP6" class="sr-only">Comb. 6: P<sub>u</sub> [tf]</label><input id="cP6" type="number" step="1" value="5"></div>
+            <div><label for="cM6" class="sr-only">Comb. 6: M<sub>u</sub> [tf·m]</label><input id="cM6" type="number" step="0.5" value="1"></div>
+            <div><label for="cV6" class="sr-only">Comb. 6: V<sub>u</sub> [tf]</label><input id="cV6" type="number" step="0.5" value="1"></div>
+          </div>
+          <div class="unit" style="margin-top:4px">Una fila por combinación LRFD, con P<sub>u</sub> (compresión positiva), M<sub>u</sub> en el eje fuerte (según el alto d) y V<sub>u</sub> según d, concomitantes. Se verifican todas y se desarrolla la crítica. Una combinación con P<sub>u</sub> ≤ 0 (tracción neta) queda SIN VERIFICAR.</div>
+        </div>
         <label for="modoV">Transferencia del corte</label>
         <select id="modoV">
           <option value="pernos" selected>Por los pernos de anclaje (ACI 318-08 Apéndice D)</option>
@@ -219,12 +265,14 @@
       </fieldset>
 
       <fieldset>
-        <legend>4. Pernos de anclaje (4 pernos)</legend>
+        <legend>4. Pernos de anclaje <span id="pernosLeg">(4 pernos)</span></legend>
         <div class="row3">
           <div><label for="db">Diámetro <span class="unit">[mm]</span></label><select id="db"><option>16</option><option selected>20</option><option>22</option><option>24</option><option>27</option><option>30</option><option>36</option></select></div>
           <div><label for="aceroP">Acero</label><select id="aceroP"><option value="A36" selected>A36 / F1554 Gr. 36</option><option value="F55">F1554 Gr. 55</option><option value="A37">A37-24ES</option></select></div>
           <div><label for="hef">Empotramiento h<sub>ef</sub> <span class="unit">[mm]</span></label><input id="hef" type="number" step="10" value="300"></div>
-          <div><label for="s1">s<sub>1</sub> (según d) <span class="unit">[mm]</span></label><input id="s1" type="number" step="10" value="150"></div>
+          <div id="s1Box"><label for="s1">s<sub>1</sub> (según d) <span class="unit">[mm]</span></label><input id="s1" type="number" step="10" value="150"></div>
+          <div id="fBox"><label for="fP">Eje a la fila f <span class="unit">[mm]</span></label><input id="fP" type="number" step="5" value="175"></div>
+          <div id="nFilaBox"><label for="nFila">Pernos por fila</label><select id="nFila"><option selected>2</option><option>3</option><option>4</option></select></div>
           <div><label for="s2">s<sub>2</sub> (según b<sub>f</sub>) <span class="unit">[mm]</span></label><input id="s2" type="number" step="10" value="200"></div>
           <div><label for="fis">Hormigón</label><select id="fis"><option value="1" selected>Fisurado</option><option value="0">No fisurado</option></select></div>
           <div><label for="cabeza">Extremo embebido</label><select id="cabeza"><option value="tuerca" selected>Tuerca hexagonal pesada</option><option value="gancho">Gancho (perno J o L)</option></select></div>
@@ -250,6 +298,7 @@
         <legend>5. Soldadura columna–placa</legend>
         <div class="row2">
           <div><label for="w">Filete w <span class="unit">[mm]</span></label><input id="w" type="number" step="1" value="6"></div>
+          <div id="alaBox"><label for="soldAla">Unión de las alas</label><select id="soldAla"><option value="filete" selected>Filete en ambas caras</option><option value="cjp">Penetración completa</option></select></div>
           <div><label for="fexx">Electrodo</label><select id="fexx"><option value="4920" selected>E70 (F<sub>EXX</sub> = 4 920 kgf/cm²)</option><option value="4220">E60 (F<sub>EXX</sub> = 4 220 kgf/cm²)</option></select></div>
         </div>
         <label class="chk"><input id="contacto" type="checkbox" checked> Contacto pleno columna–placa (extremo cepillado)</label>
@@ -278,7 +327,7 @@
 
 <script src="memo.js?v=42"></script>
 <script src="tablero.js?v=7"></script>
-<script src="guia.js?v=7"></script>
+<script src="guia.js?v=8"></script>
 <script src="dxf.js?v=3"></script>
 <script src="modelo3d.js?v=6"></script>
 <script>
@@ -453,11 +502,28 @@ function perfil() {
   const [nombre, h, b, tw, tf, r] = row;
   return { nombre, d: h / 10, bf: b / 10, tf: tf / 10, tw: tw / 10, r: r / 10 };
 }
+const esEmpotrada = () => $("tipo").value === "empotrada";
+const nCombos = () => parseInt($("nComb").value, 10) || 1;
+// Combinaciones de la base empotrada [kgf y kgf·cm]: P (compresión +), M (valor absoluto, eje fuerte) y V (valor absoluto)
+function combinaciones() {
+  const out = [];
+  for (let i = 1; i <= nCombos(); i++) out.push({ i, Pu: num(`cP${i}`) * 1000, Mu: Math.abs(num(`cM${i}`)) * 1e5, Vu: Math.abs(num(`cV${i}`)) * 1000 });
+  return out;
+}
+// Posiciones de los pernos en planta [cm]: x según d (N), z según b_f (B)
+function posPernos(d) {
+  if (!d.emp) return [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([a, b]) => [a * d.s1 / 2, b * d.s2 / 2]);
+  const zs = Array.from({ length: d.nFila }, (_, j) => -d.s2 / 2 + j * d.s2 / (d.nFila - 1));
+  return [1, -1].flatMap(a => zs.map(z => [a * d.f, z]));
+}
 function leerDatos() {
   const c = (id) => num(id) / 10;           // mm → cm
   const db = parseFloat($("db").value);
   const ac = ACEROS[$("acero").value], ap = ACEROS_PERNO[$("aceroP").value];
+  const emp = esEmpotrada(), nFila = parseInt($("nFila").value, 10);
+  const combos = emp ? combinaciones() : [];
   return {
+    tipo: emp ? "empotrada" : "articulada", emp, combos, nFila, nP: emp ? 2 * nFila : N_PERNOS, f: c("fP"), soldAla: $("soldAla").value, Mu: 0,
     p: perfil(), acero: $("acero").value, Fy: ac.Fy, Fu: ac.Fu,
     N: c("N"), B: c("B"), tp: c("tp"), Np: c("Np"), Bp: c("Bp"), ha: c("ha"), fc: num("fc"), eg: c("eg"), phic: parseFloat($("phic").value),
     Pu: num("Pu") * 1000, Pmin: num("Pmin") * 1000, Vu: num("Vu") * 1000, Tu: num("Tu") * 1000,
@@ -465,13 +531,17 @@ function leerDatos() {
     cabeza: $("cabeza").value, eh: c("eh"), sis: $("sis").value, armAnc: $("armAnc").checked, nAr: Math.round(num("nAr")), dbAr: parseFloat($("dbAr").value) / 10,
     modoV: $("modoV").value, mu: num("mu"), phiR: num("phiR"),
     db: db / 10, dh: PERFORACION[db] / 10, paso: PASO[db] / 10, aceroP: $("aceroP").value, fya: ap.fya, futa: ap.futa,
-    hef: c("hef"), s1: c("s1"), s2: c("s2"), fisurado: $("fis").value === "1" || $("sis").value !== "no", grout: $("grout").checked, torque: $("torque").checked, ag: c("ag"), tg: c("tg"), wg: c("wg"),
+    hef: c("hef"), s1: emp ? 2 * c("fP") : c("s1"), s2: c("s2"), fisurado: $("fis").value === "1" || $("sis").value !== "no", grout: $("grout").checked, torque: $("torque").checked, ag: c("ag"), tg: c("tg"), wg: c("wg"),
     w: c("w"), fexx: parseFloat($("fexx").value), contacto: $("contacto").checked,
   };
 }
 function reglasDatos() {
   const r = [["N", 0, true], ["B", 0, true], ["tp", 0, true], ["Np", 0, true], ["Bp", 0, true], ["ha", 0, true], ["fc", 0, true], ["eg", 0],
-    ["Pu", 0, true], ["Pmin", 0], ["Vu", 0], ["Tu", 0], ["hef", 0, true], ["s1", 0, true], ["s2", 0, true], ["w", 0, true], ["ag", 0, true], ["tg", 0, true], ["wg", 0, true]];
+    ["hef", 0, true], ["s2", 0, true], ["w", 0, true], ["ag", 0, true], ["tg", 0, true], ["wg", 0, true]];
+  if (esEmpotrada()) {
+    r.push(["fP", 0, true]);
+    for (let i = 1; i <= nCombos(); i++) r.push([`cP${i}`, -Infinity], [`cM${i}`, -Infinity], [`cV${i}`, -Infinity]);
+  } else r.push(["Pu", 0, true], ["Pmin", 0], ["Vu", 0], ["Tu", 0], ["s1", 0, true]);
   if ($("serie").value === "otro") r.push(["pd", 0, true], ["pbf", 0, true], ["ptf", 0, true], ["ptw", 0, true]);
   if ($("modoV").value === "roce") r.push(["mu", 0, true], ["phiR", 0, true]);
   if ($("modoV").value === "llave") r.push(["bL", 0, true], ["tL", 0, true], ["HL", 0, true], ["wL", 0, true]);
@@ -480,18 +550,19 @@ function reglasDatos() {
   return r;
 }
 function reglasMaximos() {
-  const dh = PERFORACION[$("db").value];
+  const dh = PERFORACION[$("db").value], emp = esEmpotrada();
+  const sx = emp ? 2 * num("fP") : num("s1");
   return [
-    ["Pmin", num("Pu"), "P<sub>u,mín</sub> no puede superar P<sub>u</sub>"],
+    ...(emp ? [["fP", num("N") / 2 - dh / 2, "Los pernos (f) deben quedar dentro de la placa"]] : [["Pmin", num("Pu"), "P<sub>u,mín</sub> no puede superar P<sub>u</sub>"]]),
     ["N", num("Np"), "La placa (N) no puede ser más larga que el pedestal (N<sub>p</sub>)"],
     ["B", num("Bp"), "La placa (B) no puede ser más ancha que el pedestal (B<sub>p</sub>)"],
     ["s1", num("N") - dh, "Los pernos (s<sub>1</sub>) deben quedar dentro de la placa"],
     ["s2", num("B") - dh, "Los pernos (s<sub>2</sub>) deben quedar dentro de la placa"],
-    ["ag", Math.min(num("N") - num("s1"), num("B") - num("s2")), "La golilla debe quedar dentro de la placa"],
+    ["ag", Math.min(num("N") - sx, num("B") - num("s2"), emp ? num("s2") / (parseInt($("nFila").value, 10) - 1) : Infinity), "La golilla debe quedar dentro de la placa y no montarse sobre la vecina"],
     ["hef", num("ha") - 50, "El empotramiento h<sub>ef</sub> debe ser menor que el alto del pedestal menos 50 mm"],
     ["ptf", num("pd") / 2 - 0.1, "El espesor del ala es demasiado grande para el alto del perfil"],
     ["ptw", num("pbf") - 0.1, "El espesor del alma es demasiado grande para el ancho del ala"],
-    ...($("modoV").value === "llave" ? [["bL", num("B"), "La llave no puede ser más ancha que la placa (B)"], ["tL", num("s1") - PERFORACION[$("db").value], "La llave debe caber entre las perforaciones de los pernos"]] : []),
+    ...($("modoV").value === "llave" ? [["bL", num("B"), "La llave no puede ser más ancha que la placa (B)"], ["tL", sx - PERFORACION[$("db").value], "La llave debe caber entre las perforaciones de los pernos"]] : []),
   ];
 }
 
@@ -524,10 +595,12 @@ function palanca(d) {
   const ca1 = MM((d.Np - d.s1) / 2), ca2 = MM((d.Bp - d.s2) / 2), s1 = MM(d.s1), s2 = MM(d.s2);
   // D.5.2.3: con 4 bordes a menos de 1.5 hef, h'ef = máx(ca,máx/1.5 ; s/3)
   const cuatro = ca1 < 1.5 * hef && ca2 < 1.5 * hef;
-  const hp = cuatro ? Math.min(hef, Math.max(Math.max(ca1, ca2) / 1.5, Math.max(s1, s2) / 3)) : hef;
+  // s: mayor separación entre pernos del grupo (en la base empotrada, la de la fila puede ser menor que s2)
+  const sMax = d.sMax ? MM(d.sMax) : Math.max(s1, s2);
+  const hp = cuatro ? Math.min(hef, Math.max(Math.max(ca1, ca2) / 1.5, sMax / 3)) : hef;
   const Nb = hp >= 280 && hp <= 635 ? 3.9 * Math.sqrt(fc) * Math.pow(hp, 5 / 3) : 10 * Math.sqrt(fc) * Math.pow(hp, 1.5);  // D-7 / D-8
   const ANco = 9 * hp * hp;
-  const ANc = Math.min((2 * Math.min(ca1, 1.5 * hp) + s1) * (2 * Math.min(ca2, 1.5 * hp) + s2), N_PERNOS * ANco);
+  const ANc = Math.min((2 * Math.min(ca1, 1.5 * hp) + s1) * (2 * Math.min(ca2, 1.5 * hp) + s2), (d.nP || N_PERNOS) * ANco);
   const camin = Math.min(ca1, ca2);
   const psiEd = camin >= 1.5 * hp ? 1 : 0.7 + 0.3 * camin / (1.5 * hp);                                // D-11
   const psiC = d.fisurado ? 1.0 : 1.25;                                                                 // D.5.2.6
@@ -540,6 +613,50 @@ function palanca(d) {
 // ---------------------------------------------------------------------------
 // Cálculo
 // ---------------------------------------------------------------------------
+// Llave de corte (AISC Design Guide 1, 2.ª ed., 3.5): placa vertical soldada bajo la placa base, perpendicular al corte.
+// Común a la base articulada y a la empotrada; Vu es el corte de la combinación.
+function llaveCorte(d, m, Vu, ck, motivos) {
+  const fcM = d.fc * MPA;
+  // Llave de corte (AISC Design Guide 1, 2.ª ed., 3.5): placa vertical soldada bajo la placa base, perpendicular al corte
+  const dL = d.HL - d.eg;                                 // profundidad que apoya en el hormigón (bajo el grout)
+  m.p(L`El corte lo toma una llave de corte: una placa de $b_L \times t_L$ soldada bajo la placa base, centrada y perpendicular al corte, que apoya contra el hormigón bajo el grout en una profundidad $d_L = H_L - e_g$. Se sigue la AISC Design Guide 1 (2.ª ed., 3.5): aplastamiento del hormigón, flexión y corte de la llave, soldadura a la placa y arrancamiento del hormigón frente a la llave. Los pernos no toman corte.`);
+  m.row("Profundidad de apoyo en el hormigón: d<sub>L</sub>", `${fmt(MM(dL), 0)} mm`);
+  m.eq(L`d_L = H_L - e_g = ${tn(MM(d.HL), 0)} - ${tn(MM(d.eg), 0)} = ${tn(MM(dL), 0)}\ \mathrm{mm}`);
+  // Aplastamiento del hormigón (ACI 318-08 10.14.1, φ = 0.65)
+  const phiBr = 0.65 * 0.85 * d.fc * d.bL * dL, dcBr = Vu / phiBr;
+  m.row("Llave: aplastamiento del hormigón φ0.85f'<sub>c</sub>A<sub>brg</sub> ≥ V<sub>u</sub>", `${fmt(T(phiBr), 2)} tf ${tagDC(dcBr)}`, "ACI 318-08 10.14.1");
+  m.eq(L`\phi B_n = 0.65\cdot 0.85\,f'_c\,b_L\,d_L = 0.65\cdot 0.85\cdot ${tn(d.fc, 0)}\cdot ${tn(d.bL, 1)}\cdot ${tn(dL, 1)} = ${tn(T(phiBr), 2)}\ \mathrm{tf} \qquad \frac{V_u}{\phi B_n} = ${tn(dcBr, 3)} ${cmp(dcBr)} 1.0`, "10.14.1");
+  ck("Llave: aplastamiento del hormigón", L`$V_u = ${tn(T(Vu), 2)}$ tf`, L`$\phi B_n = ${tn(T(phiBr), 2)}$ tf`, dcBr, "v");
+  // Flexión de la llave en su unión con la placa: la resultante del aplastamiento a e_g + d_L/2
+  const Mu = Vu * (d.eg + dL / 2), phiMn = 0.9 * d.Fy * d.bL * d.tL ** 2 / 4, dcM = Mu / phiMn;
+  m.row("Llave: flexión en la unión con la placa φM<sub>n</sub> ≥ M<sub>u</sub>", `${fmt(Mu / 1e5, 3)} ≤ ${fmt(phiMn / 1e5, 3)} tf·m ${tagDC(dcM)}`, "AISC 360-16 F11-1");
+  m.eq(L`M_u = V_u\left(e_g + \frac{d_L}{2}\right) = ${tn(Vu, 0)}\left(${tn(d.eg, 1)} + \frac{${tn(dL, 1)}}{2}\right) = ${tn(Mu, 0)}\ \mathrm{kgf\,cm} \qquad \phi M_n = 0.90\,F_y\,\frac{b_L t_L^2}{4} = ${tn(phiMn, 0)}\ \mathrm{kgf\,cm}`, "F11-1");
+  ck("Llave: flexión", L`$M_u = ${tn(Mu / 1e5, 3)}$ tf·m`, L`$\phi M_n = ${tn(phiMn / 1e5, 3)}$ tf·m`, dcM, "v");
+  const phiVL = 1.0 * 0.6 * d.Fy * d.bL * d.tL, dcVL = Vu / phiVL;
+  m.row("Llave: fluencia por corte φR<sub>n</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVL), 2)} tf ${tagDC(dcVL)}`, "AISC 360-16 J4-3");
+  m.eq(L`\phi R_n = 1.00\cdot 0.60\,F_y\,b_L\,t_L = 0.60\cdot ${tn(d.Fy, 0)}\cdot ${tn(d.bL, 1)}\cdot ${tn(d.tL, 2)} = ${tn(T(phiVL), 2)}\ \mathrm{tf}`, "J4-3");
+  ck("Llave: corte", L`$V_u = ${tn(T(Vu), 2)}$ tf`, L`$\phi R_n = ${tn(T(phiVL), 2)}$ tf`, dcVL, "v");
+  // Soldadura llave–placa: dos filetes de largo b_L; el momento como par de fuerzas con brazo t_L (conservador)
+  const rnL = PHI_W * 0.6 * d.fexx * 0.707 * d.wL, fMw = Mu / (d.tL * d.bL), fVw = Vu / (2 * d.bL), qL = Math.hypot(fMw, fVw), dcWL = qL / rnL;
+  m.row("Llave: soldadura a la placa base q ≤ φr<sub>n</sub>", `${fmt(qL, 1)} ≤ ${fmt(rnL, 1)} kgf/cm ${tagDC(dcWL)}`, "AISC 360-16 J2-4");
+  m.eq(L`q = \sqrt{\left(\frac{M_u}{t_L\,b_L}\right)^2 + \left(\frac{V_u}{2\,b_L}\right)^2} = \sqrt{${tn(fMw, 1)}^2 + ${tn(fVw, 1)}^2} = ${tn(qL, 1)}\ \mathrm{kgf/cm} \qquad \phi r_n = 0.75\cdot 0.60\cdot ${tn(d.fexx, 0)}\cdot 0.707\cdot ${tn(d.wL, 2)} = ${tn(rnL, 1)}\ \mathrm{kgf/cm}`, "J2-4");
+  m.p(L`Dos filetes de largo $b_L$, uno por cara; el momento se toma como un par de fuerzas con brazo $t_L$, lo que es conservador.`);
+  ck("Llave: soldadura", L`$q = ${tn(qL, 1)}$ kgf/cm`, L`$\phi r_n = ${tn(rnL, 1)}$ kgf/cm`, dcWL, "v");
+  const tMinL = MM(Math.min(d.tL, d.tp)), wMinL = (tMinL <= 6 ? 3 : tMinL <= 13 ? 5 : tMinL <= 19 ? 6 : 8) / 10, okWL = d.wL >= wMinL - 1e-9;
+  m.row("Llave: tamaño mínimo del filete", `${fmt(MM(wMinL), 0)} mm ${tag(okWL, okWL ? "Cumple" : "No cumple")}`, "AISC 360-16 Tabla J2.4");
+  if (!okWL) motivos.push(`filete de la llave menor que el mínimo (${fmt(MM(wMinL), 0)} mm)`);
+  // Arrancamiento del hormigón frente a la llave (DG1, criterio de ACI 349): 4φ√f'c A_V [psi] = 0.33φ√f'c A_V [MPa], φ = 0.75
+  const cL = MM((d.Np - d.tL) / 2), bLm = MM(d.bL), dLm = MM(dL);
+  const AV = Math.min(bLm + 2 * cL, MM(d.Bp)) * Math.min(dLm + cL, MM(d.ha)) - bLm * dLm;
+  const phiVcL = 0.75 * 0.33 * Math.sqrt(fcM) * AV * KGF, dcVcL = Vu / phiVcL;
+  m.row("Llave: arrancamiento del hormigón frente a la llave φV<sub>c</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVcL), 2)} tf ${tagDC(dcVcL)}`, "DG1 3.5 (ACI 349)");
+  m.eq(L`A_V = \min(b_L + 2c;\ B_p)\cdot\min(d_L + c;\ h_a) - b_L\,d_L = ${tn(AV, 0)}\ \mathrm{mm^2},\ c = \frac{N_p - t_L}{2} = ${tn(cL, 0)}\ \mathrm{mm} \qquad \phi V_c = 0.75\cdot 0.33\sqrt{f'_c}\,A_V = 0.75\cdot 0.33\sqrt{${tn(fcM, 1)}}\cdot ${tn(AV, 0)} = ${tn(T(phiVcL), 2)}\ \mathrm{tf}`);
+  m.p(L`El área $A_V$ es la proyección en la cara del pedestal de un plano de falla a 45° desde los bordes de la llave, descontando el área de apoyo de la llave ($4\phi\sqrt{f'_c}$ en psi, que en MPa es $0.33\phi\sqrt{f'_c}$).`);
+  ck("Llave: arrancamiento del hormigón", L`$V_u = ${tn(T(Vu), 2)}$ tf`, L`$\phi V_c = ${tn(T(phiVcL), 2)}$ tf`, dcVcL, "v");
+  m.p(L`La llave exige grout que rellene completamente el espacio alrededor de ella; se recomienda una perforación de inyección en la placa base.`);
+  return { dL, phiBr, Mu, phiMn, phiVL, qL, rnL, AV, phiVcL, cL };
+}
+
 let ultimoTex = "", ultimoNombre = "memoria.tex", ultimoR = null, ultimoD = null;
 
 function verificar(d, m) {
@@ -647,44 +764,7 @@ function verificar(d, m) {
     ck("Corte por roce", L`$V_u = ${tn(T(d.Vu), 2)}$ tf`, L`$\phi\mu P_{u,min} = ${tn(T(phiVf), 2)}$ tf`, dcF, "v");
     r.phiVf = phiVf;
   } else if (d.modoV === "llave") {
-    // Llave de corte (AISC Design Guide 1, 2.ª ed., 3.5): placa vertical soldada bajo la placa base, perpendicular al corte
-    const dL = d.HL - d.eg;                                 // profundidad que apoya en el hormigón (bajo el grout)
-    m.p(L`El corte lo toma una llave de corte: una placa de $b_L \times t_L$ soldada bajo la placa base, centrada y perpendicular al corte, que apoya contra el hormigón bajo el grout en una profundidad $d_L = H_L - e_g$. Se sigue la AISC Design Guide 1 (2.ª ed., 3.5): aplastamiento del hormigón, flexión y corte de la llave, soldadura a la placa y arrancamiento del hormigón frente a la llave. Los pernos no toman corte.`);
-    m.row("Profundidad de apoyo en el hormigón: d<sub>L</sub>", `${fmt(MM(dL), 0)} mm`);
-    m.eq(L`d_L = H_L - e_g = ${tn(MM(d.HL), 0)} - ${tn(MM(d.eg), 0)} = ${tn(MM(dL), 0)}\ \mathrm{mm}`);
-    // Aplastamiento del hormigón (ACI 318-08 10.14.1, φ = 0.65)
-    const phiBr = 0.65 * 0.85 * d.fc * d.bL * dL, dcBr = d.Vu / phiBr;
-    m.row("Llave: aplastamiento del hormigón φ0.85f'<sub>c</sub>A<sub>brg</sub> ≥ V<sub>u</sub>", `${fmt(T(phiBr), 2)} tf ${tagDC(dcBr)}`, "ACI 318-08 10.14.1");
-    m.eq(L`\phi B_n = 0.65\cdot 0.85\,f'_c\,b_L\,d_L = 0.65\cdot 0.85\cdot ${tn(d.fc, 0)}\cdot ${tn(d.bL, 1)}\cdot ${tn(dL, 1)} = ${tn(T(phiBr), 2)}\ \mathrm{tf} \qquad \frac{V_u}{\phi B_n} = ${tn(dcBr, 3)} ${cmp(dcBr)} 1.0`, "10.14.1");
-    ck("Llave: aplastamiento del hormigón", L`$V_u = ${tn(T(d.Vu), 2)}$ tf`, L`$\phi B_n = ${tn(T(phiBr), 2)}$ tf`, dcBr, "v");
-    // Flexión de la llave en su unión con la placa: la resultante del aplastamiento a e_g + d_L/2
-    const Mu = d.Vu * (d.eg + dL / 2), phiMn = 0.9 * d.Fy * d.bL * d.tL ** 2 / 4, dcM = Mu / phiMn;
-    m.row("Llave: flexión en la unión con la placa φM<sub>n</sub> ≥ M<sub>u</sub>", `${fmt(Mu / 1e5, 3)} ≤ ${fmt(phiMn / 1e5, 3)} tf·m ${tagDC(dcM)}`, "AISC 360-16 F11-1");
-    m.eq(L`M_u = V_u\left(e_g + \frac{d_L}{2}\right) = ${tn(d.Vu, 0)}\left(${tn(d.eg, 1)} + \frac{${tn(dL, 1)}}{2}\right) = ${tn(Mu, 0)}\ \mathrm{kgf\,cm} \qquad \phi M_n = 0.90\,F_y\,\frac{b_L t_L^2}{4} = ${tn(phiMn, 0)}\ \mathrm{kgf\,cm}`, "F11-1");
-    ck("Llave: flexión", L`$M_u = ${tn(Mu / 1e5, 3)}$ tf·m`, L`$\phi M_n = ${tn(phiMn / 1e5, 3)}$ tf·m`, dcM, "v");
-    const phiVL = 1.0 * 0.6 * d.Fy * d.bL * d.tL, dcVL = d.Vu / phiVL;
-    m.row("Llave: fluencia por corte φR<sub>n</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVL), 2)} tf ${tagDC(dcVL)}`, "AISC 360-16 J4-3");
-    m.eq(L`\phi R_n = 1.00\cdot 0.60\,F_y\,b_L\,t_L = 0.60\cdot ${tn(d.Fy, 0)}\cdot ${tn(d.bL, 1)}\cdot ${tn(d.tL, 2)} = ${tn(T(phiVL), 2)}\ \mathrm{tf}`, "J4-3");
-    ck("Llave: corte", L`$V_u = ${tn(T(d.Vu), 2)}$ tf`, L`$\phi R_n = ${tn(T(phiVL), 2)}$ tf`, dcVL, "v");
-    // Soldadura llave–placa: dos filetes de largo b_L; el momento como par de fuerzas con brazo t_L (conservador)
-    const rnL = PHI_W * 0.6 * d.fexx * 0.707 * d.wL, fMw = Mu / (d.tL * d.bL), fVw = d.Vu / (2 * d.bL), qL = Math.hypot(fMw, fVw), dcWL = qL / rnL;
-    m.row("Llave: soldadura a la placa base q ≤ φr<sub>n</sub>", `${fmt(qL, 1)} ≤ ${fmt(rnL, 1)} kgf/cm ${tagDC(dcWL)}`, "AISC 360-16 J2-4");
-    m.eq(L`q = \sqrt{\left(\frac{M_u}{t_L\,b_L}\right)^2 + \left(\frac{V_u}{2\,b_L}\right)^2} = \sqrt{${tn(fMw, 1)}^2 + ${tn(fVw, 1)}^2} = ${tn(qL, 1)}\ \mathrm{kgf/cm} \qquad \phi r_n = 0.75\cdot 0.60\cdot ${tn(d.fexx, 0)}\cdot 0.707\cdot ${tn(d.wL, 2)} = ${tn(rnL, 1)}\ \mathrm{kgf/cm}`, "J2-4");
-    m.p(L`Dos filetes de largo $b_L$, uno por cara; el momento se toma como un par de fuerzas con brazo $t_L$, lo que es conservador.`);
-    ck("Llave: soldadura", L`$q = ${tn(qL, 1)}$ kgf/cm`, L`$\phi r_n = ${tn(rnL, 1)}$ kgf/cm`, dcWL, "v");
-    const tMinL = MM(Math.min(d.tL, d.tp)), wMinL = (tMinL <= 6 ? 3 : tMinL <= 13 ? 5 : tMinL <= 19 ? 6 : 8) / 10, okWL = d.wL >= wMinL - 1e-9;
-    m.row("Llave: tamaño mínimo del filete", `${fmt(MM(wMinL), 0)} mm ${tag(okWL, okWL ? "Cumple" : "No cumple")}`, "AISC 360-16 Tabla J2.4");
-    if (!okWL) motivos.push(`filete de la llave menor que el mínimo (${fmt(MM(wMinL), 0)} mm)`);
-    // Arrancamiento del hormigón frente a la llave (DG1, criterio de ACI 349): 4φ√f'c A_V [psi] = 0.33φ√f'c A_V [MPa], φ = 0.75
-    const cL = MM((d.Np - d.tL) / 2), bLm = MM(d.bL), dLm = MM(dL);
-    const AV = Math.min(bLm + 2 * cL, MM(d.Bp)) * Math.min(dLm + cL, MM(d.ha)) - bLm * dLm;
-    const phiVcL = 0.75 * 0.33 * Math.sqrt(fcM) * AV * KGF, dcVcL = d.Vu / phiVcL;
-    m.row("Llave: arrancamiento del hormigón frente a la llave φV<sub>c</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVcL), 2)} tf ${tagDC(dcVcL)}`, "DG1 3.5 (ACI 349)");
-    m.eq(L`A_V = \min(b_L + 2c;\ B_p)\cdot\min(d_L + c;\ h_a) - b_L\,d_L = ${tn(AV, 0)}\ \mathrm{mm^2},\ c = \frac{N_p - t_L}{2} = ${tn(cL, 0)}\ \mathrm{mm} \qquad \phi V_c = 0.75\cdot 0.33\sqrt{f'_c}\,A_V = 0.75\cdot 0.33\sqrt{${tn(fcM, 1)}}\cdot ${tn(AV, 0)} = ${tn(T(phiVcL), 2)}\ \mathrm{tf}`);
-    m.p(L`El área $A_V$ es la proyección en la cara del pedestal de un plano de falla a 45° desde los bordes de la llave, descontando el área de apoyo de la llave ($4\phi\sqrt{f'_c}$ en psi, que en MPa es $0.33\phi\sqrt{f'_c}$).`);
-    ck("Llave: arrancamiento del hormigón", L`$V_u = ${tn(T(d.Vu), 2)}$ tf`, L`$\phi V_c = ${tn(T(phiVcL), 2)}$ tf`, dcVcL, "v");
-    m.p(L`La llave exige grout que rellene completamente el espacio alrededor de ella; se recomienda una perforación de inyección en la placa base.`);
-    Object.assign(r, { dL, phiBr, Mu, phiMn, phiVL, qL, rnL, AV, phiVcL, cL });
+    Object.assign(r, llaveCorte(d, m, d.Vu, ck, motivos));
   } else {
     m.p(L`El corte lo toman los pernos de anclaje, sin roce. Las expresiones del Apéndice D del ACI 318-08 están en N, mm y MPa: se evalúan en esas unidades y se convierten a tf. Se considera ${d.fisurado ? "hormigón fisurado" : "hormigón no fisurado"} y sin armadura de anclaje para corte en el pedestal (condición B, $\phi = 0.70$).${sisTxt}`);
     // Acero
@@ -931,6 +1011,398 @@ function verificar(d, m) {
 }
 
 // ---------------------------------------------------------------------------
+// Base empotrada (VERSIÓN DE PRUEBA): compresión, momento en el eje fuerte y corte, AISC Design Guide 1 (2.ª ed.), LRFD.
+// Pernos en dos filas fuera de las alas, a ±f del eje, con nFila pernos cada una repartidos en s2.
+// ---------------------------------------------------------------------------
+// Núcleo del procedimiento de la DG1 (kgf y cm): presión máxima, excentricidad, largo de apoyo Y, tracción T_u y espesores.
+// Se separa del resto para comprobarlo contra los ejemplos publicados.
+function momentoDG1(o) {
+  const { Pu, Mu, N, B, f, fpMax, Fy, mV, nV, dP, tf } = o;
+  const qMax = fpMax * B, e = Pu > 0 ? Mu / Pu : Infinity, eCrit = N / 2 - Pu / (2 * qMax);
+  const tApoyo = (fp, Y, l) => (Y >= l ? l * Math.sqrt(2 * fp / (PHI_T * Fy)) : Math.sqrt(4 * fp * Y * (l - Y / 2) / (PHI_T * Fy)));
+  const r = { qMax, e, eCrit, grande: e > eCrit + 1e-9 };
+  if (!r.grande) {
+    r.Y = N - 2 * e; r.fp = Pu / (B * r.Y); r.Tu = 0; r.dcAp = r.fp / fpMax;
+  } else {
+    r.k2 = (f + N / 2) ** 2; r.req = 2 * Pu * (e + f) / qMax; r.dcSol = r.req / r.k2; r.fp = fpMax;
+    if (r.dcSol > 1 + 1e-9) { r.sinSolucion = true; return r; }
+    r.Y = (f + N / 2) - Math.sqrt(r.k2 - r.req); r.Tu = qMax * r.Y - Pu;
+  }
+  r.tm = tApoyo(r.fp, r.Y, mV); r.tn = tApoyo(r.fp, r.Y, nV);
+  r.x = f - dP / 2 + tf / 2;
+  r.tT = r.Tu > 0 ? Math.sqrt(4 * r.Tu * r.x / (PHI_T * Fy * B)) : 0;
+  r.treq = Math.max(r.tm, r.tn, r.tT);
+  return r;
+}
+
+// Cono de tracción de la fila traccionada (ACI 318-08 D.5.2): n pernos en línea a f del eje, borde exterior c_a1 = N_p/2 − f.
+// Hacia el interior no hay borde (la fila comprimida no forma parte del grupo traccionado). N, mm y MPa; resultado en N.
+function conoFila(d) {
+  const { fc, hef } = aci(d);
+  const ce = MM(d.Np / 2 - d.f), c2 = MM((d.Bp - d.s2) / 2), s2 = MM(d.s2), sz = MM(d.s2 / (d.nFila - 1));
+  // D.5.2.3: tres bordes (el exterior y los dos laterales) a menos de 1.5 hef
+  const tres = ce < 1.5 * hef && c2 < 1.5 * hef;
+  const hp = tres ? Math.min(hef, Math.max(Math.max(ce, c2) / 1.5, sz / 3)) : hef;
+  const Nb = hp >= 280 && hp <= 635 ? 3.9 * Math.sqrt(fc) * Math.pow(hp, 5 / 3) : 10 * Math.sqrt(fc) * Math.pow(hp, 1.5);   // D-8 / D-7
+  const ANco = 9 * hp * hp;
+  const ANc = Math.min((Math.min(ce, 1.5 * hp) + 1.5 * hp) * (2 * Math.min(c2, 1.5 * hp) + s2), d.nFila * ANco);
+  const camin = Math.min(ce, c2);
+  const psiEd = camin >= 1.5 * hp ? 1 : 0.7 + 0.3 * camin / (1.5 * hp);                                   // D-11
+  const psiC = d.fisurado ? 1.0 : 1.25;                                                                    // D.5.2.6
+  const Ncbg = ANc / ANco * psiEd * psiC * Nb;                                                             // D-5 (ψec = 1: fila con carga uniforme)
+  return { ce, c2, tres, hp, Nb, ANco, ANc, psiEd, psiC, Ncbg };
+}
+
+function verificarEmpotrada(d, m) {
+  const checks = [], motivos = [], sinVer = [];
+  const ck = (k, dem, cap, dc, grupo) => checks.push({ k, dem, cap, dc, grupo });
+  const p = d.p, A1 = d.N * d.B, nF = d.nFila, nT = d.nP, sz = d.s2 / (nF - 1);
+
+  // ---------- 1. Datos y combinaciones ----------
+  m.h("Datos y alcance de la verificación");
+  m.p(L`\textbf{Versión de prueba:} esta herramienta está en desarrollo; el procedimiento con momento se comprobó contra ejemplos publicados de momento grande, pero el cálculo debe comprobarse a mano.`);
+  m.p(L`Se verifica una base empotrada: la columna transmite compresión $P_u$, momento $M_u$ en el eje fuerte (según el alto $d$) y corte $V_u$. Se sigue el procedimiento de la AISC Design Guide 1 (2.ª ed.) con presión rectangular bajo la placa: si la excentricidad $e = M_u/P_u$ no supera la crítica, la presión equilibra la carga sin tracción en los pernos (momento pequeño); si la supera, la presión llega a su máximo y la fila de pernos del lado traccionado toma la diferencia (momento grande). Los pernos se verifican con el Apéndice D del ACI 318-08.`);
+  m.row("Perfil de la columna", `${p.nombre} · d = ${fmt(MM(p.d), 0)} · b<sub>f</sub> = ${fmt(MM(p.bf), 0)} · t<sub>f</sub> = ${fmt(MM(p.tf), 1)} · t<sub>w</sub> = ${fmt(MM(p.tw), 1)} mm`);
+  m.row("Placa base: N × B × t<sub>p</sub>", `${fmt(MM(d.N), 0)} × ${fmt(MM(d.B), 0)} × ${fmt(MM(d.tp), 0)} mm · ${ACEROS[d.acero].nombre}`);
+  m.row("Pedestal: N<sub>p</sub> × B<sub>p</sub> ; f'<sub>c</sub>", `${fmt(MM(d.Np), 0)} × ${fmt(MM(d.Bp), 0)} mm ; ${fmt(d.fc, 0)} kgf/cm²`);
+  m.row("Pernos: filas a ±f del eje ; pernos por fila", `f = ${fmt(MM(d.f), 0)} mm ; ${nF} (${nT} en total)`);
+  if (d.resumenComb && d.resumenComb.length > 1) {
+    m.sub("Combinaciones de carga");
+    m.p(L`Se verificaron ${d.resumenComb.length} combinaciones; se desarrolla la crítica, la de mayor razón demanda/capacidad.`);
+    for (const c of d.resumenComb) {
+      const est = c.sinVer ? '<span class="tag warn">SIN VERIFICAR</span>' : tagDC(c.dcMax);
+      m.row(`Combinación ${c.i}${c.i === d.comb ? " (crítica)" : ""}: P<sub>u</sub> ; M<sub>u</sub> ; V<sub>u</sub>`, `${fmt(T(c.Pu), 2)} tf ; ${fmt(c.Mu / 1e5, 2)} tf·m ; ${fmt(T(c.Vu), 2)} tf ${est}`);
+    }
+    m.raw(L`\begin{table}[H]
+\centering
+\small
+\caption{Combinaciones verificadas.}
+\begin{tabular}{ccccc}
+\toprule
+Comb. & $P_u$ [tf] & $M_u$ [tf$\cdot$m] & $V_u$ [tf] & D/C máx.\\
+\midrule
+${d.resumenComb.map(c => `${c.i}${c.i === d.comb ? "*" : ""} & ${tn(T(c.Pu), 2)} & ${tn(c.Mu / 1e5, 2)} & ${tn(T(c.Vu), 2)} & ${c.sinVer ? "sin verificar" : tnT(c.dcMax, 3)}\\\\`).join("\n")}
+\bottomrule
+\end{tabular}
+\end{table}
+\noindent * Combinación crítica, desarrollada a continuación.
+`);
+  }
+  m.row(`Combinación desarrollada${d.resumenComb && d.resumenComb.length > 1 ? ` (${d.comb})` : ""}: P<sub>u</sub> ; M<sub>u</sub> ; V<sub>u</sub>`, `${fmt(T(d.Pu), 2)} tf ; ${fmt(d.Mu / 1e5, 2)} tf·m ; ${fmt(T(d.Vu), 2)} tf`);
+
+  // ---------- 2. Disposición de los pernos (común a todas las combinaciones) ----------
+  m.h("Pernos de anclaje: disposición");
+  const aG = d.ag / 2, cub = d.db > 1.6 ? 5 : 4;
+  const holgAla = d.f - aG - p.d / 2;                             // golilla al borde exterior del ala
+  m.p(L`Se usan dos filas de ${nF} pernos, fuera de las alas, a $\pm f$ del eje de la columna; en cada fila los pernos se reparten en el ancho $s_2$ (separación $s = s_2/(n-1) = ${tn(MM(sz), 0)}$ mm). La perforación de la placa se toma de la Tabla 4-46 del Manual ICHA y sobre ella va una golilla gruesa soldada en terreno, con perforación $d_a + 2$ mm.`);
+  m.row("Perno ; perforación en la placa", `ø${fmt(MM(d.db), 0)} mm ${ACEROS_PERNO[d.aceroP].nombre} ; ø${fmt(MM(d.dh), 0)} mm`, "Manual ICHA Tabla 4-46");
+  m.row("Golilla: lado × espesor", `${fmt(MM(d.ag), 0)} × ${fmt(MM(d.tg), 0)} mm`, "DG1 Tabla 2.3");
+  const holgOk = holgAla >= d.w - 1e-9;
+  m.row("Distancia libre de la golilla al ala ≥ w", `${holgAla >= 0 ? fmt(MM(holgAla), 1) + " mm" : "interfiere"} ${holgOk ? tag(true, "Cumple") : tag(false, holgAla >= 0 ? "sobre la soldadura" : "interfiere")}`);
+  m.eq(L`f - \frac{a_g}{2} - \frac{d}{2} = ${tn(MM(d.f), 1)} - ${tn(MM(aG), 1)} - ${tn(MM(p.d / 2), 1)} = ${tn(MM(holgAla), 1)}\ \mathrm{mm}`);
+  if (!holgOk) motivos.push(holgAla < 0 ? "las golillas interfieren con el perfil" : "las golillas quedan sobre la soldadura del perfil");
+  const sMin = (d.torque ? 6 : 4) * d.db, sReal = Math.min(sz, 2 * d.f), okS = sReal >= sMin - 1e-9;
+  m.row(`Separación mínima entre pernos: s ≥ ${d.torque ? 6 : 4}d<sub>a</sub>`, `${fmt(MM(sReal), 0)} ≥ ${fmt(MM(sMin), 0)} mm ${tag(okS, okS ? "Cumple" : "No cumple")}`, "ACI 318-08 D.8.1");
+  if (!okS) motivos.push("separación entre pernos menor que la mínima");
+  const eN = d.N / 2 - d.f, eB = (d.B - d.s2) / 2, ca1 = d.Np / 2 - d.f, ca2 = (d.Bp - d.s2) / 2, caMin = Math.min(ca1, ca2);
+  const okC = d.torque ? caMin >= 6 * d.db - 1e-9 : caMin - d.db / 2 >= cub - 1e-9;
+  m.row("Borde de la placa: N/2 − f ; (B − s<sub>2</sub>)/2", `${fmt(MM(eN), 0)} ; ${fmt(MM(eB), 0)} mm`);
+  m.row("Borde del pedestal: c<sub>a1</sub> = N<sub>p</sub>/2 − f ; c<sub>a2</sub>", `${fmt(MM(ca1), 0)} ; ${fmt(MM(ca2), 0)} mm`);
+  m.row(d.torque ? "Distancia mínima al borde con torque: c<sub>a,mín</sub> ≥ 6d<sub>a</sub>" : "Distancia mínima al borde sin torque: recubrimiento del perno ≥ recubrimiento mínimo",
+    d.torque ? `${fmt(MM(caMin), 0)} ≥ ${fmt(MM(6 * d.db), 0)} mm ${tag(okC, okC ? "Cumple" : "No cumple")}` : `${fmt(MM(caMin - d.db / 2), 0)} ≥ ${fmt(MM(cub), 0)} mm ${tag(okC, okC ? "Cumple" : "No cumple")}`, "ACI 318-08 D.8.2");
+  if (!okC) motivos.push("pernos demasiado cerca del borde del pedestal");
+
+  const r = { A1, eN, eB, ca1, ca2, holgura: holgAla, okS, okC, sz };
+  const fin = () => {
+    const falla = (re) => checks.some(c => re.test(c.k) && c.dc > 1 + 1e-9);
+    r.criticos = {
+      pedestal: falla(/Aplastamiento|Equilibrio|Arrancamiento|palanca|Extracción|Desprendimiento lateral|Llave: (aplastamiento|arrancamiento)/),
+      placa: falla(/Espesor|roce/),
+      pernos: falla(/acero de los pernos|golilla|Interacción|Armadura de anclaje/) || !holgOk || !okS || !okC || motivos.some(t => /dúctil|gancho|golillas/.test(t)),
+      llave: falla(/^Llave: (flexión|corte|soldadura)/) || motivos.some(t => /llave/.test(t)),
+      columna: falla(/^Soldadura|Metal base/) || motivos.some(t => /filete/.test(t)),
+    };
+    r.dcMax = checks.length ? Math.max(...checks.map(c => c.dc)) : 0;
+    r.sinVerificar = sinVer.length > 0;
+    r.ok = r.dcMax <= 1 + 1e-9 && !motivos.length && !r.sinVerificar;
+    return Object.assign(r, { checks, motivos, sinVer });
+  };
+
+  // ---------- 3. Presión bajo la placa ----------
+  m.h("Presión bajo la placa y excentricidad");
+  const rA = Math.min(d.Np / d.N, d.Bp / d.B), raiz = Math.min(rA, 2);
+  const fpMax = d.phic * 0.85 * d.fc * raiz;
+  const mV = (d.N - 0.95 * p.d) / 2, nV = (d.B - 0.8 * p.bf) / 2;
+  Object.assign(r, { rA, raiz, fpMax, mV, nV });
+  m.p(L`La presión máxima es la resistencia al aplastamiento por unidad de área, con el aumento $\sqrt{A_2/A_1} \le 2$ del área de apoyo semejante y $\phi_c = ${tn(d.phic, 2)}$ (${d.phic === 0.65 ? "AISC 360-16 J8" : "Especificación ICHA 13.9"}).`);
+  m.row("Presión máxima: f<sub>p,máx</sub>", `${fmt(fpMax, 1)} kgf/cm²`, d.phic === 0.65 ? "AISC 360-16 J8-2" : "Espec. ICHA 13.9.2");
+  m.eq(L`f_{p,m\acute{a}x} = \phi_c\,0.85\,f'_c\sqrt{\frac{A_2}{A_1}} = ${tn(d.phic, 2)}\cdot 0.85\cdot ${tn(d.fc, 0)}\cdot ${tn(raiz, 3)} = ${tn(fpMax, 1)}\ \mathrm{kgf/cm^2} \le \phi_c\,1.7\,f'_c`);
+  if (d.Pu <= 0) {
+    sinVer.push(`combinación ${d.comb} con tracción neta`);
+    m.note("La combinación tiene tracción neta (P<sub>u</sub> ≤ 0): en esta primera versión no se verifica la base con tracción y momento. Queda SIN VERIFICAR.", L`La combinación tiene tracción neta ($P_u \le 0$): en esta primera versión no se verifica la base con tracción y momento. Queda SIN VERIFICAR.`);
+    return fin();
+  }
+  const g = momentoDG1({ Pu: d.Pu, Mu: d.Mu, N: d.N, B: d.B, f: d.f, fpMax, Fy: d.Fy, mV, nV, dP: p.d, tf: p.tf });
+  Object.assign(r, g);
+  m.row("Carga lineal máxima: q<sub>máx</sub>", `${fmt(g.qMax, 1)} kgf/cm`);
+  m.eq(L`q_{m\acute{a}x} = f_{p,m\acute{a}x}\,B = ${tn(fpMax, 1)}\cdot ${tn(d.B, 1)} = ${tn(g.qMax, 1)}\ \mathrm{kgf/cm}`);
+  m.row("Excentricidad: e ; e<sub>crít</sub>", `${fmt(MM(g.e), 1)} ; ${fmt(MM(g.eCrit), 1)} mm · ${g.grande ? "momento grande" : "momento pequeño"}`, g.grande ? "DG1 3.4" : "DG1 3.3");
+  m.eq(L`e = \frac{M_u}{P_u} = \frac{${tn(d.Mu, 0)}}{${tn(d.Pu, 0)}} = ${tn(g.e, 2)}\ \mathrm{cm} \qquad e_{cr\acute{\imath}t} = \frac{N}{2} - \frac{P_u}{2\,q_{m\acute{a}x}} = \frac{${tn(d.N, 1)}}{2} - \frac{${tn(d.Pu, 0)}}{2\cdot ${tn(g.qMax, 1)}} = ${tn(g.eCrit, 2)}\ \mathrm{cm}`);
+  if (!g.grande) {
+    m.p(L`Como $e \le e_{cr\acute{\imath}t}$, la presión uniforme en el largo $Y = N - 2e$, centrado bajo la carga, equilibra $P_u$ y $M_u$ sin tracción en los pernos.`);
+    m.row("Largo de apoyo: Y", `${fmt(MM(g.Y), 1)} mm`, "DG1 3.3");
+    m.eq(L`Y = N - 2e = ${tn(d.N, 1)} - 2\cdot ${tn(g.e, 2)} = ${tn(g.Y, 2)}\ \mathrm{cm}`);
+    m.row("Presión de apoyo: f<sub>p</sub> ≤ f<sub>p,máx</sub>", `${fmt(g.fp, 1)} kgf/cm² ${tagDC(g.dcAp)}`, "DG1 3.3");
+    m.eq(L`f_p = \frac{P_u}{B\,Y} = \frac{${tn(d.Pu, 0)}}{${tn(d.B, 1)}\cdot ${tn(g.Y, 2)}} = ${tn(g.fp, 1)}\ \mathrm{kgf/cm^2} \qquad \frac{f_p}{f_{p,m\acute{a}x}} = ${tn(g.dcAp, 3)} ${cmp(g.dcAp)} 1.0`);
+    ck("Aplastamiento del hormigón", L`$f_p = ${tn(g.fp, 1)}$ kgf/cm$^2$`, L`$f_{p,max} = ${tn(fpMax, 1)}$ kgf/cm$^2$`, g.dcAp, "ap");
+  } else {
+    m.p(L`Como $e > e_{cr\acute{\imath}t}$, la presión alcanza su máximo en un largo $Y$ desde el borde comprimido y la fila de pernos del lado traccionado, a $f$ del eje, toma la tracción $T_u$. El equilibrio de fuerzas y de momentos respecto de esa fila tiene solución real solo si se cumple la condición siguiente; si no, hay que agrandar la placa.`);
+    m.row("Existencia de la solución: 2P<sub>u</sub>(e + f)/q<sub>máx</sub> ≤ (f + N/2)²", `${fmt(g.req, 0)} ≤ ${fmt(g.k2, 0)} cm² ${tagDC(g.dcSol)}`, "DG1 3.4");
+    m.eq(L`\left(f + \frac{N}{2}\right)^2 = \left(${tn(d.f, 1)} + ${tn(d.N / 2, 1)}\right)^2 = ${tn(g.k2, 0)}\ \mathrm{cm^2} \qquad \frac{2\,P_u\,(e + f)}{q_{m\acute{a}x}} = \frac{2\cdot ${tn(d.Pu, 0)}\,(${tn(g.e, 2)} + ${tn(d.f, 1)})}{${tn(g.qMax, 1)}} = ${tn(g.req, 0)}\ \mathrm{cm^2}`);
+    ck("Equilibrio con la presión máxima", L`$${tn(g.req, 0)}$ cm$^2$`, L`$${tn(g.k2, 0)}$ cm$^2$`, g.dcSol, "ap");
+    if (g.sinSolucion) {
+      m.note("No hay solución real: la placa es muy chica para el momento. Agrande N o B, o aleje la fila de pernos del eje (f).", L`No hay solución real: la placa es muy chica para el momento. Agrande $N$ o $B$, o aleje la fila de pernos del eje ($f$).`);
+      return fin();
+    }
+    m.row("Largo de apoyo: Y", `${fmt(MM(g.Y), 1)} mm`, "DG1 3.4");
+    m.eq(L`Y = \left(f + \frac{N}{2}\right) - \sqrt{\left(f + \frac{N}{2}\right)^2 - \frac{2\,P_u\,(e + f)}{q_{m\acute{a}x}}} = ${tn(d.f + d.N / 2, 2)} - \sqrt{${tn(g.k2, 0)} - ${tn(g.req, 0)}} = ${tn(g.Y, 2)}\ \mathrm{cm}`);
+    m.row("Tracción en la fila de pernos: T<sub>u</sub>", `${fmt(T(g.Tu), 2)} tf`, "DG1 3.4");
+    m.eq(L`T_u = q_{m\acute{a}x}\,Y - P_u = ${tn(g.qMax, 1)}\cdot ${tn(g.Y, 2)} - ${tn(d.Pu, 0)} = ${tn(g.Tu, 0)}\ \mathrm{kgf} = ${tn(T(g.Tu), 2)}\ \mathrm{tf}`);
+  }
+
+  // ---------- 4. Espesor ----------
+  m.h("Espesor de la placa base");
+  const fp = g.fp;
+  const eqApoyo = (l, nom, t) => (g.Y >= l
+    ? L`Y \ge ${nom}:\quad t_{${nom}} = ${nom}\sqrt{\frac{2\,f_p}{\phi\,F_y}} = ${tn(l, 2)}\sqrt{\frac{2\cdot ${tn(fp, 1)}}{0.90\cdot ${tn(d.Fy, 0)}}} = ${tn(t, 2)}\ \mathrm{cm}`
+    : L`Y < ${nom}:\quad t_{${nom}} = \sqrt{\frac{4\,f_p\,Y\,(${nom} - Y/2)}{\phi\,F_y}} = \sqrt{\frac{4\cdot ${tn(fp, 1)}\cdot ${tn(g.Y, 2)}\,(${tn(l, 2)} - ${tn(g.Y / 2, 2)})}{0.90\cdot ${tn(d.Fy, 0)}}} = ${tn(t, 2)}\ \mathrm{cm}`);
+  m.p(L`En el lado comprimido la placa trabaja como voladizo desde el perfil con la presión $f_p${g.grande ? L` = f_{p,m\acute{a}x}` : ""}$ en el largo $Y$; se evalúa con el voladizo $m$ y, como indica la Design Guide 1, también con $n$ en su lugar (las expresiones con $\phi = 0.90$ equivalen a los coeficientes 1.5 y 2.11 de la guía).${g.Tu > 0 ? L` En el lado traccionado, la fila de pernos flexiona la placa con el brazo $x = f - d/2 + t_f/2$ y el ancho $B$.` : ""}`);
+  m.row("Voladizos: m ; n", `${fmt(MM(mV), 1)} ; ${fmt(MM(nV), 1)} mm`);
+  m.eq(L`m = \frac{N - 0.95\,d}{2} = ${tn(mV, 2)}\ \mathrm{cm} \qquad n = \frac{B - 0.8\,b_f}{2} = ${tn(nV, 2)}\ \mathrm{cm}`);
+  m.row("Lado comprimido: t<sub>m</sub> ; t<sub>n</sub>", `${fmt(MM(g.tm), 1)} ; ${fmt(MM(g.tn), 1)} mm`, g.grande ? "DG1 3.4" : "DG1 3.3");
+  m.eq(eqApoyo(mV, "m", g.tm));
+  m.eq(eqApoyo(nV, "n", g.tn));
+  if (g.Tu > 0) {
+    m.row("Lado traccionado: x ; t<sub>T</sub>", `${fmt(MM(g.x), 1)} ; ${fmt(MM(g.tT), 1)} mm`, "DG1 3.4");
+    m.eq(L`x = f - \frac{d}{2} + \frac{t_f}{2} = ${tn(g.x, 2)}\ \mathrm{cm} \qquad t_T = \sqrt{\frac{4\,T_u\,x}{\phi\,F_y\,B}} = \sqrt{\frac{4\cdot ${tn(g.Tu, 0)}\cdot ${tn(g.x, 2)}}{0.90\cdot ${tn(d.Fy, 0)}\cdot ${tn(d.B, 1)}}} = ${tn(g.tT, 2)}\ \mathrm{cm}`);
+  }
+  const dcT = g.treq / d.tp;
+  m.row("Espesor requerido: t<sub>req</sub> ≤ t<sub>p</sub>", `${fmt(MM(g.treq), 1)} ≤ ${fmt(MM(d.tp), 0)} mm ${tagDC(dcT)}`);
+  ck("Espesor de la placa", L`$t_{req} = ${tn(MM(g.treq), 1)}$ mm`, L`$t_p = ${tn(MM(d.tp), 0)}$ mm`, dcT, "pl");
+
+  // ---------- 5. Corte ----------
+  m.h("Transferencia del corte");
+  const fC = d.sis === "no" ? 1 : 0.75, fR = d.sis === "red" ? 0.4 : 1;
+  const sisTxt = d.sis === "no" ? "" : d.sis === "red"
+    ? L` En sismo, las resistencias del hormigón se multiplican por 0.75 (D.3.3.3) y todas las del anclaje por 0.4 (D.3.3.6).`
+    : L` En sismo, las resistencias del hormigón se multiplican por 0.75 (D.3.3.3) y debe controlar la falla dúctil del acero (D.3.3.4).`;
+  const fTex = (c) => (c === 1 ? "" : L`\cdot ${tn(c, 2)}`);
+  const Ase = Math.PI / 4 * (d.db - 0.9743 * d.paso) ** 2;
+  const futa = Math.min(d.futa, 1.9 * d.fya, 860 / MPA);
+  const fcM = d.fc * MPA;
+  const dPal = Object.assign({}, d, { sMax: Math.max(2 * d.f, sz) });
+  let corteConc = Infinity, phiVsa = 0;
+  const cortePernos = d.modoV === "pernos" && d.Vu > 0;
+  if (d.Vu <= 0) m.p(L`No hay corte en esta combinación.`);
+  else if (d.modoV === "roce") {
+    const phiVf = d.phiR * d.mu * d.Pu, dcF = d.Vu / phiVf;
+    m.p(L`El corte se transmite por roce entre la placa y el grout con la compresión $P_u$ de la misma combinación (AISC Design Guide 1, sección 3.5). En diseño sísmico (NCh 2369) muchas veces no se acepta y el corte se asigna a los pernos o a una llave de corte.`);
+    m.row("Resistencia por roce: φμP<sub>u</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVf), 2)} tf ${tagDC(dcF)}`, "DG1 3.5");
+    m.eq(L`\phi\,\mu\,P_u = ${tn(d.phiR, 2)}\cdot ${tn(d.mu, 2)}\cdot ${tn(T(d.Pu), 2)} = ${tn(T(phiVf), 2)}\ \mathrm{tf} \qquad \frac{V_u}{\phi\mu P_u} = ${tn(dcF, 3)} ${cmp(dcF)} 1.0`);
+    ck("Corte por roce", L`$V_u = ${tn(T(d.Vu), 2)}$ tf`, L`$\phi\mu P_u = ${tn(T(phiVf), 2)}$ tf`, dcF, "v");
+  } else if (d.modoV === "llave") {
+    Object.assign(r, llaveCorte(d, m, d.Vu, ck, motivos));
+  } else {
+    m.p(L`El corte lo toman los ${nT} pernos, sin roce (todos trabajan gracias a las golillas soldadas). Expresiones del Apéndice D del ACI 318-08 en N, mm y MPa. Se considera ${d.fisurado ? "hormigón fisurado" : "hormigón no fisurado"} y sin armadura de anclaje para corte (condición B, $\phi = 0.70$).${sisTxt}`);
+    m.sub("Resistencia del acero del perno");
+    const Vsa = 0.6 * Ase * futa * (d.grout ? 0.8 : 1);
+    phiVsa = PHI_SV * nT * Vsa * fR;
+    const dcS = d.Vu / phiVsa;
+    m.row("Resistencia a corte del grupo: φV<sub>sa</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVsa), 2)} tf ${tagDC(dcS)}`, "ACI 318-08 D-20");
+    m.eq(L`\phi V_{sa} = \phi\,n\,(0.6\,A_{se}\,f_{uta})${d.grout ? L`\cdot 0.8` : ""}${fTex(fR)} = 0.65\cdot ${nT}\cdot 0.6\cdot ${tn(Ase, 3)}\cdot ${tn(futa, 0)}${d.grout ? L`\cdot 0.8` : ""}${fTex(fR)} = ${tn(T(phiVsa), 2)}\ \mathrm{tf}`, "D-20");
+    ck("Corte en el acero de los pernos", L`$V_u = ${tn(T(d.Vu), 2)}$ tf`, L`$\phi V_{sa} = ${tn(T(phiVsa), 2)}$ tf`, dcS, "v");
+    m.sub("Arrancamiento del hormigón por corte");
+    m.p(L`El corte actúa según $d$, hacia uno de los bordes $N_p$. Se revisan la fila frontal ($c_{a1} = N_p/2 - f$) con la mitad del corte y la trasera ($c_{a1} + 2f$) con todo el corte (D.6.2.1 y su comentario, perforaciones sobredimensionadas).`);
+    const casos = [["frontal", ca1, 0.5], ["trasera", ca1 + 2 * d.f, 1]].map(([nom, c, f]) => {
+      const a = arrancamientoCorte(d, c);
+      a.phiV *= fC * fR;
+      const dem = f * d.Vu, dc = dem / a.phiV;
+      corteConc = Math.min(corteConc, a.phiV / f);
+      m.row(`Fila ${nom}: c<sub>a1</sub> ; ψ<sub>ed,V</sub> ; ψ<sub>h,V</sub>`, `${fmt(a.ca1Real, 0)} mm ; ${fmt(a.psiEd, 3)} ; ${fmt(a.psiH, 3)}`, "D.6.2");
+      m.eq(L`V_b = ${tn(a.Vb / 1000, 2)}\ \mathrm{kN} \qquad A_{Vc} = ${tn(a.Avc, 0)}\ \mathrm{mm^2},\ A_{Vco} = ${tn(a.Avco, 0)}\ \mathrm{mm^2} \qquad \phi V_{cbg} = 0.70\,\frac{A_{Vc}}{A_{Vco}}\,\psi_{ed,V}\,\psi_{c,V}\,\psi_{h,V}\,V_b${fTex(fC * fR)} = ${tn(T(a.phiV), 2)}\ \mathrm{tf}`, "D-22");
+      m.row(`Fila ${nom}: φV<sub>cbg</sub> ≥ ${f === 1 ? "V<sub>u</sub>" : "V<sub>u</sub>/2"}`, `${fmt(T(a.phiV), 2)} tf ${tagDC(dc)}`, "ACI 318-08 D-22");
+      ck(`Arrancamiento por corte, fila ${nom}`, L`${f === 1 ? "$V_u$" : "$V_u/2$"} $= ${tn(T(dem), 2)}$ tf`, L`$\phi V_{cbg} = ${tn(T(a.phiV), 2)}$ tf`, dc, "v");
+      return { nom, ...a, dem, dc };
+    });
+    m.sub("Desprendimiento por palanca (pryout)");
+    const pr = palanca(dPal), phiVcp = pr.phiV * fC * fR, dcP = d.Vu / phiVcp;
+    corteConc = Math.min(corteConc, phiVcp);
+    m.eq(L`h'_{ef} = ${tn(pr.hp, 0)}\ \mathrm{mm} \qquad N_{cbg} = \frac{A_{Nc}}{A_{Nco}}\,\psi_{ed,N}\,\psi_{c,N}\,N_b = \frac{${tn(pr.ANc, 0)}}{${tn(pr.ANco, 0)}}\cdot ${tn(pr.psiEd, 3)}\cdot ${tn(pr.psiC, 2)}\cdot ${tn(pr.Nb / 1000, 2)} = ${tn(pr.Ncbg / 1000, 2)}\ \mathrm{kN}`, "D-5");
+    m.row("Resistencia por palanca: φV<sub>cpg</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVcp), 2)} tf ${tagDC(dcP)}`, "ACI 318-08 D-31");
+    m.eq(L`\phi V_{cpg} = 0.70\cdot ${pr.kcp}\cdot ${tn(pr.Ncbg / 1000, 2)}${fTex(fC * fR)} = ${tn(T(phiVcp), 2)}\ \mathrm{tf} \qquad \frac{V_u}{\phi V_{cpg}} = ${tn(dcP, 3)} ${cmp(dcP)} 1.0`, "D-31");
+    ck("Desprendimiento por palanca", L`$V_u = ${tn(T(d.Vu), 2)}$ tf`, L`$\phi V_{cpg} = ${tn(T(phiVcp), 2)}$ tf`, dcP, "v");
+    m.sub("Aplastamiento en la perforación de la golilla");
+    const dhg = d.db + 0.2, lc = d.ag / 2 - dhg / 2;
+    const Rn1 = Math.min(1.2 * lc * d.tg * d.Fu, 2.4 * d.db * d.tg * d.Fu), phiRb = 0.75 * nT * Rn1, dcB = d.Vu / phiRb;
+    m.row("Aplastamiento del grupo: φR<sub>n</sub> ≥ V<sub>u</sub>", `${fmt(T(phiRb), 2)} tf ${tagDC(dcB)}`, "AISC 360-16 J3-6a");
+    m.eq(L`R_n = \min(1.2\,l_c\,t_g\,F_u;\ 2.4\,d_a\,t_g\,F_u) = ${tn(Rn1, 0)}\ \mathrm{kgf},\ l_c = ${tn(MM(lc), 1)}\ \mathrm{mm} \qquad \phi R_n = 0.75\cdot ${nT}\cdot ${tn(Rn1, 0)} = ${tn(T(phiRb), 2)}\ \mathrm{tf}`, "J3-6a");
+    ck("Aplastamiento en la golilla", L`$V_u = ${tn(T(d.Vu), 2)}$ tf`, L`$\phi R_n = ${tn(T(phiRb), 2)}$ tf`, dcB, "v");
+    m.sub("Soldadura de las golillas a la placa");
+    const rnG = PHI_W * 0.6 * d.fexx * 0.707 * d.wg, phiRg = rnG * 4 * d.ag, demG = d.Vu / nT, dcG = demG / phiRg;
+    m.row(`Soldadura de una golilla: φR<sub>n</sub> ≥ V<sub>u</sub>/${nT}`, `${fmt(T(phiRg), 2)} tf ${tagDC(dcG)}`, "AISC 360-16 J2-4");
+    m.eq(L`\phi R_n = 0.75\cdot 0.60\cdot ${tn(d.fexx, 0)}\cdot 0.707\cdot ${tn(d.wg, 2)}\cdot 4\cdot ${tn(d.ag, 1)} = ${tn(T(phiRg), 2)}\ \mathrm{tf} \qquad \frac{V_u/${nT}}{\phi R_n} = ${tn(dcG, 3)} ${cmp(dcG)} 1.0`, "J2-4");
+    ck("Soldadura de las golillas", L`$V_u/${nT} = ${tn(T(demG), 2)}$ tf`, L`$\phi R_n = ${tn(T(phiRg), 2)}$ tf`, dcG, "v");
+    const tgm = MM(Math.min(d.tg, d.tp)), wgMin = (tgm <= 6 ? 3 : tgm <= 13 ? 5 : tgm <= 19 ? 6 : 8) / 10;
+    const wgMax = MM(d.tg) < 6 ? d.tg : d.tg - 0.2, okWg = d.wg >= wgMin - 1e-9 && d.wg <= wgMax + 1e-9;
+    m.row("Filete de la golilla: mínimo ; máximo en su borde", `${fmt(MM(wgMin), 0)} ; ${fmt(MM(wgMax), 0)} mm ${tag(okWg, okWg ? "Cumple" : "No cumple")}`, "AISC 360-16 Tabla J2.4, J2.2b");
+    if (!okWg) motivos.push(d.wg < wgMin ? `filete de las golillas menor que el mínimo (${fmt(MM(wgMin), 0)} mm)` : `filete de las golillas mayor que el máximo (${fmt(MM(wgMax), 0)} mm)`);
+    Object.assign(r, { Ase, futa, phiVsa, casos, pr, phiVcp });
+  }
+
+  // ---------- 6. Tracción en la fila de pernos ----------
+  m.h("Tracción en los pernos de anclaje");
+  let tracConc = Infinity, phiNsaF = 0;
+  if (!(g.Tu > 0)) {
+    m.p(L`Momento pequeño: la presión equilibra la carga y los pernos no trabajan a tracción en esta combinación.`);
+  } else {
+    const Nua = g.Tu / nF;
+    m.p(L`La tracción $T_u$ la toma la fila de ${nF} pernos del lado traccionado, por igual: $N_{ua} = T_u/${nF} = ${tn(T(Nua), 2)}$ tf por perno. El grupo traccionado es solo esa fila: su cono de hormigón se mide con su borde exterior $c_{a1} = N_p/2 - f$, sin borde hacia el interior, y con $\psi_{ec,N} = 1$ porque todos sus pernos tiran lo mismo.${sisTxt}`);
+    m.sub("Resistencia del acero a tracción");
+    const Nsa = Ase * futa, phiNsa = 0.75 * Nsa * fR, dcNs = Nua / phiNsa;
+    phiNsaF = nF * phiNsa;
+    m.row("Tracción en el acero, por perno: φN<sub>sa</sub> ≥ N<sub>ua</sub>", `${fmt(T(phiNsa), 2)} tf ${tagDC(dcNs)}`, "ACI 318-08 D-3");
+    m.eq(L`\phi N_{sa} = 0.75\,A_{se,N}\,f_{uta}${fTex(fR)} = 0.75\cdot ${tn(Ase, 3)}\cdot ${tn(futa, 0)}${fTex(fR)} = ${tn(T(phiNsa), 2)}\ \mathrm{tf} \qquad \frac{N_{ua}}{\phi N_{sa}} = ${tn(dcNs, 3)} ${cmp(dcNs)} 1.0`, "D-3");
+    ck("Tracción en el acero de los pernos", L`$N_{ua} = ${tn(T(Nua), 2)}$ tf`, L`$\phi N_{sa} = ${tn(T(phiNsa), 2)}$ tf`, dcNs, "t");
+    if (d.armAnc) {
+      m.sub("Armadura de anclaje a tracción");
+      const Ab = Math.PI / 4 * d.dbAr ** 2, phiNs = 0.75 * d.nAr * Ab * 4200 * fR, dcAr = g.Tu / phiNs;
+      m.p(L`La armadura de anclaje (A630-420H) junto a la fila traccionada reemplaza su cono de hormigón (D.5.2.9); las ramas efectivas son las que cruzan el cono de esa fila. Su desarrollo a ambos lados del plano de falla no se verifica aquí.`);
+      m.row("Armadura de anclaje: φA<sub>s</sub>f<sub>y</sub> ≥ T<sub>u</sub>", `${fmt(T(phiNs), 2)} tf ${tagDC(dcAr)}`, "ACI 318-08 D.5.2.9");
+      m.eq(L`\phi N_n = 0.75\,n\,A_b\,f_y${fTex(fR)} = 0.75\cdot ${d.nAr}\cdot ${tn(Ab, 3)}\cdot 4\,200${fTex(fR)} = ${tn(T(phiNs), 2)}\ \mathrm{tf}`, "D.5.2.9");
+      ck("Armadura de anclaje a tracción", L`$T_u = ${tn(T(g.Tu), 2)}$ tf`, L`$\phi A_s f_y = ${tn(T(phiNs), 2)}$ tf`, dcAr, "t");
+    } else {
+      m.sub("Arrancamiento del cono de hormigón por tracción");
+      const cf = conoFila(d), phiNcb = PHI_CV * cf.Ncbg * KGF * fC * fR, dcNc = g.Tu / phiNcb;
+      tracConc = Math.min(tracConc, phiNcb);
+      m.row("Fila traccionada: h'<sub>ef</sub> ; A<sub>Nc</sub>/A<sub>Nco</sub> ; ψ<sub>ed,N</sub> ; ψ<sub>c,N</sub>", `${fmt(cf.hp, 0)} mm ; ${fmt(cf.ANc / cf.ANco, 3)} ; ${fmt(cf.psiEd, 3)} ; ${fmt(cf.psiC, 2)}`, "ACI 318-08 D.5.2");
+      m.eq(L`A_{Nc} = \left[\min(c_{a1};\ 1.5h'_{ef}) + 1.5h'_{ef}\right]\left[2\min(c_{a2};\ 1.5h'_{ef}) + s_2\right] = ${tn(cf.ANc, 0)}\ \mathrm{mm^2} \qquad A_{Nco} = 9\,h_{ef}'^2 = ${tn(cf.ANco, 0)}\ \mathrm{mm^2}`, "D-6");
+      m.eq(L`N_{cbg} = \frac{A_{Nc}}{A_{Nco}}\,\psi_{ec,N}\,\psi_{ed,N}\,\psi_{c,N}\,N_b = \frac{${tn(cf.ANc, 0)}}{${tn(cf.ANco, 0)}}\cdot 1.0\cdot ${tn(cf.psiEd, 3)}\cdot ${tn(cf.psiC, 2)}\cdot ${tn(cf.Nb / 1000, 2)} = ${tn(cf.Ncbg / 1000, 2)}\ \mathrm{kN}`, "D-5");
+      if (cf.tres) m.p(L`Tres bordes del pedestal (el exterior y los laterales) están a menos de $1.5\,h_{ef}$: se usa $h'_{ef} = ${tn(cf.hp, 0)}$ mm (D.5.2.3).`);
+      m.row("Arrancamiento de la fila: φN<sub>cbg</sub> ≥ T<sub>u</sub>", `${fmt(T(phiNcb), 2)} tf ${tagDC(dcNc)}`, "ACI 318-08 D-5");
+      m.eq(L`\phi N_{cbg} = 0.70\cdot ${tn(cf.Ncbg / 1000, 2)}${fTex(fC * fR)} = ${tn(T(phiNcb), 2)}\ \mathrm{tf} \qquad \frac{T_u}{\phi N_{cbg}} = ${tn(dcNc, 3)} ${cmp(dcNc)} 1.0`, "D-5");
+      ck("Arrancamiento del hormigón por tracción", L`$T_u = ${tn(T(g.Tu), 2)}$ tf`, L`$\phi N_{cbg} = ${tn(T(phiNcb), 2)}$ tf`, dcNc, "t");
+      r.cono = cf;
+    }
+    m.sub("Extracción del perno (pullout)");
+    const da = MM(d.db), psiP = d.fisurado ? 1.0 : 1.4;
+    let Np, Abrg = 0;
+    if (d.cabeza === "tuerca") {
+      const F = 1.5 * da + 3;
+      Abrg = 0.866 * F * F - Math.PI / 4 * da * da;
+      Np = 8 * Abrg * fcM;
+      m.eq(L`A_{brg} = 0.866\,F^2 - \frac{\pi}{4}d_a^2 = ${tn(Abrg, 0)}\ \mathrm{mm^2} \qquad N_p = 8\,A_{brg}\,f'_c = ${tn(Np / 1000, 2)}\ \mathrm{kN}`, "D-15");
+    } else {
+      const ehm = MM(d.eh), ehU = Math.min(ehm, 4.5 * da), okEh = ehm >= 3 * da - 1e-9;
+      Np = 0.9 * fcM * ehU * da;
+      m.eq(L`N_p = 0.9\,f'_c\,e_h\,d_a = 0.9\cdot ${tn(fcM, 1)}\cdot ${tn(ehU, 0)}\cdot ${tn(da, 0)} = ${tn(Np / 1000, 2)}\ \mathrm{kN}`, "D-16");
+      m.row("Largo del gancho: 3d<sub>a</sub> ≤ e<sub>h</sub> ≤ 4.5d<sub>a</sub>", `${fmt(ehm, 0)} mm ${tag(okEh, okEh ? "Cumple" : 'menor que 3<span class="sim">d</span><sub>a</sub>')}`, "ACI 318-08 D.5.3.5");
+      if (!okEh) motivos.push("gancho del perno menor que 3 da");
+    }
+    const phiNpn = PHI_CV * psiP * Np * KGF * fC * fR, dcNp = Nua / phiNpn;
+    tracConc = Math.min(tracConc, nF * phiNpn);
+    m.row("Extracción por perno: φN<sub>pn</sub> ≥ N<sub>ua</sub>", `${fmt(T(phiNpn), 2)} tf ${tagDC(dcNp)}`, "ACI 318-08 D-14");
+    m.eq(L`\phi N_{pn} = 0.70\,\psi_{c,P}\,N_p${fTex(fC * fR)} = 0.70\cdot ${tn(psiP, 1)}\cdot ${tn(Np / 1000, 2)}${fTex(fC * fR)} = ${tn(T(phiNpn), 2)}\ \mathrm{tf} \qquad \frac{N_{ua}}{\phi N_{pn}} = ${tn(dcNp, 3)} ${cmp(dcNp)} 1.0`, "D-14");
+    ck("Extracción del perno", L`$N_{ua} = ${tn(T(Nua), 2)}$ tf`, L`$\phi N_{pn} = ${tn(T(phiNpn), 2)}$ tf`, dcNp, "t");
+    if (d.cabeza === "tuerca") {
+      // D.5.4: la fila junto al borde exterior (c = c_a1) y, si están cerca, los pernos de esquina hacia el borde lateral (c = c_a2)
+      const hefm = MM(d.hef), ce = MM(ca1), c2 = MM(ca2), Nsb = (c) => 13 * c * Math.sqrt(Abrg) * Math.sqrt(fcM);
+      const casosSb = [];
+      if (ce < 0.4 * hefm) {
+        const s = MM(d.s2), grupo = MM(sz) < 6 * ce;
+        const fEsq = c2 < 3 * ce ? (1 + Math.min(c2 / ce, 3)) / 4 : 1;
+        const Nsbg = grupo ? (1 + s / (6 * ce)) * Nsb(ce) : nF * fEsq * Nsb(ce);
+        casosSb.push({ txt: "fila junto al borde exterior", c: ce, Nsbg, dem: g.Tu, demTxt: "T_u", ec: grupo ? L`N_{sbg} = \left(1 + \frac{s}{6c_{a1}}\right)N_{sb} = \left(1 + \frac{${tn(s, 0)}}{6\cdot ${tn(ce, 0)}}\right)${tn(Nsb(ce) / 1000, 2)}` : L`${nF}\,N_{sb}${fEsq !== 1 ? L`\,\frac{1 + c_{a2}/c_{a1}}{4}` : ""}`, ref: grupo ? "D-18" : "D-17" });
+      }
+      if (c2 < 0.4 * hefm) {
+        const fEsq = ce < 3 * c2 ? (1 + Math.min(ce / c2, 3)) / 4 : 1;
+        casosSb.push({ txt: "perno de esquina hacia el borde lateral", c: c2, Nsbg: fEsq * Nsb(c2), dem: Nua, demTxt: "N_{ua}", ec: L`N_{sb}${fEsq !== 1 ? L`\,\frac{1 + c_{a1}/c_{a2}}{4}` : ""}`, ref: "D-17" });
+      }
+      if (!casosSb.length) m.p(L`Desprendimiento lateral: no aplica, porque las distancias al borde ($${tn(ce, 0)}$ y $${tn(c2, 0)}$ mm) no son menores que $0.4\,h_{ef} = ${tn(0.4 * hefm, 0)}$ mm (D.5.4.1).`);
+      for (const cs of casosSb) {
+        m.sub(`Desprendimiento lateral (side-face blowout): ${cs.txt}`);
+        const phiNsb = PHI_CV * cs.Nsbg * KGF * fC * fR, dcSb = cs.dem / phiNsb;
+        tracConc = Math.min(tracConc, phiNsb * g.Tu / cs.dem);
+        m.eq(L`N_{sb} = 13\,c\sqrt{A_{brg}}\,\lambda\sqrt{f'_c} = 13\cdot ${tn(cs.c, 0)}\sqrt{${tn(Abrg, 0)}}\sqrt{${tn(fcM, 1)}} = ${tn(Nsb(cs.c) / 1000, 2)}\ \mathrm{kN} \qquad ${cs.ec} = ${tn(cs.Nsbg / 1000, 2)}\ \mathrm{kN}`, cs.ref);
+        m.row(`Desprendimiento lateral, ${cs.txt}: φN<sub>sb</sub> ≥ ${cs.demTxt === "T_u" ? "T<sub>u</sub>" : "N<sub>ua</sub>"}`, `${fmt(T(phiNsb), 2)} tf ${tagDC(dcSb)}`, `ACI 318-08 ${cs.ref}`);
+        ck(`Desprendimiento lateral, ${cs.txt}`, L`$${cs.demTxt} = ${tn(T(cs.dem), 2)}$ tf`, L`$\phi N_{sb} = ${tn(T(phiNsb), 2)}$ tf`, dcSb, "t");
+      }
+    }
+    Object.assign(r, { Nua, phiNsa, phiNpn, Np, Abrg });
+    if (cortePernos) {
+      m.sub("Interacción tracción – corte");
+      const tr = checks.filter(c => c.grupo === "t"), co = checks.filter(c => c.grupo === "v" && !/golilla/.test(c.k));
+      const bN = Math.max(...tr.map(c => c.dc)), bV = Math.max(...co.map(c => c.dc));
+      const dcI = (bN + bV) / 1.2;
+      m.row("Razones de tracción y de corte: N<sub>ua</sub>/φN<sub>n</sub> ; V<sub>ua</sub>/φV<sub>n</sub>", `${fmt(bN, 3)} ; ${fmt(bV, 3)}`, "ACI 318-08 D.7");
+      if (bV <= 0.2 || bN <= 0.2) m.p(L`Como ${bV <= 0.2 ? L`$V_{ua}/\phi V_n = ${tn(bV, 3)} \le 0.2$, se permite la resistencia completa a tracción (D.7.1)` : L`$N_{ua}/\phi N_n = ${tn(bN, 3)} \le 0.2$, se permite la resistencia completa a corte (D.7.2)`}.`);
+      else {
+        m.row("Interacción: N<sub>ua</sub>/φN<sub>n</sub> + V<sub>ua</sub>/φV<sub>n</sub> ≤ 1.2", `${fmt(bN + bV, 3)} ${tagDC(dcI)}`, "ACI 318-08 D-32");
+        m.eq(L`\frac{N_{ua}}{\phi N_n} + \frac{V_{ua}}{\phi V_n} = ${tn(bN, 3)} + ${tn(bV, 3)} = ${tn(bN + bV, 3)} ${bN + bV <= 1.2 ? LE : ">"} 1.2`, "D-32");
+        ck("Interacción tracción–corte", L`$${tn(bN + bV, 3)}$`, "1.2", dcI, "t");
+      }
+      m.p(L`Se usa la razón de corte del grupo completo junto con la de tracción de la fila traccionada, lo que es conservador.`);
+    }
+  }
+  if (d.sis === "ductil" && (g.Tu > 0 || cortePernos)) {
+    m.sub("Sismo: falla dúctil del anclaje");
+    const okT = !(g.Tu > 0) || phiNsaF < tracConc, okV = !cortePernos || phiVsa < corteConc;
+    if (g.Tu > 0) m.row("Tracción: acero de la fila &lt; menor modo del hormigón", `${fmt(T(phiNsaF), 2)} ; ${Number.isFinite(tracConc) ? fmt(T(tracConc), 2) : "—"} tf ${tag(okT, okT ? "Dúctil" : "No dúctil")}`, "ACI 318-08 D.3.3.4");
+    if (cortePernos) m.row("Corte: acero del grupo &lt; menor modo del hormigón", `${fmt(T(phiVsa), 2)} ; ${fmt(T(corteConc), 2)} tf ${tag(okV, okV ? "Dúctil" : "No dúctil")}`, "ACI 318-08 D.3.3.4");
+    if (!okT || !okV) motivos.push(`anclaje no dúctil en sismo (${[!okT && "tracción", !okV && "corte"].filter(Boolean).join(" y ")}, D.3.3.4)`);
+  }
+
+  // ---------- 7. Soldadura ----------
+  m.h("Soldadura columna – placa");
+  const hw = p.d - 2 * p.tf - 2 * p.r, Lw = 2 * hw, Lala = 2 * p.bf - p.tw;
+  const rn = PHI_W * 0.6 * d.fexx * 0.707 * d.w;
+  const Fala = d.Mu / (p.d - p.tf), Ft = Fala - d.Pu / 2, Fc = Fala + d.Pu / 2;
+  const Fw = Math.max(d.contacto ? 0 : Fc, Ft, 0);
+  m.p(L`El momento pasa por las alas como un par de fuerzas de brazo $d - t_f$, y la compresión se reparte por mitades: el ala traccionada lleva $M_u/(d - t_f) - P_u/2$ y la comprimida $M_u/(d - t_f) + P_u/2$. ${d.contacto ? "Con contacto pleno, la compresión pasa por apoyo directo (Especificación ICHA 13.1.4) y la soldadura del ala toma la tracción." : "Sin contacto pleno, la soldadura del ala toma la mayor de las dos fuerzas."} El alma toma el corte.`);
+  m.row("Fuerzas en las alas: traccionada ; comprimida", `${fmt(T(Ft), 2)} ; ${fmt(T(Fc), 2)} tf`);
+  m.eq(L`F_{ala} = \frac{M_u}{d - t_f} \pm \frac{P_u}{2} = \frac{${tn(d.Mu, 0)}}{${tn(p.d - p.tf, 2)}} \pm \frac{${tn(d.Pu, 0)}}{2} = ${tn(T(Ft), 2)}\ ;\ ${tn(T(Fc), 2)}\ \mathrm{tf}`);
+  if (Fw <= 0) m.p(L`Ninguna ala queda traccionada${d.contacto ? "" : " y la compresión es nula"}: la soldadura de las alas no recibe fuerza en esta combinación.`);
+  else if (d.soldAla === "cjp") {
+    const phiRc = 0.9 * d.Fy * p.bf * p.tf, dcC = Fw / phiRc;
+    m.row("Ala con penetración completa: φF<sub>y</sub>b<sub>f</sub>t<sub>f</sub> ≥ F<sub>ala</sub>", `${fmt(T(phiRc), 2)} tf ${tagDC(dcC)}`, "AISC 360-16 Tabla J2.5");
+    m.eq(L`\phi R_n = 0.90\,F_y\,b_f\,t_f = 0.90\cdot ${tn(d.Fy, 0)}\cdot ${tn(p.bf, 1)}\cdot ${tn(p.tf, 2)} = ${tn(T(phiRc), 2)}\ \mathrm{tf} \qquad \frac{${tn(T(Fw), 2)}}{${tn(T(phiRc), 2)}} = ${tn(dcC, 3)} ${cmp(dcC)} 1.0`, "Tabla J2.5");
+    m.p(L`Con soldadura de penetración completa y electrodo compatible, controla el metal base (tracción normal al eje de la soldadura).`);
+    ck("Soldadura del ala (penetración completa)", L`$F_{ala} = ${tn(T(Fw), 2)}$ tf`, L`$\phi R_n = ${tn(T(phiRc), 2)}$ tf`, dcC, "w");
+  } else {
+    const qA = Fw / Lala, dcA = qA / rn;
+    m.row("Soldadura del ala, filete en ambas caras: q ≤ φr<sub>n</sub>", `${fmt(qA, 1)} ≤ ${fmt(rn, 1)} kgf/cm ${tagDC(dcA)}`, "AISC 360-16 J2-4");
+    m.eq(L`L_{ala} = 2\,b_f - t_w = ${tn(MM(Lala), 0)}\ \mathrm{mm} \qquad q = \frac{F_{ala}}{L_{ala}} = \frac{${tn(Fw, 0)}}{${tn(Lala, 2)}} = ${tn(qA, 1)}\ \mathrm{kgf/cm} \qquad \phi r_n = 0.75\cdot 0.60\cdot ${tn(d.fexx, 0)}\cdot 0.707\cdot ${tn(d.w, 2)} = ${tn(rn, 1)}\ \mathrm{kgf/cm}`, "J2-4");
+    m.p(L`Se usa la resistencia del filete sin el aumento por carga transversal (J2-5), lo que es conservador.`);
+    ck("Soldadura del ala (filete)", L`$q = ${tn(qA, 1)}$ kgf/cm`, L`$\phi r_n = ${tn(rn, 1)}$ kgf/cm`, dcA, "w");
+  }
+  const qW = d.Vu / Lw, dcWw = qW / rn;
+  m.row("Soldadura del alma, filete en ambas caras: q ≤ φr<sub>n</sub>", `${fmt(qW, 1)} ≤ ${fmt(rn, 1)} kgf/cm ${tagDC(dcWw)}`, "AISC 360-16 J2-4");
+  m.eq(L`L_w = 2\,(d - 2t_f - 2r) = ${tn(MM(Lw), 0)}\ \mathrm{mm} \qquad q = \frac{V_u}{L_w} = \frac{${tn(d.Vu, 0)}}{${tn(Lw, 2)}} = ${tn(qW, 1)}\ \mathrm{kgf/cm}`, "J2-4");
+  ck("Soldadura del alma (filete)", L`$q = ${tn(qW, 1)}$ kgf/cm`, L`$\phi r_n = ${tn(rn, 1)}$ kgf/cm`, dcWw, "w");
+  const phiVy = 1.0 * 0.6 * d.Fy * p.tw * hw, dcMB = d.Vu / phiVy;
+  m.row("Metal base del alma, fluencia por corte: φR<sub>n</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVy), 2)} tf ${tagDC(dcMB)}`, "AISC 360-16 J4-3");
+  m.eq(L`\phi R_n = 1.0\cdot 0.60\,F_y\,t_w\,h_w = 0.60\cdot ${tn(d.Fy, 0)}\cdot ${tn(p.tw, 2)}\cdot ${tn(hw, 2)} = ${tn(T(phiVy), 2)}\ \mathrm{tf}`, "J4-3");
+  ck("Metal base del alma", L`$V_u = ${tn(T(d.Vu), 2)}$ tf`, L`$\phi R_n = ${tn(T(phiVy), 2)}$ tf`, dcMB, "w");
+  const wTabla = (tcm) => { const t = MM(tcm); return (t <= 6 ? 3 : t <= 13 ? 5 : t <= 19 ? 6 : 8) / 10; };
+  const wMinAlma = wTabla(Math.min(p.tw, d.tp)), wMinAla = d.soldAla === "filete" ? wTabla(Math.min(p.tf, d.tp)) : 0, wMin = Math.max(wMinAlma, wMinAla);
+  const okMin = d.w >= wMin - 1e-9;
+  m.row(d.soldAla === "filete" ? "Tamaño mínimo del filete: alma ; alas" : "Tamaño mínimo del filete del alma", `${d.soldAla === "filete" ? fmt(MM(wMinAlma), 0) + " ; " + fmt(MM(wMinAla), 0) : fmt(MM(wMinAlma), 0)} mm ${tag(okMin, okMin ? "Cumple" : "No cumple")}`, "AISC 360-16 Tabla J2.4");
+  if (!okMin) motivos.push(`filete menor que el mínimo (${fmt(MM(wMin), 0)} mm)`);
+  m.p(L`Las placas atiesadoras (sillas) para momentos grandes no se consideran en esta versión.`);
+  Object.assign(r, { hw, Lw, Lala, rn, Fala, Ft, Fc, Fw, phiVy, wMin });
+  return fin();
+}
+
+// ---------------------------------------------------------------------------
 // Dibujo: planta y elevación (SVG en pantalla y TikZ en la memoria). Escala en mm.
 // ---------------------------------------------------------------------------
 function contornoI(p) {   // contorno de la sección I en mm, centrada; x según d, z según bf
@@ -944,7 +1416,7 @@ function svgBase(d, r) {
   const NAR = "#e65c00", mal = r.criticos.columna ? NAR : "#7d8796", malPl = r.criticos.placa ? NAR : "#c3c9d1", malPed = r.criticos.pedestal ? "#f6d2bb" : "#eef0f2", malPer = r.criticos.pernos ? NAR : "#c62828";
   const I = contornoI(d.p).map(([x, z]) => `${X(z).toFixed(1)},${Y(x).toFixed(1)}`).join(" ");
   const ag = MM(d.ag) * k;
-  const pernos = [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([a, b]) => `<rect x="${X(b * MM(d.s2) / 2) - ag / 2}" y="${Y(a * MM(d.s1) / 2) - ag / 2}" width="${ag}" height="${ag}" fill="#dfe3e8" stroke="${c}"/><circle cx="${X(b * MM(d.s2) / 2)}" cy="${Y(a * MM(d.s1) / 2)}" r="${MM(d.dh) / 2 * k}" fill="#fff" stroke="${c}"/><circle cx="${X(b * MM(d.s2) / 2)}" cy="${Y(a * MM(d.s1) / 2)}" r="${MM(d.db) / 2 * k}" fill="${malPer}" stroke="none"/>`).join("");
+  const pernos = posPernos(d).map(([xc, zc]) => { const px = X(MM(zc)), py = Y(MM(xc)); return `<rect x="${px - ag / 2}" y="${py - ag / 2}" width="${ag}" height="${ag}" fill="#dfe3e8" stroke="${c}"/><circle cx="${px}" cy="${py}" r="${MM(d.dh) / 2 * k}" fill="#fff" stroke="${c}"/><circle cx="${px}" cy="${py}" r="${MM(d.db) / 2 * k}" fill="${malPer}" stroke="none"/>`; }).join("");
   const cota = (x1, y1, x2, y2, s, tx, ty, a = "middle") => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#8a93a0"/>${t(tx, ty, s, a, 10)}`;
   const planta = `<rect x="${X(-Bp / 2)}" y="${Y(Np / 2)}" width="${Bp * k}" height="${Np * k}" fill="${malPed}" stroke="#8a93a0" stroke-dasharray="5 3"/>
     <rect x="${X(-B / 2)}" y="${Y(N / 2)}" width="${B * k}" height="${N * k}" fill="${malPl}" stroke="${c}" stroke-width="1.4"/>
@@ -953,7 +1425,7 @@ function svgBase(d, r) {
     ${cota(X(-B / 2), Y(-N / 2) + 14, X(B / 2), Y(-N / 2) + 14, `B = ${fmt(B, 0)}`, ox, Y(-N / 2) + 26)}
     ${cota(X(B / 2) + 14, Y(N / 2), X(B / 2) + 14, Y(-N / 2), `N = ${fmt(N, 0)}`, X(B / 2) + 18, oy + 4, "start")}
     ${cota(X(-MM(d.s2) / 2), Y(N / 2) - 10, X(MM(d.s2) / 2), Y(N / 2) - 10, `s₂ = ${fmt(MM(d.s2), 0)}`, ox, Y(N / 2) - 14)}
-    ${cota(X(-B / 2) - 12, Y(MM(d.s1) / 2), X(-B / 2) - 12, Y(-MM(d.s1) / 2), `s₁ = ${fmt(MM(d.s1), 0)}`, X(-B / 2) - 16, oy + 4, "end")}
+    ${cota(X(-B / 2) - 12, Y(MM(d.s1) / 2), X(-B / 2) - 12, Y(-MM(d.s1) / 2), d.emp ? `2f = ${fmt(MM(d.s1), 0)}` : `s₁ = ${fmt(MM(d.s1), 0)}`, X(-B / 2) - 16, oy + 4, "end")}
     ${t(ox, Y(-Np / 2) + 16, `pedestal ${fmt(Bp, 0)} × ${fmt(Np, 0)}`, "middle", 9.5)}
     <path d="M${X(-Bp / 2) - 26},${Y(-40)} L${X(-Bp / 2) - 26},${Y(40)}" stroke="#c0392b" stroke-width="1.6" marker-end="url(#fl)"/>${t(X(-Bp / 2) - 30, Y(0) + 4, "V", "end", 10)}
     ${t(ox, 26, "PLANTA", "middle", 11)}`;
@@ -972,7 +1444,8 @@ function svgBase(d, r) {
     ${t(EX(N / 2) + 6, EY(eg + tp / 2) + 4, `t<tspan font-size="8" dy="2">p</tspan><tspan dy="-2"> = ${fmt(tp, 0)}</tspan>`, "start", 10)}
     ${t(EX(N / 2) + 6, EY(eg / 2) + 12, `grout ${fmt(eg, 0)}`, "start", 9.5)}
     ${t(EX(MM(d.s1) / 2) + 8, EY(-MM(d.hef) / 2), `h<tspan font-size="8" dy="2">ef</tspan><tspan dy="-2"> = ${fmt(MM(d.hef), 0)}</tspan>`, "start", 10)}
-    ${t(EX(0), 26, "ELEVACIÓN (según d)", "middle", 11)}`;
+    ${t(EX(0), 26, "ELEVACIÓN (según d)", "middle", 11)}
+    ${d.emp ? (() => { const ym = EY(eg + tp + col * 0.55), xa = EX(-MM(d.p.d) / 2) - 14, xb = EX(MM(d.p.d) / 2) + 14, rr = (xb - xa) * 0.6; return `<path d="M${xa},${ym} A ${rr} ${rr} 0 0 1 ${xb},${ym}" fill="none" stroke="#c0392b" stroke-width="1.6" marker-end="url(#fl)"/>${t(xb + 6, ym + 4, "M", "start", 10.5)}`; })() : ""}`;
   const W = ex0 + Np * kv + 90, Ht = Math.max(40 + Np * k + 40, EY(-hP) + 26);
   return `<svg viewBox="0 0 ${W.toFixed(0)} ${Ht.toFixed(0)}" role="img" aria-label="Planta y elevación de la placa base">
     <defs><marker id="fl" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#c0392b"/></marker></defs>
@@ -983,7 +1456,7 @@ function svgBase(d, r) {
 function tikzBase(d, r) {
   const k = 7 / Math.max(MM(d.Np), MM(d.Bp)), f = (v) => (v * k).toFixed(3);
   const I = contornoI(d.p).map(([x, z]) => `(${f(z)},${f(x)})`).join(" -- ");
-  const pernos = [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([a, b]) => L`\draw (${f(b * MM(d.s2) / 2)},${f(a * MM(d.s1) / 2)}) circle (${f(MM(d.dh) / 2)});`).join("\n");
+  const pernos = posPernos(d).map(([xc, zc]) => L`\draw (${f(MM(zc))},${f(MM(xc))}) circle (${f(MM(d.dh) / 2)});`).join("\n");
   const Np = MM(d.Np), Bp = MM(d.Bp), N = MM(d.N), B = MM(d.B);
   return L`\begin{figure}[H]
 \centering
@@ -1011,24 +1484,37 @@ function documentoTex(d, r, cuerpo) {
     fila("Columna", L`${p.nombre}: $d = ${tn(MM(p.d), 0)}$, $b_f = ${tn(MM(p.bf), 0)}$, $t_f = ${tn(MM(p.tf), 1)}$, $t_w = ${tn(MM(p.tw), 1)}$ mm`),
     fila(L`Placa $N \times B \times t_p$`, L`${tn(MM(d.N), 0)} $\times$ ${tn(MM(d.B), 0)} $\times$ ${tn(MM(d.tp), 0)} mm, ${ACEROS[d.acero].nombre} ($F_y = ${tn(d.Fy, 0)}$ kgf/cm$^2$)`),
     fila("Pedestal", L`${tn(MM(d.Np), 0)} $\times$ ${tn(MM(d.Bp), 0)} mm, $h_a = ${tn(MM(d.ha), 0)}$ mm, $f'_c = ${tn(d.fc, 0)}$ kgf/cm$^2$, grout ${tn(MM(d.eg), 0)} mm`),
-    fila("Pernos", L`${N_PERNOS} ø${tn(MM(d.db), 0)} mm ${ACEROS_PERNO[d.aceroP].nombre}, $h_{ef} = ${tn(MM(d.hef), 0)}$ mm, $s_1 = ${tn(MM(d.s1), 0)}$, $s_2 = ${tn(MM(d.s2), 0)}$ mm`),
-    fila("Soldadura", L`filete ${tn(MM(d.w), 0)} mm en todo el contorno, $F_{EXX} = ${tn(d.fexx, 0)}$ kgf/cm$^2$`),
-    fila("Cargas mayoradas", L`$P_u = ${tn(T(d.Pu), 2)}$ tf, $P_{u,min} = ${tn(T(d.Pmin), 2)}$ tf, $V_u = ${tn(T(d.Vu), 2)}$ tf, $T_u = ${tn(T(d.Tu), 2)}$ tf`),
+    d.emp
+      ? fila("Pernos", L`2 filas de ${d.nFila} ø${tn(MM(d.db), 0)} mm ${ACEROS_PERNO[d.aceroP].nombre}, $h_{ef} = ${tn(MM(d.hef), 0)}$ mm, $f = ${tn(MM(d.f), 0)}$ mm, $s_2 = ${tn(MM(d.s2), 0)}$ mm`)
+      : fila("Pernos", L`${N_PERNOS} ø${tn(MM(d.db), 0)} mm ${ACEROS_PERNO[d.aceroP].nombre}, $h_{ef} = ${tn(MM(d.hef), 0)}$ mm, $s_1 = ${tn(MM(d.s1), 0)}$, $s_2 = ${tn(MM(d.s2), 0)}$ mm`),
+    d.emp
+      ? fila("Soldadura", L`alas: ${d.soldAla === "cjp" ? "penetración completa" : L`filete ${tn(MM(d.w), 0)} mm en ambas caras`}; alma: filete ${tn(MM(d.w), 0)} mm; $F_{EXX} = ${tn(d.fexx, 0)}$ kgf/cm$^2$`)
+      : fila("Soldadura", L`filete ${tn(MM(d.w), 0)} mm en todo el contorno, $F_{EXX} = ${tn(d.fexx, 0)}$ kgf/cm$^2$`),
+    d.emp
+      ? fila("Cargas mayoradas", L`${d.combos.length} combinaci${d.combos.length > 1 ? "ones" : "ón"}; crítica: $P_u = ${tn(T(d.Pu), 2)}$ tf, $M_u = ${tn(d.Mu / 1e5, 2)}$ tf$\cdot$m, $V_u = ${tn(T(d.Vu), 2)}$ tf`)
+      : fila("Cargas mayoradas", L`$P_u = ${tn(T(d.Pu), 2)}$ tf, $P_{u,min} = ${tn(T(d.Pmin), 2)}$ tf, $V_u = ${tn(T(d.Vu), 2)}$ tf, $T_u = ${tn(T(d.Tu), 2)}$ tf`),
     fila("Transferencia del corte", { pernos: "pernos de anclaje", roce: "roce placa--grout", llave: L`llave de corte ${tn(MM(d.bL), 0)} $\times$ ${tn(MM(d.tL), 0)} mm, $H_L = ${tn(MM(d.HL), 0)}$ mm` }[d.modoV]),
   ].join("\n");
   const resumen = r.checks.map(c => `${c.k} & ${c.dem} & ${c.cap} & ${tnT(c.dc, 3)} & ${estado(c.dc)}\\\\`).join("\n");
   const alcance = [
-    L`\textbf{Versión de prueba}: la herramienta está en desarrollo y sus resultados aún no se han validado contra ejemplos publicados.`,
-    L`Base articulada: compresión o tracción concéntrica y corte, sin momento. La tracción se reparte por igual entre los ${N_PERNOS} pernos y se supone concomitante con todo el corte; no se considera el efecto de palanca en la placa.`,
+    d.emp
+      ? L`\textbf{Versión de prueba}: la herramienta está en desarrollo; el procedimiento con momento se comprobó contra ejemplos publicados, pero el resto de la herramienta aún no se ha validado.`
+      : L`\textbf{Versión de prueba}: la herramienta está en desarrollo y sus resultados aún no se han validado contra ejemplos publicados.`,
+    d.emp
+      ? L`Base empotrada con momento en el eje fuerte, según la AISC Design Guide 1 (2.ª ed.) con presión rectangular bajo la placa. La tracción de la fila de pernos se reparte por igual entre sus ${d.nFila} pernos; su cono de hormigón es el de esa fila sola. No se consideran placas atiesadoras (sillas), el momento en el eje débil ni la tracción neta con momento: una combinación con $P_u \le 0$ queda sin verificar.`
+      : L`Base articulada: compresión o tracción concéntrica y corte, sin momento. La tracción se reparte por igual entre los ${N_PERNOS} pernos y se supone concomitante con todo el corte; no se considera el efecto de palanca en la placa.`,
     d.sis !== "no" ? L`Sismo según ACI 318-08 D.3.3: resistencias del hormigón por 0.75${d.sis === "red" ? " y todas las del anclaje por 0.4 (D.3.3.6)" : " y verificación de falla dúctil del acero (D.3.3.4)"}.` : L`Sin las exigencias sísmicas de D.3.3; si la combinación incluye sismo (NCh 433, NCh 2369), elija la opción de sismo.`,
     d.armAnc ? L`La armadura de anclaje a tracción reemplaza el cono de hormigón (D.5.2.9); su desarrollo a ambos lados del plano de falla debe verificarse aparte.` : "",
-    L`El espesor de la placa sigue la AISC Design Guide 1 con presión uniforme. El aplastamiento usa $\phi_c = ${tn(d.phic, 2)}$.`,
+    d.emp ? L`El espesor de la placa sigue la AISC Design Guide 1: lado comprimido con los voladizos $m$ y $n$ y lado traccionado con el brazo $x = f - d/2 + t_f/2$ en el ancho $B$. El aplastamiento usa $\phi_c = ${tn(d.phic, 2)}$.` : L`El espesor de la placa sigue la AISC Design Guide 1 con presión uniforme. El aplastamiento usa $\phi_c = ${tn(d.phic, 2)}$.`,
     L`Los pernos se verifican con el Apéndice D del ACI 318-08${d.armAnc ? "" : ", sin armadura de anclaje en el pedestal"}; con perforaciones sobredimensionadas se exigen golillas soldadas, cuya soldadura se verifica cuando el corte va por los pernos. Pernos ${d.torque ? "con" : "sin"} apriete controlado (D.8).`,
-    d.modoV === "roce" ? L`El corte por roce supone compresión permanente concomitante; NCh 2369 suele no aceptarlo en sismo.` : "",
+    d.modoV === "roce" ? (d.emp ? L`El corte por roce usa la compresión $P_u$ de la misma combinación; NCh 2369 suele no aceptarlo en sismo.` : L`El corte por roce supone compresión permanente concomitante; NCh 2369 suele no aceptarlo en sismo.`) : "",
     d.modoV === "llave" ? L`La llave de corte sigue la AISC Design Guide 1 (2.ª ed., 3.5): aplastamiento con ACI 318-08 10.14.1, flexión F11-1 y corte J4-3 de la llave, soldadura con el momento como par de fuerzas de brazo $t_L$ y arrancamiento del hormigón con el criterio de ACI 349; exige grout que la rodee completamente.` : "",
     L`No se verifican el pedestal (armaduras, corte, flexión), el traspaso de cargas a la fundación, la estabilidad de montaje ni las tolerancias.`,
   ].filter(Boolean).map(t => `\\item ${t}`).join("\n");
-  const concl = L`Por lo tanto, como la relación demanda-capacidad máxima es $D/C = ${tn(r.dcMax, 3)}$ ${r.dcMax <= 1 ? L`$\le 1.0$` : L`$> 1.0$`}${r.motivos.length ? ` y ${r.motivos.join(", ")}` : ""}, la placa base \textbf{${r.ok ? "cumple" : "no cumple"}} con las verificaciones indicadas.`;
+  const conclSv = r.sinVerificar ? L` Además, queda \textbf{sin verificar}: ${r.sinVer.join("; ")}.` : "";
+  const concl = r.sinVerificar && !r.falla
+    ? L`La relación demanda-capacidad máxima de lo verificado es $D/C = ${tn(r.dcMax, 3)}$, pero la placa base queda \textbf{sin verificar}: ${r.sinVer.join("; ")}.`
+    : L`Por lo tanto, como la relación demanda-capacidad máxima es $D/C = ${tn(r.dcMax, 3)}$ ${r.dcMax <= 1 ? L`$\le 1.0$` : L`$> 1.0$`}${r.motivos.length ? ` y ${r.motivos.join(", ")}` : ""}, la placa base \textbf{${r.ok ? "cumple" : "no cumple"}} con las verificaciones indicadas.${conclSv}`;
   return L`\documentclass[11pt,letterpaper]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -1044,7 +1530,7 @@ ${TEX_ESTILO}
 \setlength{\headheight}{14pt}
 \pagestyle{fancy}
 \fancyhf{}
-\chead{Placa base articulada (versión de prueba)}
+\chead{Placa base ${d.emp ? "empotrada" : "articulada"} (versión de prueba)}
 \lfoot{Memoria de cálculo --- Placa base, AISC 360-16 y ACI 318-08}
 \rfoot{\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
@@ -1055,7 +1541,7 @@ ${TEX_ESTILO}
 
 \begin{center}
 {\Large\bfseries Memoria de Cálculo}\\[4pt]
-{\large Placa base articulada de columna de acero}\\[2pt]
+{\large Placa base ${d.emp ? "empotrada" : "articulada"} de columna de acero}\\[2pt]
 {\small\bfseries VERSIÓN DE PRUEBA}\\[2pt]
 ${tn(MM(d.N), 0)} $\times$ ${tn(MM(d.B), 0)} $\times$ ${tn(MM(d.tp), 0)} mm\\[2pt]
 {\small ${fecha}}
@@ -1106,7 +1592,31 @@ ${concl}
 // ---------------------------------------------------------------------------
 // Cálculo e interfaz
 // ---------------------------------------------------------------------------
+// Textos de la cabecera y campos según el programa (articulada o empotrada)
+function ajustarTipo() {
+  const emp = esEmpotrada();
+  $("titBase").textContent = emp ? "Placa base empotrada" : "Placa base articulada";
+  $("subBase").textContent = emp
+    ? "Columna de acero sobre pedestal · Compresión, momento en el eje fuerte y corte: presión, espesor, pernos traccionados, corte y soldadura · AISC Design Guide 1, AISC 360-16 y ACI 318-08 Apéndice D"
+    : "Columna de acero sobre pedestal · Aplastamiento, espesor, corte y tracción en los pernos, llave de corte y soldadura · AISC 360-16, Design Guide 1 y ACI 318-08 Apéndice D";
+  $("alcBase").textContent = emp
+    ? "Base empotrada con momento en el eje fuerte: no considera placas atiesadoras (sillas), tracción neta con momento (queda sin verificar) ni las armaduras del pedestal."
+    : "Solo cubre bases articuladas (compresión o tracción concéntrica y corte): no verifica momento en la base ni las armaduras del pedestal.";
+  document.title = emp ? "Placa base empotrada" : "Placa Base";
+  $("cargasArt").classList.toggle("hidden", emp);
+  $("cargasEmp").classList.toggle("hidden", !emp);
+  for (let i = 1; i <= 6; i++) $(`combRow${i}`).classList.toggle("hidden", !emp || i > nCombos());
+  $("s1Box").classList.toggle("hidden", emp);
+  $("fBox").classList.toggle("hidden", !emp);
+  $("nFilaBox").classList.toggle("hidden", !emp);
+  $("alaBox").classList.toggle("hidden", !emp);
+  $("pernosLeg").textContent = emp ? `(2 filas de ${$("nFila").value})` : "(4 pernos)";
+  $("esqNota").innerHTML = emp
+    ? "Planta (N según el alto d del perfil, B según el ala) y elevación · dos filas de pernos fuera de las alas, a ±f del eje, repartidas en s<sub>2</sub> · M<sub>u</sub> en el eje fuerte"
+    : "Planta (N según el alto d del perfil, B según el ala) y elevación · 4 pernos en (±s<sub>1</sub>/2, ±s<sub>2</sub>/2)";
+}
 function calcular() {
+  ajustarTipo();
   $("roceBox").classList.toggle("hidden", $("modoV").value !== "roce");
   $("llaveBox").classList.toggle("hidden", $("modoV").value !== "llave");
   $("llaveNota").classList.toggle("hidden", $("modoV").value !== "llave");
@@ -1123,6 +1633,7 @@ function calcular() {
   if (!malos.length) {
     const p = perfil();
     if (num("N") / 10 <= 0.95 * p.d || num("B") / 10 <= 0.8 * p.bf) { $("N").classList.add("invalido"); $("B").classList.add("invalido"); malos = ["La placa debe ser más grande que el perfil (N > 0.95 d y B > 0.8 b<sub>f</sub>)"]; }
+    else if (esEmpotrada() && num("fP") / 10 <= p.d / 2) { $("fP").classList.add("invalido"); malos = ["Las filas de pernos deben quedar fuera de las alas (f > d/2)"]; }
     else if ($("modoV").value === "llave" && num("HL") < num("eg") + 25) { $("HL").classList.add("invalido"); malos = ["La llave debe penetrar al menos 25 mm en el hormigón bajo el grout (H<sub>L</sub> ≥ grout + 25 mm)"]; }
   }
   const limpiar = (msg) => {
@@ -1133,8 +1644,24 @@ function calcular() {
   };
   if (malos.length) { limpiar(avisoInvalidos(malos)); return; }
   const d = leerDatos();
-  const m = new Memo();
-  const r = verificar(d, m);
+  let m = new Memo(), r;
+  if (d.emp) {
+    // Todas las combinaciones (memoria descartada); se desarrolla la crítica, la de mayor D/C entre las verificadas
+    const res = d.combos.map(c => {
+      const rr = verificarEmpotrada(Object.assign({}, d, { Pu: c.Pu, Mu: c.Mu, Vu: c.Vu, comb: c.i }), new Memo());
+      return { ...c, dcMax: rr.dcMax, sinVer: rr.sinVerificar, r: rr };
+    });
+    const ver = res.filter(x => !x.sinVer);
+    const crit = (ver.length ? ver : res).reduce((a, x) => (x.dcMax > a.dcMax ? x : a));
+    Object.assign(d, { Pu: crit.Pu, Mu: crit.Mu, Vu: crit.Vu, comb: crit.i, resumenComb: res.map(({ r, ...x }) => x) });
+    r = verificarEmpotrada(d, m);
+    // El veredicto reúne los motivos y lo sin verificar de todas las combinaciones
+    r.motivos = [...new Set(res.flatMap(x => x.r.motivos).concat(r.motivos))];
+    r.sinVer = [...new Set(res.flatMap(x => x.r.sinVer))];
+    r.sinVerificar = r.sinVer.length > 0;
+    r.falla = r.dcMax > 1 + 1e-9 || r.motivos.length > 0;
+    r.ok = !r.falla && !r.sinVerificar;
+  } else r = verificar(d, m);
 
   const peor = (g) => r.checks.filter(c => c.grupo === g).reduce((a, c) => (c.dc > (a?.dc ?? -1) ? c : a), null);
   const ap = peor("ap"), pl = peor("pl"), v = peor("v"), w = peor("w"), t = peor("t");
@@ -1144,17 +1671,20 @@ function calcular() {
     return `<div class="card"><div class="t">${t}</div><div class="v">${fmt(c.dc, 3)}</div><div class="bar ${c.dc > 1 + 1e-9 ? "bad" : ""}"><i style="width:${wd}%"></i></div><div class="s">${s}</div></div>`;
   };
   $("summary").innerHTML = [
-    card("Aplastamiento del hormigón", ap, `φ<sub>c</sub>P<sub>p</sub> = ${fmt(T(r.phiPp), 1)} tf`),
-    card("Espesor de la placa", pl, `t<sub>req</sub> = ${fmt(MM(Math.max(r.treq, r.treqT || 0)), 1)} mm / t<sub>p</sub> = ${fmt(MM(d.tp), 0)} mm`),
+    d.emp
+      ? card(r.grande ? "Equilibrio (momento grande)" : "Aplastamiento (momento pequeño)", ap, Number.isFinite(r.e) ? `comb. ${d.comb} · e = ${fmt(MM(r.e), 0)} mm · e<sub>crít</sub> = ${fmt(MM(r.eCrit), 0)} mm` : `comb. ${d.comb}`)
+      : card("Aplastamiento del hormigón", ap, `φ<sub>c</sub>P<sub>p</sub> = ${fmt(T(r.phiPp), 1)} tf`),
+    card("Espesor de la placa", pl, Number.isFinite(r.treq) ? `t<sub>req</sub> = ${fmt(MM(Math.max(r.treq, r.treqT || 0)), 1)} mm / t<sub>p</sub> = ${fmt(MM(d.tp), 0)} mm` : "sin calcular"),
     card("Corte", v, v ? `más exigido: ${v.k.toLowerCase()}` : "sin corte"),
-    card("Tracción en los pernos", t, t ? `más exigido: ${t.k.toLowerCase()}` : "sin levantamiento"),
-    card("Soldadura", w, `filete ${fmt(MM(d.w), 0)} mm en todo el contorno`),
+    card("Tracción en los pernos", t, t ? `más exigido: ${t.k.toLowerCase()}` : d.emp ? "sin tracción en los pernos" : "sin levantamiento"),
+    card("Soldadura", w, d.emp ? `alas: ${d.soldAla === "cjp" ? "penetración completa" : `filete ${fmt(MM(d.w), 0)} mm`} · alma: filete ${fmt(MM(d.w), 0)} mm` : `filete ${fmt(MM(d.w), 0)} mm en todo el contorno`),
   ].join("");
 
   $("resTitle").textContent = `Resultados — Placa base ${fmt(MM(d.N), 0)} × ${fmt(MM(d.B), 0)} × ${fmt(MM(d.tp), 0)} mm · ${d.p.nombre}`;
   const rm = Number.isFinite(r.dcMax) ? fmt(r.dcMax, 3) : "∞";
   const fallas = [...r.checks.filter(c => c.dc > 1 + 1e-9).map(c => c.k.toLowerCase()), ...r.motivos];
-  const txt = r.ok ? "✔ La placa base CUMPLE" : `✘ La placa base NO CUMPLE (${fallas.join(", ")})`;
+  const sv = r.sinVerificar ? `SIN VERIFICAR: ${r.sinVer.join("; ")}` : "";
+  const txt = r.ok ? "✔ La placa base CUMPLE" : fallas.length ? `✘ La placa base NO CUMPLE (${fallas.join(", ")}${sv ? `; además ${sv}` : ""})` : `✘ La placa base queda ${sv}`;
   $("verdict").innerHTML = `<div class="verdict ${r.ok ? "ok" : "bad"}">${txt} — razón máxima = ${rm}</div>`
     + `<div class="note">Versión de prueba: compruebe el resultado a mano antes de usarlo.</div>`;
   $("dibujo").innerHTML = svgBase(d, r);
@@ -1162,7 +1692,7 @@ function calcular() {
 
   ultimoR = r; ultimoD = d;
   ultimoTex = documentoTex(d, r, m.texto());
-  ultimoNombre = `memoria_placa_base_${fmt(MM(d.N), 0)}x${fmt(MM(d.B), 0)}x${fmt(MM(d.tp), 0)}.tex`;
+  ultimoNombre = `memoria_placa_base_${d.emp ? "empotrada_" : ""}${fmt(MM(d.N), 0)}x${fmt(MM(d.B), 0)}x${fmt(MM(d.tp), 0)}.tex`;
 }
 
 // ---------------------------------------------------------------------------
@@ -1174,8 +1704,8 @@ function descargarDXF() {
   const N = MM(d.N), B = MM(d.B), tp = MM(d.tp), Np = MM(d.Np), Bp = MM(d.Bp), eg = MM(d.eg), s1 = MM(d.s1), s2 = MM(d.s2);
   const db = MM(d.db), dh = MM(d.dh), hef = MM(d.hef), dP = MM(p.d), tf = MM(p.tf), col = 400, ag = MM(d.ag), tg = MM(d.tg);
   const grado = { 170: "G17", 200: "G20", 250: "G25", 300: "G30", 350: "G35", 400: "G40" }[d.fc] || `f'c = ${d.fc} kgf/cm²`;
-  const pl = new PlanoDXF({ titulo: `PLACA BASE ${fmt(N, 0)} x ${fmt(B, 0)} x ${fmt(tp, 0)} mm`, contenido: "planta, elevación y especificaciones (versión de prueba)" });
-  const PER = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
+  const pl = new PlanoDXF({ titulo: `PLACA BASE ${d.emp ? "EMPOTRADA " : ""}${fmt(N, 0)} x ${fmt(B, 0)} x ${fmt(tp, 0)} mm`, contenido: "planta, elevación y especificaciones (versión de prueba)" });
+  const PER = posPernos(d).map(([x, z]) => [MM(x), MM(z)]), nP = PER.length;
   pl.vista({
     titulo: "Planta", bbox: [-Bp / 2 - 120, -Np / 2 - 120, Bp / 2 + 160, Np / 2 + 100], objetivo: [170, 170], margen: [22, 20, 40, 10],
     dibujar: (v) => {
@@ -1184,11 +1714,11 @@ function descargarDXF() {
       v.poly("SECCION", contornoI(p).map(([x, z]) => [z, x]));
       v.line("EJES", -Bp / 2 - 80, 0, Bp / 2 + 80, 0); v.line("EJES", 0, -Np / 2 - 80, 0, Np / 2 + 80);
       if (d.modoV === "llave") { const bL = MM(d.bL), tL = MM(d.tL); v.poly("OCULTO", [[-bL / 2, -tL / 2], [bL / 2, -tL / 2], [bL / 2, tL / 2], [-bL / 2, tL / 2]]); }
-      for (const [a, b] of PER) { const X = b * s2 / 2, Y = a * s1 / 2; v.circle("OCULTO", X, Y, dh / 2); v.poly("CONTORNO", [[X - ag / 2, Y - ag / 2], [X + ag / 2, Y - ag / 2], [X + ag / 2, Y + ag / 2], [X - ag / 2, Y + ag / 2]]); v.circle("ARMADURA", X, Y, db / 2); }
-      v.referencia(s2 / 2, s1 / 2, B / 2 + v.pp(10), N / 2 + v.pp(4), `4 pernos %%c${fmt(db, 0)} - perf. %%c${fmt(dh, 0)}`, "TEXTOS");
+      for (const [Y, X] of PER) { v.circle("OCULTO", X, Y, dh / 2); v.poly("CONTORNO", [[X - ag / 2, Y - ag / 2], [X + ag / 2, Y - ag / 2], [X + ag / 2, Y + ag / 2], [X - ag / 2, Y + ag / 2]]); v.circle("ARMADURA", X, Y, db / 2); }
+      v.referencia(s2 / 2, s1 / 2, B / 2 + v.pp(10), N / 2 + v.pp(4), `${nP} pernos %%c${fmt(db, 0)} - perf. %%c${fmt(dh, 0)}`, "TEXTOS");
       v.cotaH(-B / 2, B / 2, -N / 2, -10, `B = ${fmtCota(B)}`); v.cotaH(-s2 / 2, s2 / 2, N / 2, 6, `s2 = ${fmtCota(s2)}`);
       v.cotaH(-Bp / 2, Bp / 2, -Np / 2, -18, `Bp = ${fmtCota(Bp)}`);
-      v.cotaV(-N / 2, N / 2, B / 2, 10, `N = ${fmtCota(N)}`); v.cotaV(-s1 / 2, s1 / 2, -B / 2, -6, `s1 = ${fmtCota(s1)}`);
+      v.cotaV(-N / 2, N / 2, B / 2, 10, `N = ${fmtCota(N)}`); v.cotaV(-s1 / 2, s1 / 2, -B / 2, -6, d.emp ? `2f = ${fmtCota(s1)}` : `s1 = ${fmtCota(s1)}`);
       v.cotaV(-Np / 2, Np / 2, -Bp / 2, -16, `Np = ${fmtCota(Np)}`);
       v.text("TEXTOS", 0, -Np / 2 - v.pp(26), 2.2, `Columna ${p.nombre}`, 1, 0);
     },
@@ -1227,10 +1757,10 @@ function descargarDXF() {
     titulo: "Cuadro de elementos", columnas: [["Elemento", 34], ["Descripción", 70], ["Cant.", 12]],
     filas: [
       ["Placa base", `PL ${fmt(N, 0)} x ${fmt(B, 0)} x ${fmt(tp, 0)} mm, ${ACEROS[d.acero].nombre}`, "1"],
-      ["Pernos de anclaje", `%%c${fmt(db, 0)} mm ${ACEROS_PERNO[d.aceroP].nombre}, hef = ${fmt(hef, 0)} mm`, "4"],
-      ["Perforaciones", `%%c${fmt(dh, 0)} mm (Tabla 4-46 Manual ICHA)`, "4"],
-      ["Golillas", `${fmt(MM(d.ag), 0)} x ${fmt(MM(d.ag), 0)} x ${fmt(MM(d.tg), 0)} mm, perf. %%c${fmt(db + 2, 0)}, filete ${fmt(MM(d.wg), 0)} mm en terreno`, "4"],
-      ["Soldadura", `Filete ${fmt(MM(d.w), 0)} mm todo el contorno, ${d.fexx >= 4900 ? "E70XX" : "E60XX"}`, "-"],
+      ["Pernos de anclaje", `%%c${fmt(db, 0)} mm ${ACEROS_PERNO[d.aceroP].nombre}, hef = ${fmt(hef, 0)} mm`, `${nP}`],
+      ["Perforaciones", `%%c${fmt(dh, 0)} mm (Tabla 4-46 Manual ICHA)`, `${nP}`],
+      ["Golillas", `${fmt(MM(d.ag), 0)} x ${fmt(MM(d.ag), 0)} x ${fmt(MM(d.tg), 0)} mm, perf. %%c${fmt(db + 2, 0)}, filete ${fmt(MM(d.wg), 0)} mm en terreno`, `${nP}`],
+      ["Soldadura", d.emp ? `Alas: ${d.soldAla === "cjp" ? "penetración completa" : `filete ${fmt(MM(d.w), 0)} mm ambas caras`}; alma: filete ${fmt(MM(d.w), 0)} mm; ${d.fexx >= 4900 ? "E70XX" : "E60XX"}` : `Filete ${fmt(MM(d.w), 0)} mm todo el contorno, ${d.fexx >= 4900 ? "E70XX" : "E60XX"}`, "-"],
       ["Grout", `Sin retracción, ${fmt(eg, 0)} mm`, "-"],
       ...(d.modoV === "llave" ? [["Llave de corte", `PL ${fmt(MM(d.bL), 0)} x ${fmt(MM(d.tL), 0)} x ${fmt(MM(d.HL), 0)} mm, filete ${fmt(MM(d.wL), 0)} mm ambas caras`, "1"]] : []),
     ],
@@ -1239,8 +1769,11 @@ function descargarDXF() {
     "VERSION DE PRUEBA: verificar el cálculo a mano antes de construir.",
     "Cotas en mm. No medir sobre el plano.",
     `Acero de la placa ${ACEROS[d.acero].nombre}; fabricación y montaje según NCh 428. Hormigón del pedestal ${grado} según NCh 170.`,
-    `Diseño: AISC 360-16 y AISC Design Guide 1 (placa y soldadura), ACI 318-08 Apéndice D (pernos). Razón D/C máxima ${Number.isFinite(r.dcMax) ? fmt(r.dcMax, 3) : "infinita"}${r.ok ? " (cumple)" : " (NO CUMPLE)"}.`,
-    `Corte transmitido por ${{ pernos: "los pernos de anclaje", roce: "roce placa-grout", llave: "llave de corte" }[d.modoV]}. Base articulada${d.Tu > 0 ? `; tracción de diseño ${fmt(T(d.Tu), 2)} tf en los 4 pernos` : ": sin tracción en los pernos"}.`,
+    `Diseño: AISC 360-16 y AISC Design Guide 1 (placa y soldadura), ACI 318-08 Apéndice D (pernos). Razón D/C máxima ${Number.isFinite(r.dcMax) ? fmt(r.dcMax, 3) : "infinita"}${r.ok ? " (cumple)" : r.sinVerificar && !r.falla ? " (SIN VERIFICAR)" : " (NO CUMPLE)"}.`,
+    `Corte transmitido por ${{ pernos: "los pernos de anclaje", roce: "roce placa-grout", llave: "llave de corte" }[d.modoV]}. ${d.emp
+      ? `Base empotrada; combinación crítica ${d.comb}: Pu = ${fmt(T(d.Pu), 2)} tf, Mu = ${fmt(d.Mu / 1e5, 2)} tf-m, Vu = ${fmt(T(d.Vu), 2)} tf${r.Tu > 0 ? `; tracción ${fmt(T(r.Tu), 2)} tf en la fila de ${d.nFila} pernos` : ""}`
+      : `Base articulada${d.Tu > 0 ? `; tracción de diseño ${fmt(T(d.Tu), 2)} tf en los 4 pernos` : ": sin tracción en los pernos"}`}.`,
+    ...(r.sinVerificar ? [`SIN VERIFICAR: ${r.sinVer.join("; ")}.`] : []),
     ...(d.modoV === "llave" ? ["Rellenar con grout todo el espacio alrededor de la llave; dejar perforación de inyección en la placa."] : []),
     ...(d.armAnc ? [`Armadura de anclaje: ${d.nAr} ramas %%c${fmt(MM(d.dbAr), 0)} A630-420H junto a los pernos, desarrolladas a ambos lados del plano de falla (verificar aparte).`] : []),
     ...(d.sis !== "no" ? ["Anclaje diseñado con las exigencias sísmicas de ACI 318-08 D.3.3."] : []),
@@ -1249,7 +1782,21 @@ function descargarDXF() {
   descargarPlano(pl, `plano_placa_base_${fmt(N, 0)}x${fmt(B, 0)}x${fmt(tp, 0)}.dxf`);
 }
 
+// Geometría por defecto de cada programa: al cambiar de programa, los campos que siguen con el valor por defecto del
+// otro toman el de este (lo que el usuario escribió se conserva).
+const DEF_TIPO = {
+  articulada: { N: 350, B: 300, tp: 20, Np: 500, Bp: 500, modoV: "pernos" },
+  empotrada: { N: 450, B: 350, tp: 40, Np: 750, Bp: 650, modoV: "roce" },
+};
+function defectosTipo(tipo) {
+  const otro = DEF_TIPO[tipo === "empotrada" ? "articulada" : "empotrada"], este = DEF_TIPO[tipo];
+  for (const k in este) if ($(k).value === String(otro[k])) $(k).value = este[k];
+}
 function init() {
+  const q = new URLSearchParams(location.search).get("tipo");
+  if (q === "articulada" || q === "empotrada") $("tipo").value = q;
+  if ($("tipo").value === "empotrada") defectosTipo("empotrada");
+  $("tipo").addEventListener("change", () => defectosTipo($("tipo").value));
   llenarPerfiles();
   $("serie").addEventListener("change", () => { llenarPerfiles(); calcular(); });
   $("db").addEventListener("change", () => { const g = GOLILLA[$("db").value]; $("ag").value = g[0]; $("tg").value = g[1]; $("wg").value = g[1] >= 6 ? g[1] - 2 : g[1]; });
@@ -1280,8 +1827,8 @@ window.Zona2D3D?.montar({
     if (d.modoV === "llave") e.caja({ mat: c.llave ? "critico" : "acero" }, -MM(d.tL) / 2, MM(d.tL) / 2, eg - MM(d.HL), eg, -MM(d.bL) / 2, MM(d.bL) / 2);
     const perfilI = Geo3D.dobleT(MM(p.bf), MM(p.d), MM(p.tw), MM(p.tf), MM(p.r));
     e.extruir({ mat: c.columna ? "critico" : "acero" }, perfilI, eg + tp, eg + tp + 600, (u, v, w) => [v, w, u]);
-    for (const [a, b] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
-      const x = a * s1 / 2, z = b * s2 / 2;
+    for (const [xc, zc] of posPernos(d)) {
+      const x = MM(xc), z = MM(zc);
       e.tubo({ mat: c.pernos ? "critico" : "armadura" }, [x, -hef, z], [x, eg + tp + 1.6 * db + 10, z], db / 2);
       const ag = MM(d.ag), tg = MM(d.tg);
       e.caja({ mat: "acero" }, x - ag / 2, x + ag / 2, eg + tp, eg + tp + tg, z - ag / 2, z + ag / 2);
@@ -1292,7 +1839,7 @@ window.Zona2D3D?.montar({
 });
 // Integración con proyectos (proyectos.js): datos para guardar y restaurar este cálculo
 window.AURA_MEMO = {
-  tipo: "Placa base articulada (prueba)",
+  get tipo() { return esEmpotrada() ? "Placa base empotrada (prueba)" : "Placa base articulada (prueba)"; },
   elemento: () => "", tex: () => ultimoTex, nombre: () => ultimoNombre,
   recalcular: (v) => { llenarPerfiles(); if (v && v.perfil) $("perfil").value = v.perfil; calcular(); },
 };
