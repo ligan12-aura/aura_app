@@ -1,15 +1,35 @@
-# Ficha normativa: Placa base articulada (versión de prueba)
+# Ficha normativa: Placa base articulada y empotrada (versión de prueba)
 
-Base articulada de columna de acero de sección I sobre un pedestal de hormigón, con compresión y corte. La placa sigue la AISC Design Guide 1, el aplastamiento y la soldadura la AISC 360-16 y los pernos el Apéndice D del ACI 318-08. Es una **versión de prueba**: los resultados aún no se han validado contra ejemplos publicados.
+Placa base de columna de acero de sección I sobre un pedestal de hormigón, en dos programas de la misma página: articulada (`?tipo=articulada`, compresión o tracción concéntrica y corte) y empotrada (`?tipo=empotrada`, compresión, momento en el eje fuerte y corte). La placa sigue la AISC Design Guide 1, el aplastamiento y la soldadura la AISC 360-16 y los pernos el Apéndice D del ACI 318-08. Es una **versión de prueba**: la articulada aún no se ha validado contra ejemplos publicados; en la empotrada solo el procedimiento con momento (`momentoDG1`) se comprobó contra ejemplos publicados de momento grande.
 
 Documentos: AISC 360-16 (español); ACI 318-08 (español); Manual de Diseño ICHA 2000 (Instituto Chileno del Acero). La AISC Design Guide 1 (2.ª ed.) no está en el proyecto.
 
 ## Criterios y límites
 
+### Articulada
+
 - No verifica momento en la base ni las armaduras del pedestal. La tracción T_u es concéntrica, se reparte por igual entre los 4 pernos y se supone concomitante con todo el corte; no se considera el efecto de palanca en la placa.
 - Con levantamiento (T_u > 0) no se acepta el roce: el corte va por los pernos o por la llave.
 - Sismo (opción): resistencias del hormigón por 0.75 (D.3.3.3) y, a elección, falla dúctil del acero (D.3.3.4: la resistencia del acero debe ser menor que la del menor modo del hormigón) o 0.4 × todas las resistencias (D.3.3.6).
 - Armadura de anclaje a tracción (opción): reemplaza el cono de hormigón con 0.75 n A_b f_y (A630-420H); su desarrollo a ambos lados del plano de falla no se verifica.
+
+### Empotrada
+
+- Procedimiento de la AISC Design Guide 1 (2.ª ed., LRFD) con presión rectangular bajo la placa y momento en el eje fuerte. Presión máxima f_p,máx = φc 0.85 f'c √(A2/A1), con √(A2/A1) ≤ 2; q_máx = f_p,máx B; e = M_u/P_u; e_crít = N/2 − P_u/(2 q_máx).
+- Momento pequeño (e ≤ e_crít): Y = N − 2e, f_p = P_u/(B Y), sin tracción en los pernos; la tarjeta y la razón D/C son f_p/f_p,máx.
+- Si P_u > q_máx N (e_crít < 0), la compresión supera el aplastamiento de toda la placa: falla "Aplastamiento del hormigón" con D/C = P_u/(q_máx N) y no se sigue calculando.
+- Momento grande (e > e_crít): la solución existe si (f + N/2)² ≥ 2 P_u (e + f)/q_máx (se informa como D/C "equilibrio con la presión máxima"; si no se cumple, no se sigue calculando y hay que agrandar la placa). Y = (f + N/2) − √((f + N/2)² − 2 P_u (e + f)/q_máx) y T_u = q_máx Y − P_u.
+- Espesor del lado comprimido con m y, como indica la guía, también con n en su lugar: Y ≥ ℓ, t = ℓ √(2 f_p/(φ F_y)); Y < ℓ, t = √(4 f_p Y (ℓ − Y/2)/(φ F_y)), con φ = 0.90 (equivalen a los coeficientes 1.5 y 2.11 de la guía). Lado traccionado: x = f − d/2 + t_f/2 y t = √(4 T_u x/(φ F_y B)). No se usa el factor λn' de Thornton.
+- Pernos: dos filas de n = 2, 3 o 4 pernos fuera de las alas, a ±f del eje, repartidos en s2. La fila traccionada toma T_u por igual (N_ua = T_u/n). Su cono (D.5.2) es el de la fila sola: borde exterior c_a1 = N_p/2 − f, hacia el interior hasta 1.5 h'_ef o el borde opuesto (N_p/2 + f), bordes laterales (B_p − s2)/2, ψ_ec,N = 1 y h'_ef de D.5.2.3 con tres bordes a menos de 1.5 h_ef. Desprendimiento lateral de la fila junto al borde exterior (D-18 o D-17) y del perno de esquina hacia el borde lateral (D-17 con factor de esquina).
+- Corte por los pernos: todos (2n) con golillas soldadas; arrancamiento fila frontal (c_a1 = N_p/2 − f, V/2) y trasera (c_a1 + 2f, V); palanca con el cono del grupo completo y s = máx(2f ; s2/(n − 1)). Interacción D-32 con la mayor razón de tracción de la fila y la mayor de corte del grupo (conservador). Por roce: φ μ P_u con la P_u de la misma combinación. Por llave: igual que la articulada.
+- Soldadura: el momento pasa por las alas como par de brazo d − t_f; ala traccionada M_u/(d − t_f) − P_u/2, comprimida + P_u/2. Con contacto pleno la soldadura del ala toma solo la tracción. Filete en ambas caras (largo 2 b_f − t_w, sin el aumento J2-5) o penetración completa (φ = 0.90 F_y b_f t_f, Tabla J2.5). El alma toma el corte con filete en ambas caras.
+- Combinaciones: hasta 6 filas (P_u, M_u, V_u) concomitantes; se verifican todas y se desarrolla la de mayor D/C. El veredicto y los elementos en naranja reúnen las fallas de todas: lo que falla en otra combinación se nombra con su número, y la tabla de combinaciones dice qué falla en cada una. Una combinación con P_u ≤ 0 (tracción neta) queda SIN VERIFICAR.
+- Fuera de alcance: placas atiesadoras (sillas), momento en el eje débil, tracción neta con momento y armaduras del pedestal.
+- Comprobación: el núcleo del procedimiento (`momentoDG1`) reproduce un ejemplo de momento grande publicado con perfil W18×119 (Y ≈ 1.94 in, T_u ≈ 68 kips, espesores 1.63, 1.93 y 1.09 in) y el ejemplo 2 de la guía de placas base de HSS del Steel Tube Institute (Y = 9.71 in, T_u = 53.3 kips, lado traccionado 0.73 in). El caso de momento pequeño se comprobó a mano (Y = N − 2e, f_p y espesores).
+
+### Comunes
+
+- N_b del cono (D.5.2.2): D-8 solo con tuerca (perno con cabeza) y 280 ≤ h'_ef ≤ 635 mm; con gancho, siempre D-7.
 - Extracción: tuerca hexagonal pesada con F = 1.5 d_a + 3 mm (A_brg = 0.866 F² − π d_a²/4) o gancho con 3 d_a ≤ e_h ≤ 4.5 d_a.
 - Flexión de la placa por la tracción de los pernos: voladizo de brazo x hasta la cara del perfil más cercana (ala o alma) y ancho efectivo a 45°, hasta x por lado, limitado por la mitad de la separación al perno vecino y por el borde de la placa; t_req = √(4 N_ua x / (φ F_y b_ef)).
 - En sismo el hormigón se supone fisurado (D.3.3.3): la página bloquea la opción "no fisurado".
@@ -66,3 +86,8 @@ Documentos: AISC 360-16 (español); ACI 318-08 (español); Manual de Diseño ICH
 | Soldadura columna – placa | Metal base del alma, fluencia por corte | J4-3 | AISC 360-16 (español) |  |
 | Soldadura columna – placa | Compresión por contacto pleno | 13.1.4 | Manual de Diseño ICHA 2000, Cap. 5 | 511 |
 | Soldadura columna – placa | Holgura máxima de 2 mm en el contacto | 16.4.4 | Manual de Diseño ICHA 2000, Cap. 5 | 579 |
+| Base empotrada: presión y excentricidad | f_p,máx, q_máx, e, e_crít | 3.3, 3.4 | AISC Design Guide 1 (no está en el proyecto; numeración de secciones por confirmar) |  |
+| Base empotrada: momento pequeño | Y = N − 2e, f_p, espesor con m y n | 3.3 | AISC Design Guide 1 (no está en el proyecto) |  |
+| Base empotrada: momento grande | Existencia de la solución, Y, T_u, espesor de los lados comprimido y traccionado | 3.4 | AISC Design Guide 1 (no está en el proyecto) |  |
+| Base empotrada: fila traccionada | Cono de la fila, h'ef, ψed,N | D.5.2, D-5, D-6, D-11, D.5.2.3 | ACI 318-08 (español) |  |
+| Base empotrada: soldadura de las alas | Penetración completa, tracción normal al eje | Tabla J2.5 | AISC 360-16 (español) |  |

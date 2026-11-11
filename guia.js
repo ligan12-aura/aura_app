@@ -105,9 +105,10 @@ const Guia = (() => {
       { en: "t:Transferencia", titulo: "7 · Transferencia de carga", texto: "Con o sin barras de traspaso: define el coeficiente J y la verificación de escalonamiento." },
     ],
     "base.html": [
+      { en: "#tipo", titulo: "Tipo de base", texto: "Articulada (compresión o tracción y corte) o empotrada (compresión, momento en el eje fuerte y corte, por combinaciones, con dos filas de pernos fuera de las alas)." },
       { en: "t:1. Columna", titulo: "1 · Columna", texto: "Perfil de la columna de acero que llega a la placa base." },
       { en: "t:2. Placa", titulo: "2 · Placa y pedestal", texto: "Dimensiones y espesor de la placa y del pedestal de hormigón: definen el aplastamiento (A2/A1) y la flexión de la placa (Design Guide 1)." },
-      { en: "t:3. Cargas", titulo: "3 · Cargas mayoradas", texto: "Compresión o tracción, corte y momento en la base (LRFD)." },
+      { en: "t:3. Cargas", titulo: "3 · Cargas mayoradas", texto: "Cargas LRFD en la base. En la articulada, compresión, tracción y corte; en la empotrada, una fila por combinación con P, M y V concomitantes: se verifican todas y se desarrolla la crítica." },
       { en: "t:4. Pernos", titulo: "4 · Pernos de anclaje", texto: "Diámetro, calidad y largo embebido de los pernos: se verifican a tracción, corte y arrancamiento del hormigón (ACI 318-08 Apéndice D). Si el corte no lo toman los pernos, defina la llave de corte." },
       { en: "t:5. Soldadura", titulo: "5 · Soldadura", texto: "Tamaño de la soldadura entre la columna y la placa." },
     ],

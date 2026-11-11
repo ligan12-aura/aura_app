@@ -241,6 +241,8 @@ const Tablero = (() => {
       desc: "Specification for Structural Steel Buildings. American Institute of Steel Construction, Chicago, 2016. Diseño por factores de carga y resistencia (LRFD)." },
     { id: "aci", patron: /ACI\s?318-08/, clausula: /^\d{1,2}(?:[.-]\d+)+(?![\d.A-Z])/, titulo: "ACI 318-08",
       desc: "Building Code Requirements for Structural Concrete and Commentary. American Concrete Institute, Farmington Hills, 2008. Adoptado en Chile mediante el DS 60 y la NCh 430." },
+    { id: "dg1", patron: /\bDG1\b|Design Guide 1/, titulo: "AISC Design Guide 1 (2.ª ed.)",
+      desc: "Base Plate and Anchor Rod Design. American Institute of Steel Construction, 2006." },
     { id: "aci14", patron: /ACI\s?318-14/, titulo: "ACI 318-14", desc: "Building Code Requirements for Structural Concrete and Commentary. American Concrete Institute, 2014." },
     { id: "nch1198", patron: /NCh\s?1198(?::2024)?/, clausula: /^(?:\d{1,2}(?:\.\d+)+(?![\dA-Z])|Tabla \d|Anexo [A-Z]\b)/, titulo: "NCh 1198:2024",
       desc: "Madera — Construcciones en madera — Cálculo. Instituto Nacional de Normalización (INN), Santiago, 2024. Método de tensiones admisibles." },

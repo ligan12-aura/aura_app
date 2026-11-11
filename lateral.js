@@ -72,7 +72,10 @@
       E("acero.html?elemento=columna", "Columnas", "columna", { tab: "tabCol" }),
       E("reticulada.html", "Vigas reticuladas", "reticulada"),
       E("placa.html", "Placa colaborante", "placa"),
-      E("base.html", "Placa base (prueba)", "base"),
+      R("bases", "Placa base", "base", [
+        E("base.html?tipo=articulada", "Articulada (prueba)", null, { sel: "tipo", val: "articulada" }),
+        E("base.html?tipo=empotrada", "Empotrada (prueba)", null, { sel: "tipo", val: "empotrada" }),
+      ]),
       R("conexiones", "Conexiones", "conexion", [
         E("conexion.html?tipo=corte", "De corte (prueba)", null, { sel: "tipo", val: "corte" }),
         E("conexion.html?tipo=momento", "De momento (prueba)", null, { sel: "tipo", val: "momento" }),
