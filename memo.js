@@ -705,10 +705,67 @@ function figura3D(fig) {
 // Arma y descarga el .zip de una memoria: .tex con citas, referencias.bib y figuras PNG
 async function descargarZipMemoria(tex, nombre, contenedor) {
   if (!tex) { alert("Corrija los datos inválidos antes de descargar la memoria."); return; }
+  if (!(await antesDeEntregar())) return;
   const base = nombre.replace(/\.tex$/i, "");
   const fig = figura3D(await prepararFiguras(tex, contenedor));
   const { tex: conRef, usadas } = conCitas(estiloMemoria(fig.tex, oficinaMemoria()));
   const archivos = [{ nombre: `${base}.tex`, datos: texUnicode(conRef) }];
   if (usadas.length) archivos.push({ nombre: "referencias.bib", datos: usadas.map(u => u.bib).join("\n\n") + "\n" });
   descargarBlob(crearZip([...archivos, ...fig.archivos]), `${base}.zip`);
+  avisoEntrega(`Memoria descargada: ${base}.zip (.tex${usadas.length ? ", referencias.bib" : ""}${fig.archivos.length ? ` y ${fig.archivos.length} figura${fig.archivos.length > 1 ? "s" : ""}` : ""}).`);
+}
+
+// «Antes de entregar»: resumen de lo que lleva la memoria (proyecto, calculista y oficina, veredicto y
+// condiciones de la página) antes de descargarla. Devuelve true si el usuario confirma.
+function antesDeEntregar() {
+  if (typeof HTMLDialogElement !== "function") return Promise.resolve(true);
+  const p = window.AURA_PROYECTO || null;
+  const ls = (k) => { try { return localStorage.getItem(k) || ""; } catch { return ""; } };
+  const calculista = (p && p.calculista) || ls("auraCalculista");
+  const oficina = (p && p.oficina) || oficinaMemoria();
+  const ver = document.querySelector("#verdict .verdict, .verdict");
+  const tituloEl = document.getElementById("resTitle");
+  const condiciones = document.querySelector("body > footer, footer");
+  const dlg = document.createElement("dialog");
+  dlg.className = "entrega";
+  dlg.setAttribute("aria-labelledby", "entregaTit");
+  const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+  const form = el("form"); form.method = "dialog";
+  form.append(el("h2", null, "Antes de entregar")); form.lastChild.id = "entregaTit";
+  form.append(el("p", "entrega-sub", (tituloEl ? tituloEl.textContent.replace(/^Resultados\s*[—-]\s*/, "") : document.title.replace(/\s*—\s*structura$/, ""))));
+  const dl = el("dl", "entrega-datos");
+  const fila = (k, v, falta) => { dl.append(el("dt", null, k)); dl.append(el("dd", falta ? "falta" : null, v || falta)); };
+  fila("Proyecto", p && p.nombre, "Sin proyecto activo");
+  fila("Calculista", calculista, "Sin calculista");
+  fila("Oficina", oficina, "Sin oficina");
+  form.append(dl);
+  if (!calculista || !oficina) form.append(el("p", "entrega-aviso", "La portada y el pie de la memoria quedarán sin esos datos. Puede completarlos en el proyecto (panel Proyecto) antes de descargar."));
+  if (ver) {
+    const v = el("p", "entrega-veredicto " + (/NO CUMPLE/.test(ver.textContent) ? "bad" : /SIN VERIFICAR/.test(ver.textContent) || ver.classList.contains("warn") ? "warn" : ver.classList.contains("ok") ? "ok" : ""), ver.textContent.trim());
+    form.append(v);
+  }
+  if (condiciones && condiciones.textContent.trim()) {
+    form.append(el("h3", null, "Condiciones de esta verificación"));
+    form.append(el("p", "entrega-cond", condiciones.textContent.trim()));
+  }
+  const acc = el("div", "entrega-acc");
+  const volver = el("button", "btn sec", "Volver"); volver.type = "submit"; volver.value = "no";
+  const ok = el("button", "btn", "Descargar memoria (.zip)"); ok.type = "submit"; ok.value = "si";
+  acc.append(volver, ok); form.append(acc);
+  dlg.append(form);
+  document.body.append(dlg);
+  return new Promise((listo) => {
+    dlg.addEventListener("close", () => { const r = dlg.returnValue === "si"; dlg.remove(); listo(r); }, { once: true });
+    dlg.showModal();
+    ok.focus();
+  });
+}
+// Confirmación breve tras la descarga (se anuncia a lectores de pantalla)
+function avisoEntrega(txt) {
+  let t = document.getElementById("avisoEntrega");
+  if (!t) { t = document.createElement("div"); t.id = "avisoEntrega"; t.className = "aviso-entrega"; t.setAttribute("role", "status"); document.body.append(t); }
+  t.textContent = txt;
+  t.classList.add("visible");
+  clearTimeout(avisoEntrega.t);
+  avisoEntrega.t = setTimeout(() => t.classList.remove("visible"), 4500);
 }

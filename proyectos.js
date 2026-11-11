@@ -546,6 +546,7 @@ async function pintarPanel() {
   if (!panel) return;
   const p = proyectoActivoId() ? await Proyectos.obtener(proyectoActivoId()) : null;
   window.AURA_OFICINA = p ? p.oficina : undefined;   // pie de página de las memorias individuales
+  window.AURA_PROYECTO = p ? { nombre: p.nombre, calculista: p.calculista, oficina: p.oficina } : undefined;   // resumen «Antes de entregar» (memo.js)
   const tab = document.getElementById("auraPanelTab");
   tab.textContent = p ? `Proyecto: ${p.nombre.length > 22 ? p.nombre.slice(0, 21) + "…" : p.nombre}` : "Proyectos";
   if (!p) {

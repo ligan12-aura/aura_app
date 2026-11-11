@@ -13,7 +13,7 @@
 <link rel="icon" type="image/svg+xml" href="icons/structura.svg">
 <title>Acceso — structura</title>
 <!-- Antes de los estilos propios: los botones de esta página tienen su propio tamaño -->
-<link rel="stylesheet" href="aura.css?v=20">
+<link rel="stylesheet" href="aura.css?v=21">
 <script>
 // Tema claro u oscuro, igual que en el resto de la app (lateral.js): la elección guardada o la del sistema
 try { const t = localStorage.getItem("auraTema"); document.documentElement.dataset.tema = t === "claro" || t === "oscuro" ? t : (matchMedia("(prefers-color-scheme: dark)").matches ? "oscuro" : "claro"); } catch { /* sin almacenamiento */ }
@@ -61,11 +61,87 @@ try { const t = localStorage.getItem("auraTema"); document.documentElement.datas
   html[data-tema="oscuro"] .aviso { background: var(--bad-sup); }
   html[data-tema="oscuro"] footer { color: var(--tenue); }
   footer { margin-top: 22px; color: rgba(255,255,255,.6); font-size: 12px; text-align: center; }
+  /* Vitrina: lo que hace structura, con un resultado real del programa (viga HEB 140 con los datos por defecto de acero.html) */
+  .acceso { width: min(1120px, 100%); display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; align-items: center; justify-items: center; }
+  .acceso > .caja { order: 1; }
+  .vitrina { order: 2; width: min(560px, 100%); color: #fff; }
+  @media (min-width: 980px) {
+    .acceso { grid-template-columns: minmax(0, 1.25fr) minmax(0, 384px); gap: 56px; justify-items: stretch; }
+    .acceso > .caja { order: 2; justify-self: end; }
+    .vitrina { order: 1; width: 100%; }
+  }
+  .vitrina h2 { margin: 0; font-size: clamp(1.6rem, 1.1rem + 1.6vw, 2.3rem); line-height: 1.1; letter-spacing: -.03em; font-weight: 700; text-wrap: balance; }
+  .vitrina > p { margin: 10px 0 0; max-width: 46ch; font-size: 15.5px; color: #d5d8f5; }
+  .muestra { margin: 22px 0 0; background: var(--sup); color: var(--tinta); border-radius: var(--r-l); overflow: hidden;
+             box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 24px 48px -20px rgba(0,0,0,.45); }
+  .mu-cab { display: flex; align-items: baseline; gap: 6px 12px; flex-wrap: wrap; padding: 10px 14px; border-bottom: 1px solid var(--linea); background: var(--sup-2);
+            font: 600 12px/1.3 "Cascadia Mono", Consolas, ui-monospace, monospace; letter-spacing: .04em; color: var(--texto-2); }
+  .mu-cab span { margin-left: auto; font: 12px/1.3 "Segoe UI", system-ui, sans-serif; letter-spacing: 0; color: var(--texto-3); }
+  .mu-ver { display: flex; align-items: center; gap: 14px; padding: 14px; background: var(--ok-sup); border-bottom: 1px solid var(--linea-suave); }
+  .mu-med { position: relative; flex: 0 0 64px; width: 64px; height: 64px; }
+  .mu-med svg { width: 64px; height: 64px; transform: rotate(-90deg); }
+  .mu-med .fondo { fill: none; stroke: var(--sup-3); stroke-width: 7; }
+  .mu-med .arco { fill: none; stroke: var(--ok); stroke-width: 7; stroke-linecap: round; stroke-dasharray: 0 999; }
+  .mu-med b { position: absolute; inset: 0; display: grid; place-items: center; font: 700 14px/1 "Segoe UI", system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+  .mu-ver p { margin: 0; font-weight: 700; color: var(--ok); font-size: 15px; }
+  .mu-ver small { display: block; margin-top: 2px; font-weight: 500; color: var(--texto-2); font-size: 12.5px; }
+  .mu-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--linea-suave); border-bottom: 1px solid var(--linea-suave); }
+  .mu-card { background: var(--sup); padding: 10px 12px 12px; }
+  .mu-card .t { font-size: 12px; color: var(--texto-2); }
+  .mu-card .v { margin-top: 2px; font: 700 20px/1.1 "Segoe UI", system-ui, sans-serif; color: var(--acento); font-variant-numeric: tabular-nums; }
+  .mu-bar { position: relative; height: 5px; margin-top: 8px; border-radius: 2px; background: var(--sup-3); overflow: hidden; }
+  .mu-bar i { position: absolute; inset: 0; transform-origin: left center; transform: scaleX(0); background: var(--verde); border-radius: 2px; }
+  .mu-card .s { margin-top: 6px; font-size: 12px; color: var(--texto-3); font-variant-numeric: tabular-nums; }
+  .mu-fila { display: flex; align-items: center; gap: 8px; padding: 11px 14px; font-size: 13px; }
+  .mu-fila .ref { font: 700 11.5px/1 "Cascadia Mono", Consolas, ui-monospace, monospace; color: var(--acento); background: var(--azul-tinte); border-radius: var(--r-s); padding: 3px 6px; }
+  .mu-fila b { margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .disciplinas { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 8px; }
+  .disciplinas li { display: inline-flex; gap: 6px; align-items: baseline; padding: 6px 10px; border: 1px solid rgba(255,255,255,.22); border-radius: var(--r-s); font-size: 13px; color: #fff; }
+  .disciplinas li span { font: 12px/1 "Cascadia Mono", Consolas, ui-monospace, monospace; color: #c8cbe8; }
+  /* Un solo momento: el medidor y las barras se llenan una vez al cargar */
+  .muestra { animation: sube .45s var(--e-out, ease-out) .12s both; }
+  .mu-med .arco { transition: stroke-dasharray .9s cubic-bezier(0.23, 1, 0.32, 1) .35s; }
+  .mu-bar i { transition: transform .8s cubic-bezier(0.23, 1, 0.32, 1); transition-delay: var(--d, .45s); }
+  .lista .mu-med .arco { stroke-dasharray: var(--arco) 999; }
+  .lista .mu-bar i { transform: scaleX(var(--dc)); }
+  @media (prefers-reduced-motion: reduce) { .muestra { animation: none; } .mu-med .arco, .mu-bar i { transition: none; } }
+  html[data-tema="oscuro"] .vitrina { color: var(--tinta); }
+  html[data-tema="oscuro"] .vitrina > p { color: var(--texto-2); }
+  html[data-tema="oscuro"] .disciplinas li { color: var(--tinta); border-color: var(--linea); }
+  html[data-tema="oscuro"] .disciplinas li span { color: var(--texto-3); }
+  html[data-tema="oscuro"] .muestra { border: 1px solid var(--linea); box-shadow: none; }
+  @media (max-width: 520px) { .mu-cards { grid-template-columns: minmax(0, 1fr); } .mu-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 0 12px; } .mu-card .v { margin: 0; } .mu-bar, .mu-card .s { grid-column: 1 / -1; } }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js" integrity="sha384-K0oxqktRvaThvYgGL4G+OK2Ih6VS6Uyu7j3+7WJgp/uWM0Yv6Xi4YEiw0BB+mPfi" crossorigin="anonymous"></script>
 <script src="nube.js?v=32"></script>
 </head>
 <body>
+<div class="acceso">
+<section class="vitrina" aria-labelledby="vitTit">
+  <h2 id="vitTit">Verificación estructural con normas chilenas y AISC</h2>
+  <p>Cada resultado con su razón D/C y su cláusula, hasta la memoria de cálculo para Overleaf y el plano DXF con viñeta NCh 13.</p>
+  <div class="muestra" id="muestra">
+    <div class="mu-cab">VIGA HEB 140 · A42-27ES<span>Resultado real con los datos de ejemplo</span></div>
+    <div class="mu-ver">
+      <div class="mu-med"><svg viewBox="0 0 64 64" aria-hidden="true"><circle class="fondo" cx="32" cy="32" r="26"/><circle class="arco" cx="32" cy="32" r="26"/></svg><b>0.378</b></div>
+      <p>CUMPLE · razón máxima = 0.378<small>Flexión y corte según AISC 360-16, LRFD</small></p>
+    </div>
+    <div class="mu-cards">
+      <div class="mu-card"><div class="t">Flexión eje fuerte</div><div class="v">0.378</div><div class="mu-bar"><i style="--dc:.378"></i></div><div class="s">φM<sub>nx</sub> = 5 963.9 kgf·m</div></div>
+      <div class="mu-card"><div class="t">Flexión total (x + y)</div><div class="v">0.378</div><div class="mu-bar"><i style="--dc:.378;--d:.53s"></i></div><div class="s">φM<sub>ny</sub> = 2 910.8 kgf·m</div></div>
+      <div class="mu-card"><div class="t">Corte</div><div class="v">0.157</div><div class="mu-bar"><i style="--dc:.157;--d:.61s"></i></div><div class="s">φV<sub>n</sub> = 15 876 kgf</div></div>
+    </div>
+    <div class="mu-fila"><span>Resistencia de diseño a flexión φ<sub>b</sub>M<sub>nx</sub></span><span class="ref">F1</span><b>5 963.9 kgf·m</b></div>
+  </div>
+  <ul class="disciplinas" aria-label="Disciplinas y normas">
+    <li>Acero <span>AISC 360-16</span></li>
+    <li>Hormigón <span>ACI 318-08</span></li>
+    <li>Madera <span>NCh 1198</span></li>
+    <li>Sismo <span>NCh 433 · 2369</span></li>
+    <li>Viento <span>NCh 432</span></li>
+    <li>Pavimentos <span>AASHTO 93</span></li>
+  </ul>
+</section>
 <main class="caja" id="cajaCarga" aria-busy="true">
   <span class="marca-s"><svg class="iso" viewBox="0 0 32 32" aria-hidden="true"><rect class="iso-f" width="32" height="32" rx="7"/><path class="iso-s" d="M22 9H10V16H22V23H10"/><circle class="iso-n" cx="22" cy="16" r="2.6"/></svg><span class="marca-t">structura</span></span>
   <p class="sub" style="margin:0">Comprobando la sesión…</p>
@@ -99,11 +175,14 @@ try { const t = localStorage.getItem("auraTema"); document.documentElement.datas
     Usar otra cuenta
   </button>
 </main>
-<footer>Herramienta de apoyo académico. Verifique siempre los resultados.</footer>
+</div>
+<footer>Los resultados no reemplazan el criterio del profesional que firma. Verifique siempre los resultados.</footer>
 
 <script>
 "use strict";
 const $ = (id) => document.getElementById(id);
+// Vitrina: el medidor (r = 26) y las barras se llenan una vez; la razón 0.378 ocupa su fracción de la vuelta hasta D/C = 1.5
+(() => { const m = $("muestra"); m.style.setProperty("--arco", (0.378 / 1.5 * 2 * Math.PI * 26).toFixed(1)); requestAnimationFrame(() => requestAnimationFrame(() => m.classList.add("lista"))); })();
 function pantalla(id) {
   for (const c of ["cajaCarga", "cajaEntrar", "cajaSinAcceso"]) $(c).classList.toggle("hidden", c !== id);
 }

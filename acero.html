@@ -46,46 +46,51 @@
   body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 "Segoe UI", system-ui, -apple-system, sans-serif; }
   header { background: var(--head); color: #fff; padding: 10px 24px; display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap; }
   header h1 { margin: 0; font-size: 19px; font-weight: 600; }
-  header a.home { color: #fff; text-decoration: none; font-size: 13px; border: 1px solid rgba(255,255,255,.35); border-radius: 4px; padding: 3px 9px; }
+  header a.home { color: #fff; text-decoration: none; font-size: 13px; border: 1px solid rgba(255,255,255,.35); border-radius: var(--r-s); padding: 3px 9px; }
   header a.home:hover { background: #1c1ca6; }
   header span { color: #c8cbe8; font-size: 13px; }
   main { display: grid; grid-template-columns: 360px 1fr; gap: 20px; padding: 20px 24px; max-width: 1400px; margin: 0 auto; }
   @media (max-width: 900px) { main { grid-template-columns: 1fr; padding: 16px; } }
-  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-l); }
   .panel > h2 { margin: 0; padding: 10px 16px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); border-bottom: 1px solid var(--line); }
   .body { padding: 14px 16px; }
-  .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--accent); border-radius: 6px; overflow: hidden; margin-bottom: 14px; }
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--accent); border-radius: var(--r-m); overflow: hidden; margin-bottom: 14px; }
   .tabs button { border: 0; background: #fff; color: var(--accent); padding: 9px; font: inherit; font-weight: 600; cursor: pointer; }
   .tabs button.on { background: var(--accent); color: var(--accent-ink); }
   label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
-  select, input[type=number] { width: 100%; padding: 7px 9px; border: 1px solid var(--line); border-radius: 5px; font: inherit; background: #fff; color: var(--ink); }
+  select, input[type=number] { width: 100%; padding: 7px 9px; border: 1px solid var(--line); border-radius: var(--r-m); font: inherit; background: #fff; color: var(--ink); }
   select:focus, input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
   .unit { color: var(--muted); font-size: 11px; }
-  fieldset { border: 1px solid var(--line); border-radius: 6px; margin: 14px 0 0; padding: 4px 12px 12px; }
+  fieldset { border: 1px solid var(--line); border-radius: var(--r-m); margin: 14px 0 0; padding: 4px 12px 12px; }
   legend { font-size: 12px; font-weight: 600; color: var(--head); padding: 0 4px; }
-  details { margin-top: 10px; border: 1px dashed var(--line); border-radius: 6px; padding: 6px 10px; }
+  details { margin-top: 10px; border: 1px dashed var(--line); border-radius: var(--r-m); padding: 6px 10px; }
   details summary { cursor: pointer; font-size: 12px; color: var(--head); font-weight: 600; }
-  .mini { font-size: 12px; padding: 5px 9px; border: 1px solid var(--accent); color: var(--accent); background: #fff; border-radius: 4px; cursor: pointer; margin-top: 8px; }
+  .mini { font-size: 12px; padding: 5px 9px; border: 1px solid var(--accent); color: var(--accent); background: #fff; border-radius: var(--r-s); cursor: pointer; margin-top: 8px; }
   .mini:hover { background: #fff3ea; }
-  .cbOut { display: block; padding: 7px 9px; border: 1px dashed var(--line); border-radius: 5px; background: var(--sup-2); color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .cbOut { display: block; padding: 7px 9px; border: 1px dashed var(--line); border-radius: var(--r-m); background: var(--sup-2); color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
   .cbTit { font-size: 12px; font-weight: 600; color: var(--head); margin: 12px 0 -4px; }
   .chk { display: flex; gap: 8px; align-items: center; margin-top: 12px; font-size: 13px; color: var(--ink); }
   .hidden { display: none !important; }
 
   .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; padding: 14px 16px; }
-  .card { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; }
+  .card { border: 1px solid var(--line); border-radius: var(--r-m); padding: 10px 12px; }
   .card .t { font-size: 12px; color: var(--muted); }
   .card .v { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .card .s { font-size: 12px; color: var(--muted); }
-  .bar { height: 6px; background: #eceef1; border-radius: 3px; margin-top: 6px; overflow: hidden; }
+  .bar { height: 6px; background: #eceef1; border-radius: var(--r-s); margin-top: 6px; overflow: hidden; }
   .bar > i { display: block; height: 100%; background: var(--ok); }
   .bar.bad > i { background: var(--bad); }
-  .verdict { margin: 0 16px 14px; padding: 12px 14px; border-radius: 6px; font-weight: 600; font-size: 15px; }
+  .verdict { margin: 0 16px 14px; padding: 12px 14px; border-radius: var(--r-m); font-weight: 600; font-size: 15px; }
   .verdict.ok { background: var(--ok-bg); color: var(--ok); }
   .verdict.bad { background: var(--bad-bg); color: var(--bad); }
-  .note { margin: 8px 0; padding: 8px 10px; border-radius: 5px; background: var(--warn-bg); color: var(--warn); font-size: 12.5px; }
+  .note { margin: 8px 0; padding: 8px 10px; border-radius: var(--r-m); background: var(--warn-bg); color: var(--warn); font-size: 12.5px; }
+  /* Perfil más liviano que cumple: el ahorro de peso, a la vista junto al veredicto */
+  .ahorro { display: flex; align-items: center; gap: 10px 16px; flex-wrap: wrap; margin: 12px 0 0; padding: 10px 12px; border: 1px solid var(--ref-borde, #d6daf3);
+            border-radius: var(--r-m, 6px); background: var(--azul-tinte); color: var(--tinta); font-size: 13.5px; line-height: 1.45; }
+  .ahorro span { flex: 1 1 260px; }
+  .ahorro .pct { font-variant-numeric: tabular-nums; }
 
   .memo { padding: 4px 16px 16px; }
   .memo h3 { font-size: 14px; margin: 18px 0 6px; padding-bottom: 4px; border-bottom: 2px solid var(--accent); color: var(--head); }
@@ -94,8 +99,8 @@
   table.calc td { padding: 4px 8px; border-bottom: 1px solid #eef0f3; vertical-align: top; }
   table.calc td.k { color: var(--ink); }
   table.calc td.v { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
-  .ref { display: inline-block; font-size: 10.5px; color: var(--accent); border: 1px solid #f3c7a5; border-radius: 3px; padding: 0 4px; margin-left: 6px; font-weight: 500; }
-  .tag { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 11.5px; font-weight: 600; }
+  .ref { display: inline-block; font-size: 10.5px; color: var(--accent); border: 1px solid #f3c7a5; border-radius: var(--r-s); padding: 0 4px; margin-left: 6px; font-weight: 500; }
+  .tag { display: inline-block; padding: 1px 7px; border-radius: var(--r-l); font-size: 11.5px; font-weight: 600; }
   .tag.ok { background: var(--ok-bg); color: var(--ok); }
   .tag.bad { background: var(--bad-bg); color: var(--bad); }
   .tag.warn { background: var(--warn-bg); color: var(--warn); }
@@ -103,14 +108,14 @@
   table.alt th { text-align: left; font-size: 11.5px; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); padding: 5px 8px; }
   table.alt td { padding: 5px 8px; border-bottom: 1px solid #eef0f3; font-variant-numeric: tabular-nums; }
   .esquema { display: block; width: 100%; max-width: 320px; margin: 8px auto 4px; }
-  .formula { font-size: 12px; color: var(--ink); background: var(--eq-fondo); border-radius: 5px; padding: 8px 10px; line-height: 1.55; }
+  .formula { font-size: 12px; color: var(--ink); background: var(--eq-fondo); border-radius: var(--r-m); padding: 8px 10px; line-height: 1.55; }
   .secwrap { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
   .secwrap svg { flex: 0 0 auto; width: 300px; max-width: 100%; }
   .secwrap .props { flex: 1 1 260px; }
   .props { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 4px 14px; font-size: 12.5px; }
   .props div b { font-variant-numeric: tabular-nums; }
   .toolbar { display: flex; justify-content: flex-end; padding: 10px 16px 0; gap: 8px; }
-  .btn { padding: 7px 14px; border-radius: 5px; border: 1px solid var(--head); background: var(--head); color: #fff; font: inherit; font-size: 13px; cursor: pointer; }
+  .btn { padding: 7px 14px; border-radius: var(--r-m); border: 1px solid var(--head); background: var(--head); color: #fff; font: inherit; font-size: 13px; cursor: pointer; }
   .btn.sec { background: #fff; color: var(--head); }
   footer { text-align: center; color: var(--muted); font-size: 12px; padding: 10px 0 24px; }
 
@@ -120,14 +125,14 @@
     header span { color: #333; }
     header a.home { display: none; }
     main { display: block; padding: 0; }
-    #inputs, .toolbar, #altPanel, footer { display: none; }
+    #inputs, .toolbar, #altPanel, #ahorro, footer { display: none; }
     .panel { border: 0; }
     .memo h3 { break-after: avoid; }
     table.calc tr { break-inside: avoid; }
   }
 </style>
-<link rel="stylesheet" href="aura.css?v=20">
-<script src="lateral.js?v=15"></script>
+<link rel="stylesheet" href="aura.css?v=21">
+<script src="lateral.js?v=16"></script>
 <script src="asistente.js?v=8" defer></script>
 </head>
 <body>
@@ -307,6 +312,7 @@
       <h2 id="resTitle">Resultados</h2>
       <div class="summary" id="summary"></div>
       <div id="verdict"></div>
+      <div id="ahorro"></div>
       <div class="toolbar">
         <button class="btn sec" type="button" onclick="window.print()">Imprimir</button>
         <button class="btn sec" type="button" onclick="descargarDXF()">Descargar plano (.dxf)</button>
@@ -320,9 +326,9 @@
     </div>
   </section>
 </main>
-<footer>Herramienta de apoyo académico. Las solicitaciones deben provenir de un análisis que considere efectos de segundo orden (AISC 360-16, Cap. C). Verifique siempre los resultados.</footer>
+<footer>Los resultados no reemplazan el criterio del profesional que firma. Las solicitaciones deben provenir de un análisis que considere efectos de segundo orden (AISC 360-16, Cap. C). Verifique siempre los resultados.</footer>
 
-<script src="memo.js?v=42"></script>
+<script src="memo.js?v=43"></script>
 <script src="tablero.js?v=7"></script>
 <script src="guia.js?v=7"></script>
 <script src="dxf.js?v=3"></script>
@@ -1143,7 +1149,7 @@ function calcular() {
   const malos = datosInvalidos(reglasDatos());
   if (malos.length) {
     $("resTitle").textContent = "Resultados";
-    $("summary").innerHTML = ""; $("memo").innerHTML = ""; $("alt").innerHTML = "";
+    $("summary").innerHTML = ""; $("memo").innerHTML = ""; $("alt").innerHTML = ""; $("ahorro").innerHTML = "";
     $("verdict").innerHTML = avisoInvalidos(malos);
     ultimoTex = "";
     return;
@@ -1185,10 +1191,18 @@ function calcular() {
     for (const r of lista) {
       const sx = seccion(r, ser);
       const rr = verificar(sx, Fy, d, NOMEMO);
-      if (rr.dc <= 1 && !rr.fuera) alts.push({ n: sx.nombre, p: sx.peso, dc: rr.dc, h: sx.h });
+      if (rr.dc <= 1 && !rr.fuera) alts.push({ n: sx.nombre, ser, p: sx.peso, dc: rr.dc, h: sx.h });
     }
   }
   alts.sort((a, b) => a.p - b.p);
+  // El más liviano que cumple, junto al veredicto: cuánto peso se ahorra y un botón para usarlo
+  const lig = alts[0];
+  $("ahorro").innerHTML = lig && lig.n !== s.nombre && (!ok || lig.p < s.peso - 1e-9)
+    ? `<div class="ahorro"><span>${ok
+        ? `<b>${lig.n}</b> también cumple y pesa ${fmt(lig.p, 2)} kgf/m: <b class="pct">${fmt((1 - lig.p / s.peso) * 100, 0)} % menos</b> que el ${s.nombre} (D/C ${fmt(lig.dc, 3)}).`
+        : `El perfil más liviano que cumple es <b>${lig.n}</b>: ${fmt(lig.p, 2)} kgf/m, D/C ${fmt(lig.dc, 3)}.`}</span>
+       <button class="btn sec" type="button" data-ser="${lig.ser}" data-perfil="${lig.n}">Usar ${lig.n}</button></div>`
+    : "";
   const top = alts.slice(0, 8);
   $("alt").innerHTML = top.length
     ? `<table class="alt"><tr><th>Perfil</th><th>Peso [kgf/m]</th><th>Altura [cm]</th><th>D/C</th><th></th></tr>${top.map(a =>
@@ -1335,6 +1349,13 @@ function init() {
   $("cB1").addEventListener("change", () => $("b1Box").classList.toggle("hidden", !$("cB1").checked));
   $("inputs").addEventListener("input", (e) => { if (e.target.tagName === "INPUT" && !e.target.closest("details")) calcular(); });
   $("inputs").addEventListener("change", (e) => { if (e.target.tagName === "SELECT" && !e.target.closest("details")) calcular(); });
+  // «Usar …» del perfil más liviano: cambia serie y perfil como si los eligiera el usuario (se guarda en el borrador)
+  $("ahorro").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-perfil]"); if (!b) return;
+    $("serie").value = b.dataset.ser; llenarPerfiles();
+    $("perfil").value = b.dataset.perfil;
+    $("perfil").dispatchEvent(new Event("change", { bubbles: true }));
+  });
 
   const kCalc = () => {
     const a = num("kGA"), b = num("kGB");
@@ -1506,7 +1527,7 @@ window.AURA_MEMO = {
     actualizarUnidades(); $("b1Box").classList.toggle("hidden", !$("cB1").checked); calcular(); },
 };
 </script>
-<script src="proyectos.js?v=47"></script>
+<script src="proyectos.js?v=48"></script>
 <script>
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
 </script>

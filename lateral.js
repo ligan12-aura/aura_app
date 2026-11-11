@@ -332,4 +332,21 @@
     sincronizar();
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", montar); else montar();
+
+  // Herramientas recientes para la fila «Continuar» del inicio: al salir de una página de cálculo se guarda
+  // su dirección (sin elementos de proyecto) y su título; se conservan las 4 últimas.
+  const pag = location.pathname.split("/").pop() || "index.html";
+  if (!/^(index|login|bienvenida)\.html$/.test(pag) && pag.endsWith(".html")) {
+    addEventListener("pagehide", () => {
+      try {
+        const q = new URLSearchParams(location.search), limpia = new URLSearchParams();
+        for (const k of ["elemento", "tipo"]) if (q.get(k)) limpia.set(k, q.get(k));
+        const href = pag + (limpia.toString() ? "?" + limpia : "");
+        const titulo = document.title.replace(/\s*—\s*structura$/, "");
+        const lista = JSON.parse(localStorage.getItem("auraRecientes") || "[]").filter((r) => r && r.href !== href);
+        lista.unshift({ href, titulo });
+        localStorage.setItem("auraRecientes", JSON.stringify(lista.slice(0, 4)));
+      } catch { /* sin almacenamiento */ }
+    });
+  }
 })();
