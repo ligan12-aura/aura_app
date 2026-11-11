@@ -163,7 +163,8 @@ sesionLista.then(async (u) => {
     if (e) $("msg").textContent = errorEnEspanol({ message: e });
     return;
   }
-  if (await accesoAutorizado(u)) { location.replace(destino()); return; }
+  // Al entrar, primero la bienvenida (bienvenida.html), que luego sigue a la página pedida
+  if (await accesoAutorizado(u)) { location.replace("bienvenida.html?volver=" + encodeURIComponent(destino())); return; }
   $("correoSinAcceso").textContent = u.email || "Esta cuenta";
   pantalla("cajaSinAcceso");
 });
