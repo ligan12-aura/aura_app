@@ -97,6 +97,18 @@
   .memo { padding: 4px 16px 16px; }
   .memo h3 { font-size: 14px; margin: 18px 0 6px; padding-bottom: 4px; border-bottom: 2px solid var(--accent); color: var(--head); }
   .memo h4 { font-size: 13px; margin: 12px 0 4px; color: var(--head); }
+  /* Acordeones de la viga: un bloque por paso del cálculo, con sus ecuaciones debajo de las filas */
+  details.acord { border: 1px solid var(--line); border-radius: var(--r-m, 6px); margin: 6px 0; background: var(--panel); }
+  details.acord > summary { display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; list-style: none; font-size: 13px; font-weight: 600; color: var(--acento, var(--head)); }
+  details.acord > summary::-webkit-details-marker { display: none; }
+  details.acord > summary::before { content: "▸"; content: "▸" / ""; display: inline-block; transition: transform .15s; }
+  details.acord[open] > summary::before { transform: rotate(90deg); }
+  details.acord > summary:hover { background: var(--hover-fila, #f6f9f8); }
+  details.acord > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .acord-r { margin-left: auto; font-weight: 600; color: var(--ink); white-space: nowrap; }
+  .acord-c { padding: 0 12px 8px; border-top: 1px solid var(--line); }
+  .acord-c .eqs { margin-top: 6px; }
+  @media print { details.acord { border: 0; } details.acord > summary::before { display: none; } }
   table.calc { width: 100%; border-collapse: collapse; font-size: 13px; }
   table.calc td { padding: 4px 8px; border-bottom: 1px solid #eef0f3; vertical-align: top; }
   table.calc td.v { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
@@ -406,12 +418,69 @@ class Memo {
   eq(s, ref) { this.tex.push(texDisplay(s, ref)); this.out.push({ tex: s + (ref ? `\\tag*{(${ref})}` : ""), eq: true }); }
   // soloTex: comentario del paso a paso que va solo en la memoria .tex
   p(s, soloTex) { memoTexP(this, s); if (!soloTex) this.out.push({ tex: s }); }
+  // Grupo colapsable (acordeón): abarca lo que sigue hasta el próximo grupo o título. op: { abierto, resumen }
+  grupo(titulo, clave, op = {}) {
+    memoTexCerrar(this);
+    const gr = { grupo: titulo, clave, ...op };
+    this.out.push(gr); this.tex.push(`\\subsubsection*{${texTxt(titulo)}}`);
+    return gr;
+  }
   texto() { memoTexCerrar(this); return this.tex.join("\n"); }
-  html() { return memoHTML(this.out); }
+  html() {
+    let s = "", tramo = [], i = 0;
+    const titulo = (it) => typeof it === "string" && /^<h[34]/.test(it);
+    while (i < this.out.length) {
+      const it = this.out[i];
+      if (it && it.grupo) {
+        if (tramo.length) { s += memoHTML(tramo); tramo = []; }
+        const items = [];
+        for (i++; i < this.out.length && !(this.out[i] && this.out[i].grupo) && !titulo(this.out[i]); i++) items.push(this.out[i]);
+        s += acordeon(it, items);
+        continue;
+      }
+      tramo.push(it); i++;
+    }
+    if (tramo.length) s += memoHTML(tramo);
+    return s;
+  }
 }
 
+// Acordeón de la memoria: filas de resultados y, inmediatamente debajo, las ecuaciones que las calculan (visibles)
+const acordAbiertos = new Map();          // clave → abierto, recordado al recalcular
+function acordeon(gr, items) {
+  let cuerpo = "", filas = "", tex = "";
+  const tabla = () => { if (filas) cuerpo += `<table class="calc">${filas}</table>`; filas = ""; };
+  const eqs = () => { if (tex) cuerpo += `<div class="eqs">${tex}</div>`; tex = ""; };
+  for (const it of items) {
+    if (typeof it === "string") { tabla(); eqs(); cuerpo += it; }
+    else if (it.tex !== undefined) { tabla(); tex += it.eq ? texEcuacion(it.tex) : `<p>${texParrafo(it.tex)}</p>`; }
+    else { eqs(); filas += `<tr><td class="k">${it.k}${it.ref ? `<span class="ref">${it.ref}</span>` : ""}</td><td class="v">${it.v}</td></tr>`; }
+  }
+  tabla(); eqs();
+  const abierto = acordAbiertos.has(gr.clave) ? acordAbiertos.get(gr.clave) : !!gr.abierto;
+  return `<details class="acord" data-clave="${gr.clave}"${abierto ? " open" : ""}><summary><span class="acord-t">${gr.grupo}</span>${gr.resumen ? `<span class="acord-r">${gr.resumen}</span>` : ""}</summary><div class="acord-c">${cuerpo}</div></details>`;
+}
+// Las ecuaciones se dibujan con KaTeX al abrir el acordeón (y se recuerda si quedó abierto)
+document.addEventListener("toggle", (ev) => {
+  const d = ev.target;
+  if (!(d instanceof HTMLDetailsElement) || !d.classList.contains("acord")) return;
+  if (!d.dataset.imprimir) acordAbiertos.set(d.dataset.clave, d.open);
+  if (d.open) dibujarTex(d);
+}, true);
+// «Mostrar / ocultar todas las ecuaciones» (memo.js) también abre o cierra todos los acordeones de la viga
+document.addEventListener("click", (ev) => {
+  const b = ev.target.closest(".todasEq");
+  const memo = b && b.nextElementSibling;
+  if (!memo || memo.id !== "memo") return;
+  const acs = [...memo.querySelectorAll("details.acord")], abrir = acs.some(d => !d.open);
+  acs.forEach(d => { d.open = abrir; });
+});
+// Al imprimir se ve todo el procedimiento: se abren los acordeones cerrados y luego se vuelven a cerrar
+addEventListener("beforeprint", () => document.querySelectorAll("details.acord:not([open])").forEach(d => { d.dataset.imprimir = "1"; d.open = true; }));
+addEventListener("afterprint", () => document.querySelectorAll("details.acord[data-imprimir]").forEach(d => { d.open = false; delete d.dataset.imprimir; }));
+
 // Memo nulo para evaluar alternativas sin generar texto.
-const NOMEMO = { h() {}, sub() {}, row() {}, note() {}, eq() {}, p() {} };
+const NOMEMO = { h() {}, sub() {}, row() {}, note() {}, eq() {}, p() {}, grupo() { return {}; } };
 
 // ---------------------------------------------------------------------------
 // Parámetros del ACI 318-08
@@ -434,20 +503,40 @@ function flexion(cara, Mu, db, g, m) {
 
   m.sub(`Armadura ${sub}`);
   m.p(L`Se asume un comportamiento dúctil, en que el acero alcanza su tensión de fluencia $f_y$ antes de que el hormigón falle por compresión. A partir del momento último ${cara === "inf" ? "positivo" : "negativo"} $${Msym} = ${tn(Mu / 100, 1)}$ kgf$\cdot$m se determina la cuantía de acero requerida, se compara con los límites normativos y se verifica la capacidad de la armadura dispuesta.`, true);
+
+  // ---------- 1. Geometría y cuantías límite ----------
+  const rmin = Math.max(0.8 * Math.sqrt(fc) / fy, 14 / fy);
+  const rb = 0.85 * b1 * fc / fy * (ECU * ES / (ECU * ES + fy));
+  const rmax = 0.85 * b1 * fc / fy * (ECU / (ECU + 0.004));
+  m.grupo("Geometría y cuantías límite", `${cara}-geo`);
+  m.row("Altura útil: d", `${fmt(d, 2)} cm`);
+  m.row("Factor del bloque de compresiones: β<sub>1</sub>", fmt(b1, 3), "10.2.7.3");
+  m.row("Cuantía mínima: ρ<sub>mín</sub>", fmt(rmin, 5), "10.5.1");
+  m.row("Cuantía máxima (ε<sub>t</sub> = 0.004): ρ<sub>máx</sub>", fmt(rmax, 5), "10.3.5");
+  m.row("Cuantía balanceada ; referencia 0.75ρ<sub>b</sub>: ρ<sub>b</sub>", `${fmt(rb, 5)} ; ${fmt(0.75 * rb, 5)}`);
   m.p(L`\textbf{Altura útil.} Distancia desde la fibra extrema comprimida al centroide de la armadura, con barras $\phi${db}$ y estribo $\phi${de}$:`);
   m.eq(L`d = h - r_{ec} - \phi_e - \frac{d_b}{2} = ${tn(h, 1)} - ${tn(rec, 1)} - ${tn(de / 10, 1)} - \frac{${tn(db / 10, 1)}}{2} = ${tn(d)}${CM}`);
+  m.p(L`\textbf{Cuantías límite.} La cuantía no debe ser inferior a la mínima (que evita una falla frágil al fisurarse el hormigón) ni superior a la máxima (que asegura $\varepsilon_t \ge 0.004$ y una falla dúctil). Con $\beta_1 = ${tn(b1, 3)}$ (10.2.7.3):`);
+  m.eq(L`\rho_{\min} = \max\left(\frac{0.8\sqrt{f'_c}}{f_y},\ \frac{14}{f_y}\right) = \max\left(\frac{0.8\sqrt{${tn(fc, 0)}}}{${tn(fy, 0)}},\ \frac{14}{${tn(fy, 0)}}\right) = ${tn(rmin, 5)}`, "10.5.1");
+  m.eq(L`\rho_{\max} = 0.85\,\beta_1\frac{f'_c}{f_y}\cdot\frac{\varepsilon_{cu}}{\varepsilon_{cu} + 0.004} = 0.85\cdot ${tn(b1, 3)}\cdot\frac{${tn(fc, 0)}}{${tn(fy, 0)}}\cdot\frac{0.003}{0.007} = ${tn(rmax, 5)}`, "10.3.5");
+  m.eq(L`\rho_b = 0.85\,\beta_1\frac{f'_c}{f_y}\cdot\frac{\varepsilon_{cu}E_s}{\varepsilon_{cu}E_s + f_y} = ${tn(rb, 5)} \qquad 0.75\,\rho_b = ${tn(0.75 * rb, 5)} \ \text{(referencia)}`);
 
-  // Cuantía requerida (φ = 0.9 supuesto, sección controlada por tracción)
+  // ---------- 2. Armadura requerida (φ = 0.9 supuesto, sección controlada por tracción) ----------
   const Mn = Mu / 0.9;
   const mu = Mn / (0.85 * fc * b * d * d);
   const resuelve = 2 * mu < 1;
   const alpha = resuelve ? 1 - Math.sqrt(1 - 2 * mu) : NaN;
   const rho = resuelve ? 0.85 * fc * alpha / fy : Infinity;
-  m.row("Altura útil: d", `${fmt(d, 2)} cm`);
+  const rhoD = Math.max(rho, rmin);
+  const okRho = rho <= rmax;
+  const Asreq = rhoD * b * d;
+  m.grupo("Armadura requerida", `${cara}-req`);
   m.row("Momento último ; momento nominal requerido: M<sub>u</sub> ; M<sub>n</sub>", `${fmt(Mu / 100, 1)} ; ${fmt(Mn / 100, 1)} kgf·m`, "9.3.2.1");
   m.row("Momento reducido ; profundidad relativa del bloque: μ ; α", `${fmt(mu, 4)} ; ${fmt(alpha, 4)}`);
   m.row("Cuantía requerida: ρ", fmt(rho, 5));
-  m.p(L`\textbf{Cuantía requerida.} Se supone sección controlada por tracción ($\phi = 0.90$, se verifica más adelante), por lo que el momento nominal requerido es:`);
+  m.row("Cuantía de diseño ; armadura requerida: ρ ; A<sub>s,req</sub>", `${fmt(rhoD, 5)} ; ${fmt(Asreq, 3)} cm²`);
+  m.row("Control de cuantía máxima: ρ ≤ ρ<sub>máx</sub>", tag(okRho, okRho ? "cumple" : "requiere armadura doble o mayor sección"), "10.3.5");
+  m.p(L`\textbf{Cuantía requerida.} Se supone sección controlada por tracción ($\phi = 0.90$, se verifica en la capacidad), por lo que el momento nominal requerido es:`);
   m.eq(L`M_n = \frac{${Msym}}{\phi} = \frac{${tn(Mu, 0)}}{0.9} = ${tn(Mn, 0)}${KGCM}`, "9.3.2.1");
   m.p(L`Del equilibrio de la sección con el bloque rectangular de compresiones se obtienen el momento reducido $\mu$, la profundidad relativa del bloque $\alpha$ y la cuantía $\rho$:`, true);
   m.eq(L`\mu = \frac{M_n}{0.85\,f'_c\,b\,d^2} = \frac{${tn(Mn, 0)}}{0.85\cdot ${tn(fc, 0)}\cdot ${tn(b, 1)}\cdot ${tn(d)}^2} = ${tn(mu, 4)}`);
@@ -457,28 +546,11 @@ function flexion(cara, Mu, db, g, m) {
     m.note("2μ ≥ 1: la sección de hormigón no es capaz de desarrollar el momento solicitado; se requiere aumentar la sección.",
       L`$2\mu \ge 1$: la sección de hormigón no es capaz de desarrollar el momento solicitado; se requiere aumentar la sección.`);
   }
-
-  // Cuantías límite
-  const rmin = Math.max(0.8 * Math.sqrt(fc) / fy, 14 / fy);
-  const rb = 0.85 * b1 * fc / fy * (ECU * ES / (ECU * ES + fy));
-  const rmax = 0.85 * b1 * fc / fy * (ECU / (ECU + 0.004));
-  m.row("Cuantía mínima: ρ<sub>mín</sub>", fmt(rmin, 5), "10.5.1");
-  m.row("Cuantía máxima ; referencia 0.75 cuantía balanceada: ρ<sub>máx</sub> ; 0.75ρ<sub>b</sub>", `${fmt(rmax, 5)} ; ${fmt(0.75 * rb, 5)}`, "10.3.5");
-  m.p(L`\textbf{Cuantías límite.} La cuantía no debe ser inferior a la mínima (que evita una falla frágil al fisurarse el hormigón) ni superior a la máxima (que asegura $\varepsilon_t \ge 0.004$ y una falla dúctil). Con $\beta_1 = ${tn(b1, 3)}$ (10.2.7.3):`);
-  m.eq(L`\rho_{\min} = \max\left(\frac{0.8\sqrt{f'_c}}{f_y},\ \frac{14}{f_y}\right) = \max\left(\frac{0.8\sqrt{${tn(fc, 0)}}}{${tn(fy, 0)}},\ \frac{14}{${tn(fy, 0)}}\right) = ${tn(rmin, 5)}`, "10.5.1");
-  m.eq(L`\rho_{\max} = 0.85\,\beta_1\frac{f'_c}{f_y}\cdot\frac{\varepsilon_{cu}}{\varepsilon_{cu} + 0.004} = 0.85\cdot ${tn(b1, 3)}\cdot\frac{${tn(fc, 0)}}{${tn(fy, 0)}}\cdot\frac{0.003}{0.007} = ${tn(rmax, 5)}`, "10.3.5");
-  m.eq(L`\rho_b = 0.85\,\beta_1\frac{f'_c}{f_y}\cdot\frac{\varepsilon_{cu}E_s}{\varepsilon_{cu}E_s + f_y} = ${tn(rb, 5)} \qquad 0.75\,\rho_b = ${tn(0.75 * rb, 5)} \ \text{(referencia)}`);
-
-  const rhoD = Math.max(rho, rmin);
-  const okRho = rho <= rmax;
-  const Asreq = rhoD * b * d;
-  m.row("Cuantía de diseño ; armadura requerida: ρ ; A<sub>s,req</sub>", `${fmt(rhoD, 5)} ; ${fmt(Asreq, 3)} cm²`);
-  m.row("Control de cuantía máxima: ρ ≤ ρ<sub>máx</sub>", tag(okRho, okRho ? "cumple" : "requiere armadura doble o mayor sección"));
   m.p(L`Como $\rho = ${tn(rho, 5)}$ ${rho >= rmin ? L`$\ge$` : L`$<$`} $\rho_{\min} = ${tn(rmin, 5)}$, ${rho >= rmin ? "rige la cuantía por solicitación" : L`\textbf{rige la cuantía mínima}`}${okRho ? L` y $\rho \le \rho_{\max}$.` : L`, pero $\rho > \rho_{\max}$: \textbf{la sección requiere armadura doble o mayores dimensiones}.`}`);
   m.p(L`Con la cuantía que rige el diseño, el área de acero longitudinal requerida es:`, true);
   m.eq(L`A_s = \rho\,b\,d = ${tn(rhoD, 5)}\cdot ${tn(b, 1)}\cdot ${tn(d)} = ${tn(Asreq, 3)}${CM2}`);
 
-  // Número de barras y disposición en una capa
+  // ---------- 3. Disposición de armadura (una capa) ----------
   const Ab = areaBarra(db);
   const Nb = Number.isFinite(Asreq) ? Math.max(2, Math.ceil(Asreq / Ab - 1e-9)) : NaN;
   const As = Nb * Ab;
@@ -490,19 +562,20 @@ function flexion(cara, Mu, db, g, m) {
   const sMax = Math.min(38 * 2800 / fs - 2.5 * cc, 30 * 2800 / fs);
   const sCC = (anchoUtil - db / 10) / (Nb - 1);
   const okSmin = sLibre >= sMin, okSmax = sCC <= sMax;
+  m.grupo("Disposición de armadura", `${cara}-disp`);
   m.row(`Área de una barra φ${db} ; número de barras: A<sub>b</sub> ; N<sub>b</sub>`, `${fmt(Ab, 3)} cm² ; ${Nb}φ${db}`);
-  m.row("Armadura dispuesta: A<sub>s</sub>", `${fmt(As, 3)} cm²`);
+  m.row("Armadura dispuesta: A<sub>s,disp</sub>", `${fmt(As, 3)} cm²`);
   m.row("Espaciamiento libre entre barras: s ≥ s<sub>mín</sub>", `${fmt(sLibre, 2)} ≥ ${fmt(sMin, 2)} cm ${tag(okSmin, okSmin ? "cumple" : "no cabe en una capa")}`, "7.6.1");
   m.row("Espaciamiento entre ejes (control de fisuración): s ≤ s<sub>máx</sub>", `${fmt(sCC, 2)} ≤ ${fmt(sMax, 2)} cm ${tag(okSmax, okSmax ? "cumple" : "no cumple")}`, "10.6.4");
+  if (!okSmin) m.note(`Las ${Nb} barras φ${db} no caben en una capa con el espaciamiento libre mínimo; use un diámetro mayor o dos capas.`,
+    L`Las ${Nb} barras $\phi${db}$ no caben en una capa con el espaciamiento libre mínimo; use un diámetro mayor o dos capas.`);
   m.p(L`\textbf{Disposición de barras.} Se determina el número de barras en función del área nominal de la barra seleccionada $\phi${db}$ ($A_b = ${tn(Ab, 3)}$ cm$^2$) y se verifica que quepan en una capa:`);
   m.eq(L`N_b = \left\lceil\frac{A_s}{A_b}\right\rceil = \left\lceil\frac{${tn(Asreq, 3)}}{${tn(Ab, 3)}}\right\rceil = ${Nb} \;\Rightarrow\; ${Nb}\phi${db},\quad A_{s,\text{disp}} = ${tn(As, 3)}${CM2}`);
   m.eq(L`s = \frac{b - 2(r_{ec} + \phi_e) - N_b\,d_b}{N_b - 1} = \frac{${tn(b, 1)} - 2(${tn(rec, 1)} + ${tn(de / 10, 1)}) - ${Nb}\cdot ${tn(db / 10, 1)}}{${Nb - 1}} = ${tn(sLibre)}${CM} \;${okSmin ? GE : "<"}\; s_{\min} = \max(2.5;\ d_b) = ${tn(sMin)}${CM}`, "7.6.1");
   m.eq(L`s_{\max} = \min\left(38\frac{2800}{f_s} - 2.5\,c_c,\ 30\frac{2800}{f_s}\right) = \min\left(38\cdot\frac{2800}{${tn(fs, 0)}} - 2.5\cdot ${tn(cc)},\ 30\cdot\frac{2800}{${tn(fs, 0)}}\right) = ${tn(sMax)}${CM}`, "10-4");
   m.p(L`con $f_s = \tfrac{2}{3}f_y = ${tn(fs, 0)}$ kgf/cm$^2$ y $c_c = r_{ec} + \phi_e = ${tn(cc)}$ cm. Espaciamiento entre ejes de barras $${tn(sCC)}$ cm ${okSmax ? L`$\le$` : L`$>$`} $s_{\max}$.`);
-  if (!okSmin) m.note(`Las ${Nb} barras φ${db} no caben en una capa con el espaciamiento libre mínimo; use un diámetro mayor o dos capas.`,
-    L`Las ${Nb} barras $\phi${db}$ no caben en una capa con el espaciamiento libre mínimo; use un diámetro mayor o dos capas.`);
 
-  // Verificación de la capacidad con la armadura dispuesta
+  // ---------- 4. Verificación de capacidad (resumen) ----------
   const a = As * fy / (0.85 * fc * b);
   const c = a / b1;
   const et = ECU * (d - c) / c;
@@ -511,6 +584,8 @@ function flexion(cara, Mu, db, g, m) {
   const phiMn = phi * MnP;
   const okEt = et >= 0.004;
   const dc = phiMn > 0 ? Mu / phiMn : Infinity;   // sin solución con armadura simple no hay capacidad
+  const ok = resuelve && okRho && okSmin && okSmax && okEt && dc <= 1;
+  m.grupo("Verificación de capacidad (resumen)", `${cara}-cap`, { abierto: true, resumen: `D/C = ${fmt(dc, 3)} ${okTxt(ok)}` });
   m.row("Profundidad del bloque de compresión ; eje neutro: a ; c", `${fmt(a, 2)} ; ${fmt(c, 2)} cm`, "10.2.7");
   m.row("Deformación del acero en tracción ; factor de reducción: ε<sub>t</sub> ; φ", `${fmt(et, 4)} ${tag(okEt, okEt ? "cumple" : "no cumple")} ; ${fmt(phi, 3)}`, "10.3.5 / 9.3.2");
   m.row("<b>Resistencia de diseño a flexión: φM<sub>n</sub></b>", `<b>${fmt(phiMn / 100, 1)} kgf·m</b>`);
@@ -521,7 +596,6 @@ function flexion(cara, Mu, db, g, m) {
   m.eq(L`\phi M_n = \phi\,A_s f_y\left(d - \frac{a}{2}\right) = ${tn(phi, 3)}\cdot ${tn(As, 3)}\cdot ${tn(fy, 0)}\left(${tn(d)} - \frac{${tn(a, 3)}}{2}\right) = ${tn(phiMn, 0)}${KGCM} = ${tn(phiMn / 100, 1)}${KGM}`);
   m.eq(L`\frac{D}{C} = \frac{${Msym}}{\phi M_n} = \frac{${tn(Mu / 100, 1)}}{${tn(phiMn / 100, 1)}} = ${tn(dc, 3)} ${cmp(dc, 1)} 1.0`);
   // Requisitos que no entran en la razón D/C: sin ellos, el veredicto no explicaría un "no cumple" con D/C bajo
-  const ok = resuelve && okRho && okSmin && okSmax && okEt && dc <= 1;
   const fallas = !resuelve ? ["la sección no resiste el momento con armadura simple"] : [
     !okRho && "cuantía mayor que la máxima (10.3.5)",
     !okSmin && "las barras no caben en una capa (7.6.1)",
@@ -534,7 +608,7 @@ function flexion(cara, Mu, db, g, m) {
 }
 
 // ---------------------------------------------------------------------------
-// Corte — Capítulo 11
+// Corte — Capítulo 11 (con el detallamiento de los estribos)
 // ---------------------------------------------------------------------------
 function corte(Vu, g, d, dbMin, criterio, m) {
   const { b, fc, fy, de, ramas } = g;
@@ -543,32 +617,40 @@ function corte(Vu, g, d, dbMin, criterio, m) {
   // Criterio sísmico (pórtico especial): ACI 318-08 21.5.4.2 exige diseñar el refuerzo transversal con V_c = 0 cuando el corte
   // sísmico es la mitad o más del corte requerido y P_u < A_g f'c/20 (vigas). Se adopta V_c = 0, del lado seguro.
   const sis = criterio === "sismico";
+  m.p(L`La capacidad al corte se evalúa considerando la contribución del hormigón $V_c$ y de la armadura transversal $V_s$, exigiendo $V_u \le \phi(V_c + V_s)$ con $\phi = 0.75$ (9.3.2.3) y altura útil $d = ${tn(d)}$ cm.`, true);
+
+  // ---------- 1. Capacidad del hormigón ----------
   const Vc = sis ? 0 : 0.53 * rf * b * d;
   const phiVc = phi * Vc;
-  const VsCalc = Vu / phi - Vc;
-  const Vs = Math.max(0, VsCalc);
-  const VsMax = 2.12 * rf * b * d;
-  const okVs = Vs <= VsMax;
+  m.grupo("Capacidad del hormigón", "v-hor");
   m.row("Altura útil ; factor de reducción por corte: d ; φ", `${fmt(d, 2)} cm ; 0.75`, "9.3.2.3");
   m.row("Resistencia al corte del hormigón: V<sub>c</sub> ; φV<sub>c</sub>", `${fmt(Vc, 0)} ; ${fmt(phiVc, 0)} kgf${sis ? " (sísmico: V<sub>c</sub> = 0)" : ""}`, sis ? "21.5.4.2" : "11.2.1.1");
   if (sis) {
     m.note("Criterio sísmico: se toma V<sub>c</sub> = 0 (ACI 318-08 21.5.4.2). V<sub>u</sub> debe ser el corte de diseño V<sub>e</sub> de 21.5.4.1, con los momentos probables M<sub>pr</sub> (1.25 f<sub>y</sub>) en los extremos más las cargas gravitacionales, que esta página no calcula.",
       L`Criterio sísmico: se toma $V_c = 0$ (ACI 318-08, 21.5.4.2), lo que corresponde cuando el corte inducido por el sismo es la mitad o más del corte requerido y $P_u < A_gf'_c/20$. $V_u$ debe ser el corte de diseño $V_e$ de 21.5.4.1, calculado con los momentos probables $M_{pr}$ ($1.25f_y$) en los extremos más las cargas gravitacionales mayoradas; esta memoria no lo calcula y usa el $V_u$ ingresado.`);
+    m.eq(L`V_c = 0 \qquad \phi V_c = 0`, "21.5.4.2");
+  } else {
+    m.p(L`\textbf{Resistencia del hormigón:}`);
+    m.eq(L`V_c = 0.53\sqrt{f'_c}\,b_w\,d = 0.53\sqrt{${tn(fc, 0)}}\cdot ${tn(b, 1)}\cdot ${tn(d)} = ${tn(Vc, 0)}${KG} \qquad \phi V_c = 0.75\cdot ${tn(Vc, 0)} = ${tn(phiVc, 0)}${KG}`, "11-3");
   }
+
+  // ---------- 2. Demanda sobre el acero ----------
+  const VsCalc = Vu / phi - Vc;
+  const Vs = Math.max(0, VsCalc);
+  const VsMax = 2.12 * rf * b * d;
+  const okVs = Vs <= VsMax;
+  m.grupo("Demanda sobre el acero", "v-acero");
   m.row("Corte requerido al acero: V<sub>s</sub>", `${fmt(VsCalc, 0)} kgf`, "11.4.7.1");
-  m.row("Límite del corte resistido por el acero: V<sub>s</sub> ≤ V<sub>s,máx</sub>", `${fmt(Vs, 0)} ≤ ${fmt(VsMax, 0)} kgf ${tag(okVs, okVs ? "cumple" : "aumentar sección")}`, "11.4.7.9");
-  m.p(L`La capacidad al corte se evalúa considerando la contribución del hormigón $V_c$ y de la armadura transversal $V_s$, exigiendo $V_u \le \phi(V_c + V_s)$ con $\phi = 0.75$ (9.3.2.3) y altura útil $d = ${tn(d)}$ cm.`, true);
-  m.p(L`\textbf{Resistencia del hormigón y corte requerido al acero:}`);
-  if (sis) m.eq(L`V_c = 0 \qquad \phi V_c = 0`, "21.5.4.2");
-  else m.eq(L`V_c = 0.53\sqrt{f'_c}\,b_w\,d = 0.53\sqrt{${tn(fc, 0)}}\cdot ${tn(b, 1)}\cdot ${tn(d)} = ${tn(Vc, 0)}${KG} \qquad \phi V_c = ${tn(phiVc, 0)}${KG}`, "11-3");
+  m.row("Límite del corte resistido por el acero (aplastamiento del alma): V<sub>s</sub> ≤ V<sub>s,máx</sub>", `${fmt(Vs, 0)} ≤ ${fmt(VsMax, 0)} kgf ${tag(okVs, okVs ? "cumple" : "aumentar sección")}`, "11.4.7.9");
+  if (!okVs) m.note("V<sub>s</sub> supera el límite 2.12√f'c b<sub>w</sub> d: se debe aumentar la sección.", L`$V_s$ supera el límite $2.12\sqrt{f'_c}\,b_w d$: se debe aumentar la sección.`);
+  m.p(L`\textbf{Corte requerido al acero:}`);
   m.eq(L`V_s = \frac{V_u}{\phi} - V_c = \frac{${tn(Vu, 0)}}{0.75} - ${tn(Vc, 0)} = ${tn(VsCalc, 0)}${KG}`, "11-2");
   m.p(L`Se verifica que la sección sea adecuada, limitando el corte que puede tomar el acero para prevenir la falla por compresión diagonal del alma:`, true);
   m.eq(L`V_{s,\max} = 2.12\sqrt{f'_c}\,b_w\,d = 2.12\sqrt{${tn(fc, 0)}}\cdot ${tn(b, 1)}\cdot ${tn(d)} = ${tn(VsMax, 0)}${KG}`, "11.4.7.9");
   m.eq(L`V_s = ${tn(Vs, 0)}${KG} \;${okVs ? LE : ">"}\; V_{s,\max} = ${tn(VsMax, 0)}${KG}`);
   if (VsCalc <= 0) m.p(L`Como $V_s \le 0$, el hormigón resiste por sí solo la demanda y no se requiere armadura de corte por cálculo.`);
-  if (!okVs) m.note("V<sub>s</sub> supera el límite 2.12√f'c b<sub>w</sub> d: se debe aumentar la sección.", L`$V_s$ supera el límite $2.12\sqrt{f'_c}\,b_w d$: se debe aumentar la sección.`);
 
-  // Armadura transversal
+  // ---------- 3. Diseño de estribos ----------
   const requiereMin = Vu > 0.5 * phiVc;
   const AvsReq = Vs / (fy * d);
   const AvsMin = Math.max(0.2 * rf, 3.5) * b / fy;
@@ -595,27 +677,35 @@ function corte(Vu, g, d, dbMin, criterio, m) {
     sMaxRef = "11.4.5.3";
   }
   const s = Math.max(1, Math.floor(Math.min(sCalc, sMax) + 1e-9));
-  const VsP = ramas * Abe * fy * d / s;
-  const phiVn = phi * (Vc + VsP);
-  const dc = Vu / phiVn;
+  m.grupo("Diseño de estribos", "v-est");
   m.row("Armadura de corte requerida: A<sub>v</sub>/s", `${fmt(AvsReq, 4)} cm²/cm`, "11-15");
   m.row("Armadura de corte mínima: (A<sub>v</sub>/s)<sub>mín</sub>", `${fmt(AvsMin, 4)} cm²/cm`, "11.4.6.3");
-  m.row(`Espaciamiento calculado, estribo φ${de} de ${ramas} ramas: s`, `${fmt(sCalc, 2)} cm`);
-  m.row("Espaciamiento máximo: s<sub>máx</sub>", `${fmt(sMax, 2)} cm`, sMaxRef || "d/4");
-  m.row("<b>Estribos adoptados</b>", `<b>E φ${de} @ ${s} cm</b>`);
-  m.row("<b>Resistencia de diseño a corte: φV<sub>n</sub></b>", `<b>${fmt(phiVn, 0)} kgf</b>`);
-  m.row("<b>Razón demanda/capacidad en corte: D/C</b>", `<b>${fmt(dc, 3)}</b> ${okTxt(dc <= 1 && okVs)}`);
+  m.row(`Espaciamiento teórico, estribo φ${de} de ${ramas} ramas: s`, `${fmt(sCalc, 2)} cm`);
+  m.row("Espaciamiento máximo normativo: s<sub>máx</sub>", `${fmt(sMax, 2)} cm`, sMaxRef || "d/4");
   m.p(L`\textbf{Armadura transversal.} Se dispone al menos la armadura mínima ${requiereMin ? L`(exigida por 11.4.6.1, pues $V_u > 0.5\phi V_c = ${tn(0.5 * phiVc, 0)}$ kgf)` : L`(como $V_u \le 0.5\phi V_c = ${tn(0.5 * phiVc, 0)}$ kgf no es exigida por 11.4.6.1; se dispone como armadura constructiva)`}:`);
   m.eq(L`\frac{A_v}{s} = \frac{V_s}{f_{yt}\,d} = \frac{${tn(Vs, 0)}}{${tn(fy, 0)}\cdot ${tn(d)}} = ${tn(AvsReq, 4)}${CM2CM}`, "11-15");
   m.eq(L`\left(\frac{A_v}{s}\right)_{\min} = \max\left(0.2\sqrt{f'_c},\ 3.5\right)\frac{b_w}{f_{yt}} = \max\left(${tn(0.2 * rf, 3)},\ 3.5\right)\cdot\frac{${tn(b, 1)}}{${tn(fy, 0)}} = ${tn(AvsMin, 4)}${CM2CM}`, "11-13");
   m.eq(L`s = \frac{n\,A_b}{A_v/s} = \frac{${ramas}\cdot ${tn(Abe, 3)}}{${tn(Avs, 4)}} = ${tn(sCalc)}${CM}`);
   m.eq(L`${sMaxTxt} = ${tn(sMax)}${CM}`, sMaxRef);
+
+  // ---------- 4. Detallamiento ----------
+  const hk = ganchos({ ...g, s }, m);
+
+  // ---------- 5. Verificación de capacidad (resumen) ----------
+  const VsP = ramas * Abe * fy * d / s;
+  const phiVn = phi * (Vc + VsP);
+  const dc = Vu / phiVn;
+  m.grupo("Verificación de capacidad (resumen)", "v-cap", { abierto: true, resumen: `D/C = ${fmt(dc, 3)} ${okTxt(dc <= 1 && okVs)}` });
+  m.row("<b>Estribo adoptado</b>", `<b>E φ${de} @ ${s} cm</b> (${ramas} ramas)`);
+  m.row("Corte resistido por los estribos adoptados: V<sub>s,disp</sub>", `${fmt(VsP, 0)} kgf`, "11-15");
+  m.row("<b>Resistencia de diseño a corte: φV<sub>n</sub></b>", `<b>${fmt(phiVn, 0)} kgf</b>`);
+  m.row("<b>Razón demanda/capacidad en corte: D/C</b>", `<b>${fmt(dc, 3)}</b> ${okTxt(dc <= 1 && okVs)}`);
   m.p(L`Se adopta \textbf{E$\phi${de}$ @ ${s} cm} (${ramas} ramas). Capacidad con la armadura dispuesta:`);
   m.eq(L`V_{s,\text{disp}} = \frac{n\,A_b\,f_{yt}\,d}{s} = \frac{${ramas}\cdot ${tn(Abe, 3)}\cdot ${tn(fy, 0)}\cdot ${tn(d)}}{${s}} = ${tn(VsP, 0)}${KG}`, "11-15");
   m.eq(L`\phi V_n = \phi(V_c + V_{s,\text{disp}}) = 0.75\,(${tn(Vc, 0)} + ${tn(VsP, 0)}) = ${tn(phiVn, 0)}${KG} \qquad \frac{D}{C} = \frac{V_u}{\phi V_n} = \frac{${tn(Vu, 0)}}{${tn(phiVn, 0)}} = ${tn(dc, 3)} ${cmp(dc, 1)} 1.0`, "11-1");
   m.p(L`Por lo tanto, con estribos E$\phi${de}$ @ ${s} cm la viga \textbf{${dc <= 1 && okVs ? "cumple" : "no cumple"}} la verificación a corte.`, true);
 
-  return { Vc, phiVc, phiVn, dc, s, ok: okVs && dc <= 1, fallas: okVs ? [] : ["corte del acero mayor que el máximo de la sección (11.4.7.9)"] };
+  return { Vc, phiVc, phiVn, dc, s, hk, ok: okVs && dc <= 1, fallas: okVs ? [] : ["corte del acero mayor que el máximo de la sección (11.4.7.9)"] };
 }
 
 // ---------------------------------------------------------------------------
@@ -635,7 +725,7 @@ function ganchos(g, m) {
   const peso = kgm * Lt / 100;
   const pesoMl = peso * 100 / s;                           // kg por metro de viga
   const tipo = gancho === "sismico" ? "sísmico" : "estándar";
-  m.sub("Detalle de ganchos y largo del estribo");
+  m.grupo("Detallamiento", "v-det");
   m.row("Diámetro interior de doblado: D", `${fmt(D, 2)} cm`, "7.2.2");
   m.row(`Extensión del gancho 135° ${tipo}: l<sub>ext</sub>`, `${fmt(ext, 2)} cm`, gancho === "sismico" ? "21.1" : "7.1.3(c)");
   m.row("Largo de cada gancho: L<sub>g</sub>", `${fmt(Lg, 2)} cm`);
@@ -830,7 +920,7 @@ function calcularViga() {
   m.h("Verificación a corte — Capítulo 11");
   const v = corte(g.Vu, g, inf.d, Math.min(g.dbInf, g.dbSup), g.criterio, m);
   g.s = v.s;
-  g.hk = ganchos(g, m);
+  g.hk = v.hk;
 
   // Datos generales (se anteponen en pantalla)
   const datos = new Memo();
@@ -860,6 +950,7 @@ function calcularViga() {
   const motivos = [...inf.fallas.map(f => `armadura inferior: ${f}`), ...sup.fallas.map(f => `armadura superior: ${f}`), ...v.fallas.map(f => `corte: ${f}`)];
   $("verdict").innerHTML = `<div class="verdict ${ok ? "ok" : "bad"}">${ok ? "✔ La viga CUMPLE" : "✘ La viga NO CUMPLE"} — razón máxima = ${razonTxt(dc)}${motivos.map(x => ` · ${x}`).join("")}</div>`;
   $("memo").innerHTML = datos.html() + m.html();
+  dibujarTex($("memo"));          // todas las ecuaciones, también las de acordeones cerrados (para imprimir)
 
   const resumen = [
     { k: "Flexión inferior", dem: L`$M_u^{+} = ${tn(g.Mpos / 100, 1)}$ kgf$\cdot$m`, cap: L`$\phi M_n = ${tn(inf.phiMn / 100, 1)}$ kgf$\cdot$m`, dc: inf.dc, arm: L`${inf.Nb}$\phi$${inf.db}`, ok: inf.ok },
