@@ -25,7 +25,7 @@ PWA en HTML y JS puro publicada en GitHub Pages. Acceso con Google (Supabase); s
 - Bienvenida tras iniciar sesión: se muestra en cada inicio, con animación breve, botón «Entrar» y avance automático al terminar.
 
 ## Brand Commitments
-- Nombre: structura, en minúsculas. Isotipo «S de pórticos»: tres vigas y dos columnas con un nudo naranja (`icons/structura.svg`).
+- Nombre: structura, en minúsculas. Isotipo «S de pórticos»: tres vigas y dos columnas con un nudo naranja (`icons/structura-s.svg`).
 - Paleta de `aura.css`: azul #00008B, naranja #e65c00, gris acero #e3e6ea; en oscuro azul #2c3cc8 y naranja #ff8a3d.
 - Tono técnico y sobrio, en español de Chile.
 - La bienvenida puede afirmar: normas chilenas y AISC por disciplina; memorias .tex y planos DXF. No mencionar a MMP ni a Hormi en la bienvenida.
