@@ -143,6 +143,11 @@
   <section class="panel" id="inputs">
     <h2>Datos de entrada</h2>
     <div class="body">
+      <label for="normaACI">Versión del código ACI 318 (malla y E<sub>c</sub>)</label>
+      <select id="normaACI">
+        <option value="08" selected>ACI 318-08 (vigente en Chile)</option>
+        <option value="19">ACI 318-19 (aún no vigente en Chile)</option>
+      </select>
       <svg class="esquema" viewBox="0 0 320 120" aria-label="Esquema de la sección de la losa colaborante">
         <rect x="10" y="22" width="300" height="34" fill="#eceef1" stroke="#9aa3ad"/>
         <path d="M10 56 L30 56 L42 92 L78 92 L90 56 L130 56 L142 92 L178 92 L190 56 L230 56 L242 92 L278 92 L290 56 L310 56 L310 56"
@@ -291,6 +296,8 @@ const TABLA_IV = {
 };
 const FC_MIN = 214;          // kgf/cm² (21 MPa): mínimo de AISC 360-16 I1.3 para hormigón de peso normal
 const AS_MIN = 1.8;            // cm²/m, armadura de retracción mínima en cada dirección
+// Versión del ACI 318 para la malla y E_c: 318-08 (vigente en Chile, por defecto) o 318-19 (casilla normaACI)
+const aci = (r08, r19) => (document.getElementById("normaACI")?.value === "19" ? `ACI 318-19 ${r19}` : `ACI 318-08 ${r08}`);
 const V_APOYO = 11200;         // kgf por metro de ancho: resistencia última de los conectores en cada apoyo
 const FU_CON = 4570;           // kgf/cm² (65 ksi), conectores AWS D1.1 tipo B
 const CONECTOR = { "5/8": { d: 1.588, txt: "5/8\"" }, "3/4": { d: 1.905, txt: "3/4\"" } };
@@ -480,7 +487,7 @@ function conector(d, m) {
   const Qn = d.QnUser ?? QnA;
   m.row(`Área del conector ${D.txt}: A<sub>sa</sub>`, `${fmt(Asa, 2)} cm²`);
   m.eq(L`A_{sa} = \frac{\pi\,d^2}{4} = \frac{\pi\cdot ${tn(D.d, 2)}^2}{4} = ${tn(Asa, 2)}\ \mathrm{cm^2}`);
-  m.row("Módulo elástico del hormigón: E<sub>c</sub>", `${fmt(Ec, 0)} kgf/cm²`, "ACI 318-08 8.5.1");
+  m.row("Módulo elástico del hormigón: E<sub>c</sub>", `${fmt(Ec, 0)} kgf/cm²`, aci("8.5.1", "19.2.2.1"));
   m.row(`R<sub>g</sub> (${d.cnv} por valle) ; R<sub>p</sub> (posición ${d.pos === "fuerte" ? "fuerte" : "débil"})`, `${fmt(Rg, 2)} ; ${fmt(Rp, 2)}`, "I8.2a");
   m.eq(L`E_c = 15\,100\sqrt{f'_c} = 15\,100\sqrt{${tn(d.fc, 0)}} = ${tn(Ec, 0)}\ \mathrm{kgf/cm^2}`);
   m.eq(L`Q_n = 0.5\,A_{sa}\sqrt{f'_c E_c} = 0.5 \cdot ${tn(Asa, 3)}\sqrt{${tn(d.fc, 0)} \cdot ${tn(Ec, 0)}} = ${tn(Q1, 0)}\ \mathrm{kgf}`, "I8-1");
@@ -611,12 +618,12 @@ function verificar(eh, d, m) {
   m.row("Razón de armadura: A<sub>s,mín</sub> / A<sub>s</sub>", tagDC(dc4));
   m.eq(L`\frac{A_{s,m\acute{\imath}n}}{A_s} = \frac{${tn(AS_MIN, 2)}}{${tn(d.As, 2)}} = ${tn(dc4, 3)} ${dc4 <= 1 ? LE : ">"} 1.0`);
   const asACI = 0.0018 * 100 * eh;
-  m.p(L`La malla se ubica a 2.5 cm de la cara superior del hormigón, con acero A63-42H como mínimo. Se usa el mínimo del fabricante; como referencia, la cuantía $0.0018\,b\,e_h$ del ACI 318 aplicada al hormigón sobre la cresta daría ${tn(asACI, 2)} cm$^2$/m.`, true);
+  m.p(L`La malla se ubica a 2.5 cm de la cara superior del hormigón, con acero A63-42H como mínimo. Se usa el mínimo del fabricante; como referencia, la cuantía $0.0018\,b\,e_h$ del ${aci("7.12.2.1", "24.4.3.2, para todo $f_y$,")} aplicada al hormigón sobre la cresta daría ${tn(asACI, 2)} cm$^2$/m.`, true);
   checks.push({ k: "Malla de retracción", dem: L`$A_{s,m\acute{\imath}n} = ${tn(AS_MIN, 2)}$ cm$^2$/m`, cap: L`$A_s = ${tn(d.As, 2)}$ cm$^2$/m`, dc: dc4, html: "Malla de retracción" });
   const sMaxM = Math.min(5 * eh, 45);
   const dc4b = d.sM / sMaxM;
-  m.row("Espaciamiento de la malla: s ≤ s<sub>máx</sub>", `${fmt(d.sM, 1)} ${dc4b <= 1 + 1e-9 ? "≤" : ">"} ${fmt(sMaxM, 1)} cm ${tagDC(dc4b)}`, "ACI 318-08 7.12.2.2");
-  m.eq(L`s = ${tn(d.sM, 1)}\ \mathrm{cm} ${cmp(d.sM, sMaxM)} s_{m\acute{a}x} = \min(5 e_h;\ 45) = \min(${tn(5 * eh, 0)};\ 45) = ${tn(sMaxM, 1)}\ \mathrm{cm}`, "ACI 318-08 7.12.2.2");
+  m.row("Espaciamiento de la malla: s ≤ s<sub>máx</sub>", `${fmt(d.sM, 1)} ${dc4b <= 1 + 1e-9 ? "≤" : ">"} ${fmt(sMaxM, 1)} cm ${tagDC(dc4b)}`, aci("7.12.2.2", "24.4.3.3"));
+  m.eq(L`s = ${tn(d.sM, 1)}\ \mathrm{cm} ${cmp(d.sM, sMaxM)} s_{m\acute{a}x} = \min(5 e_h;\ 45) = \min(${tn(5 * eh, 0)};\ 45) = ${tn(sMaxM, 1)}\ \mathrm{cm}`, aci("7.12.2.2", "24.4.3.3"));
   checks.push({ k: "Espaciamiento de la malla", dem: L`$s = ${tn(d.sM, 1)}$ cm`, cap: L`$s_{m\acute{a}x} = ${tn(sMaxM, 1)}$ cm`, dc: dc4b, html: "Espaciamiento de la malla" });
 
   // 6. Conectores de corte en los apoyos

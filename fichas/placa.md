@@ -43,3 +43,7 @@ Documentos: Manual técnico Instadeck (Cintac); Ficha técnica Instadeck (Cintac
 | Conectores de la viga de apoyo (acción compuesta completa) | Corte horizontal: V' | I3.2d | AISC 360-16 (español) | 148 |
 | Conectores de la viga de apoyo (acción compuesta completa) | Disposición | I8.2d | AISC 360-16 (español) | 160 |
 | Conectores de la viga de apoyo (acción compuesta completa) | I+ ; S+ (sección efectiva) | Ficha técnica | Ficha técnica Instadeck (Cintac) | 3 |
+
+## Opción ACI 318-19 (casilla «Versión del código ACI 318»)
+
+Con la casilla en ACI 318-19 (aún no vigente en Chile) solo cambian las referencias: la cuantía 0.0018 se aplica para todo fy (24.4.3.2, PDF 464), la separación de la malla sigue limitada a mín(5e_h ; 450 mm) (24.4.3.3, PDF 464) y Ec se cita en 19.2.2.1 (PDF 358). Los valores no cambian. Documento: ACI 318M-19 (inglés, unidades SI); la página del PDF es la impresa + 2.

@@ -161,6 +161,9 @@
       <fieldset>
         <legend>2. Materiales y armadura</legend>
         <div class="row2">
+          <div><label for="normaACI">Versión del código</label>
+            <select id="normaACI"><option value="08" selected>Planilla IIO348 (ACI 318-08, vigente en Chile)</option><option value="19">ACI 318-19 (aún no vigente en Chile)</option></select></div>
+          <div id="boxOmega" class="hidden"><label for="omegaV">Sobrerresistencia Ω<sub>v</sub> si h<sub>w</sub>/L<sub>w</sub> &gt; 1.5</label><input id="omegaV" type="number" step="0.05" min="1" value="1.5"></div>
           <div><label for="fc">Hormigón f'<sub>c</sub> <span class="unit">[kgf/cm²]</span></label><input id="fc" type="number" step="10" value="250"></div>
           <div><label for="fy">Acero f<sub>y</sub> <span class="unit">[kgf/cm²]</span></label><input id="fy" type="number" step="100" value="4200"></div>
           <div><label for="db">Barra horizontal φ <span class="unit">[mm]</span></label>
@@ -229,6 +232,41 @@ function corteFila(Vu, Lw, e, c) {
   const s = Math.floor(100 * Ab / (As / 2));
   const dc = Math.max(Vu / phiVn, Vu / limite, Vs / Vsmax);
   return { Vu, Vc, Vs, Vsmax, Avs, rho, rhoMin, As, alfa, phiVn, limite, Ab, s, dc };
+}
+// ---------------------------------------------------------------------------
+// ACI 318-19, muros estructurales especiales (18.10), elegido en la casilla normaACI. Las expresiones del código
+// están en MPa: c·√f'c[MPa] = 3.193·c·√f'c[kgf/cm²]. ns es el número de pisos del pier en la tabla.
+// ---------------------------------------------------------------------------
+const es19 = () => document.getElementById("normaACI")?.value === "19";
+const MPA = 10.1972;
+const kR = (c) => c * Math.sqrt(MPA);
+function corteFila19(Vu, Lw, e, c, ns) {
+  const raiz = Math.sqrt(c.fc), Acv = e * 100 * Lw * 100, hl = c.Hw / Lw;
+  // 18.10.3.1: V_e = Ω_v ω_v V_u ≤ 3V_u (Tabla 18.10.3.1.2 y 18.10.3.1.3, con h_wcs = H_w)
+  const Om = hl > 1.5 ? Math.max(1, c.Omega) : 1;
+  const nsE = Math.max(ns, 0.00028 * c.Hw * 1000);
+  const om = hl < 2 ? 1 : nsE <= 6 ? 0.9 + nsE / 10 : Math.min(1.8, 1.3 + nsE / 30);
+  const Ve = Math.min(Om * om * Vu, 3 * Vu);
+  // 18.10.4.1: V_n = (α_c λ √f'c + ρ_t f_y) A_cv; α_c = 0.25 (h_w/L_w ≤ 1.5), 0.17 (≥ 2.0), lineal entre ambos
+  const ac = hl <= 1.5 ? 0.25 : hl >= 2 ? 0.17 : 0.25 - 0.08 * (hl - 1.5) / 0.5;
+  const Vc = kR(ac) * raiz * Acv;
+  const Vs = Ve / PHI - Vc;
+  const Avs = Vs / (c.fy * Lw * 100) * 100;                     // cm²/m
+  const rho = Avs / (100 * e * 100);
+  // 18.10.2.1: ρ_t ≥ 0.0025, salvo V_u ≤ 0.083λ√f'c A_cv, donde se permite la Tabla 11.6.1 (0.0020 con barras ≤ φ16 y A630-420H)
+  const reduce = Vu <= kR(0.083) * raiz * Acv;
+  const rhoMin = reduce && c.db <= 16 && c.fy >= 4200 ? 0.0020 : 0.0025;
+  const As = Math.max(rho, rhoMin) * 100 * e * 100;              // cm²/m
+  const Ab = Math.PI * (c.db / 20) ** 2;
+  const s = Math.floor(100 * Ab / (As / 2));
+  const rhoP = s > 0 ? 2 * Ab * 100 / s / (100 * e * 100) : NaN;
+  const Vn = (kR(ac) * raiz + rhoP * c.fy) * Acv;
+  // 18.10.4.4: V_n ≤ 0.83√f'c A_cw en un segmento; 0.66√f'c A_cv para todos los que comparten la fuerza (informativo)
+  const VnMax = kR(0.83) * raiz * Acv, Vn066 = kR(0.66) * raiz * Acv;
+  const phiVn = PHI * Math.min(Vn, VnMax), limite = PHI * VnMax;
+  const dosCapas = Vu > kR(0.17) * raiz * Acv || hl >= 2;        // 18.10.2.2
+  const dc = Math.max(Ve / phiVn, Ve / limite);
+  return { Vu, Ve, Om, om, nsE, hl, alfa: ac, Vc, Vs, Vsmax: NaN, Avs, rho, rhoMin, reduce, As, Ab, s, rhoP, Vn, VnMax, Vn066, phiVn, limite, dosCapas, dc, Acv };
 }
 // </calculo>
 
@@ -563,8 +601,11 @@ function analizar(c) {
   const g = geometria(), filas = filasPier().filter(f => f[2] === $("caso").value);
   const vars = objeto("piersVariables");
   const res = [], faltan = [], fuera = [], porDefecto = [];
-  const revisar = (Vu, Lw, e, f) => { const r = { ...corteFila(Math.abs(Vu), Lw, e, c), piso: f[0], ubic: f[3], paso: f[4] }; if (!Number.isFinite(r.dc)) r.dc = Infinity; return r; };
+  const n19 = es19();
+  let ns = 1;
+  const revisar = (Vu, Lw, e, f) => { const r = { ...(n19 ? corteFila19(Math.abs(Vu), Lw, e, c, ns) : corteFila(Math.abs(Vu), Lw, e, c)), piso: f[0], ubic: f[3], paso: f[4] }; if (!Number.isFinite(r.dc)) r.dc = Infinity; return r; };
   for (const p of listaPiers(filas)) {
+    ns = new Set(filas.filter(f => f[1] === p).map(f => f[0])).size;
     const gp = Object.hasOwn(g, p) ? g[p] : null, eVacio = vacia(gp?.e);
     const Lw = numero(gp?.L), e = eVacio ? c.eDef : numero(gp.e);
     if (!(Lw > 0) || !(e > 0)) { faltan.push(p); continue; }
@@ -579,7 +620,8 @@ function analizar(c) {
       if (!gob || r.Vu > gob.Vu) gob = r;
       if (menor) dcMenor = Math.max(dcMenor, revisar(f[5], menor.L, menor.e, f).dc);
     }
-    res.push({ p, Lw, e, crit, gob, dc: crit.dc, svMax: Math.min(Lw * 100 / 3, 3 * e * 100, 45), menor: menor ? { ...menor, dc: dcMenor } : null });
+    // S_v,máx: planilla mín(L_w/3; 3e; 45 cm); ACI 318-19 mín(3e; 450 mm) (11.7.3.1 y 18.10.2.1)
+    res.push({ p, Lw, e, ns, crit, gob, dc: crit.dc, svMax: n19 ? Math.min(3 * e * 100, 45) : Math.min(Lw * 100 / 3, 3 * e * 100, 45), menor: menor ? { ...menor, dc: dcMenor } : null });
   }
   res.sort((a, b) => b.dc - a.dc);
   return { res, faltan, fuera, porDefecto, n: filas.length };
@@ -660,7 +702,51 @@ ${puntos}\draw[cota] (0,-0.3) -- (${g(e)},-0.3) node[midway,below]{\small $e = $
 `;
 }
 
+function memoPier19(m, r, c, figura) {
+  const { p, Lw, e, gob: f } = r, raiz = Math.sqrt(c.fc), hl = c.Hw / Lw, Acv = e * Lw;
+  m.h(`Pier ${p}`);
+  if (figura) m.raw(tikzPier(r, c));
+  m.sub("Geometría y demanda");
+  m.row("Largo ; espesor ; área de corte: L<sub>w</sub> ; e ; A<sub>cv</sub>", `${fmt(Lw, 2)} ; ${fmt(e, 2)} m ; ${fmt(Acv, 3)} m²`);
+  m.eq(L`A_{cv} = L_w\,e = ${tn(Lw, 2)}\cdot ${tn(e, 2)} = ${tn(Acv, 3)}\ \mathrm{m^2}`);
+  m.row(`Corte máximo (${escH(f.piso)}, ${escH(f.ubic)}${f.paso ? ", " + escH(f.paso) : ""}): V<sub>u</sub>`, `${fmt(f.Vu, 1)} kgf`);
+  m.p(L`Largo $L_w = ${tn(Lw, 2)}$ m y espesor $e = ${tn(e, 2)}$ m. El corte máximo del pier es $V_u = ${tn(f.Vu, 1)}$ kgf, en ${escTex(f.piso)}, ${escTex(f.ubic)}${f.paso ? ", " + escTex(f.paso) : ""}.`, true);
+
+  m.sub("Corte de diseño amplificado");
+  m.row("Esbeltez ; número de pisos: h<sub>w</sub>/L<sub>w</sub> ; n<sub>s</sub>", `${fmt(hl, 3)} ; ${fmt(f.nsE, f.nsE % 1 ? 2 : 0)}`, "ACI 318-19 18.10.3.1.3");
+  m.row("Sobrerresistencia ; amplificación dinámica: Ω<sub>v</sub> ; ω<sub>v</sub>", `${fmt(f.Om, 2)} ; ${fmt(f.om, 3)}`, "ACI 318-19 Tabla 18.10.3.1.2 y 18.10.3.1.3");
+  m.eq(L`\Omega_v = ${hl > 1.5 ? L`${tn(f.Om, 2)}\ \ (h_{wcs}/L_w > 1.5,\ \text{dato: el mayor entre } M_{pr}/M_u \text{ y } 1.5)` : L`1.0\ \ (h_{wcs}/L_w \le 1.5)`} \qquad \omega_v = ${hl < 2 ? L`1.0\ \ (h_{wcs}/L_w < 2)` : f.nsE <= 6 ? L`0.9 + \frac{n_s}{10} = ${tn(f.om, 3)}` : L`1.3 + \frac{n_s}{30} = ${tn(f.om, 3)} \le 1.8`}`, "ACI 318-19 18.10.3.1");
+  m.row("Corte de diseño: V<sub>e</sub>", `${fmt(f.Ve, 1)} kgf`, "ACI 318-19 18.10.3.1");
+  m.eq(L`V_e = \Omega_v\,\omega_v\,V_u \le 3V_u \;\Rightarrow\; V_e = \min(${tn(f.Om, 2)}\cdot ${tn(f.om, 3)}\cdot ${tn(f.Vu, 1)};\ 3\cdot ${tn(f.Vu, 1)}) = ${tn(f.Ve, 1)}\ \mathrm{kgf}`, "ACI 318-19 (18.10.3.1)");
+
+  m.sub("Resistencia al corte y armadura horizontal");
+  m.row("Coeficiente del hormigón: α<sub>c</sub>", `${fmt(f.alfa, 3)} (MPa) → ${fmt(kR(f.alfa), 3)} (kgf/cm²)`, "ACI 318-19 18.10.4.1");
+  m.eq(L`\alpha_c = ${hl <= 1.5 ? L`0.25\ \ (h_w/L_w \le 1.5)` : hl >= 2 ? L`0.17\ \ (h_w/L_w \ge 2.0)` : L`0.25 - 0.08\,\frac{h_w/L_w - 1.5}{0.5} = ${tn(f.alfa, 3)}`} \qquad V_c = \alpha_c\lambda\sqrt{f'_c}\,A_{cv} = ${tn(kR(f.alfa), 3)}\sqrt{${tn(c.fc, 0)}}\cdot ${tn(f.Acv, 0)} = ${tn(f.Vc, 1)}\ \mathrm{kgf}`, "ACI 318-19 18.10.4.1");
+  m.row("Corte que debe resistir el acero: V<sub>s</sub>", `${fmt(f.Vs, 1)} kgf`);
+  m.eq(L`V_s = \frac{V_e}{\phi} - V_c = \frac{${tn(f.Ve, 1)}}{${PHI}} - ${tn(f.Vc, 1)} = ${tn(f.Vs, 1)}\ \mathrm{kgf} \qquad \rho_t = \frac{V_s}{f_y\,A_{cv}} = ${tn(f.rho, 5)}`);
+  m.row("Cuantía requerida ; cuantía mínima: ρ<sub>t</sub> ; ρ<sub>t,mín</sub>", `${fmt(f.rho, 5)} ; ${fmt(f.rhoMin, 4)}`, f.rhoMin === 0.002 ? "ACI 318-19 18.10.2.1 y Tabla 11.6.1" : "ACI 318-19 18.10.2.1");
+  m.eq(L`0.083\lambda\sqrt{f'_c}\,A_{cv} = ${tn(kR(0.083) * raiz * f.Acv, 1)}\ \mathrm{kgf} \;\Rightarrow\; \rho_{t,m\acute{i}n} = ${f.rhoMin === 0.002 ? L`0.0020\ \ (V_u \le 0.083\lambda\sqrt{f'_c}A_{cv},\ \text{barras} \le \phi16)` : L`0.0025`}`, "ACI 318-19 18.10.2.1");
+  m.row("Armadura horizontal total: A<sub>s</sub>", `${fmt(f.As, 2)} cm²/m`);
+  m.eq(L`A_s = \max(\rho_t;\ \rho_{t,m\acute{i}n})\cdot 100\,e = ${tn(Math.max(f.rho, f.rhoMin), 5)}\cdot 100\cdot ${tn(e * 100, 0)} = ${tn(f.As, 2)}\ \mathrm{cm^2/m}`);
+  const excede = f.s > r.svMax;
+  m.row("Espaciamiento por armadura en dos capas: s", `<b>${barra(c.db, f.s)}</b> por cara`, "ACI 318-19 18.10.2.2");
+  m.eq(L`s = \left\lfloor\frac{100\,A_b}{A_s/2}\right\rfloor = \left\lfloor\frac{100\cdot ${tn(f.Ab, 3)}}{${tn(f.As / 2, 2)}}\right\rfloor = ${f.s}\ \mathrm{cm} \qquad \rho_{t,disp} = ${tn(f.rhoP, 5)}`);
+  m.row("Espaciamiento máximo: s<sub>máx</sub>", `${fmt(r.svMax, 1)} cm ${excede ? `<span class="tag warn"><span class="sim">s</span> mayor que el máximo</span>` : `<span class="tag ok"><span class="sim">s</span> dentro del máximo</span>`}`, "ACI 318-19 11.7.3.1 y 18.10.2.1");
+  m.eq(L`s_{m\acute{a}x} = \min(3e;\ 450\ \mathrm{mm}) = \min(${tn(3 * e * 100, 1)};\ 45) = ${tn(r.svMax, 1)}\ \mathrm{cm}`, "ACI 318-19 11.7.3.1 y 18.10.2.1");
+
+  m.sub("Condiciones de resistencia");
+  m.row("Resistencia al corte: V<sub>e</sub> ≤ φV<sub>n</sub>", `${fmt(f.Ve, 1)} ≤ ${fmt(f.phiVn, 1)} kgf ${tagDC(f.Ve / f.phiVn)}`, "ACI 318-19 18.10.4.1");
+  m.eq(L`\phi V_n = \phi\left(\alpha_c\lambda\sqrt{f'_c} + \rho_t f_y\right)A_{cv} = ${PHI}\left(${tn(kR(f.alfa), 3)}\sqrt{${tn(c.fc, 0)}} + ${tn(f.rhoP, 5)}\cdot ${tn(c.fy, 0)}\right)\cdot ${tn(f.Acv, 0)} = ${tn(PHI * f.Vn, 1)}\ \mathrm{kgf}${f.Vn > f.VnMax ? L` \to ${tn(f.phiVn, 1)}\ \mathrm{kgf}\ (\text{límite})` : ""} \qquad \frac{V_e}{\phi V_n} = ${tn(f.Ve / f.phiVn, 3)} ${cmp(f.Ve / f.phiVn, 1)} 1`, "ACI 318-19 18.10.4.1");
+  m.row("Límite de un segmento: V<sub>e</sub> ≤ φ 0.83√f'c A<sub>cv</sub>", `${fmt(f.Ve, 1)} ≤ ${fmt(f.limite, 1)} kgf ${tagDC(f.Ve / f.limite)}`, "ACI 318-19 18.10.4.4");
+  m.eq(L`\phi\,0.83\sqrt{f'_c}\,A_{cv} = ${PHI}\cdot ${tn(kR(0.83), 3)}\sqrt{${tn(c.fc, 0)}}\cdot ${tn(f.Acv, 0)} = ${tn(f.limite, 1)}\ \mathrm{kgf} \qquad \frac{V_e}{\phi V_{n,m\acute{a}x}} = ${tn(f.Ve / f.limite, 3)} ${cmp(f.Ve / f.limite, 1)} 1`, "ACI 318-19 18.10.4.4");
+  m.row("Límite del conjunto de segmentos (informativo): 0.66√f'c ΣA<sub>cv</sub>", `${fmt(f.Vn066, 0)} kgf con este pier`, "ACI 318-19 18.10.4.4");
+  m.p(L`El límite $0.66\sqrt{f'_c}A_{cv}$ se aplica a la suma de los segmentos verticales que comparten una misma fuerza lateral; como esta página verifica cada pier por separado, se informa y no entra en la razón D/C.`);
+  if (f.dosCapas) m.p(L`Se requieren dos capas de armadura (18.10.2.2): ${f.Vu > kR(0.17) * raiz * f.Acv ? L`$V_u > 0.17\lambda\sqrt{f'_c}A_{cv}$` : L`$h_w/L_w \ge 2$`}. La armadura propuesta va en dos capas.`);
+  if (r.crit.dc > f.dc + 1e-9) m.note(`La razón máxima de este pier, D/C = ${fmt(r.crit.dc, 3)}, se da en ${escH(r.crit.piso)}, ${escH(r.crit.ubic)}, con V<sub>u</sub> = ${fmt(r.crit.Vu, 1)} kgf.`,
+    L`La razón máxima de este pier, $D/C = ${tn(r.crit.dc, 3)}$, se da en ${escTex(r.crit.piso)}, ${escTex(r.crit.ubic)}, con $V_u = ${tn(r.crit.Vu, 1)}$ kgf.`);
+}
 function memoPier(m, r, c, figura) {
+  if (es19()) return memoPier19(m, r, c, figura);
   const { p, Lw, e, gob: f } = r, raiz = Math.sqrt(c.fc), d = 0.8 * Lw, hl = c.Hw / Lw;
   const Acv = e * Lw, Acw = e * c.Hw, limAcv = 2.12 * Acv * raiz * 1e4, limAcw = 2.65 * Acw * raiz * 1e4;
   m.h(`Pier ${p}`);
@@ -738,7 +824,7 @@ ${TEX_ESTILO}
 \pagestyle{fancy}
 \fancyhf{}
 \chead{Muros de corte}
-\lfoot{Memoria de cálculo --- Muros de corte, ACI 318-08}
+\lfoot{Memoria de cálculo --- Muros de corte, ${es19() ? "ACI 318-19" : "ACI 318-08"}}
 \rfoot{\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\footrulewidth}{0.4pt}
@@ -766,12 +852,14 @@ Hormigón $f'_c$ ; acero $f_y$ & ${tn(c.fc, 0)} ; ${tn(c.fy, 0)} kgf/cm$^2$\\
 Altura del muro $H_w$ & ${tn(c.Hw, 2)} m\\
 Barra horizontal & $\phi$${c.db} en dos capas\\
 Factor de reducción $\phi$ & ${PHI}\\
+${es19() ? L`Código & ACI 318-19 (aún no vigente en Chile), muros estructurales especiales (18.10)\\
+Sobrerresistencia $\Omega_v$ (si $h_w/L_w > 1.5$) & ${tn(c.Omega, 2)}\\` : ""}
 \bottomrule
 \end{tabular}
 \end{table}
 
 \section{Metodología}
-Se verifican al corte todas las filas de la tabla de cada pier, con el corte $V_2$ en valor absoluto y las expresiones de la planilla de diseño de muros del Informe IIO348, basadas en los capítulos 11 y 21 del ACI 318-08. A continuación se desarrolla el detalle de los piers indicados y al final se resumen todos los piers.
+${es19() ? L`Se verifican al corte todas las filas de la tabla de cada pier, con el corte $V_2$ en valor absoluto, según el ACI 318-19 para muros estructurales especiales (18.10): el corte se amplifica a $V_e = \Omega_v\omega_v V_u$ (18.10.3.1) y se compara con $\phi V_n = \phi(\alpha_c\lambda\sqrt{f'_c} + \rho_t f_y)A_{cv}$ (18.10.4.1), limitado a $0.83\sqrt{f'_c}A_{cv}$ (18.10.4.4). Las expresiones del código están en MPa y se usan en kgf/cm$^2$ con 1 MPa $= 10.197$ kgf/cm$^2$ ($c\sqrt{f'_c}$ en MPa equivale a $3.193\,c\sqrt{f'_c}$ en kgf/cm$^2$).` : L`Se verifican al corte todas las filas de la tabla de cada pier, con el corte $V_2$ en valor absoluto y las expresiones de la planilla de diseño de muros del Informe IIO348, basadas en los capítulos 11 y 21 del ACI 318-08.`} A continuación se desarrolla el detalle de los piers indicados y al final se resumen todos los piers.
 
 ${cuerpo}
 
@@ -779,8 +867,11 @@ ${cuerpo}
 \begin{itemize}
 \item Esta memoria verifica solo el corte. \textbf{La flexocompresión y los elementos de borde quedan sin verificar.}
 \item La geometría de cada pier proviene de la tabla Pier Section Properties de ETABS o fue ingresada por el usuario, con un valor por pier; $H_w$ es único para todos los piers.
-\item La altura útil se toma como $d = 0.8\,L_w$.
-\item Criterios de la planilla: $\phi V_n$ se calcula con 0.53 en lugar de $\alpha_c$ y con $\rho_{m\acute{i}n}$ en lugar de la cuantía dispuesta; el límite de resistencia se toma como $0.75\,V_{s,m\acute{a}x}$; y $S_{v,m\acute{a}x}$ usa $L_w/3$.
+${es19() ? L`\item $\Omega_v$ es un dato (${tn(c.Omega, 2)}): el ACI 318-19 pide el mayor entre $M_{pr}/M_u$ y 1.5, y esta página no calcula $M_{pr}$ porque no verifica la flexocompresión. Con un análisis más detallado se admite un valor menor, no inferior a 1.0.
+\item $h_{wcs}$ se toma igual a $H_w$ y $n_s$ es el número de pisos del pier en la tabla, no menor que $0.00028\,h_{wcs}$.
+\item Se usa $\phi = 0.75$. Si el muro no se diseña según 18.10.6.2, el ACI 318-19 (21.2.4.1) pide $\phi = 0.60$ cuando $V_n$ es menor que el corte asociado a la resistencia nominal a flexión, que esta página no calcula.
+\item El límite $0.66\sqrt{f'_c}A_{cv}$ del conjunto de segmentos que comparten una fuerza lateral (18.10.4.4) se informa por pier y no se verifica.` : L`\item La altura útil se toma como $d = 0.8\,L_w$.
+\item Criterios de la planilla: $\phi V_n$ se calcula con 0.53 en lugar de $\alpha_c$ y con $\rho_{m\acute{i}n}$ en lugar de la cuantía dispuesta; el límite de resistencia se toma como $0.75\,V_{s,m\acute{a}x}$; y $S_{v,m\acute{a}x}$ usa $L_w/3$.`}
 \item El espaciamiento propuesto no se limita automáticamente a $S_{v,m\acute{a}x}$.
 ${A.faltan.length ? L`\item Quedaron sin verificar ${A.faltan.length} piers sin geometría: ${A.faltan.map(escTex).join(", ")}.` : ""}
 ${A.avisosTex.map(t => `\\item ${t}`).join("\n")}
@@ -829,8 +920,10 @@ function calcular() {
   }
   let malos = datosInvalidos([["fc", 50], ["fy", 1000], ["Hw", 0, true], ["eDef", 0, true], ["db", 0, true]]);
   if (!malos.length) malos = datosSobreMaximo([["fc", 1000, "f'c parece estar en otra unidad: debe ir en kgf/cm²"], ["fy", 10000, "f<sub>y</sub> parece estar en otra unidad: debe ir en kgf/cm²"], ["Hw", 500, "H<sub>w</sub> parece estar en otra unidad: debe ir en m"], ["eDef", LIM.e, "El espesor por defecto parece estar en otra unidad: debe ir en m"]]);
+  $("boxOmega").classList.toggle("hidden", !es19());
+  if (!malos.length && es19()) malos = datosInvalidos([["omegaV", 1]]);
   if (malos.length) { limpiar(avisoInvalidos(malos)); return; }
-  const c = { fc: num("fc"), fy: num("fy"), Hw: num("Hw"), db: parseInt($("db").value, 10), eDef: num("eDef") };
+  const c = { fc: num("fc"), fy: num("fy"), Hw: num("Hw"), db: parseInt($("db").value, 10), eDef: num("eDef"), Omega: Math.max(1, num("omegaV") || 1.5) };
   const A = analizar(c), sinCalc = A.faltan.length + A.fuera.length;
   $("tablaGeom").querySelectorAll("tr").forEach(tr => {
     const inL = tr.querySelector('[data-k="L"]'), inE = tr.querySelector('[data-k="e"]'), fuera = A.fuera.includes(tr.dataset.pier);
@@ -875,7 +968,8 @@ function calcular() {
       L`La sección de estos piers cambia en altura y se usa la de su primera fila, como la planilla. Entre paréntesis, $D/C$ con esa sección y con la sección menor: ${variables.map(r => L`${escTex(r.p)} (${tn(r.dc, 3)} ; ${tn(r.menor.dc, 3)})`).join(", ")}.`);
   }
   if (excedenS.length) aviso(`En ${cuenta(excedenS.length, "pier", "piers")} el espaciamiento propuesto es mayor que S<sub>v,máx</sub>: ${lista(excedenS)}.`, L`En estos piers el espaciamiento propuesto es mayor que $S_{v,m\acute{a}x}$: ${listaTex(excedenS)}.`);
-  if (c.fy > 4200) aviso(`f<sub>y</sub> supera 4 200 kgf/cm², el máximo para armadura de corte (ACI 318-08 11.4.2).`, L`$f_y$ supera 4\,200 kgf/cm$^2$, el máximo para armadura de corte (ACI 318-08 11.4.2).`);
+  if (!es19() && c.fy > 4200) aviso(`f<sub>y</sub> supera 4 200 kgf/cm², el máximo para armadura de corte (ACI 318-08 11.4.2).`, L`$f_y$ supera 4\,200 kgf/cm$^2$, el máximo para armadura de corte (ACI 318-08 11.4.2).`);
+  if (es19() && c.fy / MPA > 420 + 1e-9) aviso(`f<sub>y</sub> supera 420 MPa, el máximo para armadura de corte en sistemas sísmicos especiales (ACI 318-19 Tabla 20.2.2.4a).`, L`$f_y$ supera 420 MPa, el máximo para armadura de corte en sistemas sísmicos especiales (ACI 318-19 Tabla 20.2.2.4a).`);
   // El veredicto no incluye nombres que vienen del archivo: proyectos.js y tablero.js leen su texto
   const incompleto = sinCalc ? ` · ${cuenta(sinCalc, "pier", "piers")} sin geometría válida` : "";
   const sinVerificar = "flexocompresión y elementos de borde SIN VERIFICAR";
@@ -889,7 +983,8 @@ function calcular() {
   const m = new Memo();
   const sel = A.res.find(r => r.p === $("pierSel").value);
   m.h("Criterio de verificación");
-  m.p(L`En cada fila se calcula la mayor de las razones $V_u/\phi V_n$, $V_u/(0.75\,V_{s,m\acute{a}x})$ y $V_s/V_{s,m\acute{a}x}$. La razón de cada pier es la mayor de sus filas, y el pier crítico es el de mayor razón.`, true);
+  if (es19()) m.p(L`En cada fila se amplifica el corte a $V_e = \Omega_v\omega_v V_u$ y se calcula la mayor de las razones $V_e/\phi V_n$ y $V_e/(\phi\,0.83\sqrt{f'_c}A_{cv})$ del ACI 318-19. La razón de cada pier es la mayor de sus filas, y el pier crítico es el de mayor razón.`, true);
+  else m.p(L`En cada fila se calcula la mayor de las razones $V_u/\phi V_n$, $V_u/(0.75\,V_{s,m\acute{a}x})$ y $V_s/V_{s,m\acute{a}x}$. La razón de cada pier es la mayor de sus filas, y el pier crítico es el de mayor razón.`, true);
   m.row("Filas revisadas ; piers verificados", `${fmt(A.n, 0)} ; ${A.res.length}`);
   m.row("Caso o combinación", escH($("caso").value || "—"));
   memoPier(m, crit, c, true);
@@ -907,7 +1002,8 @@ $("verdict").addEventListener("click", (ev) => { if (ev.target.id === "confirmar
 $("archivoPier").addEventListener("change", importar);
 $("tablaGeom").addEventListener("paste", pegarGeometria);
 $("tablaGeom").addEventListener("input", () => { guardarGeometria(); calcular(); });
-["caso", "fc", "fy", "db", "pierSel", "Hw", "eDef"].forEach(id => $(id).addEventListener("input", calcular));
+["caso", "fc", "fy", "db", "pierSel", "Hw", "eDef", "normaACI", "omegaV"].forEach(id => $(id).addEventListener("input", calcular));
+$("normaACI").addEventListener("change", calcular);
 calcular();
 
 window.Zona2D3D?.montar({

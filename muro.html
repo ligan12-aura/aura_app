@@ -127,7 +127,7 @@
   <a class="marca" href="index.html" aria-label="Inicio"><span class="marca-s"><svg class="iso" viewBox="0 0 32 32" aria-hidden="true"><rect class="iso-f" width="32" height="32" rx="7"/><path class="iso-s" d="M22 9H10V16H22V23H10"/><circle class="iso-n" cx="22" cy="16" r="2.6"/></svg><span class="marca-t">structura</span></span></a>
   <a class="home" href="index.html">← Inicio</a>
   <h1>Muro de contención en voladizo</h1>
-  <span>Estabilidad (Rankine y Mononobe-Okabe) · Diseño de pantalla, pie y talón ACI 318-08 · Por metro de muro · Unidades tf – m</span>
+  <span id="subNorma">Estabilidad (Rankine y Mononobe-Okabe) · Diseño de pantalla, pie y talón ACI 318-08 · Por metro de muro · Unidades tf – m</span>
 </header>
 
 <main>
@@ -135,6 +135,11 @@
   <section class="panel" id="inputs">
     <h2>Datos de entrada</h2>
     <div class="body">
+      <label for="normaACI">Versión del código (diseño en hormigón armado)</label>
+      <select id="normaACI">
+        <option value="08" selected>ACI 318-08 (vigente en Chile)</option>
+        <option value="19">ACI 318-19 (aún no vigente en Chile)</option>
+      </select>
       <svg class="esquema" viewBox="0 0 330 250" aria-label="Esquema de las dimensiones del muro">
         <path d="M30 170 L270 170 L270 196 L104 196 L104 222 L80 222 L80 196 L30 196 Z" fill="#e3e8ee" stroke="#3d4450" stroke-width="1.4"/>
         <path d="M110 170 L120 30 L140 30 L140 170 Z" fill="#e3e8ee" stroke="#3d4450" stroke-width="1.4"/>
@@ -300,6 +305,30 @@ const RHO_MIN = 0.0018, RHO_MIN_C = 0.0015, RHO_H = 0.001;   // criterio del cur
 const BW = 100;                                // ancho de diseño [cm]
 
 // ---------------------------------------------------------------------------
+// Versión del código: ACI 318-08 (vigente en Chile, por defecto) o ACI 318-19 (casilla normaACI).
+// En el 318-19 la pantalla es una losa en una dirección (13.3.6.1, Capítulo 7) y el pie y el talón una fundación
+// superficial en una dirección (13.3.2.1).
+// ---------------------------------------------------------------------------
+const es19 = () => document.getElementById("normaACI")?.value === "19";
+const NORMA = () => (es19() ? "ACI 318-19" : "ACI 318-08");
+const refN = (r08, r19) => (es19() ? r19 : r08);
+const aci = (r08, r19) => `${NORMA()} ${refN(r08, r19)}`;
+const MPA = 10.1972, ES = 2100000;
+const kR = (c) => c * Math.sqrt(MPA);                 // c·√f'c[MPa] = 3.193·c·√f'c[kgf/cm²]
+// Deformación mínima: 0.004 (318-08 10.3.5) o sección controlada por tracción εty + 0.003 (318-19 7.3.3.1)
+const etMin = (fy) => (es19() ? fy / ES + 0.003 : 0.004);
+// φ según εt: 9.3.2 (318-08, entre 0.002 y 0.005) o Tabla 21.2.2 (318-19, entre εty y εty + 0.003)
+const phiEt = (et, fy) => {
+  const ey = es19() ? fy / ES : 0.002, e2 = ey + 0.003;
+  return et >= e2 ? 0.9 : et <= ey ? 0.65 : 0.65 + 0.25 * (et - ey) / (e2 - ey);
+};
+// Factor de efecto de tamaño, 318-19 22.5.5.1.3: λs = √(2/(1 + 0.004 d)) ≤ 1 con d en mm
+const lambdaS = (dcm) => Math.min(1, Math.sqrt(2 / (1 + 0.004 * dcm * 10)));
+function textosNorma() {
+  $("subNorma").textContent = `Estabilidad (Rankine y Mononobe-Okabe) · Diseño de pantalla, pie y talón ${NORMA()} · Por metro de muro · Unidades tf – m`;
+}
+
+// ---------------------------------------------------------------------------
 // Utilidades de formato
 // ---------------------------------------------------------------------------
 const fmt = (x, d = 2) => Number.isFinite(x)
@@ -432,7 +461,10 @@ function presionPie(c, Bp, xa = Bp) {
   }
   return { F: F * h / 3, M: Mo * h / 3 };
 }
-const beta1 = (fc) => Math.min(0.85, Math.max(0.65, 0.85 - 0.05 * (fc - 280) / 70));
+// β1: 10.2.7.3 (318-08, kgf/cm²) o Tabla 22.2.2.4.3 (318-19, MPa)
+const beta1 = (fc) => (es19()
+  ? Math.min(0.85, Math.max(0.65, 0.85 - 0.05 * (fc / MPA - 28) / 7))
+  : Math.min(0.85, Math.max(0.65, 0.85 - 0.05 * (fc - 280) / 70)));
 
 // Armadura de flexión por metro: requerida, propuesta y verificación con φMn
 function flexion(Mu, h, db, d0, ref) {
@@ -450,15 +482,15 @@ function flexion(Mu, h, db, d0, ref) {
   const s = Math.min(sMaxN, Math.floor(sCalc / 2.5 + 1e-9) * 2.5);
   const Asp = s > 0 ? BW * Ab / s : NaN;
   const a = Asp * fy / (0.85 * fc * BW);
-  // Deformación de la armadura en tracción y φ (ACI 318-08 10.3.4, 10.3.5 y 9.3.2.2)
+  // Deformación de la armadura en tracción y φ (ACI 318-08 10.3.4, 10.3.5 y 9.3.2.2, o 318-19 7.3.3.1 y Tabla 21.2.2)
   const b1 = beta1(fc), c = a / b1;
   const et = 0.003 * (d - c) / c;
-  const phi = et >= 0.005 ? 0.9 : et >= 0.002 ? 0.65 + (et - 0.002) * 250 / 3 : 0.65;
+  const phi = phiEt(et, fy), eMin = etMin(fy);
   const Mn = Asp * fy * (d - a / 2);
   const phiMn = phi * Mn;
   const rhoP = Asp / (BW * d);
   return { Mu, h, db, d, mu, alfa, rho, rhoReq, As, Ab, sCalc, s, sMaxN, Asp, a, b1, c, et, phi, Mn, phiMn, rhoP, insuf,
-    dc: insuf || !(s > 0) ? Infinity : Mu / phiMn, dcEt: et > 0 ? 0.004 / et : Infinity, ref };
+    dc: insuf || !(s > 0) ? Infinity : Mu / phiMn, dcEt: et > 0 ? eMin / et : Infinity, eMin, ref };
 }
 function minima(rho, h, dEf, db) {
   const As = rho * BW * dEf, Ab = Math.PI * db * db / 4;
@@ -489,23 +521,29 @@ function memoFlexion(m, f, d0, cara) {
   m.row(`Armadura requerida (${cara}): A<sub>s</sub>`, `${fmt(f.As, 2)} cm²/m`);
   m.eq(L`A_s = \max(\rho;\ \rho_{m\acute{i}n})\,b\,d = ${tn(f.rhoReq, 5)}\cdot 100\cdot ${tn(f.d, 2)} = ${tn(f.As, 2)}\ \mathrm{cm^2/m}`);
   memoGrupo(m, "Espaciamiento y armadura adoptada", `${k}-esp`);
-  m.row("Separación calculada ; separación máxima → armadura adoptada: s ; s<sub>máx</sub>", `${fmt(f.sCalc, 1)} ; ${fmt(f.sMaxN, 1)} cm → <b>${barra(f.db, f.s)}</b>`, "ACI 318-08 7.6.5");
-  m.eq(L`s \le \frac{100\,A_b}{A_s} = \frac{100\cdot ${tn(f.Ab, 3)}}{${tn(f.As, 2)}} = ${tn(f.sCalc, 1)}\ \mathrm{cm} \qquad s_{m\acute{a}x} = \min(3h;\ 45\ \mathrm{cm}) = ${tn(f.sMaxN, 1)}\ \mathrm{cm} \;\Rightarrow\; s = ${tn(f.s, 1)}\ \mathrm{cm}`, "ACI 318-08 7.6.5");
+  m.row("Separación calculada ; separación máxima → armadura adoptada: s ; s<sub>máx</sub>", `${fmt(f.sCalc, 1)} ; ${fmt(f.sMaxN, 1)} cm → <b>${barra(f.db, f.s)}</b>`, aci("7.6.5", "7.7.2.3"));
+  m.eq(L`s \le \frac{100\,A_b}{A_s} = \frac{100\cdot ${tn(f.Ab, 3)}}{${tn(f.As, 2)}} = ${tn(f.sCalc, 1)}\ \mathrm{cm} \qquad s_{m\acute{a}x} = \min(3h;\ 45\ \mathrm{cm}) = ${tn(f.sMaxN, 1)}\ \mathrm{cm} \;\Rightarrow\; s = ${tn(f.s, 1)}\ \mathrm{cm}`, aci("7.6.5", "7.7.2.3"));
   if (f.s < 10) m.note(`Separación de ${fmt(f.s, 1)} cm: considere un diámetro mayor.`, L`Separación reducida (${tn(f.s, 1)} cm); se recomienda un diámetro mayor.`);
   memoGrupo(m, "Verificación de capacidad (resumen)", `${k}-cap`, { abierto: true, resumen: `D/C = ${fmt(Math.max(f.dc, f.dcEt), 3)} ${tag(Math.max(f.dc, f.dcEt) <= 1 + 1e-9, Math.max(f.dc, f.dcEt) <= 1 + 1e-9 ? "Cumple" : "No cumple")}` });
-  m.row("Bloque de compresión ; eje neutro ; deformación del acero: a ; c ; ε<sub>t</sub>", `${fmt(f.a, 2)} ; ${fmt(f.c, 2)} cm ; ${fmt(f.et, 4)}`, "ACI 318-08 10.2.7");
-  m.eq(L`a = \frac{A_s f_y}{0.85\,f'_c\,b} = ${tn(f.a, 2)}\ \mathrm{cm} \qquad c = \frac{a}{\beta_1} = \frac{${tn(f.a, 2)}}{${tn(f.b1, 3)}} = ${tn(f.c, 2)}\ \mathrm{cm} \qquad \varepsilon_t = 0.003\,\frac{d - c}{c} = ${tn(f.et, 4)}`, "ACI 318-08 10.2.7");
-  m.row(`Deformación mínima del acero (${f.et >= 0.005 ? "controlada por tracción" : "zona de transición"}): ε<sub>t</sub> ≥ 0.004 ; φ`, `${fmt(f.phi, 3)} ${tagDC(f.dcEt)}`, "ACI 318-08 10.3.5 y 9.3.2");
-  m.eq(L`\frac{0.004}{\varepsilon_t} = \frac{0.004}{${tn(f.et, 4)}} = ${tn(f.dcEt, 3)} ${f.dcEt <= 1 ? LE : ">"} 1.0`, "ACI 318-08 10.3.5");
-  m.row("Resistencia de diseño con la armadura dispuesta: φM<sub>n</sub>", `${fmt(TM(f.phiMn), 2)} tf·m ${tagDC(f.dc)}`, "ACI 318-08 10.2");
+  m.row("Bloque de compresión ; eje neutro ; deformación del acero: a ; c ; ε<sub>t</sub>", `${fmt(f.a, 2)} ; ${fmt(f.c, 2)} cm ; ${fmt(f.et, 4)}`, aci("10.2.7", "22.2.2.4"));
+  m.eq(L`a = \frac{A_s f_y}{0.85\,f'_c\,b} = ${tn(f.a, 2)}\ \mathrm{cm} \qquad c = \frac{a}{\beta_1} = \frac{${tn(f.a, 2)}}{${tn(f.b1, 3)}} = ${tn(f.c, 2)}\ \mathrm{cm} \qquad \varepsilon_t = 0.003\,\frac{d - c}{c} = ${tn(f.et, 4)}`, aci("10.2.7", "22.2.2.4"));
+  const tracc = f.phi >= 0.9 - 1e-9, eTx = fmt(f.eMin, 4), eTt = tn(f.eMin, 4);
+  m.row(`Deformación mínima del acero (${tracc ? "controlada por tracción" : "zona de transición"}): ε<sub>t</sub> ≥ ${eTx} ; φ`, `${fmt(f.phi, 3)} ${tagDC(f.dcEt)}`, aci("10.3.5 y 9.3.2", "7.3.3.1 y Tabla 21.2.2"));
+  if (es19()) m.eq(L`\varepsilon_{t,m\acute{i}n} = \varepsilon_{ty} + 0.003 = \frac{f_y}{E_s} + 0.003 = \frac{${tn(d0.fy, 0)}}{${tn(ES, 0)}} + 0.003 = ${eTt} \qquad \frac{\varepsilon_{t,m\acute{i}n}}{\varepsilon_t} = \frac{${eTt}}{${tn(f.et, 4)}} = ${tn(f.dcEt, 3)} ${f.dcEt <= 1 ? LE : ">"} 1.0`, "ACI 318-19 7.3.3.1");
+  else m.eq(L`\frac{0.004}{\varepsilon_t} = \frac{0.004}{${tn(f.et, 4)}} = ${tn(f.dcEt, 3)} ${f.dcEt <= 1 ? LE : ">"} 1.0`, "ACI 318-08 10.3.5");
+  m.row("Resistencia de diseño con la armadura dispuesta: φM<sub>n</sub>", `${fmt(TM(f.phiMn), 2)} tf·m ${tagDC(f.dc)}`, aci("10.2", "22.2"));
   m.eq(L`\phi M_n = ${tn(f.phi, 3)}\,A_s f_y\left(d - \frac{a}{2}\right) = ${tn(TM(f.phiMn), 2)}\ \mathrm{tf\,m} \qquad \frac{M_u}{\phi M_n} = \frac{${tn(TM(f.Mu), 2)}}{${tn(TM(f.phiMn), 2)}} = ${tn(f.dc, 3)} ${f.dc <= 1 ? LE : ">"} 1.0`);
 }
-function memoCorte(m, Vu, dEf, d0) {
-  const Vc = 0.53 * Math.sqrt(d0.fc) * BW * dEf;
+// rho: cuantía de la armadura de flexión dispuesta (ρw del 318-19); fund: pie o talón, donde 13.2.6.2 permite λs = 1
+function memoCorte(m, Vu, dEf, d0, rho, fund) {
+  const n19 = es19(), ls = fund ? 1 : lambdaS(dEf);
+  // 318-19 Tabla 22.5.5.1(c): losa o fundación sin armadura de corte (A_v < A_v,mín), 0.66 λs λ ρw^(1/3) √f'c b d en MPa
+  const Vc = (n19 ? kR(0.66) * ls * Math.cbrt(rho) : 0.53) * Math.sqrt(d0.fc) * BW * dEf;
   const dc = Vu / (PHI_V * Vc);
-  m.row("Resistencia al corte del hormigón: V<sub>c</sub> ; φV<sub>c</sub>", `${fmt(T(Vc), 2)} ; ${fmt(T(PHI_V * Vc), 2)} tf`, "ACI 318-08 11-3");
+  m.row("Resistencia al corte del hormigón: V<sub>c</sub> ; φV<sub>c</sub>", `${fmt(T(Vc), 2)} ; ${fmt(T(PHI_V * Vc), 2)} tf`, aci("11-3", "Tabla 22.5.5.1(c)"));
   m.row("Razón de corte: V<sub>u</sub> / φV<sub>c</sub>", tagDC(dc));
-  m.eq(L`V_c = 0.53\sqrt{f'_c}\,b\,d = 0.53\sqrt{${tn(d0.fc, 0)}}\cdot 100\cdot ${tn(dEf, 2)} = ${tn(T(Vc), 2)}\ \mathrm{tf}`, "ACI 318-08 11-3");
+  if (n19) m.eq(L`V_c = 0.66\,\lambda_s\lambda\,\rho_w^{1/3}\sqrt{f'_c}\,b\,d\ (\mathrm{MPa}) = ${tn(kR(0.66), 3)}\cdot ${tn(ls, 3)}\cdot ${tn(rho, 5)}^{1/3}\sqrt{${tn(d0.fc, 0)}}\cdot 100\cdot ${tn(dEf, 2)} = ${tn(T(Vc), 2)}\ \mathrm{tf} \qquad ${fund ? L`\lambda_s = 1\ \text{(13.2.6.2)}` : L`\lambda_s = \sqrt{\frac{2}{1 + 0.004\,d}} = ${tn(ls, 3)}\ (d\ \text{en mm})`}`, fund ? "ACI 318-19 Tabla 22.5.5.1(c) y 13.2.6.2" : "ACI 318-19 Tabla 22.5.5.1(c) y 22.5.5.1.3");
+  else m.eq(L`V_c = 0.53\sqrt{f'_c}\,b\,d = 0.53\sqrt{${tn(d0.fc, 0)}}\cdot 100\cdot ${tn(dEf, 2)} = ${tn(T(Vc), 2)}\ \mathrm{tf}`, "ACI 318-08 11-3");
   m.eq(L`\frac{V_u}{\phi V_c} = \frac{${tn(T(Vu), 2)}}{0.75\cdot ${tn(T(Vc), 2)}} = ${tn(dc, 3)} ${dc <= 1 ? LE : ">"} 1.0`);
   return { Vc, dc };
 }
@@ -662,8 +700,8 @@ function verificar(d, m) {
       const dcC = pc > 0 ? d.pcMin / pc : Infinity;
       m.row(`Largo comprimido${c.tri ? "" : " (base totalmente comprimida)"} ≥ ${fmt(d.pcMin, 0)} % de B`, `${fmt(M(c.Lc), 3)} m → ${fmt(pc, 1)} % ${tagDC(dcC)}`, "criterio del curso");
       m.eq(c.tri
-        ? L`\frac{3x}{B} = \frac{3\cdot ${tn(M(c.Lc / 3), 3)}}{${tn(M(B), 2)}} = ${tn(pc, 1)}\,\% ${pc >= d.pcMin - 1e-9 ? GE : "<"} ${tn(d.pcMin, 0)}\,\%`
-        : L`|e| \le \frac{B}{6} \;\Rightarrow\; \text{base totalmente comprimida: } 100\,\% ${GE} ${tn(d.pcMin, 0)}\,\%`);
+        ? L`\frac{3x}{B} = \frac{3\cdot ${tn(M(c.Lc / 3), 3)}}{${tn(M(B), 2)}} = ${tn(pc, 1)}\% ${pc >= d.pcMin - 1e-9 ? GE : "<"} ${tn(d.pcMin, 0)}\%`
+        : L`|e| \le \frac{B}{6} \;\Rightarrow\; \text{base totalmente comprimida: } 100\% ${GE} ${tn(d.pcMin, 0)}\%`);
       ck("Zona comprimida (sismo)", L`$${tn(pc, 1)}$\,\% de $B$`, L`$${tn(d.pcMin, 0)}$\,\%`, dcC, "Zona comprimida (sismo)", "estab");
     }
     return { FSv, FSd, c, sadm, Mv, FD, pc };
@@ -714,7 +752,7 @@ function verificar(d, m) {
 
   // ---------- 5. Pantalla ----------
   m.h("Diseño de la pantalla");
-  m.p(L`La pantalla se diseña como un voladizo empotrado en la zapata; la sección crítica está en su base, con espesor $e_b$. Las cargas laterales del suelo se mayoran por 1.6 (ACI 318-08 9.2) y el sismo por 1.0.`);
+  m.p(L`La pantalla se diseña como un voladizo empotrado en la zapata; la sección crítica está en su base, con espesor $e_b$. Las cargas laterales del suelo se mayoran por 1.6 (${aci("9.2", "5.3")}) y el sismo por 1.0.${es19() ? L` Según el ACI 318-19 (13.3.6.1), la pantalla se diseña como una losa en una dirección (Capítulo 7); su corte usa la expresión (c) de la Tabla 22.5.5.1, con la cuantía de la armadura vertical dispuesta y el efecto de tamaño $\lambda_s$.` : ""}`);
   const Psm = 0.5 * Ka * d.gR * d.Hm * d.Hm * BW, Pqm = Ka * d.q * d.Hm * BW;
   const Vu1 = 1.6 * (Psm + Pqm), Mu1 = 1.6 * (Psm * d.Hm / 3 + Pqm * d.Hm / 2);
   m.sub("Solicitaciones estáticas (1.6 H)");
@@ -759,17 +797,20 @@ function verificar(d, m) {
   const fP = flexion(MuP, d.eb, d.dbP, d);
   memoFlexion(m, fP, d, "cara del relleno");
   ck("Pantalla: flexión", L`$M_u = ${tn(TM(MuP), 2)}$ tf m`, L`$\phi M_n = ${tn(TM(fP.phiMn), 2)}$ tf m`, fP.dc, "Pantalla: flexión", "hor");
-  if (!fP.insuf) ck("Pantalla: deformación $\\varepsilon_t$", L`$\varepsilon_t = ${tn(fP.et, 4)}$`, L`$\varepsilon_{t,m\acute{i}n} = 0.004$`, fP.dcEt, "Pantalla: ε<sub>t</sub> mínima", "hor");
+  if (!fP.insuf) ck("Pantalla: deformación $\\varepsilon_t$", L`$\varepsilon_t = ${tn(fP.et, 4)}$`, L`$\varepsilon_{t,m\acute{i}n} = ${tn(fP.eMin, 4)}$`, fP.dcEt, "Pantalla: ε<sub>t</sub> mínima", "hor");
   m.sub("Corte en la base de la pantalla");
-  const cP = memoCorte(m, VuP, fP.d, d);
+  const cP = memoCorte(m, VuP, fP.d, d, fP.rhoP, false);
   ck("Pantalla: corte", L`$V_u = ${tn(T(VuP), 2)}$ tf`, L`$\phi V_c = ${tn(T(PHI_V * cP.Vc), 2)}$ tf`, cP.dc, "Pantalla: corte", "hor");
   m.sub("Armaduras mínimas de la pantalla");
   const dPc = d.eb - d.rec - d.dbPc / 2;
   const aPc = minima(RHO_MIN_C, d.eb, dPc, d.dbPc);
-  const rhoH = d.dbH > 1.6 + 1e-9 ? 0.00125 : RHO_H;   // ACI 318-08 14.3.3: 0.0025 con barras mayores que φ16
+  // ACI 318-08 14.3.3: 0.0025 con barras mayores que φ16. En el 318-19 la pantalla es una losa (13.3.6.1): retracción
+  // y temperatura 0.0018 b h en total para todo diámetro (24.4.3.2), que el criterio del curso (0.001 por cara) ya cubre
+  const rhoH = !es19() && d.dbH > 1.6 + 1e-9 ? 0.00125 : RHO_H;
   const aH = minima(rhoH, d.eb, d.eb, d.dbH);
   m.row("Mínima vertical, cara exterior: A'<sub>s</sub>", `${fmt(aPc.As, 2)} cm²/m → <b>${barra(d.dbPc, aPc.s)}</b>`, "criterio del curso");
-  m.row("Mínima horizontal, por cara: A<sub>s,h</sub>", `${fmt(aH.As, 2)} cm²/m → <b>${barra(d.dbH, aH.s)}</b> en cada cara`, rhoH === RHO_H ? "criterio del curso" : "ACI 318-08 14.3.3");
+  m.row("Mínima horizontal, por cara: A<sub>s,h</sub>", `${fmt(aH.As, 2)} cm²/m → <b>${barra(d.dbH, aH.s)}</b> en cada cara`, rhoH === RHO_H ? (es19() ? "criterio del curso; ACI 318-19 24.4.3.2" : "criterio del curso") : "ACI 318-08 14.3.3");
+  if (es19()) m.p(L`En el ACI 318-19 la armadura horizontal de la pantalla es de retracción y temperatura de losa, $0.0018\,b\,h$ en total para todo diámetro (24.4.3.2 y 7.6.4.1); el criterio del curso, $0.001\,b\,h$ por cara, la cumple.`);
   if (rhoH !== RHO_H) m.note("Con barras horizontales mayores que φ16, el ACI 318-08 14.3.3 exige una cuantía total de 0.0025 (0.00125 por cara).", L`Con barras horizontales mayores que $\phi$16, el ACI 318-08 14.3.3 exige una cuantía total de 0.0025 (0.00125 por cara).`);
   m.eq(L`A'_s = 0.0015\,b\,d' = 0.0015\cdot 100\cdot ${tn(dPc, 1)} = ${tn(aPc.As, 2)}\ \mathrm{cm^2/m} \;\Rightarrow\; s = ${tn(aPc.s, 1)}\ \mathrm{cm}`);
   m.eq(L`A_{s,h} = ${tn(rhoH, rhoH === RHO_H ? 3 : 5)}\,b\,e_b = ${tn(rhoH, rhoH === RHO_H ? 3 : 5)}\cdot 100\cdot ${tn(d.eb, 1)} = ${tn(aH.As, 2)}\ \mathrm{cm^2/m\ por\ cara} \;\Rightarrow\; s = ${tn(aH.s, 1)}\ \mathrm{cm}`);
@@ -777,7 +818,7 @@ function verificar(d, m) {
 
   // ---------- 6. Pie ----------
   m.h("Diseño de la zapata: pie (puntera)");
-  m.p(L`Cálculo simplificado del curso: la presión de servicio del suelo bajo el pie se mayora por 1.6 en el caso estático y por un factor ponderado en el caso sísmico. El peso propio del pie, que se opone, se mayora por 0.9 (ACI 318-08 9.2) y el suelo sobre el pie se desprecia (del lado seguro). La sección crítica de flexión está en la cara de la pantalla y la de corte a una distancia $d$ de ella (ACI 318-08 15.5.2 y 11.11.1.1).`);
+  m.p(L`Cálculo simplificado del curso: la presión de servicio del suelo bajo el pie se mayora por 1.6 en el caso estático y por un factor ponderado en el caso sísmico. El peso propio del pie, que se opone, se mayora por 0.9 (${aci("9.2", "5.3")}) y el suelo sobre el pie se desprecia (del lado seguro). La sección crítica de flexión está en la cara de la pantalla y la de corte a una distancia $d$ de ella (ACI 318-08 15.5.2 y 11.11.1.1).`);
   const Wpie = d.Hf * d.Bp * d.gH * BW;
   const dPie = d.Hf - d.rec - d.dbZp / 2, xv = Math.max(0, d.Bp - dPie);
   const pieCaso = (c, U, nom, Ufmt) => {
@@ -789,7 +830,7 @@ function verificar(d, m) {
     m.row(`${nom}: momento de la presión en la cara ; momento último: M<sub>R</sub> ; M<sub>u</sub>`, `${fmt(TM(pr.M), 3)} ; ${fmt(TM(Mu), 3)} tf·m`);
     m.row(`${nom}: corte a d = ${fmt(dPie, 1)} cm de la cara: V<sub>u</sub>`, `${fmt(T(Vu), 3)} tf`);
     m.eq(L`M_u = U\,M_R - 0.9\,W_{pie}\,\frac{B_p}{2} = ${Ufmt}\cdot ${tn(TM(pr.M), 3)} - 0.9\cdot ${tn(T(Wpie), 3)}\cdot\frac{${tn(M(d.Bp), 2)}}{2} = ${tn(TM(Mu), 3)}\ \mathrm{tf\,m}`);
-    m.eq(L`V_u = U\,R_d - 0.9\,W_d = ${Ufmt}\cdot ${tn(T(pv.F), 3)} - 0.9\cdot ${tn(T(Wv), 3)} = ${tn(T(Vu), 3)}\ \mathrm{tf} \quad (\text{tramo de } ${tn(M(xv), 3)}\ \mathrm{m\ desde\ la\ punta})`, "ACI 318-08 15.5.2");
+    m.eq(L`V_u = U\,R_d - 0.9\,W_d = ${Ufmt}\cdot ${tn(T(pv.F), 3)} - 0.9\cdot ${tn(T(Wv), 3)} = ${tn(T(Vu), 3)}\ \mathrm{tf} \quad (\text{tramo de } ${tn(M(xv), 3)}\ \mathrm{m\ desde\ la\ punta})`, aci("15.5.2", "13.2.7.2"));
     return { Vu, Mu };
   };
   m.row("Peso propio del pie: W<sub>pie</sub>", `${fmt(T(Wpie), 3)} tf`);
@@ -816,9 +857,9 @@ function verificar(d, m) {
     m.sub(`Armadura inferior del pie (controla el caso ${govPie})`);
     memoFlexion(m, fPie, d, "cara inferior");
     ck("Pie: flexión", L`$M_u = ${tn(TM(pie.Mu), 2)}$ tf m`, L`$\phi M_n = ${tn(TM(fPie.phiMn), 2)}$ tf m`, fPie.dc, "Pie: flexión", "hor");
-    if (!fPie.insuf) ck("Pie: deformación $\\varepsilon_t$", L`$\varepsilon_t = ${tn(fPie.et, 4)}$`, L`$\varepsilon_{t,m\acute{i}n} = 0.004$`, fPie.dcEt, "Pie: ε<sub>t</sub> mínima", "hor");
+    if (!fPie.insuf) ck("Pie: deformación $\\varepsilon_t$", L`$\varepsilon_t = ${tn(fPie.et, 4)}$`, L`$\varepsilon_{t,m\acute{i}n} = ${tn(fPie.eMin, 4)}$`, fPie.dcEt, "Pie: ε<sub>t</sub> mínima", "hor");
     m.sub("Corte en el pie");
-    const cPie = memoCorte(m, Math.max(0, pie.Vu), fPie.d, d);
+    const cPie = memoCorte(m, Math.max(0, pie.Vu), fPie.d, d, fPie.rhoP, true);
     ck("Pie: corte", L`$V_u = ${tn(T(Math.max(0, pie.Vu)), 2)}$ tf`, L`$\phi V_c = ${tn(T(PHI_V * cPie.Vc), 2)}$ tf`, cPie.dc, "Pie: corte", "hor");
   }
 
@@ -843,12 +884,12 @@ function verificar(d, m) {
     m.sub(`Armadura superior del talón (controla el caso ${Vt2 > Vt1 ? "sísmico" : "estático"})`);
     memoFlexion(m, fTal, d, "cara superior");
     ck("Talón: flexión", L`$M_u = ${tn(TM(tal.Mu), 2)}$ tf m`, L`$\phi M_n = ${tn(TM(fTal.phiMn), 2)}$ tf m`, fTal.dc, "Talón: flexión", "hor");
-    if (!fTal.insuf) ck("Talón: deformación $\\varepsilon_t$", L`$\varepsilon_t = ${tn(fTal.et, 4)}$`, L`$\varepsilon_{t,m\acute{i}n} = 0.004$`, fTal.dcEt, "Talón: ε<sub>t</sub> mínima", "hor");
+    if (!fTal.insuf) ck("Talón: deformación $\\varepsilon_t$", L`$\varepsilon_t = ${tn(fTal.et, 4)}$`, L`$\varepsilon_{t,m\acute{i}n} = ${tn(fTal.eMin, 4)}$`, fTal.dcEt, "Talón: ε<sub>t</sub> mínima", "hor");
     m.sub("Corte en el talón");
     const VuT = tal.Vu;
-    m.p(L`El corte del talón se verifica en la cara del trasdós y no a una distancia $d$: la carga del talón cuelga de la pantalla y la reacción no introduce compresión en esa zona (ACI 318-08 11.1.3.1 y su comentario).`);
-    m.row("Corte en la cara del trasdós: V<sub>u</sub>", `${fmt(T(VuT), 3)} tf`, "ACI 318-08 11.1.3.1");
-    const cT = memoCorte(m, VuT, fTal.d, d);
+    m.p(L`El corte del talón se verifica en la cara del trasdós y no a una distancia $d$: la carga del talón cuelga de la pantalla y la reacción no introduce compresión en esa zona (${aci("11.1.3.1 y su comentario", "7.4.3.2(a)")}).`);
+    m.row("Corte en la cara del trasdós: V<sub>u</sub>", `${fmt(T(VuT), 3)} tf`, aci("11.1.3.1", "7.4.3.2"));
+    const cT = memoCorte(m, VuT, fTal.d, d, fTal.rhoP, true);
     ck("Talón: corte", L`$V_u = ${tn(T(VuT), 2)}$ tf`, L`$\phi V_c = ${tn(T(PHI_V * cT.Vc), 2)}$ tf`, cT.dc, "Talón: corte", "hor");
   }
   m.sub("Armaduras mínimas de la zapata");
@@ -1175,8 +1216,10 @@ function documentoTex(d, r, cuerpo) {
     d.pasivo === "dentellon" ? L`El empuje pasivo se considera solo en el dentellón; el de la puntera se desprecia.` : d.pasivo === "total" ? L`El empuje pasivo se considera desde la superficie del terreno frente al muro hasta la base del dentellón (o de la zapata).` : L`No se considera empuje pasivo.`,
     L`El empuje pasivo no se incluye en el momento resistente al volcamiento.`,
     d.qEstab ? L`La sobrecarga sobre el talón se suma al peso estabilizante, como en el ejemplo del curso; el criterio más conservador es no considerarla.` : L`La sobrecarga sobre el talón no se suma al peso estabilizante (criterio conservador).`,
-    L`El diseño en hormigón armado sigue el ACI 318-08 con las cuantías mínimas del curso: 0.0018 $b\,d$ en la armadura principal, 0.0015 $b\,d$ en la cara opuesta y 0.001 $b\,h$ por cara en la armadura de repartición (0.00125 con barras mayores que $\phi$16, ACI 318-08 14.3.3). El curso aplica la cuantía mínima sobre $b\,d$, mientras que el ACI 318-08 (7.12.2.1) la expresa sobre $b\,h$.`,
-    L`La armadura de tracción debe alcanzar $\varepsilon_t \ge 0.004$ (ACI 318-08 10.3.5) y el factor $\phi$ de flexión se obtiene de $\varepsilon_t$ (9.3.2); el límite de $0.75\,\rho_b$ de versiones anteriores del ACI no es suficiente.`,
+    es19() ? L`El diseño en hormigón armado sigue el ACI 318-19 (aún no vigente en Chile): la pantalla como losa en una dirección (13.3.6.1) y el pie y el talón como fundación superficial en una dirección (13.3.2.1), con las cuantías mínimas del curso: 0.0018 $b\,d$ en la armadura principal, 0.0015 $b\,d$ en la cara opuesta y 0.001 $b\,h$ por cara en la armadura de repartición. El ACI 318-19 (7.6.1.1 y 24.4.3.2) pide 0.0018 $b\,h$, sobre la sección bruta.`
+      : L`El diseño en hormigón armado sigue el ACI 318-08 con las cuantías mínimas del curso: 0.0018 $b\,d$ en la armadura principal, 0.0015 $b\,d$ en la cara opuesta y 0.001 $b\,h$ por cara en la armadura de repartición (0.00125 con barras mayores que $\phi$16, ACI 318-08 14.3.3). El curso aplica la cuantía mínima sobre $b\,d$, mientras que el ACI 318-08 (7.12.2.1) la expresa sobre $b\,h$.`,
+    es19() ? L`La sección debe quedar controlada por tracción, $\varepsilon_t \ge \varepsilon_{ty} + 0.003$ (ACI 318-19 7.3.3.1), con $\phi$ de la Tabla 21.2.2. El corte sin estribos usa la expresión (c) de la Tabla 22.5.5.1, que depende de la cuantía de la armadura de flexión dispuesta; en la pantalla se aplica el efecto de tamaño $\lambda_s$ (22.5.5.1.3) y en el pie y el talón se desprecia, como permite 13.2.6.2.`
+      : L`La armadura de tracción debe alcanzar $\varepsilon_t \ge 0.004$ (ACI 318-08 10.3.5) y el factor $\phi$ de flexión se obtiene de $\varepsilon_t$ (9.3.2); el límite de $0.75\,\rho_b$ de versiones anteriores del ACI no es suficiente.`,
     L`El empuje pasivo, cuando se considera, se toma completo, sin factor de reducción.`,
     L`En la condición estática, que la resultante caiga en el tercio central se informa como recomendación y no como verificación.`,
     L`El dentellón no se diseña (armadura ni resistencia al empuje pasivo); solo se considera su peso y su aporte de empuje pasivo.`,
@@ -1200,7 +1243,7 @@ ${TEX_ESTILO}
 \pagestyle{fancy}
 \fancyhf{}
 \chead{Diseño de muro de contención}
-\lfoot{Memoria de cálculo --- Muro de contención en voladizo, ACI 318-08}
+\lfoot{Memoria de cálculo --- Muro de contención en voladizo, ${NORMA()}}
 \rfoot{\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\footrulewidth}{0.4pt}
@@ -1281,6 +1324,7 @@ ${r.sinVerificar.length
 let ultimoTex = "", ultimoNombre = "memoria.tex", ultimoR = null, ultimoD = null;
 
 function calcular() {
+  textosNorma();
   const sismo = $("zona").value !== "0";
   $("sismoBox").classList.toggle("hidden", !sismo);
   document.querySelectorAll(".sismoF").forEach(el => el.classList.toggle("hidden", !sismo));
@@ -1417,11 +1461,11 @@ function descargarDXFLamina() {
     ["Z3", "Zapata, transversal cara opuesta", ø(a.zC)], ["Z4", "Zapata, longitudinal (cada cara)", ø(a.zL)],
   ];
   pl.tabla({ titulo: "Cuadro de armaduras (por metro de muro)", columnas: [["Marca", 14], ["Ubicación", 62], ["Armadura", 34]], filas,
-    nota: "ø = diámetro en mm; @ = separación en cm. Largos de anclaje y traslapo según ACI 318-08 Capítulo 12." });
+    nota: `ø = diámetro en mm; @ = separación en cm. Largos de anclaje y traslapo según ${es19() ? "ACI 318-19 Capítulo 25" : "ACI 318-08 Capítulo 12"}.` });
   pl.notas([
     "Cotas en mm salvo indicación; niveles en m. No medir sobre el plano.",
     `Hormigón ${grado} según NCh 170 (f'c = ${d.fc} kgf/cm²); acero de refuerzo ${d.fy >= 4200 ? "A630-420H" : "A440-280H"} según NCh 204 (fy = ${d.fy} kgf/cm²). Recubrimiento libre ${fmt(d.rec, 1)} cm.`,
-    `Diseño del hormigón armado según ACI 318-08 y NCh 430. Empuje de tierras de Rankine${r.conSismo ? " y empuje sísmico de Mononobe-Okabe" : ""}${d.zona !== "0" ? `; zona sísmica ${d.zona} (NCh 433, Ao = ${fmt(d.Ao, 2)}g)` : ""}.`,
+    `Diseño del hormigón armado según ${es19() ? "ACI 318-19 (aún no vigente en Chile)" : "ACI 318-08 y NCh 430"}. Empuje de tierras de Rankine${r.conSismo ? " y empuje sísmico de Mononobe-Okabe" : ""}${d.zona !== "0" ? `; zona sísmica ${d.zona} (NCh 433, Ao = ${fmt(d.Ao, 2)}g)` : ""}.`,
     `Relleno granular compactado (phi = ${fmt(d.phiR, 0)}°, gamma = ${fmt(d.gR * 1000, 2)} tf/m³). Suelo de fundación: phi = ${fmt(d.phiS, 0)}°, capacidad última ${fmt(d.su, 2)} kgf/cm². Validar con el estudio de mecánica de suelos.`,
     `Factores de seguridad: volcamiento ${fmt(r.e1.FSv, 2)}${r.e2 ? ` (sísmico ${fmt(r.e2.FSv, 2)})` : ""}, deslizamiento ${fmt(r.e1.FSd, 2)}${r.e2 ? ` (sísmico ${fmt(r.e2.FSd, 2)})` : ""}. Razón máxima ${Number.isFinite(r.dcMax) ? fmt(r.dcMax, 3) : "infinita"} (${r.ok ? "cumple" : r.sinVerificar.length ? "SIN VERIFICAR" : "NO CUMPLE"}).`,
     "Drenaje: material drenante de 30 cm tras la pantalla y barbacanas ø75 mm cada 2 m en horizontal (recomendación; ajustar según el estudio de suelos). Juntas de dilatación según el proyecto de arquitectura.",

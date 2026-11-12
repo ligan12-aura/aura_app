@@ -37,3 +37,35 @@ Documentos: ACI 318-08 (español).
 | Análisis sísmico — procedimiento por verificar | Corte tipo viga x en la franja más exigida: Vu | 11-3 | ACI 318-08 (español) | 169 |
 | Análisis sísmico — procedimiento por verificar | Corte tipo viga y en la franja más exigida: Vu | 11-3 | ACI 318-08 (español) | 169 |
 | Análisis sísmico — procedimiento por verificar | Punzonamiento con transferencia de momento: vu ≤ φvc | 11.11.7.2 | ACI 318-08 (español) | 212 |
+
+## Opción ACI 318-19 (casilla «Versión del código»)
+
+La página calcula con ACI 318-08 por defecto. Con la casilla en ACI 318-19 (aún no vigente en Chile):
+
+- Corte tipo viga sin estribos con la expresión (c) de la Tabla 22.5.5.1: Vc = 0.66 λs λ ρw^(1/3) √f'c b d (MPa), con ρw de la armadura de flexión dispuesta en esa dirección. En zapatas aisladas se toma λs = 1 (13.2.6.2). Con cuantías bajas, este Vc es bastante menor que 0.53√f'c b d.
+- Punzonamiento con la Tabla 22.6.5.2 (0.33, 0.17 + 0.33/β y 0.17 + 0.083 αs d/b0, por λs λ √f'c), con λs = 1.
+- Gancho de la barra de la columna con 25.4.3.1: ldh = (fy ψe ψr ψo ψc / 23λ√f'c) db^1.5, con ψr elegido en los datos (1.6 si no se comprueba el confinamiento) y ψc de la Tabla 25.4.3.2. En la parrilla, ψr = 1.0 si s ≥ 6db y ψo = 1.25 si el recubrimiento es menor que 6db.
+- Los coeficientes en MPa se convierten a kgf/cm² con 1 MPa = 10.197 kgf/cm².
+
+Documento: ACI 318M-19 (inglés, unidades SI). La página del PDF es la impresa + 2.
+
+| Parte del cálculo | Referencia ACI 318-19 | Pág. PDF |
+|---|---|---|
+| Combinación 1.4D | Tabla 5.3.1 | 64 |
+| Transferencia de momento por corte excéntrico | 8.4.4.2.3 | 109 |
+| Cuantía mínima (referencia) | 8.6.1.1 | 112 |
+| Efecto de tamaño despreciable en zapatas | 13.2.6.2 | 196 |
+| Secciones críticas | 13.2.7.2 | 197 |
+| Desarrollo de la armadura | 13.2.8.1 | 198 |
+| d ≥ 150 mm | 13.3.1.2 | 199 |
+| Banda central en zapatas rectangulares | 13.3.3.3 | 199 |
+| Armadura de traspaso 0.005Ag | 16.3.4.1 | 226 |
+| Recubrimiento | 20.5.1.3.1 | 384 |
+| Resistencia a flexión | 22.2 | 399 |
+| Vc tipo viga | Tabla 22.5.5.1 | 406 |
+| Perímetro crítico | 22.6.4 | 414 |
+| vc de punzonamiento ; αs | Tabla 22.6.5.2 ; 22.6.5.3 | 418 |
+| Aplastamiento | 22.8.3.2 | 431 |
+| Patas de 90° | Tabla 25.3.1 | 471 |
+| ldh con gancho ; factores ψ | 25.4.3.1 ; Tabla 25.4.3.2 | 476 ; 477 |
+| ldc en compresión | 25.4.9.2 | 489 |
