@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="icon" type="image/svg+xml" href="icons/structura.svg">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js" integrity="sha384-K0oxqktRvaThvYgGL4G+OK2Ih6VS6Uyu7j3+7WJgp/uWM0Yv6Xi4YEiw0BB+mPfi" crossorigin="anonymous"></script>
-<script src="nube.js?v=32"></script>
+<script src="nube.js"></script>
 <style>
   /* PWA: sin zoom automático de iOS al enfocar campos y texto estable al rotar */
   html { -webkit-text-size-adjust: 100%; }
@@ -118,9 +118,9 @@
     table.calc tr { break-inside: avoid; }
   }
 </style>
-<link rel="stylesheet" href="aura.css?v=21">
-<script src="lateral.js?v=18"></script>
-<script src="asistente.js?v=8" defer></script>
+<link rel="stylesheet" href="aura.css">
+<script src="lateral.js"></script>
+<script src="asistente.js" defer></script>
 </head>
 <body>
 <header>
@@ -282,11 +282,11 @@
 </main>
 <footer>Basada en el procedimiento del curso Diseño de Proyectos de Ingeniería (muros de contención). No reemplaza la memoria de cálculo del ingeniero del proyecto. Verifique siempre los resultados.</footer>
 
-<script src="memo.js?v=44"></script>
-<script src="tablero.js?v=9"></script>
-<script src="guia.js?v=9"></script>
-<script src="dxf.js?v=3"></script>
-<script src="modelo3d.js?v=7"></script>
+<script src="memo.js"></script>
+<script src="tablero.js"></script>
+<script src="guia.js"></script>
+<script src="dxf.js"></script>
+<script src="modelo3d.js"></script>
 <script>
 "use strict";
 // ---------------------------------------------------------------------------
@@ -472,6 +472,8 @@ const barraTex = (db, s) => L`$\phi$${tn(db * 10, 0)} @ ${tn(s, s % 1 ? 1 : 0)} 
 // Memoria: flexión y corte de una sección
 // ---------------------------------------------------------------------------
 function memoFlexion(m, f, d0, cara) {
+  const k = `muro-${cara}`;
+  memoGrupo(m, "Armadura requerida", `${k}-req`);
   m.row("Altura útil: d", `${fmt(f.d, 2)} cm`);
   m.eq(L`d = h - r_{ec} - \frac{d_b}{2} = ${tn(f.h, 1)} - ${tn(d0.rec, 1)} - \frac{${tn(f.db, 1)}}{2} = ${tn(f.d, 2)}\ \mathrm{cm}`);
   m.eq(L`\mu = \frac{M_u}{\phi\,0.85\,f'_c\,b\,d^2} = \frac{${tn(f.Mu, 0)}}{0.9\cdot 0.85\cdot ${tn(d0.fc, 0)}\cdot 100\cdot ${tn(f.d, 2)}^2} = ${tn(f.mu, 4)}`);
@@ -486,9 +488,11 @@ function memoFlexion(m, f, d0, cara) {
   m.row("Cuantía calculada ; cuantía mínima: ρ ; ρ<sub>mín</sub>", `${fmt(f.rho, 5)} ; ${fmt(RHO_MIN, 4)}`, "criterio del curso");
   m.row(`Armadura requerida (${cara}): A<sub>s</sub>`, `${fmt(f.As, 2)} cm²/m`);
   m.eq(L`A_s = \max(\rho;\ \rho_{m\acute{i}n})\,b\,d = ${tn(f.rhoReq, 5)}\cdot 100\cdot ${tn(f.d, 2)} = ${tn(f.As, 2)}\ \mathrm{cm^2/m}`);
+  memoGrupo(m, "Espaciamiento y armadura adoptada", `${k}-esp`);
   m.row("Separación calculada ; separación máxima → armadura adoptada: s ; s<sub>máx</sub>", `${fmt(f.sCalc, 1)} ; ${fmt(f.sMaxN, 1)} cm → <b>${barra(f.db, f.s)}</b>`, "ACI 318-08 7.6.5");
   m.eq(L`s \le \frac{100\,A_b}{A_s} = \frac{100\cdot ${tn(f.Ab, 3)}}{${tn(f.As, 2)}} = ${tn(f.sCalc, 1)}\ \mathrm{cm} \qquad s_{m\acute{a}x} = \min(3h;\ 45\ \mathrm{cm}) = ${tn(f.sMaxN, 1)}\ \mathrm{cm} \;\Rightarrow\; s = ${tn(f.s, 1)}\ \mathrm{cm}`, "ACI 318-08 7.6.5");
   if (f.s < 10) m.note(`Separación de ${fmt(f.s, 1)} cm: considere un diámetro mayor.`, L`Separación reducida (${tn(f.s, 1)} cm); se recomienda un diámetro mayor.`);
+  memoGrupo(m, "Verificación de capacidad (resumen)", `${k}-cap`, { abierto: true, resumen: `D/C = ${fmt(Math.max(f.dc, f.dcEt), 3)} ${tag(Math.max(f.dc, f.dcEt) <= 1 + 1e-9, Math.max(f.dc, f.dcEt) <= 1 + 1e-9 ? "Cumple" : "No cumple")}` });
   m.row("Bloque de compresión ; eje neutro ; deformación del acero: a ; c ; ε<sub>t</sub>", `${fmt(f.a, 2)} ; ${fmt(f.c, 2)} cm ; ${fmt(f.et, 4)}`, "ACI 318-08 10.2.7");
   m.eq(L`a = \frac{A_s f_y}{0.85\,f'_c\,b} = ${tn(f.a, 2)}\ \mathrm{cm} \qquad c = \frac{a}{\beta_1} = \frac{${tn(f.a, 2)}}{${tn(f.b1, 3)}} = ${tn(f.c, 2)}\ \mathrm{cm} \qquad \varepsilon_t = 0.003\,\frac{d - c}{c} = ${tn(f.et, 4)}`, "ACI 318-08 10.2.7");
   m.row(`Deformación mínima del acero (${f.et >= 0.005 ? "controlada por tracción" : "zona de transición"}): ε<sub>t</sub> ≥ 0.004 ; φ`, `${fmt(f.phi, 3)} ${tagDC(f.dcEt)}`, "ACI 318-08 10.3.5 y 9.3.2");
@@ -1490,7 +1494,7 @@ window.AURA_MEMO = {
   recalcular: () => calcular(),
 };
 </script>
-<script src="proyectos.js?v=49"></script>
+<script src="proyectos.js"></script>
 <script>
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
 </script>

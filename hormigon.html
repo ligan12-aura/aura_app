@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="icon" type="image/svg+xml" href="icons/structura.svg">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js" integrity="sha384-K0oxqktRvaThvYgGL4G+OK2Ih6VS6Uyu7j3+7WJgp/uWM0Yv6Xi4YEiw0BB+mPfi" crossorigin="anonymous"></script>
-<script src="nube.js?v=32"></script>
+<script src="nube.js"></script>
 <style>
   /* PWA: sin zoom automático de iOS al enfocar campos y texto estable al rotar */
   html { -webkit-text-size-adjust: 100%; }
@@ -97,18 +97,6 @@
   .memo { padding: 4px 16px 16px; }
   .memo h3 { font-size: 14px; margin: 18px 0 6px; padding-bottom: 4px; border-bottom: 2px solid var(--accent); color: var(--head); }
   .memo h4 { font-size: 13px; margin: 12px 0 4px; color: var(--head); }
-  /* Acordeones de la viga: un bloque por paso del cálculo, con sus ecuaciones debajo de las filas */
-  details.acord { border: 1px solid var(--line); border-radius: var(--r-m, 6px); margin: 6px 0; background: var(--panel); }
-  details.acord > summary { display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; list-style: none; font-size: 13px; font-weight: 600; color: var(--acento, var(--head)); }
-  details.acord > summary::-webkit-details-marker { display: none; }
-  details.acord > summary::before { content: "▸"; content: "▸" / ""; display: inline-block; transition: transform .15s; }
-  details.acord[open] > summary::before { transform: rotate(90deg); }
-  details.acord > summary:hover { background: var(--hover-fila, #f6f9f8); }
-  details.acord > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-  .acord-r { margin-left: auto; font-weight: 600; color: var(--ink); white-space: nowrap; }
-  .acord-c { padding: 0 12px 8px; border-top: 1px solid var(--line); }
-  .acord-c .eqs { margin-top: 6px; }
-  @media print { details.acord { border: 0; } details.acord > summary::before { display: none; } }
   table.calc { width: 100%; border-collapse: collapse; font-size: 13px; }
   table.calc td { padding: 4px 8px; border-bottom: 1px solid #eef0f3; vertical-align: top; }
   table.calc td.v { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
@@ -140,9 +128,9 @@
     table.calc tr { break-inside: avoid; }
   }
 </style>
-<link rel="stylesheet" href="aura.css?v=21">
-<script src="lateral.js?v=18"></script>
-<script src="asistente.js?v=8" defer></script>
+<link rel="stylesheet" href="aura.css">
+<script src="lateral.js"></script>
+<script src="asistente.js" defer></script>
 </head>
 <body>
 <header>
@@ -369,11 +357,11 @@
 </main>
 <footer>Los resultados no reemplazan el criterio del profesional que firma. Las solicitaciones deben corresponder a la envolvente de combinaciones mayoradas. Verifique siempre los resultados.</footer>
 
-<script src="memo.js?v=44"></script>
-<script src="tablero.js?v=9"></script>
-<script src="guia.js?v=9"></script>
-<script src="dxf.js?v=3"></script>
-<script src="modelo3d.js?v=7"></script>
+<script src="memo.js"></script>
+<script src="tablero.js"></script>
+<script src="guia.js"></script>
+<script src="dxf.js"></script>
+<script src="modelo3d.js"></script>
 <script>
 "use strict";
 // ---------------------------------------------------------------------------
@@ -418,69 +406,12 @@ class Memo {
   eq(s, ref) { this.tex.push(texDisplay(s, ref)); this.out.push({ tex: s + (ref ? `\\tag*{(${ref})}` : ""), eq: true }); }
   // soloTex: comentario del paso a paso que va solo en la memoria .tex
   p(s, soloTex) { memoTexP(this, s); if (!soloTex) this.out.push({ tex: s }); }
-  // Grupo colapsable (acordeón): abarca lo que sigue hasta el próximo grupo o título. op: { abierto, resumen }
-  grupo(titulo, clave, op = {}) {
-    memoTexCerrar(this);
-    const gr = { grupo: titulo, clave, ...op };
-    this.out.push(gr); this.tex.push(`\\subsubsection*{${texTxt(titulo)}}`);
-    return gr;
-  }
   texto() { memoTexCerrar(this); return this.tex.join("\n"); }
-  html() {
-    let s = "", tramo = [], i = 0;
-    const titulo = (it) => typeof it === "string" && /^<h[34]/.test(it);
-    while (i < this.out.length) {
-      const it = this.out[i];
-      if (it && it.grupo) {
-        if (tramo.length) { s += memoHTML(tramo); tramo = []; }
-        const items = [];
-        for (i++; i < this.out.length && !(this.out[i] && this.out[i].grupo) && !titulo(this.out[i]); i++) items.push(this.out[i]);
-        s += acordeon(it, items);
-        continue;
-      }
-      tramo.push(it); i++;
-    }
-    if (tramo.length) s += memoHTML(tramo);
-    return s;
-  }
+  html() { return memoHTML(this.out); }
 }
-
-// Acordeón de la memoria: filas de resultados y, inmediatamente debajo, las ecuaciones que las calculan (visibles)
-const acordAbiertos = new Map();          // clave → abierto, recordado al recalcular
-function acordeon(gr, items) {
-  let cuerpo = "", filas = "", tex = "";
-  const tabla = () => { if (filas) cuerpo += `<table class="calc">${filas}</table>`; filas = ""; };
-  const eqs = () => { if (tex) cuerpo += `<div class="eqs">${tex}</div>`; tex = ""; };
-  for (const it of items) {
-    if (typeof it === "string") { tabla(); eqs(); cuerpo += it; }
-    else if (it.tex !== undefined) { tabla(); tex += it.eq ? texEcuacion(it.tex) : `<p>${texParrafo(it.tex)}</p>`; }
-    else { eqs(); filas += `<tr><td class="k">${it.k}${it.ref ? `<span class="ref">${it.ref}</span>` : ""}</td><td class="v">${it.v}</td></tr>`; }
-  }
-  tabla(); eqs();
-  const abierto = acordAbiertos.has(gr.clave) ? acordAbiertos.get(gr.clave) : !!gr.abierto;
-  return `<details class="acord" data-clave="${gr.clave}"${abierto ? " open" : ""}><summary><span class="acord-t">${gr.grupo}</span>${gr.resumen ? `<span class="acord-r">${gr.resumen}</span>` : ""}</summary><div class="acord-c">${cuerpo}</div></details>`;
-}
-// Las ecuaciones se dibujan con KaTeX al abrir el acordeón (y se recuerda si quedó abierto)
-document.addEventListener("toggle", (ev) => {
-  const d = ev.target;
-  if (!(d instanceof HTMLDetailsElement) || !d.classList.contains("acord")) return;
-  if (!d.dataset.imprimir) acordAbiertos.set(d.dataset.clave, d.open);
-  if (d.open) dibujarTex(d);
-}, true);
-// «Mostrar / ocultar todas las ecuaciones» (memo.js) también abre o cierra todos los acordeones de la viga
-document.addEventListener("click", (ev) => {
-  const b = ev.target.closest(".todasEq");
-  const memo = b && b.nextElementSibling;
-  if (!memo || memo.id !== "memo") return;
-  const acs = [...memo.querySelectorAll("details.acord")], abrir = acs.some(d => !d.open);
-  acs.forEach(d => { d.open = abrir; });
-});
-// Al imprimir se ve todo el procedimiento: se abren los acordeones cerrados y luego se vuelven a cerrar
-addEventListener("beforeprint", () => document.querySelectorAll("details.acord:not([open])").forEach(d => { d.dataset.imprimir = "1"; d.open = true; }));
-addEventListener("afterprint", () => document.querySelectorAll("details.acord[data-imprimir]").forEach(d => { d.open = false; delete d.dataset.imprimir; }));
 
 // Memo nulo para evaluar alternativas sin generar texto.
-const NOMEMO = { h() {}, sub() {}, row() {}, note() {}, eq() {}, p() {}, grupo() { return {}; } };
+const NOMEMO = { h() {}, sub() {}, row() {}, note() {}, eq() {}, p() {} };
 
 // ---------------------------------------------------------------------------
 // Parámetros del ACI 318-08
@@ -508,7 +439,7 @@ function flexion(cara, Mu, db, g, m) {
   const rmin = Math.max(0.8 * Math.sqrt(fc) / fy, 14 / fy);
   const rb = 0.85 * b1 * fc / fy * (ECU * ES / (ECU * ES + fy));
   const rmax = 0.85 * b1 * fc / fy * (ECU / (ECU + 0.004));
-  m.grupo("Geometría y cuantías límite", `${cara}-geo`);
+  memoGrupo(m, "Geometría y cuantías límite", `${cara}-geo`);
   m.row("Altura útil: d", `${fmt(d, 2)} cm`);
   m.row("Factor del bloque de compresiones: β<sub>1</sub>", fmt(b1, 3), "10.2.7.3");
   m.row("Cuantía mínima: ρ<sub>mín</sub>", fmt(rmin, 5), "10.5.1");
@@ -530,7 +461,7 @@ function flexion(cara, Mu, db, g, m) {
   const rhoD = Math.max(rho, rmin);
   const okRho = rho <= rmax;
   const Asreq = rhoD * b * d;
-  m.grupo("Armadura requerida", `${cara}-req`);
+  memoGrupo(m, "Armadura requerida", `${cara}-req`);
   m.row("Momento último ; momento nominal requerido: M<sub>u</sub> ; M<sub>n</sub>", `${fmt(Mu / 100, 1)} ; ${fmt(Mn / 100, 1)} kgf·m`, "9.3.2.1");
   m.row("Momento reducido ; profundidad relativa del bloque: μ ; α", `${fmt(mu, 4)} ; ${fmt(alpha, 4)}`);
   m.row("Cuantía requerida: ρ", fmt(rho, 5));
@@ -562,7 +493,7 @@ function flexion(cara, Mu, db, g, m) {
   const sMax = Math.min(38 * 2800 / fs - 2.5 * cc, 30 * 2800 / fs);
   const sCC = (anchoUtil - db / 10) / (Nb - 1);
   const okSmin = sLibre >= sMin, okSmax = sCC <= sMax;
-  m.grupo("Disposición de armadura", `${cara}-disp`);
+  memoGrupo(m, "Disposición de armadura", `${cara}-disp`);
   m.row(`Área de una barra φ${db} ; número de barras: A<sub>b</sub> ; N<sub>b</sub>`, `${fmt(Ab, 3)} cm² ; ${Nb}φ${db}`);
   m.row("Armadura dispuesta: A<sub>s,disp</sub>", `${fmt(As, 3)} cm²`);
   m.row("Espaciamiento libre entre barras: s ≥ s<sub>mín</sub>", `${fmt(sLibre, 2)} ≥ ${fmt(sMin, 2)} cm ${tag(okSmin, okSmin ? "cumple" : "no cabe en una capa")}`, "7.6.1");
@@ -585,7 +516,7 @@ function flexion(cara, Mu, db, g, m) {
   const okEt = et >= 0.004;
   const dc = phiMn > 0 ? Mu / phiMn : Infinity;   // sin solución con armadura simple no hay capacidad
   const ok = resuelve && okRho && okSmin && okSmax && okEt && dc <= 1;
-  m.grupo("Verificación de capacidad (resumen)", `${cara}-cap`, { abierto: true, resumen: `D/C = ${fmt(dc, 3)} ${okTxt(ok)}` });
+  memoGrupo(m, "Verificación de capacidad (resumen)", `${cara}-cap`, { abierto: true, resumen: `D/C = ${fmt(dc, 3)} ${okTxt(ok)}` });
   m.row("Profundidad del bloque de compresión ; eje neutro: a ; c", `${fmt(a, 2)} ; ${fmt(c, 2)} cm`, "10.2.7");
   m.row("Deformación del acero en tracción ; factor de reducción: ε<sub>t</sub> ; φ", `${fmt(et, 4)} ${tag(okEt, okEt ? "cumple" : "no cumple")} ; ${fmt(phi, 3)}`, "10.3.5 / 9.3.2");
   m.row("<b>Resistencia de diseño a flexión: φM<sub>n</sub></b>", `<b>${fmt(phiMn / 100, 1)} kgf·m</b>`);
@@ -622,7 +553,7 @@ function corte(Vu, g, d, dbMin, criterio, m) {
   // ---------- 1. Capacidad del hormigón ----------
   const Vc = sis ? 0 : 0.53 * rf * b * d;
   const phiVc = phi * Vc;
-  m.grupo("Capacidad del hormigón", "v-hor");
+  memoGrupo(m, "Capacidad del hormigón", "v-hor");
   m.row("Altura útil ; factor de reducción por corte: d ; φ", `${fmt(d, 2)} cm ; 0.75`, "9.3.2.3");
   m.row("Resistencia al corte del hormigón: V<sub>c</sub> ; φV<sub>c</sub>", `${fmt(Vc, 0)} ; ${fmt(phiVc, 0)} kgf${sis ? " (sísmico: V<sub>c</sub> = 0)" : ""}`, sis ? "21.5.4.2" : "11.2.1.1");
   if (sis) {
@@ -639,7 +570,7 @@ function corte(Vu, g, d, dbMin, criterio, m) {
   const Vs = Math.max(0, VsCalc);
   const VsMax = 2.12 * rf * b * d;
   const okVs = Vs <= VsMax;
-  m.grupo("Demanda sobre el acero", "v-acero");
+  memoGrupo(m, "Demanda sobre el acero", "v-acero");
   m.row("Corte requerido al acero: V<sub>s</sub>", `${fmt(VsCalc, 0)} kgf`, "11.4.7.1");
   m.row("Límite del corte resistido por el acero (aplastamiento del alma): V<sub>s</sub> ≤ V<sub>s,máx</sub>", `${fmt(Vs, 0)} ≤ ${fmt(VsMax, 0)} kgf ${tag(okVs, okVs ? "cumple" : "aumentar sección")}`, "11.4.7.9");
   if (!okVs) m.note("V<sub>s</sub> supera el límite 2.12√f'c b<sub>w</sub> d: se debe aumentar la sección.", L`$V_s$ supera el límite $2.12\sqrt{f'_c}\,b_w d$: se debe aumentar la sección.`);
@@ -677,7 +608,7 @@ function corte(Vu, g, d, dbMin, criterio, m) {
     sMaxRef = "11.4.5.3";
   }
   const s = Math.max(1, Math.floor(Math.min(sCalc, sMax) + 1e-9));
-  m.grupo("Diseño de estribos", "v-est");
+  memoGrupo(m, "Diseño de estribos", "v-est");
   m.row("Armadura de corte requerida: A<sub>v</sub>/s", `${fmt(AvsReq, 4)} cm²/cm`, "11-15");
   m.row("Armadura de corte mínima: (A<sub>v</sub>/s)<sub>mín</sub>", `${fmt(AvsMin, 4)} cm²/cm`, "11.4.6.3");
   m.row(`Espaciamiento teórico, estribo φ${de} de ${ramas} ramas: s`, `${fmt(sCalc, 2)} cm`);
@@ -695,7 +626,7 @@ function corte(Vu, g, d, dbMin, criterio, m) {
   const VsP = ramas * Abe * fy * d / s;
   const phiVn = phi * (Vc + VsP);
   const dc = Vu / phiVn;
-  m.grupo("Verificación de capacidad (resumen)", "v-cap", { abierto: true, resumen: `D/C = ${fmt(dc, 3)} ${okTxt(dc <= 1 && okVs)}` });
+  memoGrupo(m, "Verificación de capacidad (resumen)", "v-cap", { abierto: true, resumen: `D/C = ${fmt(dc, 3)} ${okTxt(dc <= 1 && okVs)}` });
   m.row("<b>Estribo adoptado</b>", `<b>E φ${de} @ ${s} cm</b> (${ramas} ramas)`);
   m.row("Corte resistido por los estribos adoptados: V<sub>s,disp</sub>", `${fmt(VsP, 0)} kgf`, "11-15");
   m.row("<b>Resistencia de diseño a corte: φV<sub>n</sub></b>", `<b>${fmt(phiVn, 0)} kgf</b>`);
@@ -725,7 +656,7 @@ function ganchos(g, m) {
   const peso = kgm * Lt / 100;
   const pesoMl = peso * 100 / s;                           // kg por metro de viga
   const tipo = gancho === "sismico" ? "sísmico" : "estándar";
-  m.grupo("Detallamiento", "v-det");
+  memoGrupo(m, "Detallamiento", "v-det");
   m.row("Diámetro interior de doblado: D", `${fmt(D, 2)} cm`, "7.2.2");
   m.row(`Extensión del gancho 135° ${tipo}: l<sub>ext</sub>`, `${fmt(ext, 2)} cm`, gancho === "sismico" ? "21.1" : "7.1.3(c)");
   m.row("Largo de cada gancho: L<sub>g</sub>", `${fmt(Lg, 2)} cm`);
@@ -950,7 +881,6 @@ function calcularViga() {
   const motivos = [...inf.fallas.map(f => `armadura inferior: ${f}`), ...sup.fallas.map(f => `armadura superior: ${f}`), ...v.fallas.map(f => `corte: ${f}`)];
   $("verdict").innerHTML = `<div class="verdict ${ok ? "ok" : "bad"}">${ok ? "✔ La viga CUMPLE" : "✘ La viga NO CUMPLE"} — razón máxima = ${razonTxt(dc)}${motivos.map(x => ` · ${x}`).join("")}</div>`;
   $("memo").innerHTML = datos.html() + m.html();
-  dibujarTex($("memo"));          // todas las ecuaciones, también las de acordeones cerrados (para imprimir)
 
   const resumen = [
     { k: "Flexión inferior", dem: L`$M_u^{+} = ${tn(g.Mpos / 100, 1)}$ kgf$\cdot$m`, cap: L`$\phi M_n = ${tn(inf.phiMn / 100, 1)}$ kgf$\cdot$m`, dc: inf.dc, arm: L`${inf.Nb}$\phi$${inf.db}`, ok: inf.ok },
@@ -1238,13 +1168,14 @@ function disenoFaja(t, Mu, db, d, g, dosDir, m) {
   const et = ECU * (d - c) / c, phi = phiEt(et), okEt = et >= 0.004;
   const phiMn = phi * AsP * fy * (d - a / 2);
   const dc = resuelve && phiMn > 0 ? MuC / phiMn : Infinity;   // sin solución con armadura simple no hay capacidad
+  const k = `losa-${t.titulo.replace(/<[^>]+>/g, "")}`;
+  m.p(L`Se diseña una faja de $b = 100$ cm para el momento último $M_u = ${tn(Mu, 1)}$ kgf$\cdot$m/m.`, true);
+  // ---------- Armadura requerida ----------
+  memoGrupo(m, "Armadura requerida", `${k}-req`);
   m.row("Momento último ; altura útil: M<sub>u</sub> ; d", `${fmt(Mu, 1)} kgf·m/m ; ${fmt(d, 2)} cm`);
   m.row("Momento reducido ; profundidad relativa ; cuantía: μ ; α ; ρ", `${fmt(mu, 4)} ; ${fmt(alpha, 4)} ; ${fmt(rho, 5)}`);
+  m.row("Cuantía mínima de retracción y temperatura (sobre b h): ρ<sub>mín</sub>", fmt(rmin, 4), "7.12.2.1");
   m.row("Armadura requerida: A<sub>s</sub>", `${fmt(As, 3)} cm²/m`, "7.12.2.1");
-  m.row(`Espaciamiento calculado φ${db} ; espaciamiento máximo: s ; s<sub>máx</sub>`, `${fmt(sCalc, 2)} ; ${fmt(sMax, 1)} cm`, dosDir ? "13.3.2" : "7.6.5");
-  m.row(`<b>Armadura adoptada</b>`, `<b>φ${db} @ ${s} cm</b> (${fmt(AsP, 2)} cm²/m)`);
-  m.row("Deformación del acero ; resistencia de diseño ; razón D/C: ε<sub>t</sub> ; φM<sub>n</sub> ; D/C", `${fmt(et, 4)} ; ${fmt(phiMn / 100, 1)} kgf·m/m ; <b>${fmt(dc, 3)}</b> ${okTxt(dc <= 1 && okEt)}`);
-  m.p(L`Se diseña una faja de $b = 100$ cm para el momento último $M_u = ${tn(Mu, 1)}$ kgf$\cdot$m/m.`, true);
   m.p(L`\textbf{Altura útil} de la capa considerada:`, true);
   m.eq(L`d = ${t.dTex} = ${tn(d, 2)}${CM}`);
   m.p(L`\textbf{Cuantía requerida.} Con $\phi = 0.90$ (sección controlada por tracción) se obtienen el momento reducido, la profundidad relativa del bloque de compresión y la cuantía:`, true);
@@ -1253,9 +1184,19 @@ function disenoFaja(t, Mu, db, d, g, dosDir, m) {
   m.p(L`\textbf{Área de acero.} La cuantía mínima de retracción y temperatura se aplica sobre el área bruta $b\,h$; se adopta el mayor valor:`, true);
   m.eq(L`A_s = \max(\rho\,b\,d,\ \rho_{\min}\,b\,h) = \max(${tn(AsCalc, 3)},\ ${tn(rmin, 4)}\cdot 100\cdot ${tn(e, 1)}) = ${tn(As, 3)}\ \mathrm{cm^2/m}`);
   m.p(L`${AsCalc >= AsMin ? "Rige la armadura por solicitación." : L`Como $\rho\,b\,d = ${tn(AsCalc, 3)} < \rho_{\min}\,b\,h = ${tn(AsMin, 3)}$ cm$^2$/m, \textbf{rige la cuantía mínima}.`}`, true);
+  // ---------- Espaciamiento y armadura adoptada ----------
+  memoGrupo(m, "Espaciamiento y armadura adoptada", `${k}-esp`);
+  m.row(`Espaciamiento calculado φ${db} ; espaciamiento máximo: s ; s<sub>máx</sub>`, `${fmt(sCalc, 2)} ; ${fmt(sMax, 1)} cm`, dosDir ? "13.3.2" : "7.6.5");
+  m.row(`<b>Armadura adoptada</b>`, `<b>φ${db} @ ${s} cm</b> (${fmt(AsP, 2)} cm²/m)`);
   m.p(L`\textbf{Espaciamiento.} Con barras $\phi${db}$ ($A_b = ${tn(Ab, 3)}$ cm$^2$), el espaciamiento que entrega el área requerida y el máximo normativo son:`, true);
   m.eq(L`s = \frac{b\,A_b}{A_s} = \frac{100\cdot ${tn(Ab, 3)}}{${tn(As, 3)}} = ${tn(sCalc, 2)}${CM} \qquad s_{\max} = \min(${dosDir ? "2h" : "3h"},\ 45) = \min(${tn((dosDir ? 2 : 3) * e, 1)},\ 45) = ${tn(sMax, 1)}${CM}`, dosDir ? "13.3.2" : "7.6.5");
-  m.p(L`Se adopta \textbf{$\phi${db}$ @ ${s} cm} ($A_s = ${tn(AsP, 2)}$ cm$^2$/m). Verificación de capacidad:`);
+  m.p(L`Se adopta \textbf{$\phi${db}$ @ ${s} cm} ($A_s = ${tn(AsP, 2)}$ cm$^2$/m).`);
+  // ---------- Verificación de capacidad ----------
+  memoGrupo(m, "Verificación de capacidad (resumen)", `${k}-cap`, { abierto: true, resumen: `D/C = ${fmt(dc, 3)} ${okTxt(resuelve && dc <= 1 && okEt)}` });
+  m.row("Profundidad del bloque ; eje neutro: a ; c", `${fmt(a, 3)} ; ${fmt(c, 3)} cm`);
+  m.row("Deformación del acero ; factor de reducción: ε<sub>t</sub> ; φ", `${fmt(et, 4)} ${tag(okEt, okEt ? "cumple" : "no cumple")} ; ${fmt(phi, 2)}`, "10.3.5");
+  m.row("<b>Resistencia de diseño: φM<sub>n</sub></b>", `<b>${fmt(phiMn / 100, 1)} kgf·m/m</b>`);
+  m.row("<b>Razón demanda/capacidad: D/C</b>", `<b>${fmt(dc, 3)}</b> ${okTxt(dc <= 1 && okEt)}`);
   m.eq(L`a = \frac{A_s f_y}{0.85 f'_c b} = \frac{${tn(AsP, 2)}\cdot ${tn(fy, 0)}}{0.85\cdot ${tn(fc, 0)}\cdot 100} = ${tn(a, 3)}${CM} \qquad c = \frac{a}{\beta_1} = \frac{${tn(a, 3)}}{${tn(beta1(fc), 3)}} = ${tn(c, 3)}${CM}`);
   m.eq(L`\varepsilon_t = 0.003\frac{d - c}{c} = 0.003\cdot\frac{${tn(d, 2)} - ${tn(c, 3)}}{${tn(c, 3)}} = ${tn(et, 4)} \;${okEt ? GE : "<"}\; 0.004 \;\Rightarrow\; \phi = ${tn(phi, 2)}`, "10.3.5");
   m.eq(L`\phi M_n = \phi\,A_s f_y\left(d - \frac{a}{2}\right) = ${tn(phi, 2)}\cdot ${tn(AsP, 2)}\cdot ${tn(fy, 0)}\left(${tn(d, 2)} - \frac{${tn(a, 3)}}{2}\right) = ${tn(phiMn / 100, 1)}\ \mathrm{kgf\cdot m/m}`);
@@ -2066,7 +2007,7 @@ window.AURA_MEMO = {
   recalcular: () => { calcularViga(); calcularLosa(); },
 };
 </script>
-<script src="proyectos.js?v=49"></script>
+<script src="proyectos.js"></script>
 <script>
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
 </script>

@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="icon" type="image/svg+xml" href="icons/structura.svg">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js" integrity="sha384-K0oxqktRvaThvYgGL4G+OK2Ih6VS6Uyu7j3+7WJgp/uWM0Yv6Xi4YEiw0BB+mPfi" crossorigin="anonymous"></script>
-<script src="nube.js?v=32"></script>
+<script src="nube.js"></script>
 <style>
   /* PWA: sin zoom automático de iOS al enfocar campos y texto estable al rotar */
   html { -webkit-text-size-adjust: 100%; }
@@ -124,9 +124,9 @@
     table.calc tr { break-inside: avoid; }
   }
 </style>
-<link rel="stylesheet" href="aura.css?v=21">
-<script src="lateral.js?v=18"></script>
-<script src="asistente.js?v=8" defer></script>
+<link rel="stylesheet" href="aura.css">
+<script src="lateral.js"></script>
+<script src="asistente.js" defer></script>
 </head>
 <body>
 <header>
@@ -261,11 +261,11 @@
 </main>
 <footer>Basada en el procedimiento del curso de Hormigón Armado (zapatas aisladas). Los resultados no reemplazan el criterio del profesional que firma. El análisis sísmico sigue una guía aún no confirmada. No reemplaza la memoria de cálculo del ingeniero del proyecto. Verifique siempre los resultados.</footer>
 
-<script src="memo.js?v=44"></script>
-<script src="tablero.js?v=9"></script>
-<script src="guia.js?v=9"></script>
-<script src="dxf.js?v=3"></script>
-<script src="modelo3d.js?v=7"></script>
+<script src="memo.js"></script>
+<script src="tablero.js"></script>
+<script src="guia.js"></script>
+<script src="dxf.js"></script>
+<script src="modelo3d.js"></script>
 <script>
 "use strict";
 // ---------------------------------------------------------------------------
@@ -565,11 +565,13 @@ function verificar(d, m) {
   const Vux = (nu.s1 + sx) / 2 * Ax, Vuy = (nu.s1 + sy) / 2 * Ay;
   const Vcx = 0.53 * sq * Ly * dEf, Vcy = 0.53 * sq * B * dEf;
   const dcVx = Vux / (PHI_V * Vcx), dcVy = Vuy / (PHI_V * Vcy);
+  memoGrupo(m, "Dirección x (sección 1-1)", "zap-vx", { resumen: tagDC(dcVx) });
   m.row("Dirección x (sección 1-1), distancia a la sección crítica ; área tributaria: a<sub>x</sub> ; A<sub>x</sub>", `${fmt(M(ax), 3)} m ; ${fmt(Ax / 1e4, 3)} m²`);
   m.row("Dirección x, presión en la sección ; corte último: σ<sub>x</sub> ; V<sub>ux</sub>", `${fmt(S(sx), 2)} tf/m² ; ${fmt(T(Vux), 2)} tf`);
   m.row("Dirección x, resistencia al corte del hormigón: V<sub>cx</sub>", `${fmt(T(Vcx), 2)} tf ${tagDC(dcVx)}`, "ACI 318-08 11-3");
   m.eq(L`a_x = \frac{B + a}{2} + d = ${tn(M(ax), 3)}\ \mathrm{m} \qquad A_x = (B - a_x)\,L = ${tn(Ax / 1e4, 3)}\ \mathrm{m^2} \qquad \sigma_x = \frac{a_x}{B}\,(\sigma_{1u} - \sigma_{2u}) + \sigma_{2u} = ${tn(S(sx), 2)}\ \mathrm{tf/m^2}`);
   m.eq(L`V_{ux} = \frac{\sigma_{1u} + \sigma_x}{2}\,A_x = \frac{${tn(S(nu.s1), 2)} + ${tn(S(sx), 2)}}{2}\cdot ${tn(Ax / 1e4, 3)} = ${tn(T(Vux), 2)}\ \mathrm{tf} \qquad V_{cx} = 0.53\sqrt{f'_c}\,L\,d = ${tn(T(Vcx), 2)}\ \mathrm{tf} \qquad \frac{V_{ux}}{\phi V_{cx}} = ${tn(dcVx, 3)} ${cmp(dcVx)} 1`, "ACI 318-08 11-3");
+  memoGrupo(m, "Dirección y (sección 2-2)", "zap-vy", { resumen: tagDC(dcVy) });
   m.row("Dirección y (sección 2-2), distancia a la sección crítica ; área tributaria: a<sub>y</sub> ; A<sub>y</sub>", `${fmt(M(ay), 3)} m ; ${fmt(Ay / 1e4, 3)} m²`);
   m.row("Dirección y, presión en la sección ; corte último: σ<sub>y</sub> ; V<sub>uy</sub>", `${fmt(S(sy), 2)} tf/m² ; ${fmt(T(Vuy), 2)} tf`);
   m.row("Dirección y, resistencia al corte del hormigón: V<sub>cy</sub>", `${fmt(T(Vcy), 2)} tf ${tagDC(dcVy)}`, "ACI 318-08 11-3");
@@ -583,11 +585,14 @@ function verificar(d, m) {
   const bo = 2 * ((d.a + dEf) + (d.b + dEf)), beta = Math.max(d.a, d.b) / Math.min(d.a, d.b);
   const Vc1 = 0.53 * (1 + 2 / beta) * sq * bo * dEf, Vc2 = 0.27 * (ALFA_S * dEf / bo + 2) * sq * bo * dEf, Vc3 = d.k3 * sq * bo * dEf;
   const Vcp = Math.min(Vc1, Vc2, Vc3), dcP = Vup / (PHI_V * Vcp);
+  memoGrupo(m, "Corte último", "zap-p-vu");
   m.p(L`Con la resultante dentro del núcleo central se usa la presión media $q_u = P_u/A_c$ sobre el área fuera del perímetro crítico, como en el procedimiento del curso.`);
   m.row("Presión media ; corte último: q<sub>u</sub> ; V<sub>u</sub>", `${fmt(S(qu), 2)} tf/m² ; ${fmt(T(Vup), 2)} tf`);
   m.eq(L`q_u = \frac{P_u}{A_c} = ${tn(S(qu), 2)}\ \mathrm{tf/m^2} \qquad V_u = q_u\left(A_c - (a + d)(b + d)\right) = ${tn(T(Vup), 2)}\ \mathrm{tf}`);
+  memoGrupo(m, "Perímetro crítico", "zap-p-bo");
   m.row("Perímetro crítico ; relación de lados ; factor de posición: b<sub>0</sub> ; β ; α<sub>s</sub>", `${fmt(bo, 1)} cm ; ${fmt(beta, 2)} ; ${ALFA_S}`, "ACI 318-08 11.11.2.1");
   m.eq(L`b_0 = 2\left((a + d) + (b + d)\right) = ${tn(bo, 1)}\ \mathrm{cm} \qquad \beta = \frac{\text{lado mayor}}{\text{lado menor}} = ${tn(beta, 2)} \qquad \alpha_s = ${ALFA_S}`, "ACI 318-08 11.11.2.1");
+  memoGrupo(m, "Resistencia del hormigón (resumen)", "zap-p-vc", { abierto: true, resumen: tagDC(dcP) });
   m.row("Resistencia según la relación de lados: V<sub>c1</sub>", `${fmt(T(Vc1), 2)} tf`, "ACI 318-08 11-31");
   m.row("Resistencia según el perímetro crítico: V<sub>c2</sub>", `${fmt(T(Vc2), 2)} tf`, "ACI 318-08 11-32");
   m.row("Resistencia límite: V<sub>c3</sub>", `${fmt(T(Vc3), 2)} tf`, d.k3 === 1 ? "pauta del curso" : "ACI 318-08 11-33");
@@ -604,6 +609,7 @@ function verificar(d, m) {
   const vuM = Vup / (bo * dEf) + gvf(b1x, b2x) * MyT * (b1x / 2) / Jcf(b1x, b2x) + gvf(b2x, b1x) * MxT * (b2x / 2) / Jcf(b2x, b1x);
   const dcPM = vuM / (PHI_V * Vcp / (bo * dEf));
   if (MxT + MyT > 0) {
+    memoGrupo(m, "Transferencia de momento (complemento ACI)", "zap-p-mom", { resumen: tagDC(dcPM) });
     m.p(L`El procedimiento del curso no considera el momento que la columna transfiere a la zapata. Como complemento, se agrega la fracción $\gamma_v$ de ese momento (en el coronamiento de la zapata) transferida por corte excéntrico (ACI 318-08 11.11.7.2).`);
     m.row("Momentos en el coronamiento de la zapata: M<sub>x</sub> ; M<sub>y</sub>", `${fmt(TM(MxT), 2)} ; ${fmt(TM(MyT), 2)} tf·m`);
     m.eq(L`M_x = \left|M_{xu,c} + H_{yu}\,(h_t + D_f - h_c)\right| = ${tn(TM(MxT), 2)}\ \mathrm{tf\,m} \qquad M_y = \left|M_{yu,c} + H_{xu}\,(h_t + D_f - h_c)\right| = ${tn(TM(MyT), 2)}\ \mathrm{tf\,m}`);
@@ -1162,7 +1168,7 @@ window.AURA_MEMO = {
   recalcular: () => calcular(),
 };
 </script>
-<script src="proyectos.js?v=49"></script>
+<script src="proyectos.js"></script>
 <script>
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
 </script>

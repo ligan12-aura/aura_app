@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="icon" type="image/svg+xml" href="icons/structura.svg">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js" integrity="sha384-K0oxqktRvaThvYgGL4G+OK2Ih6VS6Uyu7j3+7WJgp/uWM0Yv6Xi4YEiw0BB+mPfi" crossorigin="anonymous"></script>
-<script src="nube.js?v=32"></script>
+<script src="nube.js"></script>
 <style>
   /* PWA: sin zoom automático de iOS al enfocar campos y texto estable al rotar */
   html { -webkit-text-size-adjust: 100%; }
@@ -126,9 +126,9 @@
     table.calc tr { break-inside: avoid; }
   }
 </style>
-<link rel="stylesheet" href="aura.css?v=21">
-<script src="lateral.js?v=18"></script>
-<script src="asistente.js?v=8" defer></script>
+<link rel="stylesheet" href="aura.css">
+<script src="lateral.js"></script>
+<script src="asistente.js" defer></script>
 </head>
 <body>
 <header>
@@ -299,11 +299,11 @@
 </main>
 <footer>Columnas de hormigón armado según el ACI 318-19, con las adecuaciones del DS 60 como criterio mientras se confirma la NCh 430:2026. Los resultados no reemplazan el criterio del profesional que firma.</footer>
 
-<script src="memo.js?v=44"></script>
-<script src="tablero.js?v=9"></script>
-<script src="guia.js?v=9"></script>
-<script src="dxf.js?v=3"></script>
-<script src="modelo3d.js?v=7"></script>
+<script src="memo.js"></script>
+<script src="tablero.js"></script>
+<script src="guia.js"></script>
+<script src="dxf.js"></script>
+<script src="modelo3d.js"></script>
 <script>
 "use strict";
 // ---------------------------------------------------------------------------
@@ -914,6 +914,8 @@ ${pm.map(p => `${p.c.n}. ${nomTex(p.c.nombre)} & ${p.ext} & ${tn(T(p.c.P), 2)} &
     } else r = corte(d, S, eje, Vdem[eje], NuVc, s, Vc0);
     const ref = S.rect ? "22.5.5.1" : "22.5.2.2";
     m.sub(`Corte según ${eje}${zona ? ` — ${zona}` : ""}`);
+    const kc = `col-v${eje}-${zona || "todo"}`;
+    memoGrupo(m, "Resistencia del hormigón", `${kc}-vc`);
     m.row("Ancho ; altura útil ; cuantía ρ<sub>w</sub>: b<sub>w</sub> ; d ; ρ<sub>w</sub>", `${fmt(r.bw, 1)} ; ${fmt(r.dd, 1)} cm ; ${fmt(r.rhow, 4)}`, ref);
     m.row("Refuerzo: A<sub>v</sub> ; A<sub>v,mín</sub> (s = " + fmt(s, 1) + " cm)", `${fmt(r.Av, 2)} ; ${fmt(r.Avmin, 2)} cm²`, S.rect ? "10.6.2.2" : "22.5.8.5.6");
     m.eq(L`A_{v,m\acute{i}n} = \max\left(0.062\sqrt{f'_c};\ 0.35\right)\frac{b_w s}{f_{yt}} = ${tn(r.Avmin, 2)}\ \mathrm{cm^2}`, "10.6.2.2");
@@ -926,6 +928,7 @@ ${pm.map(p => `${p.c.n}. ${nomTex(p.c.nombre)} & ${p.ext} & ${tn(T(p.c.P), 2)} &
         : L`V_c = \left(0.66\,\lambda_s\,\rho_w^{1/3}\sqrt{f'_c} + \frac{N_u}{6A_g}\right) b_w d = ${tn(T(r.vcc), 2)}\ \mathrm{tf}\ \ (\lambda_s = ${tn(r.ls, 3)})`, "Tabla 22.5.5.1");
       m.eq(L`N_u = ${tn(T(r.Nu), 2)}\ \mathrm{tf} \qquad \frac{N_u}{6A_g} = ${tn(r.nTerm / KMPA, 3)}\ \mathrm{MPa} \le 0.05f'_c \qquad V_c \le 0.42\sqrt{f'_c}\,b_w d`, "22.5.5.1.2");
     }
+    memoGrupo(m, "Refuerzo y resistencia de diseño (resumen)", `${kc}-vn`, { abierto: true, resumen: tagDC(Math.max(r.dc, r.dcLim)) });
     m.row("Resistencia del refuerzo: V<sub>s</sub>", `${fmt(T(r.Vs), 2)} tf`, "22.5.8.5.3");
     m.eq(L`V_s = \frac{A_v f_{yt}\,d}{s} = \frac{${tn(r.Av, 2)}\cdot ${tn(r.fyt, 0)}\cdot ${tn(r.dd, 1)}}{${tn(s, 1)}} = ${tn(T(r.Vs), 2)}\ \mathrm{tf}`, "22.5.8.5.3");
     m.row(`Resistencia de diseño: φV<sub>n</sub> ≥ V<sub>u</sub> = ${fmt(T(r.Vu), 2)} tf`, `${fmt(T(r.phiVn), 2)} tf ${tagDC(r.dc)}`, "22.5.1.1");
@@ -935,6 +938,7 @@ ${pm.map(p => `${p.c.n}. ${nomTex(p.c.nombre)} & ${p.ext} & ${tn(T(p.c.P), 2)} &
     ck(`Límite de la sección, corte ${eje}`, L`$V_u$`, L`$\phi(V_c + 0.66\sqrt{f'_c}b_wd)$`, r.dcLim, `Sección a corte según ${eje}`, "corte");
     if (r.requiere) {
       const dcAv = r.Avmin / r.Av, dcS = s / r.sMax;
+      memoGrupo(m, "Refuerzo mínimo y separación", `${kc}-min`, { resumen: tagDC(Math.max(dcAv, dcS)) });
       m.row("Refuerzo mínimo si V<sub>u</sub> > 0.5φV<sub>c</sub>: A<sub>v</sub> ≥ A<sub>v,mín</sub>", `${fmt(r.Av, 2)} ≥ ${fmt(r.Avmin, 2)} cm² ${tagDC(dcAv)}`, "10.6.2.1");
       m.row(`Separación máxima del refuerzo de corte (V<sub>s,req</sub> = ${fmt(T(r.VsReq), 2)} tf ${r.VsReq <= 0.33 * raizFc(d.fc) * r.bw * r.dd ? "≤" : ">"} 0.33√f'<sub>c</sub> b<sub>w</sub>d)`, `${fmt(s, 1)} ≤ ${fmt(r.sMax, 1)} cm ${tagDC(dcS)}`, "Tabla 10.7.6.5.2");
       ck(`Refuerzo mínimo de corte ${eje}`, L`$A_{v,m\acute{i}n} = ${tn(r.Avmin, 2)}$ cm$^2$`, L`$A_v = ${tn(r.Av, 2)}$ cm$^2$`, dcAv, `Refuerzo mínimo de corte según ${eje}`, "corte");
@@ -955,9 +959,9 @@ ${pm.map(p => `${p.c.n}. ${nomTex(p.c.nombre)} & ${p.ext} & ${tn(T(p.c.P), 2)} &
   // Interacción de corte en dos direcciones (22.5.1.10 y 22.5.1.11)
   {
     const rx = Math.max(...cortes.filter(c => c.eje === "x").map(c => c.dc)), ry = Math.max(...cortes.filter(c => c.eje === "y").map(c => c.dc));
+    m.sub("Corte en dos direcciones");
     if (rx > 0.5 && ry > 0.5) {
       const dcI = (rx + ry) / 1.5;
-      m.sub("Corte en dos direcciones");
       m.row("Interacción: v<sub>u,x</sub>/φv<sub>n,x</sub> + v<sub>u,y</sub>/φv<sub>n,y</sub> ≤ 1.5", `${fmt(rx + ry, 3)} ${tagDC(dcI)}`, "22.5.1.11");
       ck("Interacción de corte biaxial", L`${tn(rx + ry, 3)}`, "1.5", dcI, "Corte biaxial", "corte");
     } else m.row("Interacción de corte biaxial (algún cociente ≤ 0.5)", tag(true, "se desprecia"), "22.5.1.10");
@@ -1047,6 +1051,7 @@ ${pm.map(p => `${p.c.n}. ${nomTex(p.c.nombre)} & ${p.ext} & ${tn(T(p.c.P), 2)} &
     ck("Longitud de desarrollo 1.25ℓd ≤ ℓu/2", L`${tn(1.25 * ld, 1)} cm`, L`${tn(d.lu / 2, 1)} cm`, dcLd, "Desarrollo de barras", "sis");
     // Refuerzo transversal en ℓo (18.7.5)
     m.sub("Refuerzo transversal de confinamiento");
+    memoGrupo(m, "Zona de confinamiento y separación", "col-conf-sep");
     m.row("Longitud de confinamiento: ℓ<sub>o</sub> = máx(h ; ℓ<sub>u</sub>/6 ; 450 mm)", `${fmt(lo, 1)} cm`, "18.7.5.1");
     const PuE = PsisMax, alta = PuE > 0.3 * S.Ag * d.fc || fcM > 70;
     m.row("Carga axial sísmica máxima ; 0.3A<sub>g</sub>f'<sub>c</sub>", `${fmt(T(PuE), 2)} ; ${fmt(T(0.3 * S.Ag * d.fc), 2)} tf`, "18.7.5.2f");
@@ -1065,6 +1070,7 @@ ${pm.map(p => `${p.c.n}. ${nomTex(p.c.nombre)} & ${p.ext} & ${tn(T(p.c.P), 2)} &
       m.eq(L`s_o = 100 + \frac{350 - h_x}{3} = 100 + \frac{350 - ${tn(hx * 10, 0)}}{3} \Rightarrow ${tn(so * 10, 0)}\ \mathrm{mm}\ (100 \le s_o \le 150) \qquad s_{m\acute{a}x} = \min(${tn(S.dimMin / 4, 1)};\ ${tn(6 * d.db, 1)};\ ${tn(so, 1)}) = ${tn(sLim, 1)}\ \mathrm{cm}`, "18.7.5.3");
       ck("Separación en ℓo", L`${tn(d.s0, 1)} cm`, L`${tn(sLim, 1)} cm`, d.s0 / sLim, "Separación en ℓo", "sis");
       const kn = nl / (nl - 2);
+      memoGrupo(m, "Cuantía de confinamiento A<sub>sh</sub>", "col-conf-ash", { abierto: true });
       for (const [eje, nleg, bc] of [["x", d.nlx, S.bcy], ["y", d.nly, S.bcx]]) {
         const Ash = nleg * S.Abt, req = Math.max(0.3 * (S.Ag / S.Ach - 1) * d.fc / fytC, 0.09 * d.fc / fytC, alta ? 0.2 * kf * kn * PuE / (fytC * S.Ach) : 0);
         const prov = Ash / (d.s0 * bc), dc = req / prov;
@@ -1074,6 +1080,7 @@ ${pm.map(p => `${p.c.n}. ${nomTex(p.c.nombre)} & ${p.ext} & ${tn(T(p.c.P), 2)} &
       }
       if (alta) m.eq(L`k_f = \frac{f'_c}{175} + 0.6 = ${tn(kf, 3)} \ge 1 \qquad k_n = \frac{n_\ell}{n_\ell - 2} = \frac{${nl}}{${nl - 2}} = ${tn(kn, 3)}`, "18.7.5.4");
       const sFuera = Math.min(15, 6 * d.db);
+      memoGrupo(m, "Fuera de ℓ<sub>o</sub>", "col-conf-fuera");
       m.row("Fuera de ℓ<sub>o</sub>: s ≤ mín(150 mm ; 6d<sub>b</sub>)", `${fmt(d.s, 1)} ≤ ${fmt(sFuera, 1)} cm ${tagDC(d.s / sFuera)}`, "18.7.5.5");
       ck("Separación fuera de ℓo", L`${tn(d.s, 1)} cm`, L`${tn(sFuera, 1)} cm`, d.s / sFuera, "Separación fuera de ℓo", "sis");
     } else {
@@ -1084,12 +1091,14 @@ ${pm.map(p => `${p.c.n}. ${nomTex(p.c.nombre)} & ${p.ext} & ${tn(T(p.c.P), 2)} &
       m.row("Separación en ℓ<sub>o</sub> ≤ mín(D/4 ; 6d<sub>b</sub> ; s<sub>o</sub>)", `${fmt(d.s0, 1)} ≤ ${fmt(sLim, 1)} cm ${tagDC(d.s0 / sLim)}`, "18.7.5.3");
       ck("Separación en ℓo", L`${tn(d.s0, 1)} cm`, L`${tn(sLim, 1)} cm`, d.s0 / sLim, "Separación en ℓo", "sis");
       const rhos = 4 * S.Abt / (S.Dc * d.s0);
+      memoGrupo(m, "Cuantía volumétrica de confinamiento", "col-conf-rhos", { abierto: true });
       const req = Math.max(0.45 * (S.Ag / S.Ach - 1) * d.fc / fytC, 0.12 * d.fc / fytC, alta ? 0.35 * kf * PuE / (fytC * S.Ach) : 0);
       m.row("Cuantía volumétrica en ℓ<sub>o</sub>: ρ<sub>s</sub> ≥ requerida", `${fmt(rhos, 4)} ≥ ${fmt(req, 4)} ${tagDC(req / rhos)}`, "Tabla 18.7.5.4");
       m.eq(L`\rho_s = ${tn(rhos, 4)} \ \ge\ \max\left(0.45\left(\frac{A_g}{A_{ch}} - 1\right)\frac{f'_c}{f_{yt}};\ 0.12\frac{f'_c}{f_{yt}}${alta ? L`;\ 0.35k_f\frac{P_u}{f_{yt}A_{ch}}` : ""}\right) = ${tn(req, 4)}`, "Tabla 18.7.5.4");
       ck("Confinamiento circular", L`${tn(req, 4)}`, L`${tn(rhos, 4)}`, req / rhos, "Confinamiento", "sis");
       if (!S.espiral) {
         const sFuera = Math.min(15, 6 * d.db);
+        memoGrupo(m, "Fuera de ℓ<sub>o</sub>", "col-conf-fuera");
         m.row("Fuera de ℓ<sub>o</sub>: s ≤ mín(150 mm ; 6d<sub>b</sub>)", `${fmt(d.s, 1)} ≤ ${fmt(sFuera, 1)} cm ${tagDC(d.s / sFuera)}`, "18.7.5.5");
         ck("Separación fuera de ℓo", L`${tn(d.s, 1)} cm`, L`${tn(sFuera, 1)} cm`, d.s / sFuera, "Separación fuera de ℓo", "sis");
       }
@@ -1545,7 +1554,7 @@ window.AURA_MEMO = {
   recalcular: () => calcular(),
 };
 </script>
-<script src="proyectos.js?v=49"></script>
+<script src="proyectos.js"></script>
 <script>
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
 </script>

@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="icon" type="image/svg+xml" href="icons/structura.svg">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js" integrity="sha384-K0oxqktRvaThvYgGL4G+OK2Ih6VS6Uyu7j3+7WJgp/uWM0Yv6Xi4YEiw0BB+mPfi" crossorigin="anonymous"></script>
-<script src="nube.js?v=32"></script>
+<script src="nube.js"></script>
 <style>
   /* PWA: sin zoom automático de iOS al enfocar campos y texto estable al rotar */
   html { -webkit-text-size-adjust: 100%; }
@@ -131,9 +131,9 @@
     table.calc tr { break-inside: avoid; }
   }
 </style>
-<link rel="stylesheet" href="aura.css?v=21">
-<script src="lateral.js?v=18"></script>
-<script src="asistente.js?v=8" defer></script>
+<link rel="stylesheet" href="aura.css">
+<script src="lateral.js"></script>
+<script src="asistente.js" defer></script>
 </head>
 <body>
 <header>
@@ -328,11 +328,11 @@
 </main>
 <footer>Los resultados no reemplazan el criterio del profesional que firma. Las solicitaciones deben provenir de un análisis que considere efectos de segundo orden (AISC 360-16, Cap. C). Verifique siempre los resultados.</footer>
 
-<script src="memo.js?v=44"></script>
-<script src="tablero.js?v=9"></script>
-<script src="guia.js?v=9"></script>
-<script src="dxf.js?v=3"></script>
-<script src="modelo3d.js?v=7"></script>
+<script src="memo.js"></script>
+<script src="tablero.js"></script>
+<script src="guia.js"></script>
+<script src="dxf.js"></script>
+<script src="modelo3d.js"></script>
 <script>
 "use strict";
 // ---------------------------------------------------------------------------
@@ -601,11 +601,13 @@ function flexionX(s, Fy, Lb, Cb, m, cbM) {
     "Alma no compacta: corresponde la sección F4/F5, fuera del alcance de esta memoria; el resultado de F2/F3 se informa sólo como referencia.");
 
   const Mp = Fy * s.Zx;
+  memoGrupo(m, "Fluencia", "ac-fx-flu");
   m.row("Momento plástico (fluencia): M<sub>p</sub>", `${fmt(Mp / 100, 1)} kgf·m`, "F2-1");
   m.p(L`\textbf{Fluencia:} el momento nominal máximo que puede desarrollar la sección es el momento plástico:`);
   m.eq(L`M_p = F_y\,Z_x = ${tn(Fy, 0)}\cdot ${tn(s.Zx, 1)} = ${tn(Mp, 0)}${KGCM} = ${tn(Mp / 100, 1)}${KGM}`, "F2-1");
 
   // Pandeo lateral-torsional
+  memoGrupo(m, "Pandeo lateral-torsional", "ac-fx-ltb");
   const Lp = 1.76 * s.ry * rEF;
   const rts = Math.sqrt(Math.sqrt(s.Iy * s.Cw) / s.Sx);
   const jc = s.J * 1 / (s.Sx * s.ho);
@@ -659,6 +661,7 @@ F_{cr} &= \frac{C_b\pi^2E}{\left(L_b/r_{ts}\right)^2}\sqrt{1 + 0.078\frac{J c}{S
   }
 
   // Pandeo local del ala (F3)
+  memoGrupo(m, "Pandeo local de ala", "ac-fx-flb");
   let Mflb = Infinity;
   if (claseAla === "compacta") {
     m.row("Pandeo local de ala", "no aplica (ala compacta)");
@@ -682,6 +685,7 @@ M_n &= M_p - (M_p - 0.7F_yS_x)\left(\frac{\lambda - \lambda_{pf}}{\lambda_{rf} -
 
   const Mn = Math.min(Mp, Mltb, Mflb);
   const phiMn = 0.9 * Mn;
+  memoGrupo(m, "Resistencia de diseño (resumen)", "ac-fx-cap", { abierto: true, resumen: `φ<sub>b</sub>M<sub>nx</sub> = ${fmt(phiMn / 100, 1)} kgf·m` });
   m.row("Resistencia nominal a flexión: M<sub>nx</sub>", `${fmt(Mn / 100, 1)} kgf·m`);
   m.row("<b>Resistencia de diseño a flexión: φ<sub>b</sub>M<sub>nx</sub></b>", `<b>${fmt(phiMn / 100, 1)} kgf·m</b>`, "F1");
   m.p(L`\textbf{Capacidad de diseño eje fuerte} (mínimo de los estados límite aplicables):`);
@@ -735,6 +739,9 @@ function corte(s, Fy, m) {
   const ht = s.hw / s.tw;
   const lim = 2.24 * Math.sqrt(E / Fy);
   m.p(L`La resistencia a corte se evalúa según la sección G2.1 del AISC 360-16, considerando que el corte en el eje fuerte lo resiste el alma del perfil.`, true);
+  memoGrupo(m, "Área y esbeltez del alma", "ac-v-alma");
+  m.row("Área del alma: A<sub>w</sub>", `${fmt(Aw, 2)} cm²`);
+  m.row("Esbeltez del alma ; límite G2.1(a): h/t<sub>w</sub> ; (h/t<sub>w</sub>)<sub>lím</sub>", `${fmt(ht, 2)} ; ${fmt(lim, 2)}`);
   m.p(L`\textbf{Área del alma:} se toma la altura total del perfil por el espesor del alma:`, true);
   m.eq(L`A_w = d\,t_w = ${tn(s.h, 1)}\cdot ${tn(s.tw)} = ${tn(Aw)}${CM2}`);
   m.p(L`\textbf{Esbeltez del alma} y límite de la sección G2.1(a):`, true);
@@ -754,8 +761,7 @@ function corte(s, Fy, m) {
   }
   const Vn = 0.6 * Fy * Aw * Cv1;
   const phiVn = phi * Vn;
-  m.row("Área del alma: A<sub>w</sub>", `${fmt(Aw, 2)} cm²`);
-  m.row("Esbeltez del alma ; límite G2.1(a): h/t<sub>w</sub> ; (h/t<sub>w</sub>)<sub>lím</sub>", `${fmt(ht, 2)} ; ${fmt(lim, 2)}`);
+  memoGrupo(m, "Resistencia a corte (resumen)", "ac-v-cap", { abierto: true, resumen: `φ<sub>v</sub>V<sub>n</sub> = ${fmt(phiVn, 0)} kgf` });
   m.row("Factor de resistencia ; coeficiente de corte del alma: φ<sub>v</sub> ; C<sub>v1</sub>", `${fmt(phi, 2)} ; ${fmt(Cv1, 3)}`, "G2.1");
   m.row("Resistencia nominal a corte: V<sub>n</sub>", `${fmt(Vn, 0)} kgf`, "G2-1");
   m.row("<b>Resistencia de diseño a corte: φ<sub>v</sub>V<sub>n</sub></b>", `<b>${fmt(phiVn, 0)} kgf</b>`);
@@ -790,6 +796,7 @@ function compresion(s, Fy, Lc, Kx, Ky, Kz, m) {
   const slx = Lcx / s.rx, sly = Lcy / s.ry;
   const Fex = PI2 * E / (slx * slx), Fey = PI2 * E / (sly * sly);
   const Fez = (PI2 * E * s.Cw / (Lcz * Lcz) + G * s.J) / (s.Ix + s.Iy);
+  memoGrupo(m, "Esbeltez del miembro", "ac-c-esb");
   m.row("Esbeltez eje x: K<sub>x</sub>L/r<sub>x</sub>", fmt(slx, 3));
   m.row("Esbeltez eje y: K<sub>y</sub>L/r<sub>y</sub>", fmt(sly, 3));
   m.p(L`La longitud efectiva de pandeo de cada eje se obtiene como $L_c = K\,L$, con los factores $K_x = ${tn(Kx, 3)}$, $K_y = ${tn(Ky, 3)}$ y $K_z = ${tn(Kz, 3)}$ (torsión) y la longitud no arriostrada $L = ${tn(Lc, 1)}$ cm. La esbeltez de cada eje se calcula con su radio de giro:`, true);
@@ -797,6 +804,7 @@ function compresion(s, Fy, Lc, Kx, Ky, Kz, m) {
   m.eq(L`\frac{L_{cx}}{r_x} = \frac{K_x L}{r_x} = \frac{${tn(Kx, 3)}\cdot ${tn(Lc, 1)}}{${tn(s.rx, 3)}} = ${tn(slx, 3)} \qquad \frac{L_{cy}}{r_y} = \frac{K_y L}{r_y} = \frac{${tn(Ky, 3)}\cdot ${tn(Lc, 1)}}{${tn(s.ry, 3)}} = ${tn(sly, 3)}`);
   if (Math.max(slx, sly) > 200) m.note("Esbeltez L<sub>c</sub>/r mayor que 200 (límite recomendado, nota de usuario E2).",
     L`Esbeltez $L_c/r$ mayor que 200 (límite recomendado, nota de usuario E2).`);
+  memoGrupo(m, "Tensiones de pandeo elástico", "ac-c-fe");
   m.row("Tensión de pandeo elástico por flexión, eje x: F<sub>ex</sub>", `${fmt(Fex, 1)} kgf/cm²`, "E3-4");
   m.row("Tensión de pandeo elástico por flexión, eje y: F<sub>ey</sub>", `${fmt(Fey, 1)} kgf/cm²`, "E3-4");
   m.row("Tensión de pandeo elástico torsional: F<sub>ez</sub>", `${fmt(Fez, 1)} kgf/cm²`, "E4-2");
@@ -813,6 +821,7 @@ F_{ez} &= \left(\frac{\pi^2 E C_w}{L_{cz}^2} + G J\right)\frac{1}{I_x + I_y}\\
   m.p(L`Controla el pandeo por ${modo}, con $F_e = ${tn(Fe, 1)}$ kgf/cm$^2$ ($L_{cz} = K_z L = ${tn(Lcz, 1)}$ cm, $G = ${tn(G, 0)}$ kgf/cm$^2$).`);
   const lim = 4.71 * rEF;
   let Fcr;
+  memoGrupo(m, "Tensión crítica de pandeo", "ac-c-fcr");
   m.p(L`\textbf{Tensión crítica de pandeo por flexión:}`);
   m.p(L`Según la sección E3, la tensión crítica depende de la razón $F_y/F_e$: si $F_y/F_e \le 2.25$ el pandeo es inelástico (ec. E3-2); en caso contrario es elástico (ec. E3-3).`, true);
   if (Fy / Fe <= 2.25) {
@@ -858,6 +867,7 @@ F_{ez} &= \left(\frac{\pi^2 E C_w}{L_{cz}^2} + G J\right)\frac{1}{I_x + I_y}\\
   }
   const Pn = Fcr * Ae;
   const phiPn = 0.9 * Pn;
+  memoGrupo(m, "Resistencia de diseño (resumen)", "ac-c-cap", { abierto: true, resumen: `φ<sub>c</sub>P<sub>n</sub> = ${fmt(phiPn, 0)} kgf` });
   m.row("Resistencia nominal a compresión: P<sub>n</sub>", `${fmt(Pn, 0)} kgf`, Ae < s.A ? "E7-1" : "E3-1");
   m.row("<b>Resistencia de diseño a compresión: φ<sub>c</sub>P<sub>n</sub></b>", `<b>${fmt(phiPn, 0)} kgf</b>`);
   m.p(L`\textbf{Resistencia a compresión:}`);
@@ -1527,7 +1537,7 @@ window.AURA_MEMO = {
     actualizarUnidades(); $("b1Box").classList.toggle("hidden", !$("cB1").checked); calcular(); },
 };
 </script>
-<script src="proyectos.js?v=49"></script>
+<script src="proyectos.js"></script>
 <script>
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
 </script>

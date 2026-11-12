@@ -185,9 +185,57 @@ async function dibujarTex(raiz) {
   });
 }
 
-// out: lista de items del Memo — texto HTML (títulos, notas), {k, v, ref} (filas) o {tex, eq} (LaTeX).
-// Agrupa las filas y el LaTeX entre títulos en un paso desplegable.
+// ---------------------------------------------------------------------------
+// Acordeones: bloques del procedimiento que se calculan juntos (por ejemplo "Armadura requerida").
+// memoGrupo(m, titulo, clave, { abierto, resumen }) abre un bloque que abarca lo que sigue hasta el próximo
+// bloque o título (h3/h4). En pantalla es un <details class="acord"> con sus filas y, justo debajo, sus
+// ecuaciones a la vista; en el .tex, un \subsubsection*. Devuelve el marcador: se le puede asignar `resumen`
+// (HTML del encabezado, p. ej. el D/C) después de calcular. Con un memo nulo (sin `out`) no hace nada.
+// ---------------------------------------------------------------------------
+function memoGrupo(m, titulo, clave, op = {}) {
+  if (!m || !Array.isArray(m.out)) return {};
+  if (Array.isArray(m.tex)) { memoTexCerrar(m); m.tex.push(`\\subsubsection*{${escTex(String(titulo).replace(/<[^>]+>/g, "")).replace(/—/g, "---")}}`); }
+  const gr = { grupo: titulo, clave, ...op };
+  m.out.push(gr);
+  return gr;
+}
+const acordAbiertos = new Map();          // clave → abierto (lo que el usuario abrió o cerró), recordado al recalcular
+function acordeonHTML(gr, items) {
+  if (!items.length) return "";             // bloque sin contenido (por ejemplo, una sección sin elementos que clasificar)
+  let cuerpo = "", filas = "", tex = "";
+  const tabla = () => { if (filas) cuerpo += `<table class="calc">${filas}</table>`; filas = ""; };
+  const eqs = () => { if (tex) cuerpo += `<div class="eqs">${tex}</div>`; tex = ""; };
+  for (const it of items) {
+    if (typeof it === "string") { tabla(); eqs(); cuerpo += it; }
+    else if (it.tex !== undefined) { tabla(); tex += it.eq ? texEcuacion(it.tex) : `<p>${texParrafo(it.tex)}</p>`; }
+    else { eqs(); filas += `<tr><td class="k">${it.k}${it.ref ? `<span class="ref">${it.ref}</span>` : ""}</td><td class="v">${it.v}</td></tr>`; }
+  }
+  tabla(); eqs();
+  const clave = String(gr.clave ?? gr.grupo).replace(/"/g, "");
+  const abierto = acordAbiertos.has(clave) ? acordAbiertos.get(clave) : !!gr.abierto;
+  return `<details class="acord" data-clave="${clave}"${abierto ? " open" : ""}><summary><span class="acord-t">${gr.grupo}</span>${gr.resumen ? `<span class="acord-r">${gr.resumen}</span>` : ""}</summary><div class="acord-c">${cuerpo}</div></details>`;
+}
+
+// out: lista de items del Memo — texto HTML (títulos, notas), {k, v, ref} (filas), {tex, eq} (LaTeX) o
+// {grupo} (acordeón, ver memoGrupo). Fuera de los acordeones, agrupa las filas y el LaTeX entre títulos en un paso desplegable.
 function memoHTML(out) {
+  if (out.some((it) => it && it.grupo)) {
+    let s = "", tramo = [], i = 0;
+    const titulo = (it) => typeof it === "string" && /^<h[34]/.test(it);
+    while (i < out.length) {
+      const it = out[i];
+      if (it && it.grupo) {
+        if (tramo.length) { s += memoHTML(tramo); tramo = []; }
+        const items = [];
+        for (i++; i < out.length && !(out[i] && out[i].grupo) && !titulo(out[i]); i++) items.push(out[i]);
+        s += acordeonHTML(it, items);
+        continue;
+      }
+      tramo.push(it); i++;
+    }
+    if (tramo.length) s += memoHTML(tramo);
+    return s;
+  }
   let s = "", filas = "", tex = "";
   const cerrar = () => {
     if (filas) {
@@ -234,9 +282,10 @@ function botonTodas(id) {
   const b = document.createElement("button");
   b.type = "button"; b.className = "todasEq"; b.textContent = "Mostrar / ocultar todas las ecuaciones";
   b.addEventListener("click", () => {
-    const pasos = [...memo.querySelectorAll(".paso")];
-    const abrir = pasos.some((p) => !p.classList.contains("abierto"));
+    const pasos = [...memo.querySelectorAll(".paso")], acs = [...memo.querySelectorAll("details.acord")];
+    const abrir = pasos.some((p) => !p.classList.contains("abierto")) || acs.some((d) => !d.open);
     pasos.forEach((p) => alternarPaso(p, abrir));
+    acs.forEach((d) => { d.open = abrir; });
   });
   memo.parentNode.insertBefore(b, memo);
 }
@@ -252,12 +301,38 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!cont) return;
     cont.addEventListener("click", () => setTimeout(() => recordar(cont)));
     cont.previousElementSibling?.classList?.contains("todasEq") && cont.previousElementSibling.addEventListener("click", () => recordar(cont));
+    let tarde = null;
+    // La primera memoria se dibuja antes de este punto: sus acordeones se completan aquí
+    setTimeout(() => cont.querySelectorAll("details.acord").forEach((d) => dibujarTex(d)), 400);
     new MutationObserver(() => {
       const est = abiertos[cont.id] || [];
       cont.querySelectorAll(".paso").forEach((p, i) => { if (est[i] && !p.classList.contains("abierto")) alternarPaso(p, true); });
+      // Acordeones: ecuaciones de los abiertos ahora; las de los cerrados un poco después (para imprimir sin espacios en blanco)
+      cont.querySelectorAll("details.acord[open]").forEach((d) => dibujarTex(d));
+      clearTimeout(tarde);
+      tarde = setTimeout(() => cont.querySelectorAll("details.acord").forEach((d) => dibujarTex(d)), 400);
     }).observe(cont, { childList: true });
   });
 });
+
+// Acordeones: se recuerda si el usuario los abrió o cerró y sus ecuaciones se dibujan al abrirlos
+document.addEventListener("toggle", (ev) => {
+  const d = ev.target;
+  if (!(d instanceof HTMLDetailsElement) || !d.classList.contains("acord")) return;
+  if (!d.dataset.imprimir && !d.dataset.auto) acordAbiertos.set(d.dataset.clave, d.open);
+  delete d.dataset.auto;
+  if (d.open) dibujarTex(d);
+  // Las de los cerrados del mismo procedimiento, un poco después (para imprimir sin espacios en blanco)
+  const cont = d.closest(".memo") || document.body;
+  clearTimeout(cont._acordTarde);
+  cont._acordTarde = setTimeout(() => cont.querySelectorAll("details.acord").forEach((x) => dibujarTex(x)), 400);
+}, true);
+// Al imprimir se ve todo el procedimiento: se abren los acordeones cerrados y luego se vuelven a cerrar
+addEventListener("beforeprint", () => document.querySelectorAll("details.acord").forEach((d) => {
+  dibujarTex(d);
+  if (!d.open) { d.dataset.imprimir = "1"; d.open = true; }
+}));
+addEventListener("afterprint", () => document.querySelectorAll("details.acord[data-imprimir]").forEach((d) => { d.open = false; setTimeout(() => delete d.dataset.imprimir); }));
 
 document.addEventListener("click", (ev) => {
   const t = ev.target.closest(".paso > table.clic, .paso > .vereq");
@@ -284,6 +359,17 @@ document.addEventListener("click", (ev) => {
   .km.crudo { font-family: Consolas, monospace; font-size: 12px; white-space: pre-wrap; }
   .vereq, .todasEq { font: inherit; font-size: 12.5px; padding: 4px 10px; border: 1px solid var(--accent, #2f7d6d); color: var(--accent, #2f7d6d); background: #fff; border-radius: 4px; cursor: pointer; }
   .todasEq { margin: 10px 16px 0; }
+  details.acord { border: 1px solid var(--line, #dde1e7); border-radius: var(--r-m, 6px); margin: 6px 0; background: var(--panel, #fff); }
+  details.acord > summary { display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; list-style: none; font-size: 13px; font-weight: 600; color: var(--acento, var(--head, #00008B)); }
+  details.acord > summary::-webkit-details-marker { display: none; }
+  details.acord > summary::before { content: "▸"; content: "▸" / ""; display: inline-block; transition: transform .15s; }
+  details.acord[open] > summary::before { transform: rotate(90deg); }
+  details.acord > summary:hover { background: var(--hover-fila, #f6f9f8); }
+  details.acord > summary:focus-visible { outline: 2px solid var(--accent, #5b7c99); outline-offset: -2px; }
+  .acord-r { margin-left: auto; font-weight: 600; color: var(--ink, #1d2330); white-space: nowrap; }
+  .acord-c { padding: 0 12px 8px; border-top: 1px solid var(--line, #dde1e7); }
+  .acord-c .eqs { margin-top: 6px; }
+  @media print { details.acord { border: 0; } details.acord > summary::before { display: none; } }
   table.comb { width: 100%; min-width: 680px; border-collapse: collapse; font-size: 12.5px; margin: 6px 0; }
   table.comb td:first-child { white-space: nowrap; }
   table.comb td:nth-child(2) { min-width: 190px; }
@@ -639,11 +725,14 @@ async function prepararFiguras(tex, contenedor, prefijo = "figura") {
   // Lo mismo con las secciones de otras pestañas (.fuera) y con la memoria oculta tras la pestaña «Referencias» (.oculta).
   const ocultas = contenedor ? ["plegada", "fuera", "oculta"].flatMap(k => [...contenedor.querySelectorAll(`.${k}`)].filter(e => e.matches(".mcard, .memo")).map(e => [e, k])) : [];
   ocultas.forEach(([e, k]) => e.classList.remove(k));
+  // Los acordeones cerrados del procedimiento también se abren un instante (sin recordarlo como elección del usuario)
+  const acordCerrados = contenedor ? [...contenedor.querySelectorAll("details.acord:not([open])")] : [];
+  acordCerrados.forEach((d) => { d.dataset.imprimir = "1"; d.open = true; });
   const archivos = [];
   let i = 0;
   // Las clases se restauran después de convertir los dibujos (svgAPng puede medir el SVG en pantalla)
   try {
-    const svgs = contenedor ? [...contenedor.querySelectorAll('svg[role="img"]')].filter(s => s.getBoundingClientRect().width > 0 && !s.closest("details, [data-sin-figura]")) : [];
+    const svgs = contenedor ? [...contenedor.querySelectorAll('svg[role="img"]')].filter(s => s.getBoundingClientRect().width > 0 && !s.closest("details:not(.acord), [data-sin-figura]")) : [];
     for (const b of [...tex.matchAll(/\\begin\{tikzpicture\}[\s\S]*?\\end\{tikzpicture\}/g)]) {
       if (i >= svgs.length) break;
       try {
@@ -653,7 +742,10 @@ async function prepararFiguras(tex, contenedor, prefijo = "figura") {
         i++;
       } catch (e) { break; }
     }
-  } finally { ocultas.forEach(([e, k]) => e.classList.add(k)); }
+  } finally {
+    ocultas.forEach(([e, k]) => e.classList.add(k));
+    acordCerrados.forEach((d) => { d.open = false; setTimeout(() => delete d.dataset.imprimir); });
+  }
   // Varias imágenes en una misma figura (lado a lado): se reparte el ancho
   tex = tex.replace(/\\begin\{figure\}[\s\S]*?\\end\{figure\}/g, (fig) => {
     const k = (fig.match(/\\includegraphics\[width=0\.85\\linewidth\]/g) || []).length;

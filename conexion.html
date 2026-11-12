@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="icon" type="image/svg+xml" href="icons/structura.svg">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js" integrity="sha384-K0oxqktRvaThvYgGL4G+OK2Ih6VS6Uyu7j3+7WJgp/uWM0Yv6Xi4YEiw0BB+mPfi" crossorigin="anonymous"></script>
-<script src="nube.js?v=32"></script>
+<script src="nube.js"></script>
 <style>
   /* PWA: sin zoom automático de iOS al enfocar campos y texto estable al rotar */
   html { -webkit-text-size-adjust: 100%; }
@@ -116,9 +116,9 @@
     table.calc tr { break-inside: avoid; }
   }
 </style>
-<link rel="stylesheet" href="aura.css?v=21">
-<script src="lateral.js?v=18"></script>
-<script src="asistente.js?v=8" defer></script>
+<link rel="stylesheet" href="aura.css">
+<script src="lateral.js"></script>
+<script src="asistente.js" defer></script>
 </head>
 <body>
 <header>
@@ -283,11 +283,11 @@
 </main>
 <footer>Versión de prueba. Herramienta de apoyo para conexiones viga–columna de acero (AISC 360-16 y Manual ICHA). No reemplaza la memoria de cálculo del ingeniero del proyecto. Verifique siempre los resultados.</footer>
 
-<script src="memo.js?v=44"></script>
-<script src="tablero.js?v=9"></script>
-<script src="guia.js?v=9"></script>
-<script src="dxf.js?v=3"></script>
-<script src="modelo3d.js?v=7"></script>
+<script src="memo.js"></script>
+<script src="tablero.js"></script>
+<script src="guia.js"></script>
+<script src="dxf.js"></script>
+<script src="modelo3d.js"></script>
 <script>
 "use strict";
 // ---------------------------------------------------------------------------
@@ -816,6 +816,7 @@ function verificar(d, m) {
   const npTxt = dos ? L`n_p\,` : "", npNum = dos ? L`2\cdot ` : "", dePl = dos ? "de las placas" : "de la placa";
   m.h(dos ? "Placas de corte: fluencia, ruptura, bloque y flexión" : "Placa de corte: fluencia, ruptura, bloque y flexión");
   if (dos) m.p(L`Las dos placas son iguales y cada una toma la mitad del corte: sus resistencias se suman ($n_p = 2$) y se comparan con $V_u$.`);
+  memoGrupo(m, "Fluencia y ruptura por corte", "cx-pl-fr");
   const Agv = nP * Lp * d.tp, Anv = nP * (Lp - d.nb * d.dhn) * d.tp;
   const phiVy = EL.fluCorte(Agv, d.FyP), dcVy = d.Vu / phiVy;
   m.row("Fluencia por corte: φR<sub>n</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVy), 2)} tf ${tagDC(dcVy)}`, "AISC 360-16 J4-3");
@@ -826,6 +827,7 @@ function verificar(d, m) {
   m.row("Ruptura por corte: φR<sub>n</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVr), 2)} tf ${tagDC(dcVr)}`, "AISC 360-16 J4-4");
   m.eq(L`\phi R_n = 0.75\cdot 0.60\,F_u\,${npTxt}(L_p - n\,d_h')\,t_p = 0.45\cdot ${tn(d.FuP, 0)}\cdot ${npNum}(${tn(Lp, 1)} - ${d.nb}\cdot ${tn(d.dhn, 3)})\cdot ${tn(d.tp, 2)} = ${tn(T(phiVr), 2)}\ \mathrm{tf} \qquad \frac{V_u}{\phi R_n} = ${tn(dcVr, 3)} ${cmp(dcVr)} 1.0`, "J4-4");
   ck(`Ruptura por corte ${dePl}`, L`$V_u = ${tn(T(d.Vu), 2)}$ tf`, L`$\phi R_n = ${tn(T(phiVr), 2)}$ tf`, dcVr, "pl");
+  memoGrupo(m, "Bloque de corte", "cx-pl-bl");
   // Bloque (por placa), dos caminos: L (corte por la línea de pernos desde el perno superior hasta el borde inferior y tracción
   // hacia el borde libre) y 1-2-3 (solo corte por la línea de pernos en todo el alto, A_gt = A_nt = 0, como el Trabajo Práctico 3)
   const bAgv = (d.lev + (d.nb - 1) * d.s) * d.tp, bAnv = bAgv - (d.nb - 0.5) * d.dhn * d.tp;
@@ -853,6 +855,7 @@ function verificar(d, m) {
     m.fig(svgBloques([pL, p3], "Bloque de corte de la placa de corte"), tikzBloques([pL, p3], L`Bloque de corte ${dos ? "en cada placa de corte" : "de la placa de corte"}: camino en L (corte por la línea de pernos desde el perno superior hasta el borde inferior y tracción hasta el borde libre) y camino 1-2-3 (solo corte por la línea de pernos en todo el alto de la placa).`));
   }
   ck(`Bloque de corte ${dePl}`, L`$V_u = ${tn(T(d.Vu), 2)}$ tf`, L`$\phi R_n = ${tn(T(phiBl), 2)}$ tf`, dcBl, "pl");
+  memoGrupo(m, "Flexión de la placa", "cx-pl-mf");
   // Flexión de la placa con la excentricidad a
   const MuP = d.Vu * d.a, phiMp = nP * 0.90 * d.FyP * d.tp * Lp * Lp / 4, dcMp = MuP / phiMp;
   m.p(L`Flexión ${dePl} en la soldadura con la excentricidad $a$ (criterio de structura, como en la práctica del Manual AISC para placas simples; no es una cláusula de la AISC 360-16): $M_u = V_u\,a$ y $\phi M_n = 0.90\,F_y\,${npTxt}Z$ con $Z = t_pL_p^2/4$.`);
@@ -895,6 +898,7 @@ function verificar(d, m) {
   if (!v.soldado && esb <= 2.24 * Math.sqrt(E_AC / d.FyV)) { phiV = 1.0; refV = "G2.1(a)"; }
   else if (esb > 1.10 * Math.sqrt(kv * E_AC / d.FyV)) { Cv1 = 1.10 * Math.sqrt(kv * E_AC / d.FyV) / esb; refV = "G2-4"; }
   const phiVn = phiV * 0.6 * d.FyV * Aw * Cv1, dcVn = d.Vu / phiVn;
+  memoGrupo(m, "Corte del alma", "cx-v-corte");
   m.row("Esbeltez del alma: h/t<sub>w</sub>", `${fmt(esb, 2)}`);
   m.eq(v.soldado || refV !== "G2.1(a)"
     ? L`\frac{h}{t_w} = ${tn(esb, 2)} \qquad 1.10\sqrt{k_vE/F_y} = ${tn(1.10 * Math.sqrt(kv * E_AC / d.FyV), 2)}\ (k_v = 5.34) \Rightarrow C_{v1} = ${tn(Cv1, 3)},\ \phi_v = 0.90`
@@ -902,6 +906,7 @@ function verificar(d, m) {
   m.row("Resistencia al corte: φ<sub>v</sub>V<sub>n</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVn), 2)} tf ${tagDC(dcVn)}`, "AISC 360-16 G2-1");
   m.eq(L`\phi_vV_n = \phi_v\,0.6\,F_y\,A_w\,C_{v1} = ${tn(phiV, 2)}\cdot 0.6\cdot ${tn(d.FyV, 0)}\cdot ${tn(Aw, 2)}\cdot ${tn(Cv1, 3)} = ${tn(T(phiVn), 2)}\ \mathrm{tf} \qquad \frac{V_u}{\phi_vV_n} = ${tn(dcVn, 3)} ${cmp(dcVn)} 1.0`, "G2-1");
   ck("Corte de la viga", L`$V_u = ${tn(T(d.Vu), 2)}$ tf`, L`$\phi_vV_n = ${tn(T(phiVn), 2)}$ tf`, dcVn, "v");
+  memoGrupo(m, "Bloque de corte del alma", "cx-v-bl");
   // Bloque de corte en el alma de la viga: los pernos empujan el alma hacia arriba; el bloque queda entre la línea de pernos y el
   // extremo de la viga (borde l_e,viga), con corte por la línea de pernos desde el perno inferior hasta el borde superior y tracción
   // horizontal desde ese perno al extremo. Sin destaje, el borde superior se toma en la cara interior del ala (criterio de AURA,
@@ -925,6 +930,7 @@ function verificar(d, m) {
   // ---------- 6. Momento ----------
   if (d.mom) {
     const dm = v.d + d.tfp, Puf = d.Mu / dm, nfb = 2 * d.nf, largoPat = (d.nf - 1) * d.sf;
+    memoGrupo(m, "Flexión de la viga", "cx-v-mf");
     // Flexión de la viga
     // Compacidad (Tabla B4.1b): ala, caso 10 (laminados: λp = 0.38√(E/Fy), λr = 1.0√(E/Fy)); alma, λp = 3.76√(E/Fy)
     const rEF = Math.sqrt(E_AC / d.FyV), lamF = v.bf / (2 * v.tf), lpF = 0.38 * rEF, lrF = 1.0 * rEF;
@@ -952,6 +958,7 @@ function verificar(d, m) {
       m.p(L`Supone arriostramiento lateral suficiente ($L_b \le L_p$, sin pandeo lateral-torsional); la verificación completa de la viga se hace en el programa de vigas de acero.`);
       ck("Flexión de la viga", L`$M_u = ${tn(d.Mu / 1e5, 2)}$ tf·m`, L`$\phi M_n = ${tn(phiMnV / 1e5, 2)}$ tf·m`, dcMv, "v");
     }
+    memoGrupo(m, "Ruptura del ala traccionada perforada", "cx-v-f13");
     // F13.1: ruptura del ala traccionada perforada
     const Afg = v.bf * v.tf, Afn = (v.bf - 2 * d.dhn) * v.tf, Yt = d.FyV / d.FuV <= 0.8 ? 1.0 : 1.1;
     const aplicaF13 = d.FuV * Afn < Yt * d.FyV * Afg;
@@ -1002,6 +1009,7 @@ function verificar(d, m) {
     m.eq(L`\min\left(l_{e,placa};\ l_{e,ala};\ \frac{b_p - g}{2};\ \frac{b_f - g}{2}\right) = \min(${tn(MM(d.lef), 0)};\ ${tn(MM(d.lebf), 0)};\ ${tn(MM(eLatP), 1)};\ ${tn(MM(eLatV), 1)}) = ${tn(MM(bMinF), 1)}\ \mathrm{mm}`);
 
     m.h("Placas de ala: tracción, compresión y bloque de corte");
+    memoGrupo(m, "Tracción de la placa", "cx-ala-tr");
     const Agp = d.bp * d.tfp, Anp = (d.bp - 2 * d.dhn) * d.tfp, Aep = Math.min(Anp, 0.85 * Agp);
     const phiTy = EL.fluTrac(Agp, d.FyP), dcTy = Puf / phiTy;
     m.row("Fluencia en tracción de la placa: φR<sub>n</sub> ≥ P<sub>uf</sub>", `${fmt(T(phiTy), 2)} tf ${tagDC(dcTy)}`, "AISC 360-16 J4-1");
@@ -1012,6 +1020,7 @@ function verificar(d, m) {
     m.eq(L`A_n = (b_p - 2d_h')\,t_{fp} = (${tn(d.bp, 1)} - 2\cdot ${tn(d.dhn, 3)})\cdot ${tn(d.tfp, 2)} = ${tn(Anp, 2)}\ \mathrm{cm^2} \qquad A_e = \min(A_n;\ 0.85A_g) = ${tn(Aep, 2)}\ \mathrm{cm^2}`, "J4.1(b)");
     m.eq(L`\phi R_n = 0.75\,F_u\,A_e = 0.75\cdot ${tn(d.FuP, 0)}\cdot ${tn(Aep, 2)} = ${tn(T(phiTr), 2)}\ \mathrm{tf} \qquad \frac{P_{uf}}{\phi R_n} = ${tn(dcTr, 3)} ${cmp(dcTr)} 1.0`, "J4-2");
     ck("Ruptura en tracción de la placa de ala", L`$P_{uf} = ${tn(T(Puf), 2)}$ tf`, L`$\phi R_n = ${tn(T(phiTr), 2)}$ tf`, dcTr, "pf");
+    memoGrupo(m, "Compresión de la placa", "cx-ala-c");
     // Compresión (J4.4): tramo libre desde la cara de la columna hasta la primera fila, K = 0.65
     const Lc = gap + d.lebf + 0, KLr = 0.65 * Lc / (d.tfp / Math.sqrt(12));
     let phiPc, refPc;
@@ -1025,6 +1034,7 @@ function verificar(d, m) {
     m.row("Compresión de la placa: KL/r ; φP<sub>n</sub> ≥ P<sub>uf</sub>", `${fmt(KLr, 1)} ; ${fmt(T(phiPc), 2)} tf ${tagDC(dcPc)}`, "AISC 360-16 J4.4");
     m.eq(L`L = \text{holgura} + l_{e,ala} = ${tn(MM(Lc), 0)}\ \mathrm{mm} \qquad \frac{KL}{r} = \frac{0.65\cdot ${tn(Lc, 2)}}{${tn(d.tfp, 2)}/\sqrt{12}} = ${tn(KLr, 1)} ${KLr <= 25 ? L`\le 25 \Rightarrow \phi P_n = 0.90\,F_yA_g` : L`> 25 \Rightarrow \text{Capítulo E}`} = ${tn(T(phiPc), 2)}\ \mathrm{tf}`, refPc);
     ck("Compresión de la placa de ala", L`$P_{uf} = ${tn(T(Puf), 2)}$ tf`, L`$\phi P_n = ${tn(T(phiPc), 2)}$ tf`, dcPc, "pf");
+    memoGrupo(m, "Bloque de corte", "cx-ala-bl");
     // Bloque de corte en la placa: bloques exteriores y bloque central
     const fAgv = 2 * (d.lef + (d.nf - 1) * d.sf), fAnv = fAgv - 2 * (d.nf - 0.5) * d.dhn;
     const bloqueDe = (t, Agt, Ant, Fy, Fu) => EL.bloque(fAgv * t, fAnv * t, Agt * t, Ant * t, Fy, Fu, d.crit);
@@ -1036,6 +1046,7 @@ function verificar(d, m) {
     m.eq(L`\text{exteriores: } A_{nt} = 2\left(\frac{b_p - g}{2} - \frac{d_h'}{2}\right)t_{fp} = ${tn(2 * (eLatP - d.dhn / 2) * d.tfp, 2)}\ \mathrm{cm^2},\ \phi R_n = ${tn(T(pExt), 2)}\ \mathrm{tf} \qquad \text{central: } A_{nt} = (g - d_h')\,t_{fp} = ${tn((d.gf - d.dhn) * d.tfp, 2)}\ \mathrm{cm^2},\ \phi R_n = ${tn(T(pInt), 2)}\ \mathrm{tf}`, d.crit === "icha" ? "13.4.3" : "J4-5");
     m.row("Bloque de corte de la placa de ala: φR<sub>n</sub> ≥ P<sub>uf</sub>", `${fmt(T(phiBp), 2)} tf ${tagDC(dcBp)}`, refBloque(d.crit));
     ck("Bloque de corte de la placa de ala", L`$P_{uf} = ${tn(T(Puf), 2)}$ tf`, L`$\phi R_n = ${tn(T(phiBp), 2)}$ tf`, dcBp, "pf");
+    memoGrupo(m, "Bloque de corte del ala de la viga", "cx-ala-blv");
     // Bloque de corte en el ala de la viga (solo bloques exteriores: entre las líneas está el alma)
     const vAgv = 2 * (d.lebf + (d.nf - 1) * d.sf), vAnv = vAgv - 2 * (d.nf - 0.5) * d.dhn;
     const phiBv = EL.bloque(vAgv * v.tf, vAnv * v.tf, 2 * eLatV * v.tf, 2 * (eLatV - d.dhn / 2) * v.tf, d.FyV, d.FuV, d.crit), dcBv = Puf / phiBv;
@@ -1538,7 +1549,7 @@ window.AURA_MEMO = {
   },
 };
 </script>
-<script src="proyectos.js?v=49"></script>
+<script src="proyectos.js"></script>
 <script>
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
 </script>

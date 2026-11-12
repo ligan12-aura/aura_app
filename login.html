@@ -13,7 +13,7 @@
 <link rel="icon" type="image/svg+xml" href="icons/structura.svg">
 <title>Acceso — structura</title>
 <!-- Antes de los estilos propios: los botones de esta página tienen su propio tamaño -->
-<link rel="stylesheet" href="aura.css?v=21">
+<link rel="stylesheet" href="aura.css">
 <script>
 // Tema claro u oscuro, igual que en el resto de la app (lateral.js): la elección guardada o la del sistema
 try { const t = localStorage.getItem("auraTema"); document.documentElement.dataset.tema = t === "claro" || t === "oscuro" ? t : (matchMedia("(prefers-color-scheme: dark)").matches ? "oscuro" : "claro"); } catch { /* sin almacenamiento */ }
@@ -113,7 +113,7 @@ try { const t = localStorage.getItem("auraTema"); document.documentElement.datas
   @media (max-width: 520px) { .mu-cards { grid-template-columns: minmax(0, 1fr); } .mu-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 0 12px; } .mu-card .v { margin: 0; } .mu-bar, .mu-card .s { grid-column: 1 / -1; } }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js" integrity="sha384-K0oxqktRvaThvYgGL4G+OK2Ih6VS6Uyu7j3+7WJgp/uWM0Yv6Xi4YEiw0BB+mPfi" crossorigin="anonymous"></script>
-<script src="nube.js?v=32"></script>
+<script src="nube.js"></script>
 </head>
 <body>
 <div class="acceso">
