@@ -145,11 +145,15 @@
   <section class="panel" id="inputs">
     <h2>Datos de entrada</h2>
     <div class="body">
-      <label for="normaACI">Versión del código</label>
-      <select id="normaACI">
-        <option value="08" selected>ACI 318-08 (vigente en Chile)</option>
-        <option value="19">ACI 318-19 (aún no vigente en Chile)</option>
-      </select>
+      <fieldset class="fsNorma">
+        <legend>Código de diseño</legend>
+        <label for="normaACI">Versión del ACI 318</label>
+        <select id="normaACI">
+          <option value="08" selected>ACI 318-08 (vigente en Chile)</option>
+          <option value="19">ACI 318-19 (aún no vigente en Chile)</option>
+        </select>
+        <div class="unit" style="margin-top:4px">Se aplica a vigas y losas.</div>
+      </fieldset>
       <div class="tabs hidden" role="tablist">
         <button type="button" id="tabViga" data-el="viga" class="on">Viga</button>
         <button type="button" id="tabLosa" data-el="losa">Losa</button>
@@ -164,7 +168,7 @@
             <div><label for="vh">Altura h <span class="unit">[cm]</span></label><input id="vh" type="number" step="0.5" min="15" value="76"></div>
             <div><label for="vrec">Recubr. libre <span class="unit">[cm]</span></label><input id="vrec" type="number" step="0.1" min="1" value="4.2"></div>
           </div>
-          <div class="unit" style="margin-top:6px">Recubrimiento libre medido hasta el estribo (ACI 7.7.1).</div>
+          <div class="unit" style="margin-top:6px">Recubrimiento libre medido hasta el estribo (<span id="refRec">ACI 318-08 7.7.1</span>).</div>
         </fieldset>
 
         <fieldset>
@@ -429,7 +433,7 @@ const refN = (r08, r19) => (es19() ? r19 : r08);           // cláusula según l
 const MPA = 10.1972;
 const kR = (c) => c * Math.sqrt(MPA), kS = (c) => c * MPA;
 const notaUnidades19 = (m) => {
-  if (es19()) m.p(L`\textbf{ACI 318-19.} Sus expresiones están en MPa; aquí se usan con $f'_c$ y $f_y$ en kgf/cm$^2$, convirtiendo los coeficientes con 1 MPa $= ${tn(MPA, 3)}$ kgf/cm$^2$: un término $c\sqrt{f'_c}$ en MPa equivale a $${tn(Math.sqrt(MPA), 3)}\,c\sqrt{f'_c}$ en kgf/cm$^2$ (por ejemplo, $0.17\sqrt{f'_c} \to ${tn(kR(0.17), 3)}\sqrt{f'_c}$).`);
+  if (es19()) m.p(L`\textbf{ACI 318-19.} Sus expresiones están en MPa; aquí se usan con $f'_c$ y $f_y$ en kgf/cm$^2$, convirtiendo los coeficientes con 1 MPa $= ${tn(MPA, 3)}$ kgf/cm$^2$: un término $c\sqrt{f'_c}$ en MPa equivale a $${tn(Math.sqrt(MPA), 3)}\,c\sqrt{f'_c}$ en kgf/cm$^2$ (por ejemplo, $0.17\sqrt{f'_c} \to ${tn(kR(0.17), 3)}\sqrt{f'_c}$). Criterio de structura: $\varepsilon_{ty} = f_y/E_s$ con $E_s = 2\,100\,000$ kgf/cm$^2$ (con $f_y = 4\,200$ kgf/cm$^2$ da 0.002, que 21.2.2.1 admite para el grado 420; con aceros más blandos el límite queda hasta 1\,\% bajo el de $E_s = 200\,000$ MPa).`);
 };
 // β1 — 10.2.7.3 (318-08, f'c en kgf/cm²) o Tabla 22.2.2.4.3 (318-19, f'c en MPa)
 const beta1 = (fc) => {
@@ -521,7 +525,9 @@ function flexion(cara, Mu, db, g, m) {
   const sMin = Math.max(2.5, db / 10);
   const cc = rec + de / 10;
   const fs = 2 / 3 * fy;
-  const sMax = Math.min(38 * 2800 / fs - 2.5 * cc, 30 * 2800 / fs);
+  // Control de fisuración: 10-4 del 318-08 (edición en kgf/cm², 2800) o Tabla 24.3.2 del 318-19 (280 MPa = 2855 kgf/cm²)
+  const f280 = n19 ? 280 * MPA : 2800;
+  const sMax = Math.min(38 * f280 / fs - 2.5 * cc, 30 * f280 / fs);
   const sCC = (anchoUtil - db / 10) / (Nb - 1);
   const okSmin = sLibre >= sMin, okSmax = sCC <= sMax;
   memoGrupo(m, "Disposición de armadura", `${cara}-disp`);
@@ -534,7 +540,7 @@ function flexion(cara, Mu, db, g, m) {
   m.p(L`\textbf{Disposición de barras.} Se determina el número de barras en función del área nominal de la barra seleccionada $\phi${db}$ ($A_b = ${tn(Ab, 3)}$ cm$^2$) y se verifica que quepan en una capa:`);
   m.eq(L`N_b = \left\lceil\frac{A_s}{A_b}\right\rceil = \left\lceil\frac{${tn(Asreq, 3)}}{${tn(Ab, 3)}}\right\rceil = ${Nb} \;\Rightarrow\; ${Nb}\phi${db},\quad A_{s,\text{disp}} = ${tn(As, 3)}${CM2}`);
   m.eq(L`s = \frac{b - 2(r_{ec} + \phi_e) - N_b\,d_b}{N_b - 1} = \frac{${tn(b, 1)} - 2(${tn(rec, 1)} + ${tn(de / 10, 1)}) - ${Nb}\cdot ${tn(db / 10, 1)}}{${Nb - 1}} = ${tn(sLibre)}${CM} \;${okSmin ? GE : "<"}\; s_{\min} = \max(2.5;\ d_b) = ${tn(sMin)}${CM}`, refSmin);
-  m.eq(L`s_{\max} = \min\left(38\frac{2800}{f_s} - 2.5\,c_c,\ 30\frac{2800}{f_s}\right) = \min\left(38\cdot\frac{2800}{${tn(fs, 0)}} - 2.5\cdot ${tn(cc)},\ 30\cdot\frac{2800}{${tn(fs, 0)}}\right) = ${tn(sMax)}${CM}`, refN("10-4", "Tabla 24.3.2"));
+  m.eq(L`s_{\max} = \min\left(38\frac{${tn(f280, 0)}}{f_s} - 2.5\,c_c,\ 30\frac{${tn(f280, 0)}}{f_s}\right) = \min\left(38\cdot\frac{${tn(f280, 0)}}{${tn(fs, 0)}} - 2.5\cdot ${tn(cc)},\ 30\cdot\frac{${tn(f280, 0)}}{${tn(fs, 0)}}\right) = ${tn(sMax)}${CM}`, refN("10-4", "Tabla 24.3.2"));
   m.p(L`con $f_s = \tfrac{2}{3}f_y = ${tn(fs, 0)}$ kgf/cm$^2$ y $c_c = r_{ec} + \phi_e = ${tn(cc)}$ cm. Espaciamiento entre ejes de barras $${tn(sCC)}$ cm ${okSmax ? L`$\le$` : L`$>$`} $s_{\max}$.`);
 
   // ---------- 4. Verificación de capacidad (resumen) ----------
@@ -710,7 +716,8 @@ function ganchos(g, m) {
   const peso = kgm * Lt / 100;
   const pesoMl = peso * 100 / s;                           // kg por metro de viga
   const tipo = gancho === "sismico" ? "sísmico" : "estándar";
-  const refD = refN("7.2.2", "Tabla 25.3.2"), refExt = gancho === "sismico" ? refN("21.1", "25.3.4") : refN("7.1.3(c)", "Tabla 25.3.2");
+  // Gancho sísmico del 318-19: definición del Capítulo 2 (6db y 75 mm) y 25.3.4 (doblez de 135°)
+  const refD = refN("7.2.2", "Tabla 25.3.2"), refExt = gancho === "sismico" ? refN("21.1", "Cap. 2 y 25.3.4") : refN("7.1.3(c)", "Tabla 25.3.2");
   memoGrupo(m, "Detallamiento", "v-det");
   m.row("Diámetro interior de doblado: D", `${fmt(D, 2)} cm`, refD);
   m.row(`Extensión del gancho 135° ${tipo}: l<sub>ext</sub>`, `${fmt(ext, 2)} cm`, refExt);
@@ -882,6 +889,7 @@ let ultimoTex = "", ultimoNombre = "memoria_viga.tex";
 let ultimoViga = null, ultimoLosa = null;   // resultados del último cálculo, para el plano DXF
 
 function calcularViga() {
+  textosNorma();                                     // la cabecera y las opciones cambian aunque los datos de la viga sean inválidos
   const panel = document.querySelector('[data-panel="viga"]');
   limpiarInvalidos(panel);
   const malos = datosInvalidos([["vb", 0, true], ["vh", 0, true], ["vrec", 0, true], ["vramas", 2], ["vMpos", 0], ["vMneg", 0], ["vVu", 0]]);
@@ -896,13 +904,12 @@ function calcularViga() {
   const { auto, prop } = resolverDiametros(g);
   const m = new Memo();
 
-  textosNorma();
   m.h(es19() ? "Verificación a flexión — ACI 318-19, Capítulos 9 y 22" : "Verificación a flexión — Capítulo 10");
   notaUnidades19(m);
   const origen = (a, p) => (a ? "propuesto" : `seleccionado (propuesto φ${p})`);
   m.row("Diámetros: inferior ; superior ; estribo",
     `φ${g.dbInf} ${origen(auto.inf, prop.inf)} ; φ${g.dbSup} ${origen(auto.sup, prop.sup)} ; φ${g.de} ${origen(auto.de, prop.de)}`);
-  m.p(L`\textbf{Selección de diámetros.} El diámetro propuesto para cada cara es el que cubre el área de acero requerida con la menor área dispuesta, cabiendo en una sola capa con el espaciamiento libre mínimo (7.6.1); para los estribos se propone el menor diámetro ($\ge\phi8$) que entrega una separación de al menos 10 cm. Se utilizan: barras inferiores $\phi${g.dbInf}$ (${auto.inf ? "propuesto" : L`seleccionado; propuesto $\phi${prop.inf}$`}), superiores $\phi${g.dbSup}$ (${auto.sup ? "propuesto" : L`seleccionado; propuesto $\phi${prop.sup}$`}) y estribos $\phi${g.de}$ (${auto.de ? "propuesto" : L`seleccionado; propuesto $\phi${prop.de}$`}).`);
+  m.p(L`\textbf{Selección de diámetros.} El diámetro propuesto para cada cara es el que cubre el área de acero requerida con la menor área dispuesta, cabiendo en una sola capa con el espaciamiento libre mínimo (${refN("7.6.1", "25.2.1")}); para los estribos se propone el menor diámetro ($\ge\phi8$) que entrega una separación de al menos 10 cm. Se utilizan: barras inferiores $\phi${g.dbInf}$ (${auto.inf ? "propuesto" : L`seleccionado; propuesto $\phi${prop.inf}$`}), superiores $\phi${g.dbSup}$ (${auto.sup ? "propuesto" : L`seleccionado; propuesto $\phi${prop.sup}$`}) y estribos $\phi${g.de}$ (${auto.de ? "propuesto" : L`seleccionado; propuesto $\phi${prop.de}$`}).`);
   const inf = flexion("inf", g.Mpos, g.dbInf, g, m);
   const sup = flexion("sup", g.Mneg, g.dbSup, g, m);
   m.h(es19() ? "Verificación a corte — ACI 318-19, Capítulos 9 y 22" : "Verificación a corte — Capítulo 11");
@@ -1236,26 +1243,23 @@ function disenoFaja(t, Mu, db, d, g, dosDir, m) {
   m.row("Momento último ; altura útil: M<sub>u</sub> ; d", `${fmt(Mu, 1)} kgf·m/m ; ${fmt(d, 2)} cm`);
   m.row("Momento reducido ; profundidad relativa ; cuantía: μ ; α ; ρ", `${fmt(mu, 4)} ; ${fmt(alpha, 4)} ; ${fmt(rho, 5)}`);
   m.row("Armadura requerida: A<sub>s</sub>", `${fmt(As, 3)} cm²/m`, refMinLosa(dosDir));
-  m.row(`Espaciamiento calculado φ${db} ; espaciamiento máximo: s ; s<sub>máx</sub>`, `${fmt(sCalc, 2)} ; ${fmt(sMax, 1)} cm`, refSmaxLosa(dosDir));
-  m.row(`<b>Armadura adoptada</b>`, `<b>φ${db} @ ${s} cm</b> (${fmt(AsP, 2)} cm²/m)`);
-  m.row("Deformación del acero ; resistencia de diseño ; razón D/C: ε<sub>t</sub> ; φM<sub>n</sub> ; D/C", `${fmt(et, 4)} ; ${fmt(phiMn / 100, 1)} kgf·m/m ; <b>${fmt(dc, 3)}</b> ${okTxt(dc <= 1 && okEt)}`);
-  m.p(L`Se diseña una faja de $b = 100$ cm para el momento último $M_u = ${tn(Mu, 1)}$ kgf$\cdot$m/m.`, true);
   m.p(L`\textbf{Altura útil} de la capa considerada:`, true);
   m.eq(L`d = ${t.dTex} = ${tn(d, 2)}${CM}`);
   m.p(L`\textbf{Cuantía requerida.} Con $\phi = 0.90$ (sección controlada por tracción) se obtienen el momento reducido, la profundidad relativa del bloque de compresión y la cuantía:`, true);
   m.eq(L`\mu = \frac{M_u/\phi}{0.85\,f'_c\,b\,d^2} = \frac{${tn(MuC, 0)}/0.9}{0.85\cdot ${tn(fc, 0)}\cdot 100\cdot ${tn(d, 2)}^2} = ${tn(mu, 4)} \qquad \alpha = 1 - \sqrt{1 - 2\mu} = 1 - \sqrt{1 - 2\cdot ${tn(mu, 4)}} = ${tn(alpha, 4)}`);
   m.eq(L`\rho = \frac{0.85\,f'_c\,\alpha}{f_y} = \frac{0.85\cdot ${tn(fc, 0)}\cdot ${tn(alpha, 4)}}{${tn(fy, 0)}} = ${tn(rho, 5)} \qquad \rho_{\min} = ${tn(rmin, 4)}\ \text{(sobre } b\,h\text{)}`, refMinLosa(dosDir));
-  m.p(L`\textbf{Área de acero.} La cuantía mínima de retracción y temperatura se aplica sobre el área bruta $b\,h$; se adopta el mayor valor:`, true);
+  m.p(L`\textbf{Área de acero.} La cuantía mínima ${es19() ? "a flexión" : "de retracción y temperatura"} se aplica sobre el área bruta $b\,h$; se adopta el mayor valor:`, true);
   m.eq(L`A_s = \max(\rho\,b\,d,\ \rho_{\min}\,b\,h) = \max(${tn(AsCalc, 3)},\ ${tn(rmin, 4)}\cdot 100\cdot ${tn(e, 1)}) = ${tn(As, 3)}\ \mathrm{cm^2/m}`);
   m.p(L`${AsCalc >= AsMin ? "Rige la armadura por solicitación." : L`Como $\rho\,b\,d = ${tn(AsCalc, 3)} < \rho_{\min}\,b\,h = ${tn(AsMin, 3)}$ cm$^2$/m, \textbf{rige la cuantía mínima}.`}`, true);
   // ---------- Espaciamiento y armadura adoptada ----------
   memoGrupo(m, "Espaciamiento y armadura adoptada", `${k}-esp`);
-  m.row(`Espaciamiento calculado φ${db} ; espaciamiento máximo: s ; s<sub>máx</sub>`, `${fmt(sCalc, 2)} ; ${fmt(sMax, 1)} cm`, dosDir ? "13.3.2" : "7.6.5");
+  m.row(`Espaciamiento calculado φ${db} ; espaciamiento máximo: s ; s<sub>máx</sub>`, `${fmt(sCalc, 2)} ; ${fmt(sMax, 1)} cm`, refSmaxLosa(dosDir));
   m.row(`<b>Armadura adoptada</b>`, `<b>φ${db} @ ${s} cm</b> (${fmt(AsP, 2)} cm²/m)`);
   m.p(L`\textbf{Espaciamiento.} Con barras $\phi${db}$ ($A_b = ${tn(Ab, 3)}$ cm$^2$), el espaciamiento que entrega el área requerida y el máximo normativo son:`, true);
   m.eq(L`s = \frac{b\,A_b}{A_s} = \frac{100\cdot ${tn(Ab, 3)}}{${tn(As, 3)}} = ${tn(sCalc, 2)}${CM} \qquad s_{\max} = \min(${dosDir ? "2h" : "3h"},\ 45) = \min(${tn((dosDir ? 2 : 3) * e, 1)},\ 45) = ${tn(sMax, 1)}${CM}`, refSmaxLosa(dosDir));
   m.p(L`Se adopta \textbf{$\phi${db}$ @ ${s} cm} ($A_s = ${tn(AsP, 2)}$ cm$^2$/m). Verificación de capacidad:`);
   memoGrupo(m, "Verificación de capacidad (resumen)", `${k}-cap`, { abierto: true, resumen: `D/C = ${fmt(dc, 3)} ${okTxt(resuelve && dc <= 1 && okEt)}` });
+  m.row("Deformación del acero ; resistencia de diseño ; razón D/C: ε<sub>t</sub> ; φM<sub>n</sub> ; D/C", `${fmt(et, 4)} ; ${fmt(phiMn / 100, 1)} kgf·m/m ; <b>${fmt(dc, 3)}</b> ${okTxt(dc <= 1 && okEt)}`, refN("10.3.5", dosDir ? "8.3.3.1" : "7.3.3.1"));
   m.eq(L`a = \frac{A_s f_y}{0.85 f'_c b} = \frac{${tn(AsP, 2)}\cdot ${tn(fy, 0)}}{0.85\cdot ${tn(fc, 0)}\cdot 100} = ${tn(a, 3)}${CM} \qquad c = \frac{a}{\beta_1} = \frac{${tn(a, 3)}}{${tn(beta1(fc), 3)}} = ${tn(c, 3)}${CM}`);
   m.eq(L`\varepsilon_t = 0.003\frac{d - c}{c} = 0.003\cdot\frac{${tn(d, 2)} - ${tn(c, 3)}}{${tn(c, 3)}} = ${tn(et, 4)} \;${okEt ? GE : "<"}\; ${tn(eMin, 4)} \;\Rightarrow\; \phi = ${tn(phi, 2)}`, refN("10.3.5", dosDir ? "8.3.3.1" : "7.3.3.1"));
   m.eq(L`\phi M_n = \phi\,A_s f_y\left(d - \frac{a}{2}\right) = ${tn(phi, 2)}\cdot ${tn(AsP, 2)}\cdot ${tn(fy, 0)}\left(${tn(d, 2)} - \frac{${tn(a, 3)}}{2}\right) = ${tn(phiMn / 100, 1)}\ \mathrm{kgf\cdot m/m}`);
@@ -1758,8 +1762,9 @@ function setElemento(el) {
 function textosNorma() {
   const n19 = es19();
   $("subNorma").textContent = `${NORMA()} · Diseño por resistencia · Unidades kgf – cm`;
+  $("refRec").textContent = n19 ? "ACI 318-19 Tabla 20.5.1.3.1" : "ACI 318-08 7.7.1";
   const op = (sel, val, txt) => { const o = [...$(sel).options].find(x => x.value === val); if (o) o.textContent = txt; };
-  op("vgancho", "sismico", n19 ? "135° sísmico — extensión 6db ≥ 7.5 cm (ACI 318-19 25.3.4)" : "135° sísmico — extensión 6db ≥ 7.5 cm (ACI 21.1)");
+  op("vgancho", "sismico", n19 ? "135° sísmico — extensión 6db ≥ 7.5 cm (ACI 318-19 Cap. 2 y 25.3.4)" : "135° sísmico — extensión 6db ≥ 7.5 cm (ACI 21.1)");
   op("vgancho", "estandar", n19 ? "135° estándar — extensión 6db ≥ 7.5 cm (ACI 318-19 Tabla 25.3.2)" : "135° estándar — extensión 6db (ACI 7.1.3)");
   op("vsmax", "general", n19 ? "General — ACI 318-19 Tabla 9.7.6.2.2 (d/2 o d/4)" : "General — ACI 11.4.5 (d/2 o d/4)");
   op("vsmax", "sismico", n19 ? "Sísmico — ACI 318-19 18.6.4.4 (d/4, 6db, 15 cm)" : "Sísmico — ACI 21.5.3.2 (d/4, 8db, 24db estribo, 30 cm)");

@@ -141,11 +141,15 @@
   <section class="panel" id="inputs">
     <h2>Datos de entrada</h2>
     <div class="body">
-      <label for="normaACI">Versión del código</label>
-      <select id="normaACI">
-        <option value="08" selected>ACI 318-08 (vigente en Chile)</option>
-        <option value="19">ACI 318-19 (aún no vigente en Chile)</option>
-      </select>
+      <fieldset class="fsNorma">
+        <legend>Código de diseño</legend>
+        <label for="normaACI">Versión del ACI 318</label>
+        <select id="normaACI">
+          <option value="08" selected>ACI 318-08 (vigente en Chile)</option>
+          <option value="19">ACI 318-19 (aún no vigente en Chile)</option>
+        </select>
+        <div class="unit" style="margin-top:4px">Se aplica al diseño en hormigón armado; las tensiones de contacto no cambian.</div>
+      </fieldset>
       <svg class="esquema" viewBox="0 0 330 230" aria-label="Esquema de la zapata aislada">
         <rect x="40" y="20" width="110" height="140" fill="#e3e8ee" stroke="#3d4450" stroke-width="1.4"/>
         <rect x="83" y="78" width="24" height="24" fill="#c3c9d1" stroke="#3d4450"/>
@@ -308,9 +312,11 @@ const K_LDC19 = 0.24 * Math.sqrt(MPA) / MPA, K_LDC19B = 0.043 / MPA;
 const vcViga = (fc, rho) => (es19() ? kR(0.66) * Math.cbrt(rho) : 0.53) * Math.sqrt(fc);
 const vcVigaTex = (rho) => (es19() ? L`${tn(kR(0.66), 3)}\,\rho_w^{1/3}\sqrt{f'_c} = ${tn(kR(0.66), 3)}\cdot ${tn(rho, 5)}^{1/3}\sqrt{f'_c}` : L`0.53\sqrt{f'_c}`);
 // v_c de punzonamiento / √f'c. 318-08 11-31 a 11-33; 318-19 Tabla 22.6.5.2 con λs = 1 (13.2.6.2). k3 = 1 es el criterio de la pauta
-const vcPunz = (beta, dEf, bo, k3) => (es19()
-  ? Math.min(kR(0.17) + kR(0.33) / beta, kR(0.17) + kR(0.083) * ALFA_S * dEf / bo, k3 === 1 ? 1 : kR(0.33))
-  : Math.min(0.53 * (1 + 2 / beta), 0.27 * (ALFA_S * dEf / bo + 2), k3));
+// Coeficientes [β, perímetro, límite] y su mínimo; una sola definición para el caso estático y el sísmico
+const vcPunzCoef = (beta, dEf, bo, k3) => (es19()
+  ? [kR(0.17) + kR(0.33) / beta, kR(0.17) + kR(0.083) * ALFA_S * dEf / bo, k3 === 1 ? 1 : kR(0.33)]
+  : [0.53 * (1 + 2 / beta), 0.27 * (ALFA_S * dEf / bo + 2), k3]);
+const vcPunz = (beta, dEf, bo, k3) => Math.min(...vcPunzCoef(beta, dEf, bo, k3));
 function textosNorma() {
   const n19 = es19();
   $("subNorma").textContent = `Fundación superficial bajo pilar · Tensiones de contacto, corte, punzonamiento y flexión ${NORMA()} · Sismo según guía (por verificar) · Unidades tf – m`;
@@ -550,7 +556,7 @@ function verificar(d, m) {
   }
   const ldh = Math.max(Ldh, 8 * d.dbc, 15, ldc), hReq = ldh + d.rec, dcH = hReq / d.hc;
   if (es19()) {
-    m.p(L`La barra (o perno) de la columna se ancla en la zapata con gancho estándar. Según el ACI 318-19 (25.4.3.1), $l_{dh} = \left(f_y\,\psi_e\psi_r\psi_o\psi_c / 23\lambda\sqrt{f'_c}\right) d_b^{1.5}$ (MPa y mm), no menor que $8 d_b$ ni que 150 mm, con $\psi_e = \lambda = 1$, $\psi_r = ${tn(d.psir, 1)}$ (dato), $\psi_o = 1.0$ (recubrimiento lateral dentro de la zapata $\ge 6 d_b$) y $\psi_c = ${tn(pc19, 3)}$ (Tabla 25.4.3.2). La altura de la zapata debe alojarla más el recubrimiento.`);
+    m.p(L`La barra (o perno) de la columna se ancla en la zapata con gancho estándar. Según el ACI 318-19 (25.4.3.1), $l_{dh} = \left(f_y\,\psi_e\psi_r\psi_o\psi_c / 23\lambda\sqrt{f'_c}\right) d_b^{1.5}$ (MPa y mm), no menor que $8 d_b$ ni que 150 mm, con $\psi_e = \lambda = 1$, $\psi_r = ${tn(d.psir, 1)}$ (dato), $\psi_o = 1.0$ (se supone un recubrimiento lateral dentro de la zapata $\ge 6 d_b$, lo que esta página no verifica; si es menor, $\psi_o = 1.25$) y $\psi_c = ${tn(pc19, 3)}$ (Tabla 25.4.3.2). La altura de la zapata debe alojarla más el recubrimiento.`);
     m.row("Longitud de desarrollo con gancho: l<sub>dh</sub>", `${fmt(Ldh, 2)} cm`, "ACI 318-19 25.4.3.1");
     m.eq(L`l_{dh} = \frac{f_y\,\psi_r\,\psi_o\,\psi_c}{23\lambda\sqrt{f'_c}}\,d_b^{1.5} = \frac{${tn(d.fy, 0)}\cdot ${tn(d.psir, 1)}\cdot 1.0\cdot ${tn(pc19, 3)}}{${tn(1 / K_LDH19, 2)}\sqrt{${tn(d.fc, 0)}}}\cdot ${tn(d.dbc, 1)}^{1.5} = ${tn(Ldh, 2)}\ \mathrm{cm}`, "ACI 318-19 25.4.3.1");
     m.row("Longitud de desarrollo en compresión: l<sub>dc</sub>", `${fmt(ldc, 2)} cm`, "ACI 318-19 25.4.9.2");
@@ -618,7 +624,10 @@ function verificar(d, m) {
   const ssx = asx / B * (nu.s1 - nu.s2) + nu.s2, ssy = asy / Ly * (nu.s1 - nu.s3) + nu.s3;
   const Mux = (ssx * lx * lx / 2 + (nu.s1 - ssx) * lx * lx / 3) * BW, Muy = (ssy * ly * ly / 2 + (nu.s1 - ssy) * ly * ly / 3) * BW;
   const fx = flexion(Mux, dEf, d.dbx, d), fy = flexion(Muy, dEf, d.dby, d);
-  const rhoWx = fx.Asp / (BW * dEf), rhoWy = fy.Asp / (BW * dEf);
+  // Si la flexión no tiene solución no hay armadura dispuesta: el ρw del 318-19 se toma con la cuantía mínima del curso
+  const rhoW = (f) => (f.Asp > 0 ? f.Asp / (BW * dEf) : RHO_MIN);
+  const rhoWx = rhoW(fx), rhoWy = rhoW(fy);
+  if (es19() && (fx.insuf || fy.insuf)) m.note(`La flexión no tiene solución en alguna dirección: para el corte tipo viga se usa ρ<sub>w</sub> = ${fmt(RHO_MIN, 4)}, la cuantía mínima.`, L`La flexión no tiene solución en alguna dirección: para el corte tipo viga se usa $\rho_w = ${tn(RHO_MIN, 4)}$, la cuantía mínima.`);
   m.sub("Corte tipo viga (a una distancia d de la cara)");
   if (es19()) m.p(L`Según el ACI 318-19, un elemento sin armadura de corte ($A_v < A_{v,m\acute{i}n}$) usa la expresión (c) de la Tabla 22.5.5.1, $V_c = 0.66\,\lambda_s\lambda\,\rho_w^{1/3}\sqrt{f'_c}\,b_w d$ (MPa), donde $\rho_w$ es la cuantía de la armadura de flexión dispuesta en la dirección analizada (dirección x: $\rho_w = ${tn(rhoWx, 5)}$; dirección y: $\rho_w = ${tn(rhoWy, 5)}$). En zapatas aisladas se permite despreciar el efecto de tamaño, $\lambda_s = 1$ (13.2.6.2).`);
   const ax = (B + d.a) / 2 + dEf, ay = (Ly + d.b) / 2 + dEf;
@@ -647,9 +656,8 @@ function verificar(d, m) {
   const qu = Pu / nav.A, A0 = (d.a + dEf) * (d.b + dEf), Vup = qu * Math.max(0, nav.A - A0);
   const bo = 2 * ((d.a + dEf) + (d.b + dEf)), beta = Math.max(d.a, d.b) / Math.min(d.a, d.b);
   const n19 = es19(), k3e = n19 && d.k3 !== 1 ? kR(0.33) : d.k3;
-  const Vc1 = (n19 ? kR(0.17) + kR(0.33) / beta : 0.53 * (1 + 2 / beta)) * sq * bo * dEf;
-  const Vc2 = (n19 ? kR(0.17) + kR(0.083) * ALFA_S * dEf / bo : 0.27 * (ALFA_S * dEf / bo + 2)) * sq * bo * dEf;
-  const Vc3 = k3e * sq * bo * dEf;
+  const [c1, c2, c3] = vcPunzCoef(beta, dEf, bo, d.k3);
+  const Vc1 = c1 * sq * bo * dEf, Vc2 = c2 * sq * bo * dEf, Vc3 = c3 * sq * bo * dEf;
   const Vcp = Math.min(Vc1, Vc2, Vc3), dcP = Vup / (PHI_V * Vcp);
   memoGrupo(m, "Corte último", "zap-p-vu");
   m.p(L`Con la resultante dentro del núcleo central se usa la presión media $q_u = P_u/A_c$ sobre el área fuera del perímetro crítico, como en el procedimiento del curso.`);
@@ -858,7 +866,7 @@ ${filasU.map(f => `$${f.nTex}$ & ${celdaU(f).map(v => v.replace(/ /g, "\\,").re
     const mx = (f) => Math.max(...okU.map(f));
     const VX = mx(f => f.it.VX), VY = mx(f => f.it.VY), vuP = mx(f => f.vu), MpX = mx(f => f.it.MpX), MpY = mx(f => f.it.MpY), Mn = mx(f => Math.max(f.it.MnX, f.it.MnY));
     // por cm de ancho; en el 318-19 con la cuantía de la armadura estática de cada dirección
-    const rWx = r.fx.Asp / (BW * dEf), rWy = r.fy.Asp / (BW * dEf);
+    const rWx = r.fx.Asp > 0 ? r.fx.Asp / (BW * dEf) : RHO_MIN, rWy = r.fy.Asp > 0 ? r.fy.Asp / (BW * dEf) : RHO_MIN;
     const vcVx = PHI_V * vcViga(d.fc, rWx) * dEf, vcVy = PHI_V * vcViga(d.fc, rWy) * dEf, vcV = Math.min(vcVx, vcVy);
     const dcVx = VX / vcVx, dcVy = VY / vcVy, dcPu = vuP / (PHI_V * vc);
     const dcMx = MpX / r.fx.phiMn, dcMy = MpY / r.fy.phiMn;
@@ -868,7 +876,7 @@ ${filasU.map(f => `$${f.nTex}$ & ${celdaU(f).map(v => v.replace(/ /g, "\\,").re
     if (es19()) m.eq(L`\phi V_{cx} = \phi\,${vcVigaTex(rWx)}\,b\,d = ${tn(T(vcVx * BW), 2)}\ \mathrm{tf/m} \qquad \phi V_{cy} = \phi\,${vcVigaTex(rWy)}\,b\,d = ${tn(T(vcVy * BW), 2)}\ \mathrm{tf/m} \qquad \frac{V_{ux}}{\phi V_{cx}} = ${tn(dcVx, 3)} \qquad \frac{V_{uy}}{\phi V_{cy}} = ${tn(dcVy, 3)}`, refVcS);
     else m.eq(L`\phi V_c = \phi\,0.53\sqrt{f'_c}\,b\,d = ${tn(T(vcV * BW), 2)}\ \mathrm{tf/m} \qquad \frac{V_{ux}}{\phi V_c} = ${tn(dcVx, 3)} \qquad \frac{V_{uy}}{\phi V_c} = ${tn(dcVy, 3)}`, refVcS);
     m.row("Punzonamiento con transferencia de momento: v<sub>u</sub> ≤ φv<sub>c</sub>", `${fmt(S(vuP), 1)} ≤ ${fmt(S(PHI_V * vc), 1)} tf/m² ${tagDC(dcPu)}`, aci("11.11.7.2", "8.4.4.2.3"));
-    m.eq(L`v_u = \frac{V_u}{b_0\,d} + \frac{\gamma_{vx}\,M_{y}\,c_x}{J_{cx}} + \frac{\gamma_{vy}\,M_{x}\,c_y}{J_{cy}} = ${tn(S(vuP), 1)}\ \mathrm{tf/m^2} \qquad \gamma_v = 1 - \frac{1}{1 + \frac{2}{3}\sqrt{b_1/b_2}} \qquad \frac{v_u}{\phi v_c} = ${tn(dcPu, 3)} ${cmp(dcPu)} 1`, "ACI 318-08 11.11.7.2");
+    m.eq(L`v_u = \frac{V_u}{b_0\,d} + \frac{\gamma_{vx}\,M_{y}\,c_x}{J_{cx}} + \frac{\gamma_{vy}\,M_{x}\,c_y}{J_{cy}} = ${tn(S(vuP), 1)}\ \mathrm{tf/m^2} \qquad \gamma_v = 1 - \frac{1}{1 + \frac{2}{3}\sqrt{b_1/b_2}} \qquad \frac{v_u}{\phi v_c} = ${tn(dcPu, 3)} ${cmp(dcPu)} 1`, aci("11.11.7.2", "8.4.4.2.3"));
     m.row(`Flexión inferior x con la armadura estática ${barra(d.dbx, r.fx.s)}`, `M<sub>u</sub> = ${fmt(TM(MpX), 2)} tf·m/m ${tagDC(dcMx)}`);
     m.row(`Flexión inferior y con la armadura estática ${barra(d.dby, r.fy.s)}`, `M<sub>u</sub> = ${fmt(TM(MpY), 2)} tf·m/m ${tagDC(dcMy)}`);
     sk("Corte tipo viga sísmico", L`$V_u = ${tn(T((dcVx >= dcVy ? VX : VY) * BW), 2)}$ tf/m`, L`$\phi V_c = ${tn(T((dcVx >= dcVy ? vcVx : vcVy) * BW), 2)}$ tf/m`, Math.max(dcVx, dcVy), "Corte sísmico");

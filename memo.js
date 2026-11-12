@@ -594,7 +594,7 @@ const REFERENCIAS = [
   year         = {2014}
 }` },
   { clave: "aci31819", patron: /ACI\s?318-19/, bib: String.raw`@manual{aci31819,
-  title        = {{ACI 318-19. Requisitos de Reglamento para Concreto Estructural y Comentario (versión en español y en sistema métrico SI)}},
+  title        = {{ACI 318-19. Requisitos de Reglamento para Concreto Estructural y Comentario (versión en español y en sistema métrico SI). Edición en inglés: ACI 318M-19, Building Code Requirements for Structural Concrete and Commentary}},
   organization = {American Concrete Institute},
   address      = {Farmington Hills, MI},
   year         = {2019}

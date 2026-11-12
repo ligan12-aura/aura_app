@@ -26,12 +26,14 @@ const Guia = (() => {
       { en: "t:4. Solicitaciones", titulo: "4 · Solicitaciones", texto: "Por defecto structura analiza el modelo plano y arma las envolventes NCh 3171. También puede ingresarlas desde un modelo externo y comprobar el .s2k en SAP2000." },
     ],
     "placa.html": [
+      { en: "t:Código de diseño", titulo: "Versión del código", texto: "Elija ACI 318-08 (por defecto) o ACI 318-19. Solo cambian las referencias de la malla de retracción y de Ec." },
       { en: "t:1. Geometría", titulo: "1 · Geometría", texto: "Ingrese la separación entre las vigas de apoyo, los tramos continuos de placa y el espesor de hormigón sobre la cresta, automático (el menor que cumple) o fijo." },
       { en: "t:2. Cargas", titulo: "2 · Cargas de servicio", texto: "Carga permanente adicional y sobrecarga de uso: es la demanda que se compara con la Tabla I del fabricante. Las cargas puntuales se aumentan un 30 % y piden revisar punzonamiento." },
       { en: "t:3. Malla", titulo: "3 · Malla de retracción", texto: "Elija el diámetro y la separación de la malla: debe dar al menos 1.8 cm²/m con s ≤ mín(5 eh ; 45 cm)." },
       { en: "t:4. Conectores", titulo: "4 · Conectores de corte", texto: "Defina los conectores (AISC I8) y, si quiere, la viga de apoyo del catálogo para verificar su ala y la acción compuesta." },
     ],
     "hormigon.html": [
+      { en: "t:Código de diseño", titulo: "Versión del código", texto: "Elija ACI 318-08 (vigente en Chile, por defecto) o ACI 318-19 (aún no vigente). Cambia las cuantías, la deformación mínima del acero, el corte y los estribos sísmicos, y las referencias de la memoria." },
       { en: "t:Geometría", titulo: "Geometría", texto: "Dimensiones de la sección o del paño. En la losa, además, las condiciones de borde definen los coeficientes de momento." },
       { en: "t:Condiciones de borde", titulo: "Condiciones de borde", texto: "Indique qué bordes de la losa son continuos o simplemente apoyados." },
       { en: "t:Materiales", titulo: "Materiales", texto: "Resistencia del hormigón f'c y fluencia del acero fy; el recubrimiento define la altura útil d." },
@@ -39,6 +41,7 @@ const Guia = (() => {
       { en: "t:Armadura", titulo: "Armadura", texto: "Diámetros de las barras principales y de los estribos o de la repartición; la herramienta propone las cantidades y separaciones." },
     ],
     "muro.html": [
+      { en: "t:Código de diseño", titulo: "Versión del código", texto: "Elija ACI 318-08 (vigente en Chile, por defecto) o ACI 318-19 (aún no vigente). Con el 318-19 la pantalla se diseña como losa: cambian el corte y la deformación mínima del acero." },
       { en: "t:1. Geometría", titulo: "1 · Geometría", texto: "Altura de la pantalla, espesores en el coronamiento y en la base, pie, talón, espesor de la zapata, profundidad de fundación y dentellón opcional." },
       { en: "t:2. Relleno", titulo: "2 · Relleno y suelo", texto: "Ángulo de fricción y peso del relleno y del suelo de fundación, cohesión y capacidad última. El empuje pasivo se considera según la opción elegida." },
       { en: "t:3. Cargas", titulo: "3 · Cargas y sismo", texto: "Sobrecarga sobre el relleno y zona sísmica (Mononobe-Okabe). Defina cómo se toman las solicitaciones sísmicas de la pantalla y del talón." },
@@ -128,6 +131,7 @@ const Guia = (() => {
       { en: "t:5. Placa nodal", titulo: "5 · Placa nodal", texto: "Espesor, tamaño y soldadura a la columna, a la viga o a ambas. Se verifican el bloque de corte, la sección de Whitmore y los filetes." },
     ],
     "piers.html": [
+      { en: "t:Código de diseño", titulo: "Versión del código", texto: "Elija la planilla IIO348 con ACI 318-08 (por defecto) o el ACI 318-19 para muros especiales, que amplifica el corte con Ωv y ωv y usa φ = 0.60 salvo que usted verifique la condición de 21.2.4.1." },
       { en: "t:1. Tablas", titulo: "1 · Tablas de ETABS", texto: "Importe las tablas de piers exportadas desde ETABS: cada pier trae sus fuerzas por combinación." },
       { en: "t:2. Materiales", titulo: "2 · Materiales y armadura", texto: "Hormigón, acero y armadura horizontal de los muros." },
       { en: "t:3. Geometría", titulo: "3 · Geometría", texto: "Largo y espesor de cada muro; con ellos se verifica el corte y la armadura horizontal." },
@@ -141,6 +145,7 @@ const Guia = (() => {
       { en: "t:6. Cargas", titulo: "6 · Cargas sin mayorar", texto: "Esfuerzos de cada estado de carga (D, L y sismo Ex, Ey de la NCh 433 sin mayorar): P, momentos en los extremos superior e inferior y cortes. AURA arma las combinaciones de la NCh 3171 con el factor 1.4 del sismo." },
     ],
     "zapata.html": [
+      { en: "t:Código de diseño", titulo: "Versión del código", texto: "Elija ACI 318-08 (vigente en Chile, por defecto) o ACI 318-19 (aún no vigente). Con el 318-19 el corte tipo viga depende de la cuantía de la parrilla y el anclaje con gancho usa otra expresión." },
       { en: "t:1. Geometría", titulo: "1 · Geometría", texto: "Elija si calcula el ancho B con el largo L fijo (como el ejercicio del curso) o verifica B y L dados. Ingrese la altura hc, el sello Df, la altura ht de la carga sobre el terreno y la columna a × b con la barra que se ancla." },
       { en: "t:2. Suelo", titulo: "2 · Suelo", texto: "Tensión admisible y pesos específicos del suelo y del hormigón. Con γ = 0 se desprecian los pesos, como en el curso." },
       { en: "t:3. Cargas", titulo: "3 · Cargas", texto: "Cargas D y L en la base de la columna (P en compresión, H y momentos). Si activa el sismo, ingrese E a nivel de servicio: esa parte es un procedimiento por verificar." },

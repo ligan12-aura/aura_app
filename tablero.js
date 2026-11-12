@@ -245,7 +245,7 @@ const Tablero = (() => {
       desc: "Base Plate and Anchor Rod Design. American Institute of Steel Construction, 2006." },
     { id: "aci14", patron: /ACI\s?318-14/, titulo: "ACI 318-14", desc: "Building Code Requirements for Structural Concrete and Commentary. American Concrete Institute, 2014." },
     { id: "aci19", patron: /ACI\s?318-19/, clausula: /^(?:Tabla\s)?\d{1,2}(?:[.-]\d+)+[a-z]?(?![\d.A-Z])/, titulo: "ACI 318-19",
-      desc: "Requisitos de Reglamento para Concreto Estructural y Comentario (versión en español, SI). American Concrete Institute, 2019. Base de la NCh 430:2026." },
+      desc: "Requisitos de Reglamento para Concreto Estructural y Comentario (versión en español, SI). American Concrete Institute, 2019. Base de la NCh 430:2026. Las páginas de vigas, losas, zapata, muro de contención, muros de corte y placa colaborante lo ofrecen como opción (aún no vigente en Chile) y citan la edición en inglés, ACI 318M-19 «Building Code Requirements for Structural Concrete», con la misma numeración de cláusulas." },
     { id: "ds60", patron: /DS\s?60\b/, titulo: "DS 60 (2011)", desc: "Decreto Supremo 60 del MINVU: adecuaciones chilenas al ACI 318-08 para el hormigón armado. Se aplican como criterio mientras se confirma la NCh 430:2026." },
     { id: "nch1198", patron: /NCh\s?1198(?::2024)?/, clausula: /^(?:\d{1,2}(?:\.\d+)+(?![\dA-Z])|Tabla \d|Anexo [A-Z]\b)/, titulo: "NCh 1198:2024",
       desc: "Madera — Construcciones en madera — Cálculo. Instituto Nacional de Normalización (INN), Santiago, 2024. Método de tensiones admisibles." },

@@ -135,11 +135,15 @@
   <section class="panel" id="inputs">
     <h2>Datos de entrada</h2>
     <div class="body">
-      <label for="normaACI">Versión del código (diseño en hormigón armado)</label>
-      <select id="normaACI">
-        <option value="08" selected>ACI 318-08 (vigente en Chile)</option>
-        <option value="19">ACI 318-19 (aún no vigente en Chile)</option>
-      </select>
+      <fieldset class="fsNorma">
+        <legend>Código de diseño</legend>
+        <label for="normaACI">Versión del ACI 318</label>
+        <select id="normaACI">
+          <option value="08" selected>ACI 318-08 (vigente en Chile)</option>
+          <option value="19">ACI 318-19 (aún no vigente en Chile)</option>
+        </select>
+        <div class="unit" style="margin-top:4px">Se aplica al diseño en hormigón armado; la estabilidad no cambia.</div>
+      </fieldset>
       <svg class="esquema" viewBox="0 0 330 250" aria-label="Esquema de las dimensiones del muro">
         <path d="M30 170 L270 170 L270 196 L104 196 L104 222 L80 222 L80 196 L30 196 Z" fill="#e3e8ee" stroke="#3d4450" stroke-width="1.4"/>
         <path d="M110 170 L120 30 L140 30 L140 170 Z" fill="#e3e8ee" stroke="#3d4450" stroke-width="1.4"/>
@@ -535,8 +539,11 @@ function memoFlexion(m, f, d0, cara) {
   m.eq(L`\phi M_n = ${tn(f.phi, 3)}\,A_s f_y\left(d - \frac{a}{2}\right) = ${tn(TM(f.phiMn), 2)}\ \mathrm{tf\,m} \qquad \frac{M_u}{\phi M_n} = \frac{${tn(TM(f.Mu), 2)}}{${tn(TM(f.phiMn), 2)}} = ${tn(f.dc, 3)} ${f.dc <= 1 ? LE : ">"} 1.0`);
 }
 // rho: cuantía de la armadura de flexión dispuesta (ρw del 318-19); fund: pie o talón, donde 13.2.6.2 permite λs = 1
-function memoCorte(m, Vu, dEf, d0, rho, fund) {
+function memoCorte(m, Vu, dEf, d0, rho0, fund) {
   const n19 = es19(), ls = fund ? 1 : lambdaS(dEf);
+  // Si la flexión no tiene solución no hay armadura dispuesta: el ρw del 318-19 se toma con la cuantía mínima del curso
+  const sinRho = !(rho0 > 0), rho = sinRho ? RHO_MIN : rho0;
+  if (n19 && sinRho) m.note(`La flexión no tiene solución con esta sección: para el corte se usa ρ<sub>w</sub> = ${fmt(RHO_MIN, 4)}, la cuantía mínima.`, L`La flexión no tiene solución con esta sección: para el corte se usa $\rho_w = ${tn(RHO_MIN, 4)}$, la cuantía mínima.`);
   // 318-19 Tabla 22.5.5.1(c): losa o fundación sin armadura de corte (A_v < A_v,mín), 0.66 λs λ ρw^(1/3) √f'c b d en MPa
   const Vc = (n19 ? kR(0.66) * ls * Math.cbrt(rho) : 0.53) * Math.sqrt(d0.fc) * BW * dEf;
   const dc = Vu / (PHI_V * Vc);
@@ -752,7 +759,7 @@ function verificar(d, m) {
 
   // ---------- 5. Pantalla ----------
   m.h("Diseño de la pantalla");
-  m.p(L`La pantalla se diseña como un voladizo empotrado en la zapata; la sección crítica está en su base, con espesor $e_b$. Las cargas laterales del suelo se mayoran por 1.6 (${aci("9.2", "5.3")}) y el sismo por 1.0.${es19() ? L` Según el ACI 318-19 (13.3.6.1), la pantalla se diseña como una losa en una dirección (Capítulo 7); su corte usa la expresión (c) de la Tabla 22.5.5.1, con la cuantía de la armadura vertical dispuesta y el efecto de tamaño $\lambda_s$.` : ""}`);
+  m.p(L`La pantalla se diseña como un voladizo empotrado en la zapata; la sección crítica está en su base, con espesor $e_b$. Las cargas laterales del suelo se mayoran por 1.6 (${aci("9.2", "5.3")}) y el sismo por 1.0.${es19() ? L` Según el ACI 318-19 (13.3.6.1), la pantalla se diseña como una losa en una dirección (Capítulo 7). Sus expresiones están en MPa; aquí se usan con $f'_c$ y $f_y$ en kgf/cm$^2$, convirtiendo los coeficientes con 1 MPa $= ${tn(MPA, 3)}$ kgf/cm$^2$ (un término $c\sqrt{f'_c}$ en MPa equivale a $${tn(Math.sqrt(MPA), 3)}\,c\sqrt{f'_c}$), y $\varepsilon_{ty} = f_y/E_s$ con $E_s = 2\,100\,000$ kgf/cm$^2$ (criterio de structura); su corte usa la expresión (c) de la Tabla 22.5.5.1, con la cuantía de la armadura vertical dispuesta y el efecto de tamaño $\lambda_s$.` : ""}`);
   const Psm = 0.5 * Ka * d.gR * d.Hm * d.Hm * BW, Pqm = Ka * d.q * d.Hm * BW;
   const Vu1 = 1.6 * (Psm + Pqm), Mu1 = 1.6 * (Psm * d.Hm / 3 + Pqm * d.Hm / 2);
   m.sub("Solicitaciones estáticas (1.6 H)");
@@ -818,7 +825,7 @@ function verificar(d, m) {
 
   // ---------- 6. Pie ----------
   m.h("Diseño de la zapata: pie (puntera)");
-  m.p(L`Cálculo simplificado del curso: la presión de servicio del suelo bajo el pie se mayora por 1.6 en el caso estático y por un factor ponderado en el caso sísmico. El peso propio del pie, que se opone, se mayora por 0.9 (${aci("9.2", "5.3")}) y el suelo sobre el pie se desprecia (del lado seguro). La sección crítica de flexión está en la cara de la pantalla y la de corte a una distancia $d$ de ella (ACI 318-08 15.5.2 y 11.11.1.1).`);
+  m.p(L`Cálculo simplificado del curso: la presión de servicio del suelo bajo el pie se mayora por 1.6 en el caso estático y por un factor ponderado en el caso sísmico. El peso propio del pie, que se opone, se mayora por 0.9 (${aci("9.2", "5.3")}) y el suelo sobre el pie se desprecia (del lado seguro). La sección crítica de flexión está en la cara de la pantalla y la de corte a una distancia $d$ de ella (${aci("15.5.2 y 11.11.1.1", "13.2.7.2")}).`);
   const Wpie = d.Hf * d.Bp * d.gH * BW;
   const dPie = d.Hf - d.rec - d.dbZp / 2, xv = Math.max(0, d.Bp - dPie);
   const pieCaso = (c, U, nom, Ufmt) => {
@@ -1274,7 +1281,7 @@ ${datos}
 ${tikzMuro(d, r)}
 
 \section{Metodología}
-Se verifica la estabilidad del muro al volcamiento, al deslizamiento y la tensión de contacto en el sello de fundación, para el caso estático (empujes de tierra más sobrecarga)${d.Ao > 0 ? " y para el caso sísmico (empujes de tierra más sobrecarga más sismo)" : ""}. Luego se diseñan a flexión y corte la pantalla, el pie y el talón según el ACI 318-08, con cargas mayoradas.
+Se verifica la estabilidad del muro al volcamiento, al deslizamiento y la tensión de contacto en el sello de fundación, para el caso estático (empujes de tierra más sobrecarga)${d.Ao > 0 ? " y para el caso sísmico (empujes de tierra más sobrecarga más sismo)" : ""}. Luego se diseñan a flexión y corte la pantalla, el pie y el talón según el ${NORMA()}, con cargas mayoradas.
 
 ${cuerpo}
 

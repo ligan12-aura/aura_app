@@ -30,8 +30,9 @@ Por defecto la página reproduce la planilla del Informe IIO348 (ACI 318-08). Co
 - Corte de diseño amplificado Ve = Ωv ωv Vu ≤ 3Vu (18.10.3.1). Ωv es un dato (1.5 por defecto) cuando hw/Lw > 1.5, porque la página no calcula Mpr; con hw/Lw ≤ 1.5, Ωv = 1.0. ωv = 1.0 si hw/Lw < 2; si no, 0.9 + ns/10 (ns ≤ 6) o 1.3 + ns/30 ≤ 1.8, con ns igual al número de pisos del pier en la tabla y no menor que 0.00028 hwcs. Se toma hwcs = Hw.
 - Vn = (αc λ √f'c + ρt fy) Acv con Acv = Lw e (sin d = 0.8Lw); αc = 0.25 si hw/Lw ≤ 1.5, 0.17 si hw/Lw ≥ 2.0, lineal entre ambos (18.10.4.1). ρt es la cuantía dispuesta.
 - Límite de un segmento 0.83√f'c Acv (18.10.4.4), que entra en la razón D/C. El límite 0.66√f'c ΣAcv del conjunto de segmentos se informa y no se verifica.
-- ρt ≥ 0.0025; si Vu ≤ 0.083λ√f'c Acv se permite la Tabla 11.6.1 (0.0020 con barras ≤ φ16 de A630-420H) (18.10.2.1). Separación ≤ mín(3e ; 450 mm).
-- φ = 0.75. El ACI 318-19 21.2.4.1 puede exigir φ = 0.60 si el muro no se diseña según 18.10.6.2; queda declarado en la memoria.
+- ρt ≥ 0.0025; si Vu ≤ 0.083λ√f'c Acv se permite la Tabla 11.6.1 (0.0020 con barras ≤ φ16 de A630-420H) (18.10.2.1). La separación propuesta se limita a mín(3e ; 450 mm) (11.7.3.1 y 18.10.2.1).
+- φ de corte = 0.60 por defecto: 21.2.4.1 la exige si Vn es menor que el corte asociado a Mn, y la página no calcula Mn. Se puede elegir 0.75 si el usuario verifica esa condición o el muro se diseña según 18.10.6.2 (excepción de 18.10.4.6); entonces el veredicto lo informa como SIN VERIFICAR.
+- El veredicto también deja SIN VERIFICAR Ωv (sin Mpr, si algún pier tiene hw/Lw > 1.5) y ρℓ ≥ ρt (18.10.4.3, si hw/Lw ≤ 2), además de la flexocompresión y los elementos de borde.
 
 Documento: ACI 318M-19 (inglés, unidades SI). La página del PDF es la impresa + 2.
 

@@ -1,8 +1,8 @@
 # Ficha normativa: Vigas y losas de hormigón
 
-Verifica vigas y losas según ACI 318-08, con detallamiento y tablas de Czerny para losas.
+Verifica vigas y losas según ACI 318-08 (o ACI 318-19 como opción, aún no vigente en Chile), con detallamiento y tablas de Czerny para losas.
 
-Documentos: ACI 318-08 (español); Manual ICH (hormigón).
+Documentos: ACI 318-08 (español); Manual ICH (hormigón); ACI 318M-19 (inglés, SI), opción.
 
 ## Criterios y límites
 
@@ -31,10 +31,10 @@ Documentos: ACI 318-08 (español); Manual ICH (hormigón).
 |  | Diámetro interior de doblado: D | 7.2.2 | ACI 318-08 (español) | 93 |
 |  | Extensión del gancho 135° …: lext | 21.1 | ACI 318-08 (español) | 339 |
 |  | Extensión del gancho 135° …: lext | 7.1.3(c) | ACI 318-08 (español) | 93 |
-| Verificación a corte — Capítulo 11 | Carga última: q | 9.2.1 | ACI 318-08 (español) | 123 |
-| Verificación a corte — Capítulo 11 | Armadura requerida: As | 7.12.2.1 | ACI 318-08 (español) | 106 |
-| Verificación a corte — Capítulo 11 | Espaciamiento calculado φ… ; espaciamiento máximo: s ; smáx | 13.3.2 | ACI 318-08 (español) | 249 |
-| Verificación a corte — Capítulo 11 | Espaciamiento calculado φ… ; espaciamiento máximo: s ; smáx | 7.6.5 | ACI 318-08 (español) | 96 |
+| Losa — diseño de armadura por flexión | Carga última: q | 9.2.1 | ACI 318-08 (español) | 123 |
+| Losa — diseño de armadura por flexión | Armadura requerida: As | 7.12.2.1 | ACI 318-08 (español) | 106 |
+| Losa — diseño de armadura por flexión | Espaciamiento calculado φ… ; espaciamiento máximo: s ; smáx | 13.3.2 | ACI 318-08 (español) | 249 |
+| Losa — diseño de armadura por flexión | Espaciamiento calculado φ… ; espaciamiento máximo: s ; smáx | 7.6.5 | ACI 318-08 (español) | 96 |
 | Ganchos y largos de barras — Manual de Detallamiento ICH | Diámetro de doblado ; extensión estándar: D ; lext | T.1 | Manual ICH (hormigón) |  |
 
 ## Opción ACI 318-19 (casilla «Versión del código»)

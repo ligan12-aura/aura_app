@@ -143,11 +143,15 @@
   <section class="panel" id="inputs">
     <h2>Datos de entrada</h2>
     <div class="body">
-      <label for="normaACI">Versión del código ACI 318 (malla y E<sub>c</sub>)</label>
-      <select id="normaACI">
-        <option value="08" selected>ACI 318-08 (vigente en Chile)</option>
-        <option value="19">ACI 318-19 (aún no vigente en Chile)</option>
-      </select>
+      <fieldset class="fsNorma">
+        <legend>Código de diseño</legend>
+        <label for="normaACI">Versión del ACI 318</label>
+        <select id="normaACI">
+          <option value="08" selected>ACI 318-08 (vigente en Chile)</option>
+          <option value="19">ACI 318-19 (aún no vigente en Chile)</option>
+        </select>
+        <div class="unit" style="margin-top:4px">Solo cambian las referencias de la malla de retracción y de E<sub>c</sub>.</div>
+      </fieldset>
       <svg class="esquema" viewBox="0 0 320 120" aria-label="Esquema de la sección de la losa colaborante">
         <rect x="10" y="22" width="300" height="34" fill="#eceef1" stroke="#9aa3ad"/>
         <path d="M10 56 L30 56 L42 92 L78 92 L90 56 L130 56 L142 92 L178 92 L190 56 L230 56 L242 92 L278 92 L290 56 L310 56 L310 56"
@@ -490,6 +494,7 @@ function conector(d, m) {
   m.row("Módulo elástico del hormigón: E<sub>c</sub>", `${fmt(Ec, 0)} kgf/cm²`, aci("8.5.1", "19.2.2.1"));
   m.row(`R<sub>g</sub> (${d.cnv} por valle) ; R<sub>p</sub> (posición ${d.pos === "fuerte" ? "fuerte" : "débil"})`, `${fmt(Rg, 2)} ; ${fmt(Rp, 2)}`, "I8.2a");
   m.eq(L`E_c = 15\,100\sqrt{f'_c} = 15\,100\sqrt{${tn(d.fc, 0)}} = ${tn(Ec, 0)}\ \mathrm{kgf/cm^2}`);
+  if (document.getElementById("normaACI")?.value === "19") m.p(L`Criterio de structura: se mantiene $E_c = 15\,100\sqrt{f'_c}$; el $4\,700\sqrt{f'_c}$ en MPa del ACI 318-19 (19.2.2.1) equivale a $15\,009\sqrt{f'_c}$ en kgf/cm$^2$, un 0.6\,\% menor, sin efecto apreciable en $Q_n$.`);
   m.eq(L`Q_n = 0.5\,A_{sa}\sqrt{f'_c E_c} = 0.5 \cdot ${tn(Asa, 3)}\sqrt{${tn(d.fc, 0)} \cdot ${tn(Ec, 0)}} = ${tn(Q1, 0)}\ \mathrm{kgf}`, "I8-1");
   m.eq(L`Q_n \le R_g R_p A_{sa} F_u = ${tn(Rg, 2)} \cdot ${tn(Rp, 2)} \cdot ${tn(Asa, 3)} \cdot ${tn(FU_CON, 0)} = ${tn(Q2, 0)}\ \mathrm{kgf}`, "I8-1");
   m.row("Q<sub>n</sub> según AISC 360-16", `${fmt(QnA / 1000, 2)} tf`, "I8-1");
