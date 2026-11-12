@@ -8,6 +8,7 @@ Documentos: ACI 318-08 (español); Manual ICH (hormigón); ACI 318M-19 (inglés,
 
 - La página del PDF de ACI 318-08 es la impresa + 2.
 - También existen en la carpeta ACI 318S-14, NCh 430 y el Manual de detallamiento, sin páginas registradas en esta ficha.
+- Losa, comparación con ETABS (casilla «Comparar Czerny con los momentos de ETABS»): la losa se diseña con los momentos de Czerny y con los momentos últimos de ETABS, con el mismo procedimiento, y una tabla compara Mu, As requerida, armadura y diferencias, más el As que entrega ETABS si se ingresa. Es la misma comparación de la Tabla N° 6.19 del Informe Final IIO348 (pág. 26 del informe), que compara Czerny, el cálculo manual con los momentos de ETABS y el diseño de ETABS. La verificación y el veredicto usan el método elegido en «Método».
 
 ## Referencias usadas por el cálculo
 

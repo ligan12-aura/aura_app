@@ -100,6 +100,12 @@
   table.calc { width: 100%; border-collapse: collapse; font-size: 13px; }
   table.calc td { padding: 4px 8px; border-bottom: 1px solid #eef0f3; vertical-align: top; }
   table.calc td.v { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .chk { display: flex; gap: 8px; align-items: center; margin-top: 12px; font-size: 13px; color: var(--ink); }
+  /* Comparación Czerny frente a ETABS (losa) */
+  table.comp { border-collapse: collapse; font-size: 13px; margin: 8px 0 12px; min-width: 100%; }
+  table.comp th, table.comp td { padding: 4px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  table.comp th { font-weight: 600; color: var(--muted); text-align: center; }
+  table.comp td:first-child { text-align: left; font-weight: 600; }
   .ref { display: inline-block; font-size: 10.5px; color: var(--accent); border: 1px solid #b9cadb; border-radius: var(--r-s); padding: 0 4px; margin-left: 6px; font-weight: 500; }
   .tag { display: inline-block; padding: 1px 7px; border-radius: var(--r-l); font-size: 11.5px; font-weight: 600; }
   .tag.ok { background: var(--ok-bg); color: var(--ok); }
@@ -318,6 +324,16 @@
             </div>
             <div class="unit" style="margin-top:6px">M<sub>X</sub>: momento que tracciona las barras en dirección X (ETABS M11 si el eje local 1 es X). Valores últimos por metro de ancho.</div>
           </div>
+          <label class="chk"><input id="lcomp" type="checkbox"> Comparar Czerny con los momentos de ETABS</label>
+          <div id="lgComp" class="hidden">
+            <div class="unit" style="margin-top:6px">Se diseña con ambos juegos de momentos y se agrega una tabla comparativa al procedimiento y a la memoria. Opcional: el área de acero que entrega el diseño de ETABS, para la última columna.</div>
+            <div class="row2">
+              <div><label for="lAsXi">A<sub>s</sub> ETABS inferior X <span class="unit">[cm²/m]</span></label><input id="lAsXi" type="number" step="any" min="0" placeholder="opcional"></div>
+              <div><label for="lAsYi">A<sub>s</sub> ETABS inferior Y <span class="unit">[cm²/m]</span></label><input id="lAsYi" type="number" step="any" min="0" placeholder="opcional"></div>
+              <div><label for="lAsXs">A<sub>s</sub> ETABS superior X <span class="unit">[cm²/m]</span></label><input id="lAsXs" type="number" step="any" min="0" placeholder="opcional"></div>
+              <div><label for="lAsYs">A<sub>s</sub> ETABS superior Y <span class="unit">[cm²/m]</span></label><input id="lAsYs" type="number" step="any" min="0" placeholder="opcional"></div>
+            </div>
+          </div>
         </fieldset>
 
         <fieldset>
@@ -341,8 +357,8 @@
     <h2 id="resTitle">Resultados — Viga</h2>
     <div id="resViga">
       <div class="summary" id="summary"></div>
-      <div class="armado" id="armado"></div>
       <div id="verdict"></div>
+      <div class="armado" id="armado"></div>
       <div class="toolbar">
         <button class="btn sec" type="button" onclick="window.print()">Imprimir</button>
         <button class="btn sec" type="button" onclick="descargarDXFViga()">Descargar plano (.dxf)</button>
@@ -351,10 +367,10 @@
       <div class="memo" id="memo"></div>
     </div>
     <div id="resLosa" class="hidden">
-      <div class="plano" id="lplano"></div>
       <div class="summary" id="lsummary"></div>
-      <div class="armado" id="larmado"></div>
       <div id="lverdict"></div>
+      <div class="plano" id="lplano"></div>
+      <div class="armado" id="larmado"></div>
       <div class="toolbar">
         <button class="btn sec" type="button" onclick="window.print()">Imprimir</button>
         <button class="btn sec" type="button" onclick="descargarDXFLosa()">Descargar plano (.dxf)</button>
@@ -1126,6 +1142,9 @@ function leerLosa() {
     bordes: { sup: $("lbSup").value === "1", inf: $("lbInf").value === "1", izq: $("lbIzq").value === "1", der: $("lbDer").value === "1" },
     modo: $("lmodo").value, D: num("lD"), L: num("lL"), gam: num("lgam"), coef: $("lcoef").value,
     man: { MXp: num("lMXp"), MYp: num("lMYp"), MXn: num("lMXn"), MYn: num("lMYn") },
+    // Comparación con ETABS: momentos de lgManual y, opcional, el área de acero que entrega el diseño de ETABS
+    comp: $("lcomp").checked,
+    asE: { Xi: num("lAsXi"), Yi: num("lAsYi"), Xs: num("lAsXs"), Ys: num("lAsYs") },
     db: { Xi: sl("ldbXi"), Yi: sl("ldbYi"), Xs: sl("ldbXs"), Ys: sl("ldbYs") },
   };
 }
@@ -1541,28 +1560,8 @@ ${out}
 // ---------------------------------------------------------------------------
 let ultimoTexLosa = "", ultimoNombreLosa = "memoria_losa.tex";
 
-function calcularLosa() {
-  const g = leerLosa();
-  const m = new Memo();
-  $("lgCzerny").classList.toggle("hidden", g.modo !== "czerny");
-  $("lgManual").classList.toggle("hidden", g.modo !== "manual");
-  limpiarInvalidos(document.querySelector('[data-panel="losa"]'));
-  const malos = datosInvalidos([["lLx", 0, true], ["lLy", 0, true], ["le", 0, true], ["lrec", 0, true],
-    ...(g.modo === "czerny" ? [["lD", 0], ["lL", 0], ["lgam", 0]] : [["lMXp", 0], ["lMYp", 0], ["lMXn", 0], ["lMYn", 0]])]);
-  if (!malos.length && g.e <= 2 * g.rec) { $("le").classList.add("invalido"); malos.push("e debe ser mayor que 2·r_ec"); }
-  if (malos.length) {
-    ["lsummary", "lmemo", "larmado", "lplano", "lcaso"].forEach(id => { $(id).innerHTML = ""; });
-    $("lverdict").innerHTML = avisoInvalidos(malos);
-    ultimoTexLosa = "";
-    return;
-  }
-
-  m.h(g.modo === "czerny" ? "Solicitaciones — Tablas de Czerny" : "Solicitaciones ingresadas");
-  const sol = solicitacionesLosa(g, m);
-  $("lcaso").innerHTML = `Dirección corta: <b>${sol.corta}</b> · ε = ${fmt(sol.eps, 3)} · ${CZERNY[sol.caso].nombre}`;
-  $("lbCentro").textContent = `${g.nombre}`;
-
-  // Capas: la dirección corta va en la capa exterior (mayor brazo)
+// Diámetros de la losa (propuestos o elegidos). Capas: la dirección corta va en la capa exterior (mayor brazo)
+function barrasLosa(g, sol) {
   const larga = sol.corta === "X" ? "Y" : "X";
   const dOut = (db) => g.e - g.rec - db / 20;
   const dIn = (dbOut) => (db) => g.e - g.rec - dbOut / 10 - db / 20;
@@ -1578,12 +1577,12 @@ function calcularLosa() {
     const dbOut = resolver(sol.corta, cara, dOut);
     resolver(larga, cara, dIn(dbOut || 8));
   }
-  for (const k of ["Xi", "Yi", "Xs", "Ys"]) $("ldb" + k).options[0].text = prop[k] ? `Automático (φ${prop[k]})` : "Automático (no requiere)";
+  return { larga, dOut, dIn, M, prop, usa };
+}
 
-  m.h(`Diseño de armadura por flexión — ${NORMA()}`);
-  notaUnidades19(m);
-  m.p(L`Se diseña una faja de $b = 100$ cm con $\phi = 0.90$ (se verifica $\varepsilon_t$), $f'_c = ${tn(g.fc, 0)}$ kgf/cm$^2$ y $f_y = ${tn(g.fy, 0)}$ kgf/cm$^2$. La cuantía mínima ${es19() ? "a flexión" : "de retracción y temperatura"} $\rho_{\min} = ${tn(rhoMinLosa(g.fy), 4)}$ se aplica sobre el área bruta $b\,h$ (${refN("7.12.2.1 y 10.5.4", sol.dosDir ? "8.6.1.1 y 24.4.3.2" : "7.6.1.1 y 24.4.3.2")}). El espaciamiento máximo es ${sol.dosDir ? L`$2h \le 45$ cm para losas en dos direcciones (${refN("13.3.2", "8.7.2.2")})` : L`$3h \le 45$ cm (${refN("7.6.5", "7.7.2.3")})`}.${es19() ? L` En el ACI 318-19 la losa debe quedar controlada por tracción, $\varepsilon_t \ge \varepsilon_{ty} + 0.003$ (${sol.dosDir ? "8.3.3.1" : "7.3.3.1"}).` : ""} La armadura de la dirección corta (${sol.corta}) se ubica en la capa exterior. Diámetro propuesto: el menor que permite una separación $\ge 15$ cm.`);
-  if (g.rec < 2) m.note(`El recubrimiento es menor que el mínimo de 2.0 cm del ACI ${refN("7.7.1(c)", "Tabla 20.5.1.3.1")} para losas.`, L`El recubrimiento es menor que el mínimo de 2.0 cm del ACI ${refN("7.7.1(c)", "Tabla 20.5.1.3.1")} para losas.`);
+// Diseño de las cuatro fajas (inferior y superior en X e Y) con los diámetros de barrasLosa
+function fajasLosa(g, sol, bar, m) {
+  const { larga, dOut, dIn, M, prop, usa } = bar;
   const R = {};
   const dTex = (outer, db, dbOut) => outer
     ? L`e - r_{ec} - \frac{d_b}{2} = ${tn(g.e, 1)} - ${tn(g.rec, 1)} - \frac{${tn(db / 10, 1)}}{2}`
@@ -1602,9 +1601,108 @@ function calcularLosa() {
       }, M[key], db, d, g, sol.dosDir, m);
     }
   }
+  return R;
+}
+
+// Tabla comparativa: momentos, armadura requerida y disposición con Czerny y con los momentos de ETABS
+// (como la Tabla N° 6.19 del Informe IIO348, más la A_s que entrega ETABS si se ingresa)
+function compararLosa(g, C, E, m) {
+  const claves = ["Xi", "Xs", "Yi", "Ys"];
+  const nom = { Xi: "X inferior", Xs: "X superior", Yi: "Y inferior", Ys: "Y superior" };
+  const Mk = (sol, k) => ({ Xi: sol.MXp, Yi: sol.MYp, Xs: sol.MXn, Ys: sol.MYn })[k];
+  const conAsE = claves.some(k => g.asE[k] > 0);
+  const filas = claves.map(k => {
+    const rc = C.R[k], re = E.R[k], mc = Mk(C.sol, k), me = Mk(E.sol, k);
+    const asC = rc ? rc.As : 0, asM = re ? re.As : 0;
+    const dif = asC > 0 ? (asM - asC) / asC * 100 : NaN;
+    return { k, mc, me, rc, re, asC, asM, asE: g.asE[k], dif, difM: mc > 0 ? (me - mc) / mc * 100 : NaN };
+  });
+  const disp = (r) => (r ? `φ${r.db} @ ${r.s}` : "—");
+  const dispT = (r) => (r ? L`$\phi${r.db}$ @ ${r.s}` : "---");
+  const r1 = (x) => (Math.abs(x) < 0.05 ? 0 : x);             // sin «−0.0 %»
+  const pct = (x) => (Number.isFinite(x) ? `${r1(x) > 0 ? "+" : ""}${fmt(r1(x), 1)} %` : "—");
+  const pctT = (x) => (Number.isFinite(x) ? `$${r1(x) > 0 ? "+" : ""}${tn(r1(x), 1)}$\\,\\%` : "---");
+  m.h("Comparación: Tablas de Czerny frente a momentos de ETABS");
+  m.p(L`Se diseña la losa con los momentos de las tablas de Czerny y con los momentos últimos extraídos de ETABS, con el mismo procedimiento, los mismos diámetros${Object.values(g.db).some(v => v === "auto") ? " (o el propuesto para cada caso)" : ""} y la misma cuantía mínima. La tabla compara los momentos, el área de acero requerida por metro de ancho y la armadura que resulta en cada caso${conAsE ? ", junto con el área que calcula ETABS en su diseño" : ""}. Las diferencias se calculan respecto de Czerny: $(M_{u,\mathrm{ETABS}} - M_{u,\mathrm{Czerny}})/M_{u,\mathrm{Czerny}}$ y $(A_{s,\mathrm{ETABS}} - A_{s,\mathrm{Czerny}})/A_{s,\mathrm{Czerny}}$, con el área requerida según los momentos de ETABS. ${g.modo === "czerny" ? "La verificación de esta memoria usa los momentos de Czerny." : "La verificación de esta memoria usa los momentos de ETABS."}`);
+  m.out.push(`<div class="tablaWrap"><table class="comp"><thead><tr><th rowspan="2">Dirección</th><th colspan="3">Czerny</th><th colspan="3">M<sub>u</sub> de ETABS</th>${conAsE ? `<th rowspan="2">A<sub>s</sub> ETABS<br>[cm²/m]</th>` : ""}<th rowspan="2">Dif. M<sub>u</sub></th><th rowspan="2">Dif. A<sub>s</sub></th></tr>
+    <tr><th>M<sub>u</sub> [kgf·m/m]</th><th>A<sub>s</sub> [cm²/m]</th><th>Armadura</th><th>M<sub>u</sub> [kgf·m/m]</th><th>A<sub>s</sub> [cm²/m]</th><th>Armadura</th></tr></thead><tbody>
+    ${filas.map(f => `<tr><td>${nom[f.k]}</td><td>${fmt(f.mc, 1)}</td><td>${f.rc ? fmt(f.asC, 2) : "—"}</td><td>${disp(f.rc)}</td><td>${fmt(f.me, 1)}</td><td>${f.re ? fmt(f.asM, 2) : "—"}</td><td>${disp(f.re)}</td>${conAsE ? `<td>${f.asE > 0 ? fmt(f.asE, 2) : "—"}</td>` : ""}<td>${pct(f.difM)}</td><td>${pct(f.dif)}</td></tr>`).join("")}
+    </tbody></table></div>`);
+  memoTexCerrar(m);
+  m.tex.push(L`\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{Comparación de momentos y áreas de acero calculadas con las tablas de Czerny y con los momentos de ETABS, por metro de ancho.}
+\begin{tabular}{l rrc rrc ${conAsE ? "r " : ""}rr}
+\toprule
+ & \multicolumn{3}{c}{Czerny} & \multicolumn{3}{c}{$M_u$ de ETABS} & ${conAsE ? L`$A_s$ ETABS & ` : ""}Dif. & Dif.\\
+Dirección & $M_u$ & $A_s$ & Armadura & $M_u$ & $A_s$ & Armadura & ${conAsE ? "(cm$^2$/m) & " : ""}$M_u$ & $A_s$\\
+ & (kgf$\cdot$m/m) & (cm$^2$/m) & & (kgf$\cdot$m/m) & (cm$^2$/m) & & ${conAsE ? "& " : ""}&\\
+\midrule
+${filas.map(f => `${nom[f.k]} & ${tn(f.mc, 1)} & ${f.rc ? tn(f.asC, 2) : "---"} & ${dispT(f.rc)} & ${tn(f.me, 1)} & ${f.re ? tn(f.asM, 2) : "---"} & ${dispT(f.re)} & ${conAsE ? `${f.asE > 0 ? tn(f.asE, 2) : "---"} & ` : ""}${pctT(f.difM)} & ${pctT(f.dif)}\\\\`).join("\n")}
+\bottomrule
+\end{tabular}
+\end{table}
+`);
+  // Lectura de la comparación, sin juicios que no se puedan sostener con los números
+  const minC = filas.filter(f => f.rc && f.rc.rho < f.rc.rmin * g.e / f.rc.d).map(f => nom[f.k]);
+  const minE = filas.filter(f => f.re && f.re.rho < f.re.rmin * g.e / f.re.d).map(f => nom[f.k]);
+  const ambosMin = minC.filter(x => minE.includes(x));
+  const mayores = filas.filter(f => f.dif < -0.05).map(f => nom[f.k]), menores = filas.filter(f => f.dif > 0.05).map(f => nom[f.k]);
+  const txt = [], y = (a) => (a.length > 1 ? `${a.slice(0, -1).join(", ")} y ${a[a.length - 1]}` : a[0]);
+  if (ambosMin.length) txt.push(`En ${y(ambosMin)} rige la cuantía mínima en ambos casos, por lo que el área de acero coincide.`);
+  if (mayores.length) txt.push(`Czerny exige más acero en ${y(mayores)}.`);
+  if (menores.length) txt.push(`Los momentos de ETABS exigen más acero en ${y(menores)}.`);
+  if (txt.length) m.p(txt.join(" "));
+}
+
+function calcularLosa() {
+  const g = leerLosa();
+  const m = new Memo();
+  // Con la comparación activa se ven y se validan las cargas de Czerny y los momentos de ETABS
+  const usaCz = g.modo === "czerny" || g.comp, usaMan = g.modo === "manual" || g.comp;
+  $("lgCzerny").classList.toggle("hidden", !usaCz);
+  $("lgManual").classList.toggle("hidden", !usaMan);
+  $("lgComp").classList.toggle("hidden", !g.comp);
+  limpiarInvalidos(document.querySelector('[data-panel="losa"]'));
+  const malos = datosInvalidos([["lLx", 0, true], ["lLy", 0, true], ["le", 0, true], ["lrec", 0, true],
+    ...(usaCz ? [["lD", 0], ["lL", 0], ["lgam", 0]] : []), ...(usaMan ? [["lMXp", 0], ["lMYp", 0], ["lMXn", 0], ["lMYn", 0]] : [])]);
+  if (!malos.length && g.e <= 2 * g.rec) { $("le").classList.add("invalido"); malos.push("e debe ser mayor que 2·r_ec"); }
+  if (malos.length) {
+    ["lsummary", "lmemo", "larmado", "lplano", "lcaso"].forEach(id => { $(id).innerHTML = ""; });
+    $("lverdict").innerHTML = avisoInvalidos(malos);
+    ultimoTexLosa = "";
+    return;
+  }
+
+  m.h(g.modo === "czerny" ? "Solicitaciones — Tablas de Czerny" : "Solicitaciones ingresadas");
+  const sol = solicitacionesLosa(g, m);
+  $("lcaso").innerHTML = `Dirección corta: <b>${sol.corta}</b> · ε = ${fmt(sol.eps, 3)} · ${CZERNY[sol.caso].nombre}`;
+  $("lbCentro").textContent = `${g.nombre}`;
+
+  const bar = barrasLosa(g, sol), { M, prop } = bar;
+  for (const k of ["Xi", "Yi", "Xs", "Ys"]) $("ldb" + k).options[0].text = prop[k] ? `Automático (φ${prop[k]})` : "Automático (no requiere)";
+
+  m.h(`Diseño de armadura por flexión — ${NORMA()}`);
+  notaUnidades19(m);
+  m.p(L`Se diseña una faja de $b = 100$ cm con $\phi = 0.90$ (se verifica $\varepsilon_t$), $f'_c = ${tn(g.fc, 0)}$ kgf/cm$^2$ y $f_y = ${tn(g.fy, 0)}$ kgf/cm$^2$. La cuantía mínima ${es19() ? "a flexión" : "de retracción y temperatura"} $\rho_{\min} = ${tn(rhoMinLosa(g.fy), 4)}$ se aplica sobre el área bruta $b\,h$ (${refN("7.12.2.1 y 10.5.4", sol.dosDir ? "8.6.1.1 y 24.4.3.2" : "7.6.1.1 y 24.4.3.2")}). El espaciamiento máximo es ${sol.dosDir ? L`$2h \le 45$ cm para losas en dos direcciones (${refN("13.3.2", "8.7.2.2")})` : L`$3h \le 45$ cm (${refN("7.6.5", "7.7.2.3")})`}.${es19() ? L` En el ACI 318-19 la losa debe quedar controlada por tracción, $\varepsilon_t \ge \varepsilon_{ty} + 0.003$ (${sol.dosDir ? "8.3.3.1" : "7.3.3.1"}).` : ""} La armadura de la dirección corta (${sol.corta}) se ubica en la capa exterior. Diámetro propuesto: el menor que permite una separación $\ge 15$ cm.`);
+  if (g.rec < 2) m.note(`El recubrimiento es menor que el mínimo de 2.0 cm del ACI ${refN("7.7.1(c)", "Tabla 20.5.1.3.1")} para losas.`, L`El recubrimiento es menor que el mínimo de 2.0 cm del ACI ${refN("7.7.1(c)", "Tabla 20.5.1.3.1")} para losas.`);
+  const R = fajasLosa(g, sol, bar, m);
 
   // Plano
   const detalles = ganchosLosa(g, R, m);
+
+  // Comparación de Czerny con los momentos de ETABS (Tabla N° 6.19 del Informe IIO348): se diseña con ambos juegos de momentos
+  if (g.comp) {
+    const otro = (modo) => {
+      const s = solicitacionesLosa({ ...g, modo }, NOMEMO);
+      return { sol: s, R: fajasLosa(g, s, barrasLosa(g, s), NOMEMO) };
+    };
+    const C = g.modo === "czerny" ? { sol, R } : otro("czerny");
+    const E = g.modo === "manual" ? { sol, R } : otro("manual");
+    compararLosa(g, C, E, m);
+  }
   const plano = planoLosa(g, R);
   $("lplano").innerHTML = svgPlano(plano) + `<h4 class="tdet">Detalle de ganchos (Manual de Detallamiento ICH, Tabla 1)</h4><div class="ganchos">${svgGanchos(detalles)}</div>`;
 
