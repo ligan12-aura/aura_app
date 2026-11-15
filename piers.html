@@ -141,6 +141,16 @@
   <section class="panel" id="inputs">
     <h2>Datos de entrada</h2>
     <div class="body">
+      <fieldset class="fsNorma">
+        <legend>Código de diseño</legend>
+        <label for="normaACI">Versión del ACI 318</label>
+        <select id="normaACI"><option value="08" selected>ACI 318-08 · planilla IIO348 (vigente en Chile)</option><option value="19">ACI 318-19 (aún no vigente en Chile)</option></select>
+        <div id="boxOmega" class="row2 hidden">
+          <div><label for="omegaV">Sobrerresistencia Ω<sub>v</sub> si h<sub>w</sub>/L<sub>w</sub> &gt; 1.5</label><input id="omegaV" type="number" step="0.05" min="1" value="1.5"></div>
+          <div><label for="phi19">Factor 𝜙 de corte (21.2.4.1)</label>
+            <select id="phi19"><option value="0.6" selected>0.60 — no se verifica V<sub>n</sub> frente a M<sub>n</sub></option><option value="0.75">0.75 — V<sub>n</sub> ≥ corte de M<sub>n</sub>, o muro según 18.10.6.2 (lo verifica el usuario)</option></select></div>
+        </div>
+      </fieldset>
       <fieldset>
         <legend>1. Tablas de ETABS</legend>
         <label for="archivoPier">Archivos .xlsx</label>
@@ -163,25 +173,6 @@
       <fieldset>
         <legend>2. Materiales y armadura</legend>
         <div class="row2">
-@@@FIN
-@@@ANTES
-    <div class="body">
-      <fieldset>
-        <legend>1. Tablas de ETABS</legend>
-@@@DESPUES
-    <div class="body">
-      <fieldset class="fsNorma">
-        <legend>Código de diseño</legend>
-        <label for="normaACI">Versión del ACI 318</label>
-        <select id="normaACI"><option value="08" selected>ACI 318-08 · planilla IIO348 (vigente en Chile)</option><option value="19">ACI 318-19 (aún no vigente en Chile)</option></select>
-        <div id="boxOmega" class="row2 hidden">
-          <div><label for="omegaV">Sobrerresistencia Ω<sub>v</sub> si h<sub>w</sub>/L<sub>w</sub> &gt; 1.5</label><input id="omegaV" type="number" step="0.05" min="1" value="1.5"></div>
-          <div><label for="phi19">Factor 𝜙 de corte (21.2.4.1)</label>
-            <select id="phi19"><option value="0.6" selected>0.60 — no se verifica V<sub>n</sub> frente a M<sub>n</sub></option><option value="0.75">0.75 — V<sub>n</sub> ≥ corte de M<sub>n</sub>, o muro según 18.10.6.2 (lo verifica el usuario)</option></select></div>
-        </div>
-      </fieldset>
-      <fieldset>
-        <legend>1. Tablas de ETABS</legend>
           <div><label for="fc">Hormigón f'<sub>c</sub> <span class="unit">[kgf/cm²]</span></label><input id="fc" type="number" step="10" value="250"></div>
           <div><label for="fy">Acero f<sub>y</sub> <span class="unit">[kgf/cm²]</span></label><input id="fy" type="number" step="100" value="4200"></div>
           <div><label for="db">Barra horizontal 𝜙 <span class="unit">[mm]</span></label>
@@ -253,10 +244,10 @@ function corteFila(Vu, Lw, e, c) {
 }
 // ---------------------------------------------------------------------------
 // ACI 318-19, muros estructurales especiales (18.10), elegido en la casilla normaACI. Las expresiones del código
-// están en MPa: c·√f'c[MPa] = 3.193·c·√f'c[kgf/cm²]. ns es el número de pisos del pier en la tabla.
+// están en MPa: c·√f'c[MPa] = 3.162·c·√f'c[kgf/cm²]. ns es el número de pisos del pier en la tabla.
 // ---------------------------------------------------------------------------
 const es19 = () => document.getElementById("normaACI")?.value === "19";
-const MPA = 10.1972;
+const MPA = 10;                 // 1 MPa = 10 kgf/cm² (criterio de cálculo usado en Chile)
 const kR = (c) => c * Math.sqrt(MPA);
 // 𝜙 de corte: 0.60 por defecto, porque 21.2.4.1 la exige si V_n es menor que el corte asociado a M_n y esta página no
 // calcula M_n; 0.75 si el usuario lo verifica o el muro se diseña según 18.10.6.2 (18.10.4.6)
@@ -884,7 +875,7 @@ Sobrerresistencia $\Omega_v$ (si $h_w/L_w > 1.5$) & ${tn(c.Omega, 2)}\\` : ""}
 \end{table}
 
 \section{Metodología}
-${es19() ? L`Se verifican al corte todas las filas de la tabla de cada pier, con el corte $V_2$ en valor absoluto, según el ACI 318-19 para muros estructurales especiales (18.10): el corte se amplifica a $V_e = \Omega_v\omega_v V_u$ (18.10.3.1) y se compara con $\phi V_n = \phi(\alpha_c\lambda\sqrt{f'_c} + \rho_t f_y)A_{cv}$ (18.10.4.1), limitado a $0.83\sqrt{f'_c}A_{cv}$ (18.10.4.4). Las expresiones del código están en MPa y se usan en kgf/cm$^2$ con 1 MPa $= 10.197$ kgf/cm$^2$ ($c\sqrt{f'_c}$ en MPa equivale a $3.193\,c\sqrt{f'_c}$ en kgf/cm$^2$).` : L`Se verifican al corte todas las filas de la tabla de cada pier, con el corte $V_2$ en valor absoluto y las expresiones de la planilla de diseño de muros del Informe IIO348, basadas en los capítulos 11 y 21 del ACI 318-08.`} A continuación se desarrolla el detalle de los piers indicados y al final se resumen todos los piers.
+${es19() ? L`Se verifican al corte todas las filas de la tabla de cada pier, con el corte $V_2$ en valor absoluto, según el ACI 318-19 para muros estructurales especiales (18.10): el corte se amplifica a $V_e = \Omega_v\omega_v V_u$ (18.10.3.1) y se compara con $\phi V_n = \phi(\alpha_c\lambda\sqrt{f'_c} + \rho_t f_y)A_{cv}$ (18.10.4.1), limitado a $0.83\sqrt{f'_c}A_{cv}$ (18.10.4.4). Las expresiones del código están en MPa y se usan en kgf/cm$^2$ con 1 MPa $= 10$ kgf/cm$^2$ (criterio de cálculo usado en Chile).` : L`Se verifican al corte todas las filas de la tabla de cada pier, con el corte $V_2$ en valor absoluto y las expresiones de la planilla de diseño de muros del Informe IIO348, basadas en los capítulos 11 y 21 del ACI 318-08.`} A continuación se desarrolla el detalle de los piers indicados y al final se resumen todos los piers.
 
 ${cuerpo}
 
@@ -1019,7 +1010,7 @@ function calcular() {
   const m = new Memo();
   const sel = A.res.find(r => r.p === $("pierSel").value);
   m.h("Criterio de verificación");
-  if (es19()) m.p(L`\textbf{ACI 318-19.} Sus expresiones están en MPa; aquí se usan con $f'_c$ y $f_y$ en kgf/cm$^2$, convirtiendo los coeficientes con 1 MPa $= ${tn(MPA, 3)}$ kgf/cm$^2$: un término $c\sqrt{f'_c}$ en MPa equivale a $${tn(Math.sqrt(MPA), 3)}\,c\sqrt{f'_c}$ en kgf/cm$^2$. Se usa $\phi = ${tn(c.phi19, 2)}$ en corte.`);
+  if (es19()) m.p(L`\textbf{ACI 318-19.} Sus expresiones están en MPa; aquí se usan con $f'_c$ y $f_y$ en kgf/cm$^2$, con 1 MPa $= 10$ kgf/cm$^2$ (criterio de cálculo usado en Chile). Se usa $\phi = ${tn(c.phi19, 2)}$ en corte.`, true);
   if (es19()) m.p(L`En cada fila se amplifica el corte a $V_e = \Omega_v\omega_v V_u$ y se calcula la mayor de las razones $V_e/\phi V_n$ y $V_e/(\phi\,0.83\sqrt{f'_c}A_{cv})$ del ACI 318-19. La razón de cada pier es la mayor de sus filas, y el pier crítico es el de mayor razón.`, true);
   else m.p(L`En cada fila se calcula la mayor de las razones $V_u/\phi V_n$, $V_u/(0.75\,V_{s,m\acute{a}x})$ y $V_s/V_{s,m\acute{a}x}$. La razón de cada pier es la mayor de sus filas, y el pier crítico es el de mayor razón.`, true);
   m.row("Filas revisadas ; piers verificados", `${fmt(A.n, 0)} ; ${A.res.length}`);

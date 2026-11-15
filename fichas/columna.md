@@ -8,9 +8,9 @@ Documentos: ACI 318-19 (español, SI); DS 60 (2011).
 
 - **NCh 430:2026 por confirmar.** No está en el proyecto. Se calcula con el ACI 318-19 y se aplican, como criterio de structura, las adecuaciones del DS 60 (escritas para el ACI 318-08) que afectan a columnas.
 - La página del PDF del ACI 318-19 no sigue un desfase fijo respecto de la página impresa: se anota la página del PDF.
-- Unidades internas kgf y cm; las expresiones del ACI en MPa y mm se convierten con 1 MPa = 10.1972 kgf/cm². E_s = 200 000 MPa.
+- Unidades internas kgf y cm; las expresiones del ACI en MPa y mm se convierten con 1 MPa = 10 kgf/cm² (criterio de cálculo usado en Chile). E_s = 200 000 MPa (2 000 000 kgf/cm²).
 - Flexocompresión por compatibilidad de deformaciones con el bloque rectangular recortado sobre el contorno real (la circular como polígono de 144 lados). En flexión biaxial se gira el eje neutro hasta alinear el momento resistente con el solicitante. Para cada P_u se resuelve el eje neutro por bisección.
-- Razón D/C a carga axial constante: máx(M_u/φM_n(P_u) ; P_u/φP_n,máx). Validado a mano: 40 × 40, 8 φ18, G25, A630-420H, flexión pura: c = 6.76 cm, ε_t = 0.0120, φM_n = 12.11 tf·m; con c = 30 cm: P_n = 250.4 tf, M_n = 20.79 tf·m.
+- Razón D/C a carga axial constante: máx(M_u/φM_n(P_u) ; P_u/φP_n,máx). Validado a mano: 40 × 40, 8 φ18, G25, A630-420H, flexión pura: c = 6.77 cm, ε_t = 0.0120, φM_n = 12.11 tf·m; con c = 30 cm: P_n = 250.3 tf, M_n = 20.77 tf·m (con 1 MPa = 10 kgf/cm², E_s = 2 000 000 kgf/cm²).
 - Con esbeltez se suman vectorialmente los momentos amplificados de ambos ejes (conservador). Sin esbeltez se verifica cada extremo con sus momentos.
 - Momentos de los extremos con el signo del diagrama del análisis: igual signo en ambos extremos = curvatura simple (M_1/M_2 negativo en el ACI 318-19).
 - No arriostrado: el análisis incluye P-Δ (δ_s = 1) o δ_s = 1/(1 − Q) aplicado al momento total (criterio conservador). Si δ_s > 1.5 queda SIN VERIFICAR. El P-δ del miembro usa k = 1 en P_c (criterio).

@@ -45,7 +45,7 @@ La página calcula con ACI 318-08 por defecto. Con la casilla en ACI 318-19 (aú
 - Corte tipo viga sin estribos con la expresión (c) de la Tabla 22.5.5.1: Vc = 0.66 λs λ ρw^(1/3) √f'c b d (MPa), con ρw de la armadura de flexión dispuesta en esa dirección. En zapatas aisladas se toma λs = 1 (13.2.6.2). Con cuantías bajas, este Vc es bastante menor que 0.53√f'c b d.
 - Punzonamiento con la Tabla 22.6.5.2 (0.33, 0.17 + 0.33/β y 0.17 + 0.083 αs d/b0, por λs λ √f'c), con λs = 1.
 - Gancho de la barra de la columna con 25.4.3.1: ldh = (fy ψe ψr ψo ψc / 23λ√f'c) db^1.5, con ψr elegido en los datos (1.6 si no se comprueba el confinamiento) y ψc de la Tabla 25.4.3.2. En la parrilla, ψr = 1.0 si s ≥ 6db y ψo = 1.25 si el recubrimiento es menor que 6db.
-- Los coeficientes en MPa se convierten a kgf/cm² con 1 MPa = 10.197 kgf/cm².
+- Los coeficientes en MPa se convierten a kgf/cm² con 1 MPa = 10 kgf/cm² (criterio de cálculo usado en Chile).
 
 Documento: ACI 318M-19 (inglés, unidades SI). La página del PDF es la impresa + 2.
 

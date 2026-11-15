@@ -38,7 +38,7 @@ La estabilidad no cambia. Con la casilla en ACI 318-19 (aún no vigente en Chile
 - Secciones controladas por tracción, εt ≥ εty + 0.003 (7.3.3.1), con φ de la Tabla 21.2.2 y β1 de la Tabla 22.2.2.4.3.
 - Corte sin estribos con la expresión (c) de la Tabla 22.5.5.1: Vc = 0.66 λs λ ρw^(1/3) √f'c b d (MPa), con ρw de la armadura de flexión dispuesta. En la pantalla se aplica λs = √(2/(1 + 0.004d)) ≤ 1 (22.5.5.1.3); en el pie y el talón, λs = 1 (13.2.6.2).
 - La armadura horizontal de la pantalla es de retracción y temperatura de losa, 0.0018 bh en total para todo diámetro (24.4.3.2); el criterio del curso de 0.001 bh por cara la cumple. La regla de 0.0025 con barras mayores que φ16 era del ACI 318-08 14.3.3 y no se aplica.
-- Los coeficientes en MPa se convierten a kgf/cm² con 1 MPa = 10.197 kgf/cm².
+- Los coeficientes en MPa se convierten a kgf/cm² con 1 MPa = 10 kgf/cm² (criterio de cálculo usado en Chile).
 
 Documento: ACI 318M-19 (inglés, unidades SI). La página del PDF es la impresa + 2.
 

@@ -40,7 +40,7 @@ Documentos: ACI 318-08 (español); Manual ICH (hormigón); ACI 318M-19 (inglés,
 
 ## Opción ACI 318-19 (casilla «Versión del código»)
 
-La página calcula con ACI 318-08 por defecto. Con la casilla en ACI 318-19 (aún no vigente en Chile) cambian las referencias y estos criterios: cuantía mínima de vigas con 0.25√f'c/fy y 1.4/fy en MPa; vigas y losas controladas por tracción (εt ≥ εty + 0.003); φ entre εty y εty + 0.003; Vc = 0.17λ√f'c bw d (expresión (a), porque la viga siempre lleva al menos Av,mín); separación sísmica de estribos d/4, 6db y 150 mm; extensión del gancho de 135° de 6db y 75 mm; losas con 0.0018 Ag para todo fy. Los coeficientes en MPa se convierten a kgf/cm² con 1 MPa = 10.197 kgf/cm² (c√f'c → 3.193 c√f'c).
+La página calcula con ACI 318-08 por defecto. Con la casilla en ACI 318-19 (aún no vigente en Chile) cambian las referencias y estos criterios: cuantía mínima de vigas con 0.25√f'c/fy y 1.4/fy en MPa; vigas y losas controladas por tracción (εt ≥ εty + 0.003); φ entre εty y εty + 0.003; Vc = 0.17λ√f'c bw d (expresión (a), porque la viga siempre lleva al menos Av,mín); separación sísmica de estribos d/4, 6db y 150 mm; extensión del gancho de 135° de 6db y 75 mm; losas con 0.0018 Ag para todo fy. Los coeficientes en MPa se convierten a kgf/cm² con 1 MPa = 10 kgf/cm² (criterio de cálculo usado en Chile) (c√f'c → 3.162 c√f'c).
 
 Documento: ACI 318M-19 (inglés, unidades SI). La página del PDF es la impresa + 2.
 

@@ -318,7 +318,7 @@
 // recortado exactamente sobre el contorno; flexión biaxial con el eje neutro girado hasta alinear el momento resistente
 // con el momento solicitante. Razón D/C a carga axial constante: M_u / 𝜙M_n(P_u) y P_u / 𝜙P_n,máx.
 // ---------------------------------------------------------------------------
-const KMPA = 10.1972;                         // kgf/cm² por MPa
+const KMPA = 10;                              // kgf/cm² por MPa: 1 MPa = 10 kgf/cm² (criterio de cálculo usado en Chile)
 const ES = 200000 * KMPA;                     // 20.2.2.2: E_s = 200 000 MPa
 const ECU = 0.003;                            // 22.2.2.1
 const PHI_V = 0.75;                           // Tabla 21.2.1 (corte)
@@ -1263,6 +1263,7 @@ function documentoTex(d, r, cuerpo) {
   const resumen = r.checks.map(c => `${c.k} & ${c.dem} & ${c.cap} & ${tt(c.dc, 3)} & ${estado(c.dc)}\\\\`).join("\n");
   const alcance = [
     L`\textbf{Modificaciones de la NCh 430:2026 por confirmar.} El cálculo sigue el ACI 318-19 (versión en español, SI) y aplica como criterio las adecuaciones chilenas del DS 60 (2011), escritas para el ACI 318-08, que afectan a las columnas: estribo de diámetro al menos un tercio del de la barra que sujeta (7.10.5.1), ganchos de 135$^\circ$ en estribos y trabas (21.6.4.2), todo Chile de Categoría de Diseño Sísmico D (21.1.1.2), pórticos intermedios solo en estructuras mixtas (21.1.1.9) y exención de la columna fuerte -- viga débil en el cielo del último piso (21.6.2.2).`,
+    L`Las expresiones del ACI 318-19 (en MPa y mm) se evalúan en kgf/cm$^2$ y cm con 1 MPa $= 10$ kgf/cm$^2$ (criterio de cálculo usado en Chile); $E_s = 200\,000$ MPa $= 2\,000\,000$ kgf/cm$^2$.`,
     L`La resistencia a flexocompresión se obtiene por compatibilidad de deformaciones con el bloque rectangular equivalente recortado sobre la sección. En flexión biaxial se gira el eje neutro hasta que el momento resistente quede en la dirección del momento solicitante, y la razón $D/C$ se mide a carga axial constante.`,
     L`Las combinaciones se arman con las cargas sin mayorar de cada estado según la NCh 3171, con el factor 1.4 del sismo del DS 60 (9.1.4) y $E_x$, $E_y$ por separado (sin combinación ortogonal). En las combinaciones sísmicas se usa $1.0L$, sin la reducción a $0.5L$ que la NCh 3171 pudiera admitir (criterio de structura; la NCh 3171 no está en el proyecto). No se incluyen sobrecarga de techo, nieve ni viento: si existen, deben sumarse a D o L o verificarse aparte.`,
     r.algunaEsbelta ? L`Con efectos de esbeltez se suman vectorialmente los momentos amplificados de ambos ejes, lo que es conservador.` : "",

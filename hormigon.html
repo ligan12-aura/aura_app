@@ -163,7 +163,6 @@
           <option value="08" selected>ACI 318-08 (vigente en Chile)</option>
           <option value="19">ACI 318-19 (aún no vigente en Chile)</option>
         </select>
-        <div class="unit" style="margin-top:4px">Se aplica a vigas y losas.</div>
       </fieldset>
       <div class="tabs hidden" role="tablist">
         <button type="button" id="tabViga" data-el="viga" class="on">Viga</button>
@@ -454,12 +453,13 @@ const NOMEMO = { h() {}, sub() {}, row() {}, note() {}, eq() {}, p() {} };
 const es19 = () => $("normaACI")?.value === "19";
 const NORMA = () => (es19() ? "ACI 318-19" : "ACI 318-08");
 const refN = (r08, r19) => (es19() ? r19 : r08);           // cláusula según la versión elegida
-// El ACI 318-19 (318M) está en MPa. 1 MPa = 10.197 kgf/cm², así que c·√f'c[MPa] = 3.193·c·√f'c[kgf/cm²]:
+// El ACI 318-19 (318M) está en MPa. Se convierte con 1 MPa = 10 kgf/cm² (criterio de cálculo usado en Chile), así que c·√f'c[MPa] = 3.162·c·√f'c[kgf/cm²]:
 // kR convierte un coeficiente de √f'c y kS uno de tensión
-const MPA = 10.1972;
+const MPA = 10;
 const kR = (c) => c * Math.sqrt(MPA), kS = (c) => c * MPA;
 const notaUnidades19 = (m) => {
-  if (es19()) m.p(L`\textbf{ACI 318-19.} Sus expresiones están en MPa; aquí se usan con $f'_c$ y $f_y$ en kgf/cm$^2$, convirtiendo los coeficientes con 1 MPa $= ${tn(MPA, 3)}$ kgf/cm$^2$: un término $c\sqrt{f'_c}$ en MPa equivale a $${tn(Math.sqrt(MPA), 3)}\,c\sqrt{f'_c}$ en kgf/cm$^2$ (por ejemplo, $0.17\sqrt{f'_c} \to ${tn(kR(0.17), 3)}\sqrt{f'_c}$). Criterio de structura: $\varepsilon_{ty} = f_y/E_s$ con $E_s = 2\,100\,000$ kgf/cm$^2$ (con $f_y = 4\,200$ kgf/cm$^2$ da 0.002, que 21.2.2.1 admite para el grado 420; con aceros más blandos el límite queda hasta 1\,\% bajo el de $E_s = 200\,000$ MPa).`);
+  // Solo en la memoria .tex (en pantalla no agrega un paso propio)
+  if (es19()) m.p(L`\textbf{ACI 318-19.} Sus coeficientes en MPa se convierten a kgf/cm$^2$ con 1 MPa $= 10$ kgf/cm$^2$ (criterio de cálculo usado en Chile), y $\varepsilon_{ty} = f_y/E_s$ con $E_s = 2\,100\,000$ kgf/cm$^2$ (criterio de structura).`, true);
 };
 // β1 — 10.2.7.3 (318-08, f'c en kgf/cm²) o Tabla 22.2.2.4.3 (318-19, f'c en MPa)
 const beta1 = (fc) => {
@@ -551,7 +551,7 @@ function flexion(cara, Mu, db, g, m) {
   const sMin = Math.max(2.5, db / 10);
   const cc = rec + de / 10;
   const fs = 2 / 3 * fy;
-  // Control de fisuración: 10-4 del 318-08 (edición en kgf/cm², 2800) o Tabla 24.3.2 del 318-19 (280 MPa = 2855 kgf/cm²)
+  // Control de fisuración: 10-4 del 318-08 (edición en kgf/cm², 2800) o Tabla 24.3.2 del 318-19 (280 MPa = 2800 kgf/cm²)
   const f280 = n19 ? 280 * MPA : 2800;
   const sMax = Math.min(38 * f280 / fs - 2.5 * cc, 30 * f280 / fs);
   const sCC = (anchoUtil - db / 10) / (Nb - 1);
