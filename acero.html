@@ -687,7 +687,7 @@ M_n &= M_p - (M_p - 0.7F_yS_x)\left(\frac{\lambda - \lambda_{pf}}{\lambda_{rf} -
 
   const Mn = Math.min(Mp, Mltb, Mflb);
   const phiMn = 0.9 * Mn;
-  memoGrupo(m, "Resistencia de diseño (resumen)", "ac-fx-cap", { abierto: true, resumen: `𝜙<sub>b</sub>M<sub>nx</sub> = ${fmt(phiMn / 100, 1)} kgf·m` });
+  memoGrupo(m, "Resistencia de diseño (resumen)", "ac-fx-cap", { resumen: `𝜙<sub>b</sub>M<sub>nx</sub> = ${fmt(phiMn / 100, 1)} kgf·m` });
   m.row("Resistencia nominal a flexión: M<sub>nx</sub>", `${fmt(Mn / 100, 1)} kgf·m`);
   m.row("<b>Resistencia de diseño a flexión: 𝜙<sub>b</sub>M<sub>nx</sub></b>", `<b>${fmt(phiMn / 100, 1)} kgf·m</b>`, "F1");
   m.p(L`\textbf{Capacidad de diseño eje fuerte} (mínimo de los estados límite aplicables):`);
@@ -763,7 +763,7 @@ function corte(s, Fy, m) {
   }
   const Vn = 0.6 * Fy * Aw * Cv1;
   const phiVn = phi * Vn;
-  memoGrupo(m, "Resistencia a corte (resumen)", "ac-v-cap", { abierto: true, resumen: `𝜙<sub>v</sub>V<sub>n</sub> = ${fmt(phiVn, 0)} kgf` });
+  memoGrupo(m, "Resistencia a corte (resumen)", "ac-v-cap", { resumen: `𝜙<sub>v</sub>V<sub>n</sub> = ${fmt(phiVn, 0)} kgf` });
   m.row("Factor de resistencia ; coeficiente de corte del alma: 𝜙<sub>v</sub> ; C<sub>v1</sub>", `${fmt(phi, 2)} ; ${fmt(Cv1, 3)}`, "G2.1");
   m.row("Resistencia nominal a corte: V<sub>n</sub>", `${fmt(Vn, 0)} kgf`, "G2-1");
   m.row("<b>Resistencia de diseño a corte: 𝜙<sub>v</sub>V<sub>n</sub></b>", `<b>${fmt(phiVn, 0)} kgf</b>`);
@@ -869,7 +869,7 @@ F_{ez} &= \left(\frac{\pi^2 E C_w}{L_{cz}^2} + G J\right)\frac{1}{I_x + I_y}\\
   }
   const Pn = Fcr * Ae;
   const phiPn = 0.9 * Pn;
-  memoGrupo(m, "Resistencia de diseño (resumen)", "ac-c-cap", { abierto: true, resumen: `𝜙<sub>c</sub>P<sub>n</sub> = ${fmt(phiPn, 0)} kgf` });
+  memoGrupo(m, "Resistencia de diseño (resumen)", "ac-c-cap", { resumen: `𝜙<sub>c</sub>P<sub>n</sub> = ${fmt(phiPn, 0)} kgf` });
   m.row("Resistencia nominal a compresión: P<sub>n</sub>", `${fmt(Pn, 0)} kgf`, Ae < s.A ? "E7-1" : "E3-1");
   m.row("<b>Resistencia de diseño a compresión: 𝜙<sub>c</sub>P<sub>n</sub></b>", `<b>${fmt(phiPn, 0)} kgf</b>`);
   m.p(L`\textbf{Resistencia a compresión:}`);

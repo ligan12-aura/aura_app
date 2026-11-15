@@ -908,7 +908,7 @@ function compresion(s, Fy, d, m, gid = "") {
   const Pn = Fcr * Ae, phiPn = 0.9 * Pn;
   if (d.Pu <= 0) e5no = false;   // sin compresión, la aplicabilidad de E5 no influye
   const dc = e5no ? Infinity : d.Pu / phiPn;
-  memoGrupo(m, "Resistencia de diseño (resumen)", `${k}-cap`, { abierto: true, resumen: `D/C = ${fmt(dc, 3)} ${tag(dc <= 1, dc <= 1 ? "CUMPLE" : "NO CUMPLE")}` });
+  memoGrupo(m, "Resistencia de diseño (resumen)", `${k}-cap`, { resumen: `D/C = ${fmt(dc, 3)} ${tag(dc <= 1, dc <= 1 ? "CUMPLE" : "NO CUMPLE")}` });
   m.row("<b>Resistencia de diseño en compresión: 𝜙<sub>c</sub>P<sub>n</sub></b>", `<b>${fmt(phiPn, 0)} kgf</b>`, Ae < s.A ? "E7-1" : "E3-1");
   m.eq(L`\phi_cP_n = 0.90\,F_{cr}A_${Ae < s.A ? "e" : "g"} = 0.90\cdot ${tn(Fcr, 1)}\cdot ${tn(Ae)} = ${tn(phiPn, 0)}${KG}`, Ae < s.A ? "E7-1" : "E3-1");
   m.row("<b>Razón P<sub>u</sub>/𝜙<sub>c</sub>P<sub>n</sub></b>", `<b>${fmt(dc, 3)}</b> ${tag(dc <= 1, dc <= 1 ? "CUMPLE" : "NO CUMPLE")}`);

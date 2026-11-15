@@ -530,7 +530,7 @@ function memoFlexion(m, f, d0, cara) {
   m.row("Separación calculada ; separación máxima → armadura adoptada: s ; s<sub>máx</sub>", `${fmt(f.sCalc, 1)} ; ${fmt(f.sMaxN, 1)} cm → <b>${barra(f.db, f.s)}</b>`, aci("7.6.5", "7.7.2.3"));
   m.eq(L`s \le \frac{100\,A_b}{A_s} = \frac{100\cdot ${tn(f.Ab, 3)}}{${tn(f.As, 2)}} = ${tn(f.sCalc, 1)}\ \mathrm{cm} \qquad s_{m\acute{a}x} = \min(3h;\ 45\ \mathrm{cm}) = ${tn(f.sMaxN, 1)}\ \mathrm{cm} \;\Rightarrow\; s = ${tn(f.s, 1)}\ \mathrm{cm}`, aci("7.6.5", "7.7.2.3"));
   if (f.s < 10) m.note(`Separación de ${fmt(f.s, 1)} cm: considere un diámetro mayor.`, L`Separación reducida (${tn(f.s, 1)} cm); se recomienda un diámetro mayor.`);
-  memoGrupo(m, "Verificación de capacidad (resumen)", `${k}-cap`, { abierto: true, resumen: `D/C = ${fmt(Math.max(f.dc, f.dcEt), 3)} ${tag(Math.max(f.dc, f.dcEt) <= 1 + 1e-9, Math.max(f.dc, f.dcEt) <= 1 + 1e-9 ? "Cumple" : "No cumple")}` });
+  memoGrupo(m, "Verificación de capacidad (resumen)", `${k}-cap`, { resumen: `D/C = ${fmt(Math.max(f.dc, f.dcEt), 3)} ${tag(Math.max(f.dc, f.dcEt) <= 1 + 1e-9, Math.max(f.dc, f.dcEt) <= 1 + 1e-9 ? "Cumple" : "No cumple")}` });
   m.row("Bloque de compresión ; eje neutro ; deformación del acero: a ; c ; ε<sub>t</sub>", `${fmt(f.a, 2)} ; ${fmt(f.c, 2)} cm ; ${fmt(f.et, 4)}`, aci("10.2.7", "22.2.2.4"));
   m.eq(L`a = \frac{A_s f_y}{0.85\,f'_c\,b} = ${tn(f.a, 2)}\ \mathrm{cm} \qquad c = \frac{a}{\beta_1} = \frac{${tn(f.a, 2)}}{${tn(f.b1, 3)}} = ${tn(f.c, 2)}\ \mathrm{cm} \qquad \varepsilon_t = 0.003\,\frac{d - c}{c} = ${tn(f.et, 4)}`, aci("10.2.7", "22.2.2.4"));
   const tracc = f.phi >= 0.9 - 1e-9, eTx = fmt(f.eMin, 4), eTt = tn(f.eMin, 4);

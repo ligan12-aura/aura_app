@@ -154,12 +154,14 @@ function capturarFormulario() {
   });
   return v;
 }
-// estricto (borrador): una lista no toma un valor que no está entre sus opciones (catálogo cambiado entre versiones)
+// estricto (borrador): una lista no toma un valor que no está entre sus opciones (catálogo cambiado entre versiones),
+// y los campos con data-sin-borrador quedan con su valor inicial (sí se restauran en un elemento de proyecto)
 function restaurarFormulario(v, estricto = false) {
   for (const [id, x] of Object.entries(v || {})) {
     const el = document.getElementById(id);
     if (!el || el.type === "file") continue;
     try {
+      if (estricto && el.dataset.sinBorrador !== undefined) continue;
       if (el.type === "checkbox") el.checked = !!x;
       else if (estricto && el.tagName === "SELECT" && ![...el.options].some(o => o.value === String(x))) continue;
       else el.value = x;

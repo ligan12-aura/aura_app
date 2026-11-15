@@ -930,7 +930,7 @@ ${pm.map(p => `${p.c.n}. ${nomTex(p.c.nombre)} & ${p.ext} & ${tn(T(p.c.P), 2)} &
         : L`V_c = \left(0.66\,\lambda_s\,\rho_w^{1/3}\sqrt{f'_c} + \frac{N_u}{6A_g}\right) b_w d = ${tn(T(r.vcc), 2)}\ \mathrm{tf}\ \ (\lambda_s = ${tn(r.ls, 3)})`, "Tabla 22.5.5.1");
       m.eq(L`N_u = ${tn(T(r.Nu), 2)}\ \mathrm{tf} \qquad \frac{N_u}{6A_g} = ${tn(r.nTerm / KMPA, 3)}\ \mathrm{MPa} \le 0.05f'_c \qquad V_c \le 0.42\sqrt{f'_c}\,b_w d`, "22.5.5.1.2");
     }
-    memoGrupo(m, "Refuerzo y resistencia de diseño (resumen)", `${kc}-vn`, { abierto: true, resumen: tagDC(Math.max(r.dc, r.dcLim)) });
+    memoGrupo(m, "Refuerzo y resistencia de diseño (resumen)", `${kc}-vn`, { resumen: tagDC(Math.max(r.dc, r.dcLim)) });
     m.row("Resistencia del refuerzo: V<sub>s</sub>", `${fmt(T(r.Vs), 2)} tf`, "22.5.8.5.3");
     m.eq(L`V_s = \frac{A_v f_{yt}\,d}{s} = \frac{${tn(r.Av, 2)}\cdot ${tn(r.fyt, 0)}\cdot ${tn(r.dd, 1)}}{${tn(s, 1)}} = ${tn(T(r.Vs), 2)}\ \mathrm{tf}`, "22.5.8.5.3");
     m.row(`Resistencia de diseño: 𝜙V<sub>n</sub> ≥ V<sub>u</sub> = ${fmt(T(r.Vu), 2)} tf`, `${fmt(T(r.phiVn), 2)} tf ${tagDC(r.dc)}`, "22.5.1.1");
@@ -1072,7 +1072,7 @@ ${pm.map(p => `${p.c.n}. ${nomTex(p.c.nombre)} & ${p.ext} & ${tn(T(p.c.P), 2)} &
       m.eq(L`s_o = 100 + \frac{350 - h_x}{3} = 100 + \frac{350 - ${tn(hx * 10, 0)}}{3} \Rightarrow ${tn(so * 10, 0)}\ \mathrm{mm}\ (100 \le s_o \le 150) \qquad s_{m\acute{a}x} = \min(${tn(S.dimMin / 4, 1)};\ ${tn(6 * d.db, 1)};\ ${tn(so, 1)}) = ${tn(sLim, 1)}\ \mathrm{cm}`, "18.7.5.3");
       ck("Separación en ℓo", L`${tn(d.s0, 1)} cm`, L`${tn(sLim, 1)} cm`, d.s0 / sLim, "Separación en ℓo", "sis");
       const kn = nl / (nl - 2);
-      memoGrupo(m, "Cuantía de confinamiento A<sub>sh</sub>", "col-conf-ash", { abierto: true });
+      memoGrupo(m, "Cuantía de confinamiento A<sub>sh</sub>", "col-conf-ash");
       for (const [eje, nleg, bc] of [["x", d.nlx, S.bcy], ["y", d.nly, S.bcx]]) {
         const Ash = nleg * S.Abt, req = Math.max(0.3 * (S.Ag / S.Ach - 1) * d.fc / fytC, 0.09 * d.fc / fytC, alta ? 0.2 * kf * kn * PuE / (fytC * S.Ach) : 0);
         const prov = Ash / (d.s0 * bc), dc = req / prov;
@@ -1093,7 +1093,7 @@ ${pm.map(p => `${p.c.n}. ${nomTex(p.c.nombre)} & ${p.ext} & ${tn(T(p.c.P), 2)} &
       m.row("Separación en ℓ<sub>o</sub> ≤ mín(D/4 ; 6d<sub>b</sub> ; s<sub>o</sub>)", `${fmt(d.s0, 1)} ≤ ${fmt(sLim, 1)} cm ${tagDC(d.s0 / sLim)}`, "18.7.5.3");
       ck("Separación en ℓo", L`${tn(d.s0, 1)} cm`, L`${tn(sLim, 1)} cm`, d.s0 / sLim, "Separación en ℓo", "sis");
       const rhos = 4 * S.Abt / (S.Dc * d.s0);
-      memoGrupo(m, "Cuantía volumétrica de confinamiento", "col-conf-rhos", { abierto: true });
+      memoGrupo(m, "Cuantía volumétrica de confinamiento", "col-conf-rhos");
       const req = Math.max(0.45 * (S.Ag / S.Ach - 1) * d.fc / fytC, 0.12 * d.fc / fytC, alta ? 0.35 * kf * PuE / (fytC * S.Ach) : 0);
       m.row("Cuantía volumétrica en ℓ<sub>o</sub>: ρ<sub>s</sub> ≥ requerida", `${fmt(rhos, 4)} ≥ ${fmt(req, 4)} ${tagDC(req / rhos)}`, "Tabla 18.7.5.4");
       m.eq(L`\rho_s = ${tn(rhos, 4)} \ \ge\ \max\left(0.45\left(\frac{A_g}{A_{ch}} - 1\right)\frac{f'_c}{f_{yt}};\ 0.12\frac{f'_c}{f_{yt}}${alta ? L`;\ 0.35k_f\frac{P_u}{f_{yt}A_{ch}}` : ""}\right) = ${tn(req, 4)}`, "Tabla 18.7.5.4");

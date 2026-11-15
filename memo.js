@@ -189,7 +189,7 @@ async function dibujarTex(raiz) {
 
 // ---------------------------------------------------------------------------
 // Acordeones: bloques del procedimiento que se calculan juntos (por ejemplo "Armadura requerida").
-// memoGrupo(m, titulo, clave, { abierto, resumen }) abre un bloque que abarca lo que sigue hasta el próximo
+// memoGrupo(m, titulo, clave, { resumen }) abre un bloque que abarca lo que sigue hasta el próximo
 // bloque o título (h3/h4). En pantalla es un <details class="acord"> con sus filas y, justo debajo, sus
 // ecuaciones a la vista; en el .tex, un \subsubsection*. Devuelve el marcador: se le puede asignar `resumen`
 // (HTML del encabezado, p. ej. el D/C) después de calcular. Con un memo nulo (sin `out`) no hace nada.
@@ -201,7 +201,9 @@ function memoGrupo(m, titulo, clave, op = {}) {
   m.out.push(gr);
   return gr;
 }
-const acordAbiertos = new Map();          // clave → abierto (lo que el usuario abrió o cerró), recordado al recalcular
+// clave → abierto (lo que el usuario abrió o cerró), recordado al recalcular. Al cargar la página o cambiar de
+// programa (evento "aura:programa" de lateral.js) se olvida y todos los acordeones parten cerrados.
+const acordAbiertos = new Map();
 function acordeonHTML(gr, items) {
   if (!items.length) return "";             // bloque sin contenido (por ejemplo, una sección sin elementos que clasificar)
   let cuerpo = "", filas = "", tex = "";
@@ -214,7 +216,7 @@ function acordeonHTML(gr, items) {
   }
   tabla(); eqs();
   const clave = String(gr.clave ?? gr.grupo).replace(/"/g, "");
-  const abierto = acordAbiertos.has(clave) ? acordAbiertos.get(clave) : !!gr.abierto;
+  const abierto = acordAbiertos.get(clave) === true;
   return `<details class="acord" data-clave="${clave}"${abierto ? " open" : ""}><summary><span class="acord-t">${gr.grupo}</span>${gr.resumen ? `<span class="acord-r">${gr.resumen}</span>` : ""}</summary><div class="acord-c">${cuerpo}</div></details>`;
 }
 
@@ -315,6 +317,14 @@ document.addEventListener("DOMContentLoaded", () => {
       tarde = setTimeout(() => cont.querySelectorAll("details.acord").forEach((d) => dibujarTex(d)), 400);
     }).observe(cont, { childList: true });
   });
+});
+
+// Al cambiar de programa en la misma página (viga ↔ losa, tipo de conexión…), los desplegables vuelven a cerrarse
+document.addEventListener("aura:programa", () => {
+  acordAbiertos.clear();
+  for (const k of Object.keys(abiertos)) delete abiertos[k];
+  document.querySelectorAll(".memo details.acord[open]").forEach((d) => { d.dataset.auto = "1"; d.open = false; });
+  document.querySelectorAll(".memo .paso.abierto").forEach((p) => alternarPaso(p, false));
 });
 
 // Acordeones: se recuerda si el usuario los abrió o cerró y sus ecuaciones se dibujan al abrirlos

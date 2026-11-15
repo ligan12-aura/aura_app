@@ -211,11 +211,11 @@
         <fieldset>
           <legend>Armadura</legend>
           <div class="row2">
-            <div><label for="vdbInf">𝜙 barra inferior <span class="unit">[mm]</span></label><select id="vdbInf" class="barras"></select></div>
-            <div><label for="vdbSup">𝜙 barra superior <span class="unit">[mm]</span></label><select id="vdbSup" class="barras"></select></div>
+            <div><label for="vdbInf">𝜙 barra inferior <span class="unit">[mm]</span></label><select id="vdbInf" class="barras" data-sin-borrador></select></div>
+            <div><label for="vdbSup">𝜙 barra superior <span class="unit">[mm]</span></label><select id="vdbSup" class="barras" data-sin-borrador></select></div>
           </div>
           <div class="row2">
-            <div><label for="vde">𝜙 estribo <span class="unit">[mm]</span></label><select id="vde"></select></div>
+            <div><label for="vde">𝜙 estribo <span class="unit">[mm]</span></label><select id="vde" data-sin-borrador></select></div>
             <div><label for="vramas">N° de ramas</label><input id="vramas" type="number" step="1" min="2" value="2"></div>
           </div>
           <details class="ayuda">
@@ -579,7 +579,7 @@ function flexion(cara, Mu, db, g, m) {
   const okEt = et >= eMin - 1e-12;
   const dc = phiMn > 0 ? Mu / phiMn : Infinity;   // sin solución con armadura simple no hay capacidad
   const ok = resuelve && okRho && okSmin && okSmax && okEt && dc <= 1;
-  memoGrupo(m, "Verificación de capacidad (resumen)", `${cara}-cap`, { abierto: true, resumen: `D/C = ${fmt(dc, 3)} ${okTxt(ok)}` });
+  memoGrupo(m, "Verificación de capacidad (resumen)", `${cara}-cap`, { resumen: `D/C = ${fmt(dc, 3)} ${okTxt(ok)}` });
   m.row("Profundidad del bloque de compresión ; eje neutro: a ; c", `${fmt(a, 2)} ; ${fmt(c, 2)} cm`, refN("10.2.7", "22.2.2.4"));
   m.row("Deformación del acero en tracción ; factor de reducción: ε<sub>t</sub> ; 𝜙", `${fmt(et, 4)} ${tag(okEt, okEt ? "cumple" : "no cumple")} ; ${fmt(phi, 3)}`, refN("10.3.5 / 9.3.2", "9.3.3.1 / Tabla 21.2.2"));
   m.row("<b>Resistencia de diseño a flexión: 𝜙M<sub>n</sub></b>", `<b>${fmt(phiMn / 100, 1)} kgf·m</b>`);
@@ -710,7 +710,7 @@ function corte(Vu, g, d, dbMin, criterio, m) {
   const VsP = ramas * Abe * fy * d / s;
   const phiVn = phi * (Vc + VsP);
   const dc = Vu / phiVn;
-  memoGrupo(m, "Verificación de capacidad (resumen)", "v-cap", { abierto: true, resumen: `D/C = ${fmt(dc, 3)} ${okTxt(dc <= 1 && okVs)}` });
+  memoGrupo(m, "Verificación de capacidad (resumen)", "v-cap", { resumen: `D/C = ${fmt(dc, 3)} ${okTxt(dc <= 1 && okVs)}` });
   m.row("<b>Estribo adoptado</b>", `<b>E 𝜙${de} @ ${s} cm</b> (${ramas} ramas)`);
   m.row("Corte resistido por los estribos adoptados: V<sub>s,disp</sub>", `${fmt(VsP, 0)} kgf`, refAvs);
   m.row("<b>Resistencia de diseño a corte: 𝜙V<sub>n</sub></b>", `<b>${fmt(phiVn, 0)} kgf</b>`);
@@ -932,11 +932,8 @@ function calcularViga() {
 
   m.h(es19() ? "Verificación a flexión — ACI 318-19, Capítulos 9 y 22" : "Verificación a flexión — Capítulo 10");
   notaUnidades19(m);
-  const origen = (a, p) => (a ? "automático" : `elegido por el usuario (automático: 𝜙${p})`);
-  m.row("Diámetros: inferior ; superior ; estribo",
-    `𝜙${g.dbInf} ${origen(auto.inf, prop.inf)} ; 𝜙${g.dbSup} ${origen(auto.sup, prop.sup)} ; 𝜙${g.de} ${origen(auto.de, prop.de)}`);
   const usoTex = (a, d, p) => L`$\phi${d}$ (${a ? "automático" : L`elegido por el usuario; el automático sería $\phi${p}$`})`;
-  m.p(L`\textbf{Selección de diámetros.} Barras: se usa el diámetro, entre $\phi10$ y $\phi36$, que cubre el área requerida con la menor área dispuesta y cabe en una capa (${refN("7.6.1", "25.2.1")}). Estribos: el menor entre $\phi8$ y $\phi12$ que deja al menos 10 cm entre estribos. Las demás verificaciones se hacen a continuación. Se utilizan: barras inferiores ${usoTex(auto.inf, g.dbInf, prop.inf)}, superiores ${usoTex(auto.sup, g.dbSup, prop.sup)} y estribos ${usoTex(auto.de, g.de, prop.de)}.`);
+  m.p(L`\textbf{Selección de diámetros.} Barras: se usa el diámetro, entre $\phi10$ y $\phi36$, que cubre el área requerida con la menor área dispuesta y cabe en una capa (${refN("7.6.1", "25.2.1")}). Estribos: el menor entre $\phi8$ y $\phi12$ que deja al menos 10 cm entre estribos. Las demás verificaciones se hacen a continuación. Se utilizan: barras inferiores ${usoTex(auto.inf, g.dbInf, prop.inf)}, superiores ${usoTex(auto.sup, g.dbSup, prop.sup)} y estribos ${usoTex(auto.de, g.de, prop.de)}.`, true);   // solo en la memoria .tex
   const inf = flexion("inf", g.Mpos, g.dbInf, g, m);
   const sup = flexion("sup", g.Mneg, g.dbSup, g, m);
   m.h(es19() ? "Verificación a corte — ACI 318-19, Capítulos 9 y 22" : "Verificación a corte — Capítulo 11");
@@ -1288,7 +1285,7 @@ function disenoFaja(t, Mu, db, d, g, dosDir, m) {
   m.p(L`\textbf{Espaciamiento.} Con barras $\phi${db}$ ($A_b = ${tn(Ab, 3)}$ cm$^2$), el espaciamiento que entrega el área requerida y el máximo normativo son:`, true);
   m.eq(L`s = \frac{b\,A_b}{A_s} = \frac{100\cdot ${tn(Ab, 3)}}{${tn(As, 3)}} = ${tn(sCalc, 2)}${CM} \qquad s_{\max} = \min(${dosDir ? "2h" : "3h"},\ 45) = \min(${tn((dosDir ? 2 : 3) * e, 1)},\ 45) = ${tn(sMax, 1)}${CM}`, refSmaxLosa(dosDir));
   m.p(L`Se adopta \textbf{$\phi${db}$ @ ${s} cm} ($A_s = ${tn(AsP, 2)}$ cm$^2$/m). Verificación de capacidad:`);
-  memoGrupo(m, "Verificación de capacidad (resumen)", `${k}-cap`, { abierto: true, resumen: `D/C = ${fmt(dc, 3)} ${okTxt(resuelve && dc <= 1 && okEt)}` });
+  memoGrupo(m, "Verificación de capacidad (resumen)", `${k}-cap`, { resumen: `D/C = ${fmt(dc, 3)} ${okTxt(resuelve && dc <= 1 && okEt)}` });
   m.row("Deformación del acero ; resistencia de diseño ; razón D/C: ε<sub>t</sub> ; 𝜙M<sub>n</sub> ; D/C", `${fmt(et, 4)} ; ${fmt(phiMn / 100, 1)} kgf·m/m ; <b>${fmt(dc, 3)}</b> ${okTxt(dc <= 1 && okEt)}`, refN("10.3.5", dosDir ? "8.3.3.1" : "7.3.3.1"));
   m.eq(L`a = \frac{A_s f_y}{0.85 f'_c b} = \frac{${tn(AsP, 2)}\cdot ${tn(fy, 0)}}{0.85\cdot ${tn(fc, 0)}\cdot 100} = ${tn(a, 3)}${CM} \qquad c = \frac{a}{\beta_1} = \frac{${tn(a, 3)}}{${tn(beta1(fc), 3)}} = ${tn(c, 3)}${CM}`);
   m.eq(L`\varepsilon_t = 0.003\frac{d - c}{c} = 0.003\cdot\frac{${tn(d, 2)} - ${tn(c, 3)}}{${tn(c, 3)}} = ${tn(et, 4)} \;${okEt ? GE : "<"}\; ${tn(eMin, 4)} \;\Rightarrow\; \phi = ${tn(phi, 2)}`, refN("10.3.5", dosDir ? "8.3.3.1" : "7.3.3.1"));
@@ -1901,7 +1898,13 @@ function init() {
     actualizarUnidades(); calcularViga();
   });
   const panelViga = document.querySelector('[data-panel="viga"]');
-  panelViga.addEventListener("input", (e) => { if (e.target.tagName === "INPUT") calcularViga(); });
+  // Diámetros: parten en «Automático» (no se toman del borrador) y vuelven a él al cambiar la geometría
+  const GEOM_VIGA = ["vb", "vh", "vrec"];
+  panelViga.addEventListener("input", (e) => {
+    if (e.target.tagName !== "INPUT") return;
+    if (GEOM_VIGA.includes(e.target.id)) for (const id of ["vdbInf", "vdbSup", "vde"]) $(id).value = "auto";
+    calcularViga();
+  });
   panelViga.addEventListener("change", (e) => { if (e.target.tagName === "SELECT" && e.target.id !== "vunidad") calcularViga(); });
   document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => setElemento(b.dataset.el)));
   $("normaACI").addEventListener("change", () => { calcularViga(); calcularLosa(); });

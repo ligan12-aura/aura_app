@@ -215,6 +215,8 @@
         btn.classList.add("tiene-actual");
         if (actual !== actualPrevio) ponerRama(btn, btn.nextElementSibling, true);
       }
+      // Cambio de programa dentro de la página: memo.js cierra los desplegables del procedimiento
+      if (actualPrevio && actual !== actualPrevio) document.dispatchEvent(new CustomEvent("aura:programa"));
       actualPrevio = actual;
     };
     marcarActual();

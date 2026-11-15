@@ -668,7 +668,7 @@ function verificar(d, m) {
   memoGrupo(m, "Perímetro crítico", "zap-p-bo");
   m.row("Perímetro crítico ; relación de lados ; factor de posición: b<sub>0</sub> ; β ; α<sub>s</sub>", `${fmt(bo, 1)} cm ; ${fmt(beta, 2)} ; ${ALFA_S}`, aci("11.11.2.1", "22.6.4 y 22.6.5.3"));
   m.eq(L`b_0 = 2\left((a + d) + (b + d)\right) = ${tn(bo, 1)}\ \mathrm{cm} \qquad \beta = \frac{\text{lado mayor}}{\text{lado menor}} = ${tn(beta, 2)} \qquad \alpha_s = ${ALFA_S}`, aci("11.11.2.1", "22.6.4 y 22.6.5.3"));
-  memoGrupo(m, "Resistencia del hormigón (resumen)", "zap-p-vc", { abierto: true, resumen: tagDC(dcP) });
+  memoGrupo(m, "Resistencia del hormigón (resumen)", "zap-p-vc", { resumen: tagDC(dcP) });
   if (n19) m.p(L`Según el ACI 318-19 (Tabla 22.6.5.2), $v_c$ es el menor entre $0.33\lambda_s\lambda\sqrt{f'_c}$, $(0.17 + 0.33/\beta)\lambda_s\lambda\sqrt{f'_c}$ y $(0.17 + 0.083\,\alpha_s d/b_0)\lambda_s\lambda\sqrt{f'_c}$ (MPa), con $\lambda_s = 1$ en zapatas aisladas (13.2.6.2). En kgf/cm$^2$ los coeficientes son $${tn(kR(0.33), 3)}$, $${tn(kR(0.17), 3)}$ y $${tn(kR(0.083), 3)}$.`);
   m.row("Resistencia según la relación de lados: V<sub>c1</sub>", `${fmt(T(Vc1), 2)} tf`, aci("11-31", "Tabla 22.6.5.2(b)"));
   m.row("Resistencia según el perímetro crítico: V<sub>c2</sub>", `${fmt(T(Vc2), 2)} tf`, aci("11-32", "Tabla 22.6.5.2(c)"));
