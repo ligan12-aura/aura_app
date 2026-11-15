@@ -205,6 +205,25 @@ function memoGrupo(m, titulo, clave, op = {}) {
 // clave → abierto (lo que el usuario abrió o cerró), recordado al recalcular. Al cargar la página o cambiar de
 // programa (evento "aura:programa" de lateral.js) se olvida y todos los acordeones parten cerrados.
 const acordAbiertos = new Map();
+// Símbolo junto al valor (cada página lo activa con window.AURA_SIMBOLO_EN_VALOR): la fila
+// "Momento último: M<sub>u</sub>" | "5 470.0 kgf·m" se muestra como "Momento último" | "M<sub>u</sub> = 5 470.0 kgf·m",
+// con el símbolo destacado. Solo si la etiqueta termina en un símbolo único (sin « ; » ni condiciones como ≤).
+function simboloEnValor(it) {
+  if (!window.AURA_SIMBOLO_EN_VALOR) return it;
+  let k = String(it.k), negrita = false;
+  const mb = k.match(/^<b>([\s\S]*)<\/b>$/);
+  if (mb) { k = mb[1]; negrita = true; }
+  const i = k.lastIndexOf(": ");
+  if (i < 0) return it;
+  const desc = k.slice(0, i), sim = k.slice(i + 2), v = String(it.v);
+  const simTexto = sim.replace(/<\/?(sub|sup|b|i)>/g, "");
+  if (!desc || !sim || / ; |[≤≥<>=]/.test(simTexto) || v.includes(" ; ")) return it;
+  return { ...it, k: negrita ? `<b>${desc}</b>` : desc, v: `<span class="simv">${sim}</span> = ${v}` };
+}
+function filaHTML(it, antes = "") {
+  const f = simboloEnValor(it);
+  return `<tr><td class="k">${antes}${f.k}${f.ref ? `<span class="ref">${f.ref}</span>` : ""}</td><td class="v">${f.v}</td></tr>`;
+}
 function acordeonHTML(gr, items) {
   if (!items.length) return "";             // bloque sin contenido (por ejemplo, una sección sin elementos que clasificar)
   let cuerpo = "", filas = "", tex = "";
@@ -213,7 +232,7 @@ function acordeonHTML(gr, items) {
   for (const it of items) {
     if (typeof it === "string") { tabla(); eqs(); cuerpo += it; }
     else if (it.tex !== undefined) { tabla(); tex += it.eq ? texEcuacion(it.tex) : `<p>${texParrafo(it.tex)}</p>`; }
-    else { eqs(); filas += `<tr><td class="k">${it.k}${it.ref ? `<span class="ref">${it.ref}</span>` : ""}</td><td class="v">${it.v}</td></tr>`; }
+    else { eqs(); filas += filaHTML(it); }
   }
   tabla(); eqs();
   const clave = String(gr.clave ?? gr.grupo).replace(/"/g, "");
@@ -263,7 +282,7 @@ function memoHTML(out) {
       tex += it.eq ? texEcuacion(it.tex) : `<p>${texParrafo(it.tex)}</p>`;
     } else {
       const flecha = '<span class="chev">▸</span>';
-      filas += `<tr><td class="k">${filas ? "" : flecha}${it.k}${it.ref ? `<span class="ref">${it.ref}</span>` : ""}</td><td class="v">${it.v}</td></tr>`;
+      filas += filaHTML(it, filas ? "" : flecha);
     }
   }
   cerrar();
@@ -424,6 +443,7 @@ document.addEventListener("DOMContentLoaded", () => {
   .eqs .katex { font-size: 1.08em; }
   .kref { color: var(--muted, #5f6b7a); font-size: 12px; white-space: nowrap; }
   input.invalido, select.invalido { border-color: #c0392b !important; background: #fdecea !important; }
+  td.v .simv { color: var(--acento, var(--head, #00008B)); font-weight: 700; }
   .atenuado { opacity: .35; filter: grayscale(.6); transition: opacity .15s; }
   @media print { .atenuado { display: none !important; } }   /* no se imprime un cálculo anterior a los datos */
   .km.crudo { font-family: Consolas, monospace; font-size: 12px; white-space: pre-wrap; }

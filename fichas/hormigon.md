@@ -14,16 +14,18 @@ Documentos: ACI 318-08 (español); Manual ICH (hormigón); ACI 318M-19 (inglés,
 
 | Parte del cálculo | Resultado en structura | Referencia | Documento | Pág. PDF |
 |---|---|---|---|---|
-|  | Momento último ; momento nominal requerido: Mu ; Mn | 9.3.2.1 | ACI 318-08 (español) | 126 |
+|  | Momento nominal requerido: Mn | 9.3.2.1 | ACI 318-08 (español) | 126 |
 |  | Cuantía mínima: ρmín | 10.5.1 | ACI 318-08 (español) | 145 |
-|  | Cuantía máxima ; referencia 0.75 cuantía balanceada: ρmáx ; 0.75ρb | 10.3.5 | ACI 318-08 (español) | 143 |
+|  | Cuantía máxima: ρmáx | 10.3.5 | ACI 318-08 (español) | 143 |
 |  | Espaciamiento libre entre barras: s ≥ smín | 7.6.1 | ACI 318-08 (español) | 96 |
 |  | Espaciamiento entre ejes (control de fisuración): s ≤ smáx | 10.6.4 | ACI 318-08 (español) | 146 |
-|  | Profundidad del bloque de compresión ; eje neutro: a ; c | 10.2.7 | ACI 318-08 (español) | 140 |
-|  | Deformación del acero en tracción ; factor de reducción: εt ; φ | 10.3.5 | ACI 318-08 (español) | 143 |
-|  | Deformación del acero en tracción ; factor de reducción: εt ; φ | 9.3.2 | ACI 318-08 (español) | 126 |
-|  | Altura útil ; factor de reducción por corte: d ; φ | 9.3.2.3 | ACI 318-08 (español) | 127 |
-|  | Resistencia al corte del hormigón: Vc ; φVc | 11.2.1.1 | ACI 318-08 (español) | 168 |
+|  | Profundidad del bloque de compresión: a | 10.2.7 | ACI 318-08 (español) | 140 |
+|  | Eje neutro: c | 10.2.7 | ACI 318-08 (español) | 140 |
+|  | Deformación del acero en tracción: εt | 10.3.5 | ACI 318-08 (español) | 143 |
+|  | Factor de reducción: φ | 9.3.2 | ACI 318-08 (español) | 126 |
+|  | Factor de reducción por corte: φ | 9.3.2.3 | ACI 318-08 (español) | 127 |
+|  | Resistencia al corte del hormigón: Vc | 11.2.1.1 | ACI 318-08 (español) | 168 |
+|  | Resistencia de diseño del hormigón: φVc | 11.2.1.1 | ACI 318-08 (español) | 168 |
 |  | Criterio sísmico: Vc = 0 (Vu debe ser el corte Ve de 21.5.4.1) | 21.5.4.2 | ACI 318-08 (español) | 355 |
 |  | Corte requerido al acero: Vs | 11.4.7.1 | ACI 318-08 (español) | 177 |
 |  | Límite del corte resistido por el acero: Vs ≤ Vs,máx | 11.4.7.9 | ACI 318-08 (español) | 179 |

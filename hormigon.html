@@ -96,7 +96,7 @@
   .verdict.ok { background: var(--ok-bg); color: var(--ok); }
   .verdict.bad { background: var(--bad-bg); color: var(--bad); }
   .armado { margin: 0 16px 6px; display: flex; gap: 10px; flex-wrap: wrap; }
-  .armado span { background: #eef2f6; border-radius: var(--r-l); padding: 4px 12px; font-size: 13px; font-weight: 600; color: var(--head); }
+  .armado span { background: var(--sup-3, #eef2f6); border: 1px solid var(--linea, transparent); border-radius: var(--r-l); padding: 4px 12px; font-size: 13px; font-weight: 600; color: var(--acento, var(--head)); }
   .note { margin: 8px 0; padding: 8px 10px; border-radius: var(--r-m); background: var(--warn-bg); color: var(--warn); font-size: 12.5px; }
 
   .memo { padding: 4px 16px 16px; }
@@ -451,6 +451,7 @@ const NOMEMO = { h() {}, sub() {}, row() {}, note() {}, eq() {}, p() {} };
 // Versión del código: ACI 318-08 (vigente en Chile, por defecto) o ACI 318-19 (casilla normaACI)
 // ---------------------------------------------------------------------------
 const es19 = () => $("normaACI")?.value === "19";
+window.AURA_SIMBOLO_EN_VALOR = true;   // memo.js: el símbolo de cada fila se muestra junto a su valor
 const NORMA = () => (es19() ? "ACI 318-19" : "ACI 318-08");
 const refN = (r08, r19) => (es19() ? r19 : r08);           // cláusula según la versión elegida
 // El ACI 318-19 (318M) está en MPa. Se convierte con 1 MPa = 10 kgf/cm² (criterio de cálculo usado en Chile), así que c·√f'c[MPa] = 3.162·c·√f'c[kgf/cm²]:
@@ -505,7 +506,8 @@ function flexion(cara, Mu, db, g, m) {
   m.row("Factor del bloque de compresiones: β<sub>1</sub>", fmt(b1, 3), refB1);
   m.row("Cuantía mínima: ρ<sub>mín</sub>", fmt(rmin, 5), refMin);
   m.row(`Cuantía máxima (ε<sub>t</sub> = ${fmt(eMin, 4)}): ρ<sub>máx</sub>`, fmt(rmax, 5), refMax);
-  m.row("Cuantía balanceada ; referencia 0.75ρ<sub>b</sub>: ρ<sub>b</sub>", `${fmt(rb, 5)} ; ${fmt(0.75 * rb, 5)}`);
+  m.row("Cuantía balanceada: ρ<sub>b</sub>", fmt(rb, 5));
+  m.row("Tres cuartos de la cuantía balanceada (referencial): 0.75ρ<sub>b</sub>", fmt(0.75 * rb, 5));
   m.p(L`\textbf{Altura útil.} Distancia desde la fibra extrema comprimida al centroide de la armadura, con barras $\phi${db}$ y estribo $\phi${de}$:`);
   m.eq(L`d = h - r_{ec} - \phi_e - \frac{d_b}{2} = ${tn(h, 1)} - ${tn(rec, 1)} - ${tn(de / 10, 1)} - \frac{${tn(db / 10, 1)}}{2} = ${tn(d)}${CM}`);
   m.p(L`\textbf{Cuantías límite.} La cuantía no debe ser inferior a la mínima (que evita una falla frágil al fisurarse el hormigón) ni superior a la máxima (que asegura $\varepsilon_t \ge ${tn(eMin, 4)}$${n19 ? L`, es decir, una sección controlada por tracción con $\varepsilon_t \ge \varepsilon_{ty} + 0.003$ (9.3.3.1)` : ""} y una falla dúctil). Con $\beta_1 = ${tn(b1, 3)}$ (${refB1}):`);
@@ -523,13 +525,16 @@ function flexion(cara, Mu, db, g, m) {
   const okRho = rho <= rmax;
   const Asreq = rhoD * b * d;
   memoGrupo(m, "Armadura requerida", `${cara}-req`);
-  m.row("Momento último ; momento nominal requerido: M<sub>u</sub> ; M<sub>n</sub>", `${fmt(Mu / 100, 1)} ; ${fmt(Mn / 100, 1)} kgf·m`, refN("9.3.2.1", "21.2.1"));
-  m.row("Momento reducido ; profundidad relativa del bloque: μ ; α", `${fmt(mu, 4)} ; ${fmt(alpha, 4)}`);
+  m.row("Momento último: M<sub>u</sub>", `${fmt(Mu / 100, 1)} kgf·m`);
+  m.row("Momento nominal requerido: M<sub>n</sub>", `${fmt(Mn / 100, 1)} kgf·m`, refN("9.3.2.1", "Tabla 21.2.1"));
+  m.row("Momento reducido: μ", fmt(mu, 4));
+  m.row("Profundidad relativa del bloque: α", fmt(alpha, 4));
   m.row("Cuantía requerida: ρ", fmt(rho, 5));
-  m.row("Cuantía de diseño ; armadura requerida: ρ ; A<sub>s,req</sub>", `${fmt(rhoD, 5)} ; ${fmt(Asreq, 3)} cm²`);
+  m.row("Cuantía de diseño: ρ<sub>d</sub>", fmt(rhoD, 5));
+  m.row("Armadura requerida: A<sub>s,req</sub>", `${fmt(Asreq, 3)} cm²`);
   m.row("Control de cuantía máxima: ρ ≤ ρ<sub>máx</sub>", tag(okRho, okRho ? "cumple" : "requiere armadura doble o mayor sección"), refMax);
   m.p(L`\textbf{Cuantía requerida.} Se supone sección controlada por tracción ($\phi = 0.90$, se verifica en la capacidad), por lo que el momento nominal requerido es:`);
-  m.eq(L`M_n = \frac{${Msym}}{\phi} = \frac{${tn(Mu, 0)}}{0.9} = ${tn(Mn, 0)}${KGCM}`, refN("9.3.2.1", "21.2.1"));
+  m.eq(L`M_n = \frac{${Msym}}{\phi} = \frac{${tn(Mu, 0)}}{0.9} = ${tn(Mn, 0)}${KGCM}`, refN("9.3.2.1", "Tabla 21.2.1"));
   m.p(L`Del equilibrio de la sección con el bloque rectangular de compresiones se obtienen el momento reducido $\mu$, la profundidad relativa del bloque $\alpha$ y la cuantía $\rho$:`, true);
   m.eq(L`\mu = \frac{M_n}{0.85\,f'_c\,b\,d^2} = \frac{${tn(Mn, 0)}}{0.85\cdot ${tn(fc, 0)}\cdot ${tn(b, 1)}\cdot ${tn(d)}^2} = ${tn(mu, 4)}`);
   if (resuelve) {
@@ -557,7 +562,8 @@ function flexion(cara, Mu, db, g, m) {
   const sCC = (anchoUtil - db / 10) / (Nb - 1);
   const okSmin = sLibre >= sMin, okSmax = sCC <= sMax;
   memoGrupo(m, "Disposición de armadura", `${cara}-disp`);
-  m.row(`Área de una barra 𝜙${db} ; número de barras: A<sub>b</sub> ; N<sub>b</sub>`, `${fmt(Ab, 3)} cm² ; ${Nb}𝜙${db}`);
+  m.row(`Área de una barra 𝜙${db}: A<sub>b</sub>`, `${fmt(Ab, 3)} cm²`);
+  m.row("Número de barras: N<sub>b</sub>", `${Nb}𝜙${db}`);
   m.row("Armadura dispuesta: A<sub>s,disp</sub>", `${fmt(As, 3)} cm²`);
   m.row("Espaciamiento libre entre barras: s ≥ s<sub>mín</sub>", `${fmt(sLibre, 2)} ≥ ${fmt(sMin, 2)} cm ${tag(okSmin, okSmin ? "cumple" : "no cabe en una capa")}`, refSmin);
   m.row("Espaciamiento entre ejes (control de fisuración): s ≤ s<sub>máx</sub>", `${fmt(sCC, 2)} ≤ ${fmt(sMax, 2)} cm ${tag(okSmax, okSmax ? "cumple" : "no cumple")}`, refSmax);
@@ -580,8 +586,10 @@ function flexion(cara, Mu, db, g, m) {
   const dc = phiMn > 0 ? Mu / phiMn : Infinity;   // sin solución con armadura simple no hay capacidad
   const ok = resuelve && okRho && okSmin && okSmax && okEt && dc <= 1;
   memoGrupo(m, "Verificación de capacidad (resumen)", `${cara}-cap`, { resumen: `D/C = ${fmt(dc, 3)} ${okTxt(ok)}` });
-  m.row("Profundidad del bloque de compresión ; eje neutro: a ; c", `${fmt(a, 2)} ; ${fmt(c, 2)} cm`, refN("10.2.7", "22.2.2.4"));
-  m.row("Deformación del acero en tracción ; factor de reducción: ε<sub>t</sub> ; 𝜙", `${fmt(et, 4)} ${tag(okEt, okEt ? "cumple" : "no cumple")} ; ${fmt(phi, 3)}`, refN("10.3.5 / 9.3.2", "9.3.3.1 / Tabla 21.2.2"));
+  m.row("Profundidad del bloque de compresión: a", `${fmt(a, 2)} cm`, refN("10.2.7", "22.2.2.4"));
+  m.row("Eje neutro: c", `${fmt(c, 2)} cm`, refN("10.2.7", "22.2.2.4"));
+  m.row("Deformación del acero en tracción: ε<sub>t</sub>", `${fmt(et, 4)} ${tag(okEt, okEt ? "cumple" : "no cumple")}`, refN("10.3.5", "9.3.3.1"));
+  m.row("Factor de reducción: 𝜙", fmt(phi, 3), refN("9.3.2", "Tabla 21.2.2"));
   m.row("<b>Resistencia de diseño a flexión: 𝜙M<sub>n</sub></b>", `<b>${fmt(phiMn / 100, 1)} kgf·m</b>`);
   m.row("<b>Razón demanda/capacidad en flexión: D/C</b>", `<b>${fmt(dc, 3)}</b> ${okTxt(dc <= 1)}`);
   m.p(L`\textbf{Verificación de la capacidad} con la armadura dispuesta $A_s = ${tn(As, 3)}$ cm$^2$. Se calculan la profundidad del bloque de compresión, el eje neutro y la deformación del acero, que confirma el factor $\phi$:`);
@@ -621,8 +629,10 @@ function corte(Vu, g, d, dbMin, criterio, m) {
   const phiVc = phi * Vc;
   const refVc = sis ? refN("21.5.4.2", "18.6.5.2") : refN("11.2.1.1", "Tabla 22.5.5.1"), refVsMax = refN("11.4.7.9", "22.5.1.2");
   memoGrupo(m, "Capacidad del hormigón", "v-hor");
-  m.row("Altura útil ; factor de reducción por corte: d ; 𝜙", `${fmt(d, 2)} cm ; 0.75`, refN("9.3.2.3", "21.2.1"));
-  m.row("Resistencia al corte del hormigón: V<sub>c</sub> ; 𝜙V<sub>c</sub>", `${fmt(Vc, 0)} ; ${fmt(phiVc, 0)} kgf${sis ? " (sísmico: V<sub>c</sub> = 0)" : ""}`, refVc);
+  m.row("Altura útil: d", `${fmt(d, 2)} cm`);
+  m.row("Factor de reducción por corte: 𝜙", "0.75", refN("9.3.2.3", "Tabla 21.2.1"));
+  m.row("Resistencia al corte del hormigón: V<sub>c</sub>", `${fmt(Vc, 0)} kgf${sis ? " (sísmico)" : ""}`, refVc);
+  m.row("Resistencia de diseño del hormigón: 𝜙V<sub>c</sub>", `${fmt(phiVc, 0)} kgf`, refVc);
   if (sis) {
     const [c0, c1] = n19 ? ["18.6.5.2", "18.6.5.1"] : ["21.5.4.2", "21.5.4.1"];
     m.note(`Criterio sísmico: se toma V<sub>c</sub> = 0 (${NORMA()} ${c0}). V<sub>u</sub> debe ser el corte de diseño V<sub>e</sub> de ${c1}, con los momentos probables M<sub>pr</sub> (1.25 f<sub>y</sub>) en los extremos más las cargas gravitacionales, que esta página no calcula.`,
@@ -748,7 +758,8 @@ function ganchos(g, m) {
   m.row("Diámetro interior de doblado: D", `${fmt(D, 2)} cm`, refD);
   m.row(`Extensión del gancho 135° ${tipo}: l<sub>ext</sub>`, `${fmt(ext, 2)} cm`, refExt);
   m.row("Largo de cada gancho: L<sub>g</sub>", `${fmt(Lg, 2)} cm`);
-  m.row("Largo total del estribo (eje) ; peso: L<sub>t</sub> ; W", `${fmt(Lt, 1)} cm ; ${fmt(peso, 3)} kg`);
+  m.row("Largo total del estribo (eje): L<sub>e</sub>", `${fmt(Lt, 1)} cm`);
+  m.row("Peso del estribo: W", `${fmt(peso, 3)} kg`);
   m.row(`Peso de estribos por metro de viga (@ ${s} cm)`, `${fmt(pesoMl, 2)} kg/m`);
   m.p(L`Los estribos cerrados se anclan con ganchos de 135° en sus extremos (${refN("7.11.3", "Tabla 25.3.2")}). Para el estribo $\phi${de}$ ($d_b = ${tn(dbe, 1)}$ cm):`);
   m.eq(L`D = ${de <= 16 ? 4 : 6}\,d_b = ${de <= 16 ? 4 : 6}\cdot ${tn(dbe, 1)} = ${tn(D)}${CM}`, refD);
