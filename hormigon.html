@@ -478,6 +478,7 @@ const phiEt = (et, fy) => {
 // (318-19 9.3.3.1 en vigas, 7.3.3.1 y 8.3.3.1 en losas)
 const etMin = (fy) => (es19() ? fy / ES + 0.003 : 0.004);
 const areaBarra = (dbmm) => Math.PI * (dbmm / 20) ** 2;
+const nPhi = (x) => String(+x.toFixed(3));                    // 𝜙 sin ceros de sobra (0.9; 0.812)
 
 // ---------------------------------------------------------------------------
 // Flexión — diseño de armadura y verificación de capacidad (Capítulo 10)
@@ -533,7 +534,7 @@ function flexion(cara, Mu, db, g, m) {
   m.row("Cuantía de diseño: ρ<sub>d</sub>", fmt(rhoD, 5));
   m.row("Armadura requerida: A<sub>s,req</sub>", `${fmt(Asreq, 3)} cm²`);
   m.row("Control de cuantía máxima: ρ ≤ ρ<sub>máx</sub>", tag(okRho, okRho ? "cumple" : "requiere armadura doble o mayor sección"), refMax);
-  m.p(L`\textbf{Cuantía requerida.} Se supone sección controlada por tracción ($\phi = 0.90$, se verifica en la capacidad), por lo que el momento nominal requerido es:`);
+  m.p(L`\textbf{Cuantía requerida.} Se supone sección controlada por tracción ($\phi = 0.9$, se verifica en la capacidad), por lo que el momento nominal requerido es:`);
   m.eq(L`M_n = \frac{${Msym}}{\phi} = \frac{${tn(Mu, 0)}}{0.9} = ${tn(Mn, 0)}${KGCM}`, refN("9.3.2.1", "Tabla 21.2.1"));
   m.p(L`Del equilibrio de la sección con el bloque rectangular de compresiones se obtienen el momento reducido $\mu$, la profundidad relativa del bloque $\alpha$ y la cuantía $\rho$:`, true);
   m.eq(L`\mu = \frac{M_n}{0.85\,f'_c\,b\,d^2} = \frac{${tn(Mn, 0)}}{0.85\cdot ${tn(fc, 0)}\cdot ${tn(b, 1)}\cdot ${tn(d)}^2} = ${tn(mu, 4)}`);
@@ -589,13 +590,13 @@ function flexion(cara, Mu, db, g, m) {
   m.row("Profundidad del bloque de compresión: a", `${fmt(a, 2)} cm`, refN("10.2.7", "22.2.2.4"));
   m.row("Eje neutro: c", `${fmt(c, 2)} cm`, refN("10.2.7", "22.2.2.4"));
   m.row("Deformación del acero en tracción: ε<sub>t</sub>", `${fmt(et, 4)} ${tag(okEt, okEt ? "cumple" : "no cumple")}`, refN("10.3.5", "9.3.3.1"));
-  m.row("Factor de reducción: 𝜙", fmt(phi, 3), refN("9.3.2", "Tabla 21.2.2"));
-  m.row("<b>Resistencia de diseño a flexión: 𝜙M<sub>n</sub></b>", `<b>${fmt(phiMn / 100, 1)} kgf·m</b>`);
-  m.row("<b>Razón demanda/capacidad en flexión: D/C</b>", `<b>${fmt(dc, 3)}</b> ${okTxt(dc <= 1)}`);
+  m.row("Factor de reducción: 𝜙", nPhi(phi), refN("9.3.2", "Tabla 21.2.2"));
+  m.row("Resistencia de diseño a flexión: 𝜙M<sub>n</sub>", `${fmt(phiMn / 100, 1)} kgf·m`);
+  m.row("Razón demanda/capacidad en flexión: D/C", `${fmt(dc, 3)} ${okTxt(dc <= 1)}`);
   m.p(L`\textbf{Verificación de la capacidad} con la armadura dispuesta $A_s = ${tn(As, 3)}$ cm$^2$. Se calculan la profundidad del bloque de compresión, el eje neutro y la deformación del acero, que confirma el factor $\phi$:`);
   m.eq(L`a = \frac{A_s f_y}{0.85\,f'_c\,b} = \frac{${tn(As, 3)}\cdot ${tn(fy, 0)}}{0.85\cdot ${tn(fc, 0)}\cdot ${tn(b, 1)}} = ${tn(a, 3)}${CM} \qquad c = \frac{a}{\beta_1} = ${tn(c, 3)}${CM}`, refN("10.2.7", "22.2.2.4"));
-  m.eq(L`\varepsilon_t = \varepsilon_{cu}\frac{d - c}{c} = 0.003\cdot\frac{${tn(d)} - ${tn(c, 3)}}{${tn(c, 3)}} = ${tn(et, 4)} \;${okEt ? GE : "<"}\; ${tn(eMin, 4)} \;\Rightarrow\; \phi = ${tn(phi, 3)}`, refMax);
-  m.eq(L`\phi M_n = \phi\,A_s f_y\left(d - \frac{a}{2}\right) = ${tn(phi, 3)}\cdot ${tn(As, 3)}\cdot ${tn(fy, 0)}\left(${tn(d)} - \frac{${tn(a, 3)}}{2}\right) = ${tn(phiMn, 0)}${KGCM} = ${tn(phiMn / 100, 1)}${KGM}`);
+  m.eq(L`\varepsilon_t = \varepsilon_{cu}\frac{d - c}{c} = 0.003\cdot\frac{${tn(d)} - ${tn(c, 3)}}{${tn(c, 3)}} = ${tn(et, 4)} \;${okEt ? GE : "<"}\; ${tn(eMin, 4)} \;\Rightarrow\; \phi = ${nPhi(phi)}`, refMax);
+  m.eq(L`\phi M_n = \phi\,A_s f_y\left(d - \frac{a}{2}\right) = ${nPhi(phi)}\cdot ${tn(As, 3)}\cdot ${tn(fy, 0)}\left(${tn(d)} - \frac{${tn(a, 3)}}{2}\right) = ${tn(phiMn, 0)}${KGCM} = ${tn(phiMn / 100, 1)}${KGM}`);
   m.eq(L`\frac{D}{C} = \frac{${Msym}}{\phi M_n} = \frac{${tn(Mu / 100, 1)}}{${tn(phiMn / 100, 1)}} = ${tn(dc, 3)} ${cmp(dc, 1)} 1.0`);
   // Requisitos que no entran en la razón D/C: sin ellos, el veredicto no explicaría un "no cumple" con D/C bajo
   const fallas = !resuelve ? ["la sección no resiste el momento con armadura simple"] : [
@@ -721,10 +722,11 @@ function corte(Vu, g, d, dbMin, criterio, m) {
   const phiVn = phi * (Vc + VsP);
   const dc = Vu / phiVn;
   memoGrupo(m, "Verificación de capacidad (resumen)", "v-cap", { resumen: `D/C = ${fmt(dc, 3)} ${okTxt(dc <= 1 && okVs)}` });
-  m.row("<b>Estribo adoptado</b>", `<b>E 𝜙${de} @ ${s} cm</b> (${ramas} ramas)`);
+  m.row("Estribo adoptado", `E 𝜙${de} @ ${s} cm (${ramas} ramas)`);
+  m.row("Resistencia al corte del hormigón: V<sub>c</sub>", `${fmt(Vc, 0)} kgf${sis ? " (sísmico)" : ""}`, refVc);
   m.row("Corte resistido por los estribos adoptados: V<sub>s,disp</sub>", `${fmt(VsP, 0)} kgf`, refAvs);
-  m.row("<b>Resistencia de diseño a corte: 𝜙V<sub>n</sub></b>", `<b>${fmt(phiVn, 0)} kgf</b>`);
-  m.row("<b>Razón demanda/capacidad en corte: D/C</b>", `<b>${fmt(dc, 3)}</b> ${okTxt(dc <= 1 && okVs)}`);
+  m.row("Resistencia de diseño a corte: 𝜙V<sub>n</sub>", `${fmt(phiVn, 0)} kgf`);
+  m.row("Razón demanda/capacidad en corte: D/C", `${fmt(dc, 3)} ${okTxt(dc <= 1 && okVs)}`);
   m.p(L`Se adopta \textbf{E$\phi${de}$ @ ${s} cm} (${ramas} ramas). Capacidad con la armadura dispuesta:`);
   m.eq(L`V_{s,\text{disp}} = \frac{n\,A_b\,f_{yt}\,d}{s} = \frac{${ramas}\cdot ${tn(Abe, 3)}\cdot ${tn(fy, 0)}\cdot ${tn(d)}}{${s}} = ${tn(VsP, 0)}${KG}`, refAvs);
   m.eq(L`\phi V_n = \phi(V_c + V_{s,\text{disp}}) = 0.75\,(${tn(Vc, 0)} + ${tn(VsP, 0)}) = ${tn(phiVn, 0)}${KG} \qquad \frac{D}{C} = \frac{V_u}{\phi V_n} = \frac{${tn(Vu, 0)}}{${tn(phiVn, 0)}} = ${tn(dc, 3)} ${cmp(dc, 1)} 1.0`, refN("11-1", "22.5.1.1"));
