@@ -220,7 +220,7 @@
           </div>
           <details class="ayuda">
             <summary>¿Cómo se elige el diámetro automático?</summary>
-            <p><b>Barras:</b> se usa el diámetro, entre 𝜙10 y 𝜙36, que cubre el área requerida con la menor área dispuesta y cabe en una capa.</p>
+            <p><b>Barras:</b> se usa el diámetro, entre 𝜙10 y 𝜙36, de menor área dispuesta que cumple la flexión (cabe en una capa y respeta la separación entre barras).</p>
             <p><b>Estribos:</b> el menor entre 𝜙8 y 𝜙12 que deja al menos 10 cm entre estribos.</p>
             <p>Las demás verificaciones se hacen después, en el procedimiento.</p>
           </details>
@@ -598,7 +598,7 @@ function flexion(cara, Mu, db, g, m) {
   ].filter(Boolean);
   m.p(L`Por lo tanto, la armadura ${cara === "inf" ? "inferior" : "superior"} de ${Nb}$\phi${db}$ ${ok ? L`\textbf{cumple}` : L`\textbf{no cumple}`} la verificación a flexión, utilizando el $${tn(dc * 100, 1)}$\,\% de su capacidad${motivosTex(fallas)}.`, true);
 
-  return { d, Nb, db, As, Asreq, rho, rmin, rhoD, phiMn, dc, ok, okSmin, fallas };
+  return { d, Nb, db, As, Asreq, rho, rmin, rhoD, phiMn, dc, ok, okSmin, okSmax, fallas };
 }
 
 // ---------------------------------------------------------------------------
@@ -859,14 +859,20 @@ const sel = (id) => ($(id).value === "auto" ? "auto" : +$(id).value);
 
 // Diámetro propuesto: el que cubre A_s con la menor área dispuesta cabiendo en una capa
 // (a igual área, el de menos barras).
+// Primero entre los que cumplen toda la flexión; si ninguno, entre los que cumplen la separación máxima entre
+// barras (control de grietas); si tampoco, entre los que caben en una capa.
 function proponerBarra(Mu, g) {
-  let mejor = null;
+  let mejor = null, mejorSep = null, mejorOk = null;
+  const elegir = (m, c) => (!m || c.As < m.As - 1e-9 || (Math.abs(c.As - m.As) < 1e-9 && c.Nb < m.Nb) ? c : m);
   for (const db of BARRAS.filter(x => x >= 10)) {
     const r = flexion("inf", Mu, db, g, NOMEMO);
     if (!r.okSmin || !Number.isFinite(r.As)) continue;
-    if (!mejor || r.As < mejor.As - 1e-9 || (Math.abs(r.As - mejor.As) < 1e-9 && r.Nb < mejor.Nb)) mejor = { db, As: r.As, Nb: r.Nb };
+    const c = { db, As: r.As, Nb: r.Nb };
+    mejor = elegir(mejor, c);
+    if (r.okSmax) mejorSep = elegir(mejorSep, c);
+    if (r.ok) mejorOk = elegir(mejorOk, c);
   }
-  return mejor ? mejor.db : BARRAS[BARRAS.length - 1];
+  return (mejorOk || mejorSep || mejor)?.db ?? BARRAS[BARRAS.length - 1];
 }
 
 // Estribo propuesto: el menor diámetro (≥ 𝜙8) que entrega una separación de al menos 10 cm.
@@ -932,7 +938,7 @@ function calcularViga() {
   m.h(es19() ? "Verificación a flexión — ACI 318-19, Capítulos 9 y 22" : "Verificación a flexión — Capítulo 10");
   notaUnidades19(m);
   const usoTex = (a, d, p) => L`$\phi${d}$ (${a ? "automático" : L`elegido por el usuario; el automático sería $\phi${p}$`})`;
-  m.p(L`\textbf{Selección de diámetros.} Barras: se usa el diámetro, entre $\phi10$ y $\phi36$, que cubre el área requerida con la menor área dispuesta y cabe en una capa (${refN("7.6.1", "25.2.1")}). Estribos: el menor entre $\phi8$ y $\phi12$ que deja al menos 10 cm entre estribos. Las demás verificaciones se hacen a continuación. Se utilizan: barras inferiores ${usoTex(auto.inf, g.dbInf, prop.inf)}, superiores ${usoTex(auto.sup, g.dbSup, prop.sup)} y estribos ${usoTex(auto.de, g.de, prop.de)}.`, true);   // solo en la memoria .tex
+  m.p(L`\textbf{Selección de diámetros.} Barras: se usa el diámetro, entre $\phi10$ y $\phi36$, de menor área dispuesta que cumple la flexión, si alguno la cumple (cabe en una capa y respeta la separación entre barras, ${refN("7.6.1 y 10.6.4", "25.2.1 y 24.3.2")}). Estribos: el menor entre $\phi8$ y $\phi12$ que deja al menos 10 cm entre estribos. Las demás verificaciones se hacen a continuación. Se utilizan: barras inferiores ${usoTex(auto.inf, g.dbInf, prop.inf)}, superiores ${usoTex(auto.sup, g.dbSup, prop.sup)} y estribos ${usoTex(auto.de, g.de, prop.de)}.`, true);   // solo en la memoria .tex
   const inf = flexion("inf", g.Mpos, g.dbInf, g, m);
   const sup = flexion("sup", g.Mneg, g.dbSup, g, m);
   m.h(es19() ? "Verificación a corte — ACI 318-19, Capítulos 9 y 22" : "Verificación a corte — Capítulo 11");
