@@ -972,7 +972,7 @@ function calcular() {
   if (!malos.length) { const x = Number($("nf").value); if (!(Number.isInteger(x) && x >= 1)) { $("nf").classList.add("invalido"); malos.push("Filas de pernos: debe ser un número entero mayor o igual a 1"); } }
   const limpiar = (msg) => {
     $("resTitle").textContent = "Resultados";
-    $("summary").innerHTML = ""; $("memo").innerHTML = ""; $("dibujo").innerHTML = "";
+    if (!esAvisoInvalidos(msg)) { $("summary").innerHTML = ""; $("memo").innerHTML = ""; $("dibujo").innerHTML = ""; }
     $("verdict").innerHTML = msg;
     ultimoTex = ""; ultimoR = null; ultimoD = null;
   };

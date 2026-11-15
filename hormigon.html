@@ -365,7 +365,7 @@
   <!-- ===================== RESULTADOS ===================== -->
   <section class="panel">
     <h2 id="resTitle">Resultados — Viga</h2>
-    <div id="resViga">
+    <div id="resViga" data-resultados>
       <div class="summary" id="summary"></div>
       <div id="verdict"></div>
       <div class="armado" id="armado"></div>
@@ -376,7 +376,7 @@
       </div>
       <div class="memo" id="memo"></div>
     </div>
-    <div id="resLosa" class="hidden">
+    <div id="resLosa" class="hidden" data-resultados>
       <div class="summary" id="lsummary"></div>
       <div id="lverdict"></div>
       <div class="plano" id="lplano"></div>
@@ -921,8 +921,7 @@ function calcularViga() {
   const malos = datosInvalidos([["vb", 0, true], ["vh", 0, true], ["vrec", 0, true], ["vramas", 2], ["vMpos", 0], ["vMneg", 0], ["vVu", 0]]);
   if (!malos.length && num("vh") <= 2 * num("vrec")) { $("vh").classList.add("invalido"); malos.push("h debe ser mayor que 2·r_ec"); }
   if (malos.length) {
-    $("summary").innerHTML = ""; $("memo").innerHTML = ""; $("armado").innerHTML = "";
-    $("verdict").innerHTML = avisoInvalidos(malos);
+    $("verdict").innerHTML = avisoInvalidos(malos);   // los resultados anteriores quedan atenuados
     ultimoTex = "";
     return;
   }
@@ -1678,8 +1677,7 @@ function calcularLosa() {
     ...(usaCz ? [["lD", 0], ["lL", 0], ["lgam", 0]] : []), ...(usaMan ? [["lMXp", 0], ["lMYp", 0], ["lMXn", 0], ["lMYn", 0]] : [])]);
   if (!malos.length && g.e <= 2 * g.rec) { $("le").classList.add("invalido"); malos.push("e debe ser mayor que 2·r_ec"); }
   if (malos.length) {
-    ["lsummary", "lmemo", "larmado", "lplano", "lcaso"].forEach(id => { $(id).innerHTML = ""; });
-    $("lverdict").innerHTML = avisoInvalidos(malos);
+    $("lverdict").innerHTML = avisoInvalidos(malos);  // los resultados anteriores quedan atenuados
     ultimoTexLosa = "";
     return;
   }

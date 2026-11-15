@@ -1069,7 +1069,7 @@ function calcular() {
   if (!malos.length) malos = datosSobreMaximo([["theta", 45, "El ángulo del techo debe ser θ ≤ 45°"], ["G", 1, "El factor de ráfaga G no debe superar 1 en un edificio rígido"]]);
   const limpiar = (msg) => {
     $("resTitle").textContent = "Resultados";
-    $("summary").innerHTML = ""; $("memo").innerHTML = ""; $("dibujo").innerHTML = "";
+    if (!esAvisoInvalidos(msg)) { $("summary").innerHTML = ""; $("memo").innerHTML = ""; $("dibujo").innerHTML = ""; }
     $("verdict").innerHTML = msg;
     ultimoTex = ""; ultimoR = null; ultimoD = null;
   };

@@ -1374,7 +1374,7 @@ function calcular() {
   if (!malos.length) malos = reglasExtra();
   const limpiar = (msg) => {
     $("resTitle").textContent = "Resultados";
-    $("summary").innerHTML = ""; $("memo").innerHTML = ""; $("dibujo").innerHTML = "";
+    if (!esAvisoInvalidos(msg)) { $("summary").innerHTML = ""; $("memo").innerHTML = ""; $("dibujo").innerHTML = ""; }
     $("verdict").innerHTML = msg;
     ultimoTex = ""; ultimoR = null; ultimoD = null;
   };

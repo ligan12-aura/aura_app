@@ -1828,9 +1828,8 @@ function tarjetas(items) {
 const texCelda = (s) => s.replace(/λ/g, "$\\lambda$").replace(/δ/g, "$\\delta$").replace(/<sub>/g, "$_{").replace(/<\/sub>/g, "}$")
   .replace(/\$\$/g, "").replace(/<[^>]+>/g, "");
 
-// Muestra el aviso de datos inválidos y vacía los resultados (no se genera .tex)
+// Aviso de datos inválidos: los resultados anteriores quedan atenuados (memo.js) y no se genera .tex
 function sinCalculo(malos) {
-  $("summary").innerHTML = ""; $("memo").innerHTML = ""; $("figMuro").innerHTML = "";
   $("resTitle").textContent = "Resultados";
   $("verdict").innerHTML = avisoInvalidos(malos);
   ultimoTex = "";

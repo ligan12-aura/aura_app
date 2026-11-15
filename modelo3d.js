@@ -434,10 +434,12 @@ const Zona2D3D = (() => {
     z.querySelectorAll("[data-z]").forEach(b => b.addEventListener("click", () => visor?.acercar?.(+b.dataset.z)));
     z.querySelectorAll("[data-g]").forEach(c => c.addEventListener("change", () => visor?.mostrar?.(c.dataset.g, c.checked)));
 
-    let pendiente = null;
+    let pendiente = null, dibujado = false;   // dibujado: ya se mostró un cálculo (se conserva con datos inválidos)
     function actualizar() {
       clearTimeout(pendiente);
       pendiente = setTimeout(() => {
+        // Datos inválidos: se conserva la vista del último cálculo válido, atenuada (memo.js, marcarDesactualizados)
+        if (dibujado && window.auraDesactualizado?.(z)) return;
         // 2D: copia del dibujo de la página con ids propios (prefijo) y sus referencias url(#…) / href="#…"
         // reescritas, para que el dibujo original no tome los marcadores de la copia (oculta al imprimir o en modo 3D)
         let s = null;
@@ -462,6 +464,7 @@ const Zona2D3D = (() => {
           try { esc = construir(); } catch (e) { console.error(e); }
           visor.fijar((esc || new Geo3D.Escena()).armar());
           z.classList.toggle("z23-sin3d", !esc);
+          dibujado = true;
         }
       }, 120);
     }

@@ -122,7 +122,8 @@ Todo el texto de la interfaz, las memorias y los commits va en **español (Chile
   - `p(tex, soloTex)`: párrafo.
   - `note()`: advertencia.
   - `raw()`: LaTeX directo (tablas).
-- Validar las entradas con `datosInvalidos(reglas)` de `memo.js`. Con datos inválidos no se calcula y `ultimoTex` queda vacío, para no mostrar un "CUMPLE" falso.
+- Validar las entradas con `datosInvalidos(reglas)` de `memo.js`. Con datos inválidos no se calcula y `ultimoTex` queda vacío, para no mostrar un "CUMPLE" falso La página **no vacía** el resumen, el procedimiento ni los dibujos: pone el aviso `avisoInvalidos` (lleva `data-invalidos`; `esAvisoInvalidos(html)` lo reconoce en funciones `limpiar` compartidas con otros mensajes) y `memo.js` (`marcarDesactualizados`) atenúa con `.atenuado` todo lo demás de ese panel, que queda con el último cálculo válido; la vista 2D/3D tampoco se actualiza mientras esté atenuada. Los planos y la memoria no se descargan porque la página vacía `ultimoTex` y sus resultados guardados.
+- Al escribir, `memo.js` retiene el evento `input` de los campos de texto y número de `<main>` en las páginas de cálculo y lo reenvía 500 ms después de la última tecla (`ESPERA_ESCRITURA`), al salir del campo o con Enter, para no calcular con valores a medio escribir. Los `input` creados por código pasan sin espera.
 - El veredicto usa la clase `.verdict ok|bad`. Para que `proyectos.js` lea el resumen, el texto debe contener `razón máxima = X`.
 - Si falta una verificación exigida que la página no calcula, el veredicto y la memoria dicen `SIN VERIFICAR`, no `CUMPLE`; `proyectos.js` lo guarda sin estado de cumple o no cumple. Si además algo falla, manda `NO CUMPLE`: "NO CUMPLE (…; además SIN VERIFICAR: …)", y el tablero y `proyectos.js` lo tratan como no cumple. Un requisito que no entra en la razón D/C y falla se indica como motivo en el veredicto.
 

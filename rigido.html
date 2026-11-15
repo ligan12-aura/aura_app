@@ -853,9 +853,8 @@ function reglasRigido() {
   if ($("barras").checked) R.push(["dowel", 0, true], ["Es", 0, true], ["trange", 0], ["FI", 0], ["age", 0, true]);
   return R;
 }
-// Aviso de datos inválidos: se vacían los resultados y no se genera .tex
+// Aviso de datos inválidos: los resultados anteriores quedan atenuados (memo.js) y no se genera .tex
 function sinCalculo(malos) {
-  ["summary", "memo", "avisos", "svgPaq"].forEach(id => { $(id).innerHTML = ""; });
   $("resTitle").textContent = "Resultados";
   $("verdict").innerHTML = avisoInvalidos(malos);
   ultimoTex = "";

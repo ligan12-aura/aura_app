@@ -854,8 +854,7 @@ function calcular() {
   const malos = datosInvalidos(reglasDatos());
   if (malos.length) {
     $("resTitle").textContent = "Resultados";
-    $("summary").innerHTML = ""; $("memo").innerHTML = ""; $("alt").innerHTML = "";
-    $("verdict").innerHTML = avisoInvalidos(malos);
+    $("verdict").innerHTML = avisoInvalidos(malos);   // los resultados anteriores quedan atenuados
     $("asOut").textContent = "—";
     ultimoTex = ""; ultimoR = null;
     return;

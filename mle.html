@@ -1030,7 +1030,6 @@ function reglas() {
   return R;
 }
 function sinCalculo(malos) {
-  ["summary", "memo", "avisos", "svgSec"].forEach(id => { $(id).innerHTML = ""; });
   $("resTitle").textContent = "Resultados";
   $("verdict").innerHTML = avisoInvalidos(malos);
   ultimoTex = "";

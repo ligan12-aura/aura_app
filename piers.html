@@ -929,7 +929,8 @@ La razón demanda-capacidad máxima al corte es $D/C = ${tn(dcMax, 3)}$, en el p
 let ultimoTex = "", ultimoNombre = "memoria_corte_muros.tex", ultimoR = null;
 function limpiar(html) {
   $("resTitle").textContent = "Resultados";
-  $("summary").innerHTML = ""; $("memo").innerHTML = ""; $("dibujo").innerHTML = ""; $("verdict").innerHTML = html;
+  if (!esAvisoInvalidos(html)) { $("summary").innerHTML = ""; $("memo").innerHTML = ""; $("dibujo").innerHTML = ""; }
+  $("verdict").innerHTML = html;
   ultimoTex = ""; ultimoR = null;
 }
 function calcular() {

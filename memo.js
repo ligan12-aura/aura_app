@@ -42,8 +42,9 @@ function datosInvalidos(reglas) {
 function limpiarInvalidos(raiz = document) {
   raiz.querySelectorAll(".invalido").forEach((el) => el.classList.remove("invalido"));
 }
+const esAvisoInvalidos = (html) => String(html).includes("data-invalidos");
 const avisoInvalidos = (malos) =>
-  `<div class="verdict bad" style="margin:10px 0;padding:10px 14px;border-radius:6px;background:#fdecea;color:#8e2a1e;font-weight:600">✘ Datos inválidos — revise: ${malos.join(" · ")}. No se calcula hasta corregirlos.</div>`;
+  `<div class="verdict bad" data-invalidos style="margin:10px 0;padding:10px 14px;border-radius:6px;background:#fdecea;color:#8e2a1e;font-weight:600">✘ Datos inválidos — revise: ${malos.join(" · ")}. No se calcula hasta corregirlos.</div>`;
 
 // pdflatex con inputenc utf8 no trae definidos los griegos ni varios símbolos matemáticos:
 // se declaran en el preámbulo los que aparecen en el documento.
@@ -351,6 +352,61 @@ document.addEventListener("click", (ev) => {
   if (t) alternarPaso(t.parentElement);
 });
 
+// ---------------------------------------------------------------------------
+// Mientras se escribe: los campos de texto y número de una página de cálculo recalculan medio segundo después
+// de la última tecla (o al salir del campo o pulsar Enter), no con cada tecla, para no calcular con valores a
+// medio escribir. Se retiene el evento "input" del usuario y se reenvía uno igual al terminar.
+// ---------------------------------------------------------------------------
+const ESPERA_ESCRITURA = 500;   // ms
+// Página de cálculo: integrada con proyectos (AURA_MEMO) o con resultados propios (espectros: #tiles); el inicio no
+const esPaginaCalculo = () => !!(window.AURA_MEMO || document.querySelector("main #tiles"));
+const escrituraPendiente = new Map(), inputReenviado = new WeakSet();
+function reenviarInput(el) {
+  clearTimeout(escrituraPendiente.get(el));
+  escrituraPendiente.delete(el);
+  const ev = new Event("input", { bubbles: true });
+  inputReenviado.add(ev);
+  el.dispatchEvent(ev);
+}
+window.addEventListener("input", (e) => {
+  const el = e.target;
+  if (!e.isTrusted || inputReenviado.has(e) || !esPaginaCalculo()) return;
+  const escribe = el instanceof HTMLTextAreaElement
+    || (el instanceof HTMLInputElement && ["number", "text", "search", "tel", ""].includes(el.type));
+  if (!escribe || !el.closest("main") || el.closest("#auraPanel")) return;
+  e.stopImmediatePropagation();
+  clearTimeout(escrituraPendiente.get(el));
+  escrituraPendiente.set(el, setTimeout(() => reenviarInput(el), ESPERA_ESCRITURA));
+}, true);
+const terminarEscritura = (e) => { if (escrituraPendiente.has(e.target)) reenviarInput(e.target); };
+window.addEventListener("focusout", terminarEscritura, true);
+window.addEventListener("keydown", (e) => { if (e.key === "Enter") terminarEscritura(e); }, true);
+// Imprimir (también con Ctrl+P, sin salir del campo): primero se calcula lo escrito
+window.auraTerminarEscritura = () => [...escrituraPendiente.keys()].forEach(reenviarInput);
+window.addEventListener("beforeprint", window.auraTerminarEscritura, true);
+
+// Con datos inválidos la página no vacía los resultados: el veredicto muestra el aviso (avisoInvalidos, con
+// data-invalidos) y lo demás del mismo panel (resumen, procedimiento, dibujos, vista 3D) queda atenuado con el
+// último cálculo válido. Los planos y la memoria no se descargan, porque la página vacía ultimoTex y sus resultados.
+function marcarDesactualizados() {
+  document.querySelectorAll(".atenuado").forEach((x) => x.classList.remove("atenuado"));
+  document.querySelectorAll("main [data-invalidos]").forEach((aviso) => {
+    const raiz = aviso.closest("[data-resultados], main > *");   // hormigon.html: viga y losa en el mismo panel
+    for (let e = aviso; e && e !== raiz; e = e.parentElement) {
+      for (const h of e.parentElement.children) if (h !== e && !/^H[1-6]$/.test(h.tagName)) h.classList.add("atenuado");
+    }
+  });
+}
+window.auraDesactualizado = (el) => !!(el && el.closest(".atenuado"));
+document.addEventListener("DOMContentLoaded", () => {
+  const main = document.querySelector("main");
+  if (!main || !esPaginaCalculo()) return;
+  let marca = 0;
+  new MutationObserver(() => { clearTimeout(marca); marca = setTimeout(marcarDesactualizados, 0); })
+    .observe(main, { childList: true, subtree: true });
+  marcarDesactualizados();
+});
+
 (function estilos() {
   const st = document.createElement("style");
   st.textContent = `
@@ -368,6 +424,8 @@ document.addEventListener("click", (ev) => {
   .eqs .katex { font-size: 1.08em; }
   .kref { color: var(--muted, #5f6b7a); font-size: 12px; white-space: nowrap; }
   input.invalido, select.invalido { border-color: #c0392b !important; background: #fdecea !important; }
+  .atenuado { opacity: .35; filter: grayscale(.6); transition: opacity .15s; }
+  @media print { .atenuado { display: none !important; } }   /* no se imprime un cálculo anterior a los datos */
   .km.crudo { font-family: Consolas, monospace; font-size: 12px; white-space: pre-wrap; }
   .vereq, .todasEq { font: inherit; font-size: 12.5px; padding: 4px 10px; border: 1px solid var(--accent, #2f7d6d); color: var(--accent, #2f7d6d); background: #fff; border-radius: 4px; cursor: pointer; }
   .todasEq { margin: 10px 16px 0; }

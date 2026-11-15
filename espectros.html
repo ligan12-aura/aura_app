@@ -489,7 +489,7 @@ function calcular() {
   if (malos.length) {
     actual = null;
     $("tiles").innerHTML = avisoInvalidos(malos);
-    ["svgWrap", "pasosR", "pasosU", "tablaPar", "tablaVal", "formula"].forEach(id => { $(id).innerHTML = ""; });
+    // el gráfico y las tablas anteriores quedan atenuados (memo.js); sin `actual` no se descargan
     $("tip").classList.add("hidden");
     return;
   }

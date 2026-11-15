@@ -834,9 +834,8 @@ function reglasVial() {
   if ($("usaSB").checked) R.push(["cbrSB", 0, true]);
   return R;
 }
-// Aviso de datos inválidos: se vacían los resultados y no se genera .tex
+// Aviso de datos inválidos: los resultados anteriores quedan atenuados (memo.js) y no se genera .tex
 function sinCalculo(malos) {
-  ["summary", "memo", "avisos", "svgPaq"].forEach(id => { $(id).innerHTML = ""; });
   $("resTitle").textContent = "Resultados";
   $("verdict").innerHTML = avisoInvalidos(malos);
   ultimoTex = "";
