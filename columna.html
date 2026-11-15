@@ -192,7 +192,7 @@
         <legend>2. Armaduras</legend>
         <div class="cbTit">Longitudinal</div>
         <div class="row3">
-          <div><label for="db">Barra φ <span class="unit">[mm]</span></label><select id="db"></select></div>
+          <div><label for="db">Barra 𝜙 <span class="unit">[mm]</span></label><select id="db"></select></div>
           <div class="soloRect"><label for="nbx">Barras por cara ∥ x</label><input id="nbx" type="number" step="1" value="3"></div>
           <div class="soloRect"><label for="nby">Barras por cara ∥ y</label><input id="nby" type="number" step="1" value="3"></div>
           <div class="soloCirc hidden"><label for="nb">N.º de barras</label><input id="nb" type="number" step="1" value="8"></div>
@@ -201,7 +201,7 @@
         <div class="cbTit">Transversal</div>
         <div class="row3">
           <div class="soloCirc hidden"><label for="tipoT">Tipo</label><select id="tipoT"><option value="espiral" selected>Espiral</option><option value="circular">Estribos circulares</option></select></div>
-          <div><label for="dbt">Barra φ<sub>t</sub> <span class="unit">[mm]</span></label><select id="dbt"></select></div>
+          <div><label for="dbt">Barra 𝜙<sub>t</sub> <span class="unit">[mm]</span></label><select id="dbt"></select></div>
           <div class="soloRect"><label for="nlx">Ramas ∥ x</label><input id="nlx" type="number" step="1" value="3"></div>
           <div class="soloRect"><label for="nly">Ramas ∥ y</label><input id="nly" type="number" step="1" value="3"></div>
         </div>
@@ -316,7 +316,7 @@
 // M_y gira en torno a y (comprime la cara ±x y usa b). V_x actúa según x y lo resisten las ramas ∥ x.
 // Resistencia a flexocompresión por compatibilidad de deformaciones (22.2) con el bloque rectangular equivalente
 // recortado exactamente sobre el contorno; flexión biaxial con el eje neutro girado hasta alinear el momento resistente
-// con el momento solicitante. Razón D/C a carga axial constante: M_u / φM_n(P_u) y P_u / φP_n,máx.
+// con el momento solicitante. Razón D/C a carga axial constante: M_u / 𝜙M_n(P_u) y P_u / 𝜙P_n,máx.
 // ---------------------------------------------------------------------------
 const KMPA = 10.1972;                         // kgf/cm² por MPa
 const ES = 200000 * KMPA;                     // 20.2.2.2: E_s = 200 000 MPa
@@ -539,7 +539,7 @@ function buscarTheta(S, d, c, psi, k) {
   }
   return (lo + hi) / 2;
 }
-// φ según la deformación neta de tracción (Tabla 21.2.2)
+// 𝜙 según la deformación neta de tracción (Tabla 21.2.2)
 function phiDe(et, S) {
   const r = Math.max(0, Math.min(1, (et - S.ety) / 0.003));
   return S.espiral ? 0.75 + 0.15 * r : 0.65 + 0.25 * r;
@@ -568,7 +568,7 @@ function momentoEn(curva, P) {
   return Number.isFinite(mejor) ? Math.max(0, mejor) : 0;
 }
 // Punto exacto de la superficie para una carga axial dada: bisección en c entre los puntos de la curva que la encierran.
-// conPhi: iguala φP_n (curva de diseño) en vez de P_n. Devuelve el menor momento entre los tramos que la cruzan.
+// conPhi: iguala 𝜙P_n (curva de diseño) en vez de P_n. Devuelve el menor momento entre los tramos que la cruzan.
 function puntoEnP(S, d, curva, P, psi, k, conPhi) {
   let mejor = null;
   for (let i = 0; i + 1 < curva.length; i++) {
@@ -586,14 +586,14 @@ function puntoEnP(S, d, curva, P, psi, k, conPhi) {
   }
   return mejor;
 }
-// Curva de diseño (φP_n, φM_n) y nominal (P_n, M_n) en la dirección ψ
+// Curva de diseño (𝜙P_n, 𝜙M_n) y nominal (P_n, M_n) en la dirección ψ
 function curvas(S, d, psi) {
   const mer = meridiano(S, d, psi, 1);
   const nominal = [{ P: mer.Pnt, M: 0, et: Infinity }, ...mer.pts.map(p => ({ P: p.P, M: p.M, et: p.et, c: p.c, th: p.th }))];
   const diseno = nominal.map(p => { const f = p.et === Infinity ? 0.9 : phiDe(p.et, S); return { P: f * p.P, M: f * p.M, phi: f, et: p.et, c: p.c, th: p.th }; });
   return { nominal, diseno };
 }
-// Capacidad de diseño para (P_u, M_ux, M_uy): φM_n en la dirección del momento a carga axial constante
+// Capacidad de diseño para (P_u, M_ux, M_uy): 𝜙M_n en la dirección del momento a carga axial constante
 function capacidad(S, d, Pu, Mux, Muy) {
   const psi = Math.atan2(Math.abs(Muy), Math.abs(Mux));
   const Mu = Math.hypot(Mux, Muy), cv = curvas(S, d, Mu > 0 ? psi : 0);
@@ -670,7 +670,7 @@ function corte(d, S, eje, Vu, Nu, s, Vc0) {
   const Vs = Av * fyt * dd / s;                                       // 22.5.8.5.3
   const phiVn = PHI_V * (Vc + Vs);
   const lim = PHI_V * (Vc + 0.66 * sq * bw * dd);                     // 22.5.1.2
-  // Tabla 10.7.6.5.2 con el V_s requerido (V_u/φ − V_c), no con el provisto: más estribos no deben exigir menor separación
+  // Tabla 10.7.6.5.2 con el V_s requerido (V_u/𝜙 − V_c), no con el provisto: más estribos no deben exigir menor separación
   const VsReq = Math.max(0, Math.abs(Vu) / PHI_V - Vc);
   const sMax = VsReq <= 0.33 * sq * bw * dd ? Math.min(dd / 2, 60) : Math.min(dd / 4, 30);
   return { eje, Vu: Math.abs(Vu), Nu, bw, dd, Av, As, rhow, fyt, Avmin, conMin, nTerm, ls, va, vb, vcc, Vc, Vs, VsReq, phiVn, lim, sMax, s, Vc0,
@@ -706,7 +706,7 @@ function verificar(d, combos, m) {
   // ---------- 1. Sección y materiales ----------
   m.h("Sección y materiales — 22.2 y 22.4");
   m.p(L`La resistencia se calcula por compatibilidad de deformaciones con $\varepsilon_{cu} = 0.003$, sin resistencia a tracción del hormigón y con el bloque rectangular equivalente de $0.85f'_c$ y profundidad $a = \beta_1 c$, recortado sobre el contorno real de la sección. El acero es elastoplástico con $E_s = 200\,000$ MPa.`);
-  m.row("Área bruta ; área de acero longitudinal: A<sub>g</sub> ; A<sub>st</sub>", `${fmt(S.Ag, 1)} ; ${fmt(S.Ast, 2)} cm² (${S.n} φ${fmt(d.db * 10, 0)})`);
+  m.row("Área bruta ; área de acero longitudinal: A<sub>g</sub> ; A<sub>st</sub>", `${fmt(S.Ag, 1)} ; ${fmt(S.Ast, 2)} cm² (${S.n} 𝜙${fmt(d.db * 10, 0)})`);
   m.eq(S.rect
     ? L`A_g = b\,h = ${tn(d.b, 0)}\cdot ${tn(d.h, 0)} = ${tn(S.Ag, 1)}\ \mathrm{cm^2} \qquad A_{st} = ${S.n}\cdot\frac{\pi\,${tn(d.db, 1)}^2}{4} = ${tn(S.Ast, 2)}\ \mathrm{cm^2}`
     : L`A_g = \frac{\pi D^2}{4} = \frac{\pi\cdot ${tn(d.D, 0)}^2}{4} = ${tn(S.Ag, 1)}\ \mathrm{cm^2} \qquad A_{st} = ${S.n}\cdot\frac{\pi\,${tn(d.db, 1)}^2}{4} = ${tn(S.Ast, 2)}\ \mathrm{cm^2}`);
@@ -716,9 +716,9 @@ function verificar(d, combos, m) {
   m.eq(L`\varepsilon_{ty} = \frac{f_y}{E_s} = \frac{${tn(d.fy, 0)}}{${tn(ES, 0)}} = ${tn(S.ety, 5)}`, "21.2.2.1");
   m.row("Resistencia axial nominal: P<sub>o</sub>", `${fmt(T(S.Po), 2)} tf`, "22.4.2.2");
   m.eq(L`P_o = 0.85 f'_c\,(A_g - A_{st}) + f_y A_{st} = 0.85\cdot ${tn(d.fc, 0)}\,(${tn(S.Ag, 1)} - ${tn(S.Ast, 2)}) + ${tn(d.fy, 0)}\cdot ${tn(S.Ast, 2)} = ${tn(T(S.Po), 2)}\ \mathrm{tf}`, "22.4.2.2");
-  m.row(`Resistencia axial máxima de diseño (${S.espiral ? "espiral" : "estribos"}): φP<sub>n,máx</sub>`, `${fmt(T(S.phiPnmax), 2)} tf`, "Tabla 22.4.2.1");
+  m.row(`Resistencia axial máxima de diseño (${S.espiral ? "espiral" : "estribos"}): 𝜙P<sub>n,máx</sub>`, `${fmt(T(S.phiPnmax), 2)} tf`, "Tabla 22.4.2.1");
   m.eq(L`\phi P_{n,m\acute{a}x} = ${tn(S.phiC, 2)}\cdot ${S.espiral ? "0.85" : "0.80"}\,P_o = ${tn(T(S.phiPnmax), 2)}\ \mathrm{tf}`, "Tabla 22.4.2.1");
-  m.row("Resistencia de diseño a tracción pura: φP<sub>nt</sub>", `${fmt(T(S.phiPnt), 2)} tf`, "22.4.3.1");
+  m.row("Resistencia de diseño a tracción pura: 𝜙P<sub>nt</sub>", `${fmt(T(S.phiPnt), 2)} tf`, "22.4.3.1");
   m.eq(L`\phi P_{nt} = 0.90\,f_y A_{st} = 0.90\cdot ${tn(d.fy, 0)}\cdot ${tn(S.Ast, 2)} = ${tn(T(-S.phiPnt), 2)}\ \mathrm{tf}\ \text{(tracción)}`, "Tabla 21.2.2");
   m.p(L`El factor $\phi$ varía con la deformación neta de tracción $\varepsilon_t$ de la barra más traccionada: ${S.espiral ? "0.75" : "0.65"} si $\varepsilon_t \le \varepsilon_{ty}$ (controlada por compresión), 0.90 si $\varepsilon_t \ge \varepsilon_{ty} + 0.003$ (controlada por tracción) e interpolación lineal entre ambos.`);
 
@@ -818,7 +818,7 @@ ${combos.map(c => `${c.n}. ${nomTex(c.nombre)}${c.sis ? " (E)" : ""} & ${tn(T(c.
     }
   }
   const pmCrit = pm.reduce((a, p) => (p.dc > a.dc ? p : a), pm[0]);
-  m.html_(`<div class="tablaWrap"><table class="alt"><thead><tr><th>Combinación</th><th>Extremo</th><th>P<sub>u</sub> [tf]</th><th>M<sub>ux</sub> [tf·m]</th><th>M<sub>uy</sub> [tf·m]</th><th>M<sub>u</sub> [tf·m]</th><th>φM<sub>n</sub> [tf·m]</th><th>D/C</th></tr></thead><tbody>${pm.map(p =>
+  m.html_(`<div class="tablaWrap"><table class="alt"><thead><tr><th>Combinación</th><th>Extremo</th><th>P<sub>u</sub> [tf]</th><th>M<sub>ux</sub> [tf·m]</th><th>M<sub>uy</sub> [tf·m]</th><th>M<sub>u</sub> [tf·m]</th><th>𝜙M<sub>n</sub> [tf·m]</th><th>D/C</th></tr></thead><tbody>${pm.map(p =>
     `<tr${p === pmCrit ? ' class="crit"' : ""}><td>${p.c.n}. ${p.c.nombre}</td><td>${p.ext}</td><td>${fmt(T(p.c.P), 2)}</td><td>${fmt(TM(p.Mx), 2)}</td><td>${fmt(TM(p.My), 2)}</td><td>${fmt(TM(p.Mu), 2)}</td><td>${fmt(TM(p.phiMn), 2)}</td><td${p.dc > 1 + 1e-9 ? ' class="malo"' : ""}>${fmt(p.dc, 3)}</td></tr>`).join("")}</tbody></table></div>`);
   m.raw(L`\begin{table}[H]
 \centering\small
@@ -840,10 +840,10 @@ ${pm.map(p => `${p.c.n}. ${nomTex(p.c.nombre)} & ${p.ext} & ${tn(T(p.c.P), 2)} &
     if (cap.ref && !cap.fuera) {
       const thG = (cap.ref.th ?? 0) * 180 / Math.PI;
       m.row("Eje neutro: profundidad c ; inclinación de la compresión θ", `${fmt(cap.ref.c, 2)} cm ; ${fmt(thG, 1)}°`, "22.2.2.4.2");
-      m.row("Deformación neta de tracción ; factor de reducción: ε<sub>t</sub> ; φ", `${fmt(cap.ref.et, 5)} ; ${fmt(cap.ref.phi, 3)}`, "Tabla 21.2.2");
+      m.row("Deformación neta de tracción ; factor de reducción: ε<sub>t</sub> ; 𝜙", `${fmt(cap.ref.et, 5)} ; ${fmt(cap.ref.phi, 3)}`, "Tabla 21.2.2");
       m.eq(L`\varepsilon_t = ${tn(cap.ref.et, 5)} \;\Rightarrow\; \phi = ${tn(cap.ref.phi, 3)}\ \ (\text{${cap.ref.et <= S.ety ? "controlada por compresión" : cap.ref.et >= S.ety + 0.003 ? "controlada por tracción" : "transición"}})`, "Tabla 21.2.2");
     }
-    m.row("Resistencia de diseño a flexión con P<sub>u</sub>: φM<sub>n</sub>", `${fmt(TM(pmCrit.phiMn), 2)} tf·m ${tagDC(cap.dcM)}`, "22.4.1.1");
+    m.row("Resistencia de diseño a flexión con P<sub>u</sub>: 𝜙M<sub>n</sub>", `${fmt(TM(pmCrit.phiMn), 2)} tf·m ${tagDC(cap.dcM)}`, "22.4.1.1");
     m.eq(L`\frac{M_u}{\phi M_n} = \frac{${tn(TM(pmCrit.Mu), 2)}}{${tn(TM(pmCrit.phiMn), 2)}} = ${tn(cap.dcM, 3)} ${cmp(cap.dcM)} 1.0 \qquad \frac{P_u}{\phi P_{n,m\acute{a}x}} = \frac{${tn(T(cc.P), 2)}}{${tn(T(S.phiPnmax), 2)}} = ${tn(cap.dcP, 3)}`, "10.5.1.1");
   } else m.note("La combinación crítica es inestable por esbeltez (P<sub>u</sub> ≥ 0.75P<sub>c</sub>).", L`La combinación crítica es inestable por esbeltez ($P_u \ge 0.75P_c$).`);
   const pAx = Math.max(...combos.map(c => c.P >= 0 ? c.P / S.phiPnmax : c.P / S.phiPnt));
@@ -867,7 +867,7 @@ ${pm.map(p => `${p.c.n}. ${nomTex(p.c.nombre)} & ${p.ext} & ${tn(T(p.c.P), 2)} &
 
   // ---------- 6. Corte ----------
   m.h("Corte — 22.5 y 10.6.2");
-  const mpr = (eje, k) => {          // M_n o M_pr uniaxial a la carga axial dada (φ = 1)
+  const mpr = (eje, k) => {          // M_n o M_pr uniaxial a la carga axial dada (𝜙 = 1)
     const psiE = eje === "x" ? 0 : Math.PI / 2, mer = meridiano(S, d, psiE, k);
     const nom = [{ P: mer.Pnt, M: 0 }, ...mer.pts.map(p => ({ P: p.P, M: p.M, c: p.c }))];
     return (P) => { const q = puntoEnP(S, d, nom, P, psiE, k, false); return q ? Math.max(0, q.M) : 0; };
@@ -933,15 +933,15 @@ ${pm.map(p => `${p.c.n}. ${nomTex(p.c.nombre)} & ${p.ext} & ${tn(T(p.c.P), 2)} &
     memoGrupo(m, "Refuerzo y resistencia de diseño (resumen)", `${kc}-vn`, { abierto: true, resumen: tagDC(Math.max(r.dc, r.dcLim)) });
     m.row("Resistencia del refuerzo: V<sub>s</sub>", `${fmt(T(r.Vs), 2)} tf`, "22.5.8.5.3");
     m.eq(L`V_s = \frac{A_v f_{yt}\,d}{s} = \frac{${tn(r.Av, 2)}\cdot ${tn(r.fyt, 0)}\cdot ${tn(r.dd, 1)}}{${tn(s, 1)}} = ${tn(T(r.Vs), 2)}\ \mathrm{tf}`, "22.5.8.5.3");
-    m.row(`Resistencia de diseño: φV<sub>n</sub> ≥ V<sub>u</sub> = ${fmt(T(r.Vu), 2)} tf`, `${fmt(T(r.phiVn), 2)} tf ${tagDC(r.dc)}`, "22.5.1.1");
+    m.row(`Resistencia de diseño: 𝜙V<sub>n</sub> ≥ V<sub>u</sub> = ${fmt(T(r.Vu), 2)} tf`, `${fmt(T(r.phiVn), 2)} tf ${tagDC(r.dc)}`, "22.5.1.1");
     m.eq(L`\phi V_n = 0.75\,(V_c + V_s) = 0.75\,(${tn(T(r.Vc), 2)} + ${tn(T(r.Vs), 2)}) = ${tn(T(r.phiVn), 2)}\ \mathrm{tf} \qquad \frac{V_u}{\phi V_n} = ${tn(r.dc, 3)} ${cmp(r.dc)} 1.0`, "22.5.1.1");
-    m.row("Límite de la sección: V<sub>u</sub> ≤ φ(V<sub>c</sub> + 0.66√f'<sub>c</sub> b<sub>w</sub>d)", tagDC(r.dcLim), "22.5.1.2");
+    m.row("Límite de la sección: V<sub>u</sub> ≤ 𝜙(V<sub>c</sub> + 0.66√f'<sub>c</sub> b<sub>w</sub>d)", tagDC(r.dcLim), "22.5.1.2");
     ck(`Corte según ${eje}${zona ? ` (${zona})` : ""}`, L`$V_u = ${tn(T(r.Vu), 2)}$ tf`, L`$\phi V_n = ${tn(T(r.phiVn), 2)}$ tf`, r.dc, `Corte según ${eje}${zona ? ` ${zona}` : ""}`, "corte");
     ck(`Límite de la sección, corte ${eje}`, L`$V_u$`, L`$\phi(V_c + 0.66\sqrt{f'_c}b_wd)$`, r.dcLim, `Sección a corte según ${eje}`, "corte");
     if (r.requiere) {
       const dcAv = r.Avmin / r.Av, dcS = s / r.sMax;
       memoGrupo(m, "Refuerzo mínimo y separación", `${kc}-min`, { resumen: tagDC(Math.max(dcAv, dcS)) });
-      m.row("Refuerzo mínimo si V<sub>u</sub> > 0.5φV<sub>c</sub>: A<sub>v</sub> ≥ A<sub>v,mín</sub>", `${fmt(r.Av, 2)} ≥ ${fmt(r.Avmin, 2)} cm² ${tagDC(dcAv)}`, "10.6.2.1");
+      m.row("Refuerzo mínimo si V<sub>u</sub> > 0.5𝜙V<sub>c</sub>: A<sub>v</sub> ≥ A<sub>v,mín</sub>", `${fmt(r.Av, 2)} ≥ ${fmt(r.Avmin, 2)} cm² ${tagDC(dcAv)}`, "10.6.2.1");
       m.row(`Separación máxima del refuerzo de corte (V<sub>s,req</sub> = ${fmt(T(r.VsReq), 2)} tf ${r.VsReq <= 0.33 * raizFc(d.fc) * r.bw * r.dd ? "≤" : ">"} 0.33√f'<sub>c</sub> b<sub>w</sub>d)`, `${fmt(s, 1)} ≤ ${fmt(r.sMax, 1)} cm ${tagDC(dcS)}`, "Tabla 10.7.6.5.2");
       ck(`Refuerzo mínimo de corte ${eje}`, L`$A_{v,m\acute{i}n} = ${tn(r.Avmin, 2)}$ cm$^2$`, L`$A_v = ${tn(r.Av, 2)}$ cm$^2$`, dcAv, `Refuerzo mínimo de corte según ${eje}`, "corte");
       ck(`Separación del refuerzo de corte ${eje}`, L`${tn(s, 1)} cm`, L`${tn(r.sMax, 1)} cm`, dcS, `Separación de corte según ${eje}`, "corte");
@@ -964,7 +964,7 @@ ${pm.map(p => `${p.c.n}. ${nomTex(p.c.nombre)} & ${p.ext} & ${tn(T(p.c.P), 2)} &
     m.sub("Corte en dos direcciones");
     if (rx > 0.5 && ry > 0.5) {
       const dcI = (rx + ry) / 1.5;
-      m.row("Interacción: v<sub>u,x</sub>/φv<sub>n,x</sub> + v<sub>u,y</sub>/φv<sub>n,y</sub> ≤ 1.5", `${fmt(rx + ry, 3)} ${tagDC(dcI)}`, "22.5.1.11");
+      m.row("Interacción: v<sub>u,x</sub>/𝜙v<sub>n,x</sub> + v<sub>u,y</sub>/𝜙v<sub>n,y</sub> ≤ 1.5", `${fmt(rx + ry, 3)} ${tagDC(dcI)}`, "22.5.1.11");
       ck("Interacción de corte biaxial", L`${tn(rx + ry, 3)}`, "1.5", dcI, "Corte biaxial", "corte");
     } else m.row("Interacción de corte biaxial (algún cociente ≤ 0.5)", tag(true, "se desprecia"), "22.5.1.10");
   }
@@ -984,7 +984,7 @@ ${pm.map(p => `${p.c.n}. ${nomTex(p.c.nombre)} & ${p.ext} & ${tn(T(p.c.P), 2)} &
     m.eq(L`\rho_s = \frac{4A_{b,t}}{D_c\,s} = \frac{4\cdot ${tn(S.Abt, 3)}}{${tn(S.Dc, 1)}\cdot ${tn(d.s0, 1)}} = ${tn(rhos, 4)} \qquad 0.45\left(\frac{A_g}{A_{ch}} - 1\right)\frac{f'_c}{f_{yt}} = ${tn(rhoMin, 4)}`, "25.7.3.3");
     ck("Cuantía de la espiral", L`${tn(rhoMin, 4)}`, L`$\rho_s = ${tn(rhos, 4)}$`, rhoMin / rhos, "Cuantía de la espiral", "det");
   } else {
-    m.row(`Diámetro del estribo ≥ ${d.db <= 3.2 ? "10 mm (barras ≤ φ32)" : "13 mm (barras ≥ φ36)"}`, `${fmt(d.dbt * 10, 0)} mm ${tagDC(dbtMinACI / d.dbt)}`, "25.7.2.2");
+    m.row(`Diámetro del estribo ≥ ${d.db <= 3.2 ? "10 mm (barras ≤ 𝜙32)" : "13 mm (barras ≥ 𝜙36)"}`, `${fmt(d.dbt * 10, 0)} mm ${tagDC(dbtMinACI / d.dbt)}`, "25.7.2.2");
     ck("Diámetro del estribo", L`${tn(dbtMinACI * 10, 0)} mm`, L`${tn(d.dbt * 10, 0)} mm`, dbtMinACI / d.dbt, "Diámetro del estribo", "det");
     const sMaxT = Math.min(16 * d.db, 48 * d.dbt, S.dimMin), sMayor = Math.max(d.s0, d.s);
     m.row("Separación de estribos ≤ mín(16d<sub>b</sub> ; 48d<sub>bt</sub> ; menor dimensión)", `${fmt(sMayor, 1)} ≤ ${fmt(sMaxT, 1)} cm ${tagDC(sMayor / sMaxT)}`, "25.7.2.1");
@@ -1173,7 +1173,7 @@ function svgColumna(d, r) {
   const W = 820, H = 330, c = "#3d4450";
   const t = (x, y, s, a = "start", fs = 10.5, col = c) => `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="${fs}" fill="${col}" text-anchor="${a}">${s}</text>`;
   let s = t(130, 22, "SECCIÓN", "middle", 11) + svgSeccion(d, r, 130, 160, 200);
-  s += t(130, 300, `${r.S.n} φ${fmt(d.db * 10, 0)} · ${r.S.espiral ? "espiral" : d.forma === "circ" ? "estribos circulares" : "estribos"} φ${fmt(d.dbt * 10, 0)} @ ${fmt(d.s0, 1)}${r.S.espiral ? "" : ` / ${fmt(d.s, 1)}`} cm`, "middle", 10);
+  s += t(130, 300, `${r.S.n} 𝜙${fmt(d.db * 10, 0)} · ${r.S.espiral ? "espiral" : d.forma === "circ" ? "estribos circulares" : "estribos"} 𝜙${fmt(d.dbt * 10, 0)} @ ${fmt(d.s0, 1)}${r.S.espiral ? "" : ` / ${fmt(d.s, 1)}`} cm`, "middle", 10);
   // Diagrama de interacción de la dirección crítica
   const cap = r.pmCrit.cap, psi = cap ? cap.psi : 0, cv = cap ? cap.cv : curvas(r.S, d, 0);
   const x0 = 330, y0 = 290, w = 450, h = 250;
@@ -1193,7 +1193,7 @@ function svgColumna(d, r) {
   s += t(x0 + w, PY(0) - 4, "M [tf·m]", "end", 10) + t(x0 + 4, y0 - h + 10, "P [tf]", "start", 10);
   s += t(x0 - 4, PY(r.S.phiPnmax) + 4, fmt(T(r.S.phiPnmax), 0), "end", 9.5) + t(x0 - 4, PY(0) + 4, "0", "end", 9.5);
   s += t(PX(Mmax / 1.1), PY(0) + 14, fmt(TM(Mmax / 1.1), 1), "end", 9.5);
-  s += t(x0 + w, y0 + 22, "— φP<tspan font-size=\"8\" dy=\"2\">n</tspan><tspan dy=\"-2\">–φM</tspan><tspan font-size=\"8\" dy=\"2\">n</tspan><tspan dy=\"-2\"> de diseño · - - nominal · ● combinaciones (naranja: crítica o falla)</tspan>", "end", 9.5);
+  s += t(x0 + w, y0 + 22, "— 𝜙P<tspan font-size=\"8\" dy=\"2\">n</tspan><tspan dy=\"-2\">–𝜙M</tspan><tspan font-size=\"8\" dy=\"2\">n</tspan><tspan dy=\"-2\"> de diseño · - - nominal · ● combinaciones (naranja: crítica o falla)</tspan>", "end", 9.5);
   return `<svg viewBox="0 0 ${W} ${H + 14}" role="img" aria-label="Sección y diagrama de interacción de la columna">${s}</svg>`;
 }
 function tikzColumna(d, r) {
@@ -1388,7 +1388,7 @@ function calcular() {
   const peor = (arr) => arr.reduce((a, c) => (c.dc > (a?.dc ?? -1) ? c : a), null);
   const pm = peor(g("pm")), cor = peor(g("corte")), det = peor(g("det")), sis = peor(g("sis")), esb = peor(g("esb"));
   const cards = [
-    { t: "Flexocompresión", v: pm.dc, s: `combinación ${r.pmCrit.c.n}: M<sub>u</sub> = ${fmt(TM(r.pmCrit.Mu), 2)} / φM<sub>n</sub> = ${fmt(TM(r.pmCrit.phiMn), 2)} tf·m` },
+    { t: "Flexocompresión", v: pm.dc, s: `combinación ${r.pmCrit.c.n}: M<sub>u</sub> = ${fmt(TM(r.pmCrit.Mu), 2)} / 𝜙M<sub>n</sub> = ${fmt(TM(r.pmCrit.phiMn), 2)} tf·m` },
     { t: "Corte", v: cor.dc, s: `más exigido: ${cor.html.toLowerCase()}` },
     { t: "Refuerzo y detalle", v: det.dc, s: `más exigido: ${det.html.toLowerCase()}` },
   ];
@@ -1401,7 +1401,7 @@ function calcular() {
   }).join("");
 
   const nomSec = r.S.rect ? `${fmt(d.b, 0)} × ${fmt(d.h, 0)} cm` : `D = ${fmt(d.D, 0)} cm`;
-  $("resTitle").textContent = `Resultados — Columna ${nomSec} · ${r.S.n} φ${fmt(d.db * 10, 0)}`;
+  $("resTitle").textContent = `Resultados — Columna ${nomSec} · ${r.S.n} 𝜙${fmt(d.db * 10, 0)}`;
   const rm = Number.isFinite(r.dcMax) ? fmt(r.dcMax, 3) : "∞";
   const fallas = [...new Set(r.checks.filter(c => c.dc > 1 + 1e-9).map(c => c.html.toLowerCase()))];
   const sv = r.sinVerif.join("; ");
@@ -1426,7 +1426,7 @@ function calcular() {
 function descargarDXF() {
   if (!ultimoTex || !ultimoR) { alert("Corrija los datos inválidos antes de descargar el plano."); return; }
   const d = ultimoD, r = ultimoR, S = r.S, k = 10;
-  const ø = (t) => String(t).replace(/φ/g, "%%c");
+  const ø = (t) => String(t).replace(/𝜙/g, "%%c");
   const nomSec = S.rect ? `${fmt(d.b, 0)} x ${fmt(d.h, 0)} cm` : `D = ${fmt(d.D, 0)} cm`;
   const pl = new PlanoDXF({ titulo: `COLUMNA ${nomSec}`, contenido: "sección, elevación, armaduras y especificaciones" });
   const Bx = (S.rect ? d.b : d.D) * k, Hy = (S.rect ? d.h : d.D) * k, rec = d.rec * k, dbt = d.dbt * 10, db = d.db * 10;
@@ -1449,8 +1449,8 @@ function descargarDXF() {
       }
       for (const b of S.barras) v.punto("ARMADURA", b.x * k, b.y * k, db);
       const b0 = S.barras[0];
-      v.referencia(b0.x * k, b0.y * k, Bx / 2 + v.pp(8), Hy / 2 + v.pp(4), ø(`${S.n} φ${fmt(db, 0)}`), "ARMADURA");
-      v.referencia(Bx / 2 - rec - dbt / 2, 0, Bx / 2 + v.pp(8), -Hy / 4, ø(`${S.espiral ? "Espiral" : "E"} φ${fmt(dbt, 0)}`), "ESTRIBOS");
+      v.referencia(b0.x * k, b0.y * k, Bx / 2 + v.pp(8), Hy / 2 + v.pp(4), ø(`${S.n} 𝜙${fmt(db, 0)}`), "ARMADURA");
+      v.referencia(Bx / 2 - rec - dbt / 2, 0, Bx / 2 + v.pp(8), -Hy / 4, ø(`${S.espiral ? "Espiral" : "E"} 𝜙${fmt(dbt, 0)}`), "ESTRIBOS");
     },
   });
   const lu = d.lu * k, lo = (r.lo || 0) * k, s0 = d.s0 * k, s = d.s * k;
@@ -1473,12 +1473,12 @@ function descargarDXF() {
       yS.slice(0, 400).forEach(est);
       v.cotaV(0, lu, -Bx / 2, -10, `lu = ${fmtCota(lu)}`);
       if (lo && !S.espiral) { v.cotaV(0, lo, Bx / 2, 10, `lo = ${fmtCota(lo)}`); v.cotaV(lu - lo, lu, Bx / 2, 10, `lo = ${fmtCota(lo)}`); }
-      v.referencia(xb, lu / 2, Bx / 2 + v.pp(22), lu / 2, ø(S.espiral ? `Espiral φ${fmt(dbt, 0)} paso ${fmt(d.s0, 1)} cm` : `E φ${fmt(dbt, 0)} @ ${fmt(d.s0, 1)} en lo / @ ${fmt(d.s, 1)} cm`), "ESTRIBOS");
+      v.referencia(xb, lu / 2, Bx / 2 + v.pp(22), lu / 2, ø(S.espiral ? `Espiral 𝜙${fmt(dbt, 0)} paso ${fmt(d.s0, 1)} cm` : `E 𝜙${fmt(dbt, 0)} @ ${fmt(d.s0, 1)} en lo / @ ${fmt(d.s, 1)} cm`), "ESTRIBOS");
     },
   });
   const filas = [
-    ["L1", "Barras longitudinales", ø(`${S.n} φ${fmt(db, 0)}`), String(S.n), fmtCota(lu)],
-    ["E1", S.espiral ? "Espiral continua" : S.rect ? `Estribo perimetral y trabas (${d.nlx} ramas || x, ${d.nly} || y)` : "Estribos circulares", ø(`φ${fmt(dbt, 0)}`), "-", "-"],
+    ["L1", "Barras longitudinales", ø(`${S.n} 𝜙${fmt(db, 0)}`), String(S.n), fmtCota(lu)],
+    ["E1", S.espiral ? "Espiral continua" : S.rect ? `Estribo perimetral y trabas (${d.nlx} ramas || x, ${d.nly} || y)` : "Estribos circulares", ø(`𝜙${fmt(dbt, 0)}`), "-", "-"],
   ];
   pl.tabla({ titulo: "Cuadro de armaduras", columnas: [["Marca", 12], ["Ubicación", 64], ["Armadura", 26], ["Cant.", 12], ["Largo [mm]", 20]], filas,
     nota: "%%c = diámetro en mm. Empalmes y anclajes según el proyecto (no incluidos)." });
@@ -1496,8 +1496,8 @@ function descargarDXF() {
 function init() {
   tablaCargas();
   const opc = (sel, obj, def) => { $(sel).innerHTML = Object.entries(obj).map(([v, t]) => `<option value="${v}"${String(v) === String(def) ? " selected" : ""}>${t}</option>`).join(""); };
-  opc("db", Object.fromEntries(BARRAS.map(b => [b, `φ${b}`])), 18);
-  opc("dbt", Object.fromEntries(ESTRIBOS.map(b => [b, `φ${b}`])), 12);
+  opc("db", Object.fromEntries(BARRAS.map(b => [b, `𝜙${b}`])), 18);
+  opc("dbt", Object.fromEntries(ESTRIBOS.map(b => [b, `𝜙${b}`])), 12);
   opc("fc", Object.fromEntries(Object.entries(GRADOS).map(([v, g]) => [v, `${g} (f'c = ${v} kgf/cm²)`])), 250);
   opc("fy", Object.fromEntries(Object.entries(ACEROS).map(([v, a]) => [v, `${a}`])), 4200);
   opc("fyt", Object.fromEntries(Object.entries(ACEROS).map(([v, a]) => [v, `${a}`])), 4200);

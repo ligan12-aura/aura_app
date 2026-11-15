@@ -204,10 +204,10 @@
       <fieldset>
         <legend>3. Malla de retracción</legend>
         <div class="row2">
-          <div><label for="dMalla">Diámetro de la barra φ <span class="unit">[mm]</span></label><input id="dMalla" type="number" step="0.1" value="6"></div>
+          <div><label for="dMalla">Diámetro de la barra 𝜙 <span class="unit">[mm]</span></label><input id="dMalla" type="number" step="0.1" value="6"></div>
           <div><label for="sMalla">Espaciamiento s <span class="unit">[cm]</span></label><input id="sMalla" type="number" step="0.5" value="15"></div>
         </div>
-        <label>Área en cada dirección A<sub>s</sub> = (π φ²/4) · 100/s</label>
+        <label>Área en cada dirección A<sub>s</sub> = (π 𝜙²/4) · 100/s</label>
         <output id="asOut" class="cbOut">—</output>
         <div class="unit" style="margin-top:4px">Misma malla en ambas direcciones. Acero A63-42H mínimo.</div>
       </fieldset>
@@ -618,7 +618,7 @@ function verificar(eh, d, m) {
   // 5. Malla de retracción
   m.h("Armadura de retracción");
   const dc4 = AS_MIN / d.As;
-  m.row("Malla en cada dirección", `φ${fmt(d.dM, 1)} a ${fmt(d.sM, 1)} cm`);
+  m.row("Malla en cada dirección", `𝜙${fmt(d.dM, 1)} a ${fmt(d.sM, 1)} cm`);
   m.row("Armadura dispuesta: A<sub>s</sub>", `${fmt(d.As, 2)} cm²/m`);
   m.eq(L`A_s = \frac{\pi\,\phi^2}{4}\cdot\frac{100}{s} = \frac{\pi \cdot ${tn(d.dM / 10, 2)}^2}{4}\cdot\frac{100}{${tn(d.sM, 1)}} = ${tn(d.As, 2)}\ \mathrm{cm^2/m}`);
   m.row("Armadura mínima: A<sub>s,mín</sub>", `${fmt(AS_MIN, 2)} cm²/m`, "Tabla IV, nota 3");
@@ -962,7 +962,7 @@ class Dxf {
     const txt = c.join("\r\n") + "\r\n";
     // La fuente txt.shx de AutoCAD no trae "·", "²" ni "³": se reemplazan por equivalentes simples
     const map = { "—": "-", "–": "-", "≤": "<=", "≥": ">=", "φ": "phi", "Δ": "Delta", "λ": "lambda", "→": "->", "π": "pi", "·": "-", "²": "2", "³": "3", "×": "x" };
-    const limpio = txt.replace(/\u00a0/g, " ").replace(/[—–≤≥φΔλ→π·²³×]/g, (ch) => map[ch]).replace(/[^\x00-\xff]/g, "?");
+    const limpio = txt.replace(/\u{1D719}/gu, "φ").replace(/\u00a0/g, " ").replace(/[—–≤≥φΔλ→π·²³×]/g, (ch) => map[ch]).replace(/[^\x00-\xff]/g, "?");
     return Uint8Array.from(limpio, (ch) => ch.charCodeAt(0));
   }
 }

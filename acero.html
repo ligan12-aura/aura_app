@@ -687,9 +687,9 @@ M_n &= M_p - (M_p - 0.7F_yS_x)\left(\frac{\lambda - \lambda_{pf}}{\lambda_{rf} -
 
   const Mn = Math.min(Mp, Mltb, Mflb);
   const phiMn = 0.9 * Mn;
-  memoGrupo(m, "Resistencia de diseño (resumen)", "ac-fx-cap", { abierto: true, resumen: `φ<sub>b</sub>M<sub>nx</sub> = ${fmt(phiMn / 100, 1)} kgf·m` });
+  memoGrupo(m, "Resistencia de diseño (resumen)", "ac-fx-cap", { abierto: true, resumen: `𝜙<sub>b</sub>M<sub>nx</sub> = ${fmt(phiMn / 100, 1)} kgf·m` });
   m.row("Resistencia nominal a flexión: M<sub>nx</sub>", `${fmt(Mn / 100, 1)} kgf·m`);
-  m.row("<b>Resistencia de diseño a flexión: φ<sub>b</sub>M<sub>nx</sub></b>", `<b>${fmt(phiMn / 100, 1)} kgf·m</b>`, "F1");
+  m.row("<b>Resistencia de diseño a flexión: 𝜙<sub>b</sub>M<sub>nx</sub></b>", `<b>${fmt(phiMn / 100, 1)} kgf·m</b>`, "F1");
   m.p(L`\textbf{Capacidad de diseño eje fuerte} (mínimo de los estados límite aplicables):`);
   m.eq(L`\phi_b M_{nx} = 0.9\cdot ${tn(Mn / 100, 1)} = ${tn(phiMn / 100, 1)}${KGM}`, "F1");
   return { Mn, phiMn, fuera, claseAla, claseAlma, Lp, Lr };
@@ -727,7 +727,7 @@ function flexionY(s, Fy, m) {
     m.eq(L`F_{cr} = \frac{0.69E}{\lambda^2} = \frac{0.69\cdot ${tn(E, 0)}}{${tn(lf, 3)}^2} = ${tn(Fcr, 1)}${KGCM2} \qquad M_n = F_{cr}S_y = ${tn(Mn / 100, 1)}${KGM}`, "F6-3");
   }
   const phiMn = 0.9 * Mn;
-  m.row("<b>Resistencia de diseño a flexión: φ<sub>b</sub>M<sub>ny</sub></b>", `<b>${fmt(phiMn / 100, 1)} kgf·m</b>`, "F1");
+  m.row("<b>Resistencia de diseño a flexión: 𝜙<sub>b</sub>M<sub>ny</sub></b>", `<b>${fmt(phiMn / 100, 1)} kgf·m</b>`, "F1");
   m.p(L`\textbf{Capacidad de diseño eje débil:}`);
   m.eq(L`\phi_b M_{ny} = 0.9\cdot ${tn(Mn / 100, 1)} = ${tn(phiMn / 100, 1)}${KGM}`, "F1");
   return { Mn, phiMn };
@@ -763,10 +763,10 @@ function corte(s, Fy, m) {
   }
   const Vn = 0.6 * Fy * Aw * Cv1;
   const phiVn = phi * Vn;
-  memoGrupo(m, "Resistencia a corte (resumen)", "ac-v-cap", { abierto: true, resumen: `φ<sub>v</sub>V<sub>n</sub> = ${fmt(phiVn, 0)} kgf` });
-  m.row("Factor de resistencia ; coeficiente de corte del alma: φ<sub>v</sub> ; C<sub>v1</sub>", `${fmt(phi, 2)} ; ${fmt(Cv1, 3)}`, "G2.1");
+  memoGrupo(m, "Resistencia a corte (resumen)", "ac-v-cap", { abierto: true, resumen: `𝜙<sub>v</sub>V<sub>n</sub> = ${fmt(phiVn, 0)} kgf` });
+  m.row("Factor de resistencia ; coeficiente de corte del alma: 𝜙<sub>v</sub> ; C<sub>v1</sub>", `${fmt(phi, 2)} ; ${fmt(Cv1, 3)}`, "G2.1");
   m.row("Resistencia nominal a corte: V<sub>n</sub>", `${fmt(Vn, 0)} kgf`, "G2-1");
-  m.row("<b>Resistencia de diseño a corte: φ<sub>v</sub>V<sub>n</sub></b>", `<b>${fmt(phiVn, 0)} kgf</b>`);
+  m.row("<b>Resistencia de diseño a corte: 𝜙<sub>v</sub>V<sub>n</sub></b>", `<b>${fmt(phiVn, 0)} kgf</b>`);
   m.p(L`\textbf{Resistencia nominal y de diseño a corte:}`, true);
   m.eq(L`V_n = 0.6\,F_y\,A_w\,C_{v1} = 0.6\cdot ${tn(Fy, 0)}\cdot ${tn(Aw)}\cdot ${tn(Cv1, 3)} = ${tn(Vn, 0)}${KG}`, "G2-1");
   m.eq(L`\phi_v V_n = ${tn(phi)}\cdot ${tn(Vn, 0)} = ${tn(phiVn, 0)}${KG}`);
@@ -869,9 +869,9 @@ F_{ez} &= \left(\frac{\pi^2 E C_w}{L_{cz}^2} + G J\right)\frac{1}{I_x + I_y}\\
   }
   const Pn = Fcr * Ae;
   const phiPn = 0.9 * Pn;
-  memoGrupo(m, "Resistencia de diseño (resumen)", "ac-c-cap", { abierto: true, resumen: `φ<sub>c</sub>P<sub>n</sub> = ${fmt(phiPn, 0)} kgf` });
+  memoGrupo(m, "Resistencia de diseño (resumen)", "ac-c-cap", { abierto: true, resumen: `𝜙<sub>c</sub>P<sub>n</sub> = ${fmt(phiPn, 0)} kgf` });
   m.row("Resistencia nominal a compresión: P<sub>n</sub>", `${fmt(Pn, 0)} kgf`, Ae < s.A ? "E7-1" : "E3-1");
-  m.row("<b>Resistencia de diseño a compresión: φ<sub>c</sub>P<sub>n</sub></b>", `<b>${fmt(phiPn, 0)} kgf</b>`);
+  m.row("<b>Resistencia de diseño a compresión: 𝜙<sub>c</sub>P<sub>n</sub></b>", `<b>${fmt(phiPn, 0)} kgf</b>`);
   m.p(L`\textbf{Resistencia a compresión:}`);
   m.eq(L`P_n = F_{cr}\,A_${Ae < s.A ? "e" : "g"} = ${tn(Fcr, 1)}\cdot ${tn(Ae)} = ${tn(Pn, 0)}${KG}`, Ae < s.A ? "E7-1" : "E3-1");
   m.eq(L`\phi_c P_n = 0.9\cdot ${tn(Pn, 0)} = ${tn(phiPn, 0)}${KG}`);
@@ -890,8 +890,8 @@ function verificarViga(s, Fy, d, m) {
   const rx = d.Mux / fx.phiMn, ry = d.Muy / fy.phiMn;
   const dcM = rx + ry;
   m.sub("Demanda / capacidad en flexión");
-  m.row("Razón de flexión, eje x: M<sub>ux</sub>/φM<sub>nx</sub>", fmt(rx, 3));
-  m.row("Razón de flexión, eje y: M<sub>uy</sub>/φM<sub>ny</sub>", fmt(ry, 3));
+  m.row("Razón de flexión, eje x: M<sub>ux</sub>/𝜙M<sub>nx</sub>", fmt(rx, 3));
+  m.row("Razón de flexión, eje y: M<sub>uy</sub>/𝜙M<sub>ny</sub>", fmt(ry, 3));
   m.row("<b>Razón demanda/capacidad en flexión: D/C</b>", `<b>${fmt(dcM, 3)}</b> ${tag(dcM <= 1, dcM <= 1 ? "CUMPLE" : "NO CUMPLE")}`, "H1-1b");
   m.p(L`Considerando los momentos últimos solicitantes $M_{ux} = ${tn(d.Mux / 100, 1)}$ kgf$\cdot$m y $M_{uy} = ${tn(d.Muy / 100, 1)}$ kgf$\cdot$m:`);
   m.eq(L`\frac{M_{ux}}{\phi_bM_{nx}} = \frac{${tn(d.Mux / 100, 1)}}{${tn(fx.phiMn / 100, 1)}} = ${tn(rx, 3)} \qquad \frac{M_{uy}}{\phi_bM_{ny}} = \frac{${tn(d.Muy / 100, 1)}}{${tn(fy.phiMn / 100, 1)}} = ${tn(ry, 3)}`);
@@ -910,9 +910,9 @@ function verificarViga(s, Fy, d, m) {
   return {
     dc, fuera: fx.fuera,
     cards: [
-      { t: "Flexión eje fuerte", v: fmt(rx, 3), s: `φM<sub>nx</sub> = ${fmt(fx.phiMn / 100, 1)} kgf·m`, r: rx },
-      { t: "Flexión total (x + y)", v: fmt(dcM, 3), s: `φM<sub>ny</sub> = ${fmt(fy.phiMn / 100, 1)} kgf·m`, r: dcM },
-      { t: "Corte", v: fmt(dcV, 3), s: `φV<sub>n</sub> = ${fmt(v.phiVn, 0)} kgf`, r: dcV },
+      { t: "Flexión eje fuerte", v: fmt(rx, 3), s: `𝜙M<sub>nx</sub> = ${fmt(fx.phiMn / 100, 1)} kgf·m`, r: rx },
+      { t: "Flexión total (x + y)", v: fmt(dcM, 3), s: `𝜙M<sub>ny</sub> = ${fmt(fy.phiMn / 100, 1)} kgf·m`, r: dcM },
+      { t: "Corte", v: fmt(dcV, 3), s: `𝜙V<sub>n</sub> = ${fmt(v.phiVn, 0)} kgf`, r: dcV },
     ],
     resumen: [
       { k: "Flexión eje fuerte", dem: L`$M_{ux} = ${tn(d.Mux / 100, 1)}$ kgf$\cdot$m`, cap: L`$\phi_bM_{nx} = ${tn(fx.phiMn / 100, 1)}$ kgf$\cdot$m`, dc: rx, ref: "F2/F3" },
@@ -927,7 +927,7 @@ function verificarColumna(s, Fy, d, m) {
   m.h("Verificación a compresión — Capítulo E");
   const c = compresion(s, Fy, d.L, d.Kx, d.Ky, d.Kz, m);
   const rP = d.Pu / c.phiPn;
-  m.row("Razón de carga axial: P<sub>u</sub>/φP<sub>n</sub>", fmt(rP, 3));
+  m.row("Razón de carga axial: P<sub>u</sub>/𝜙P<sub>n</sub>", fmt(rP, 3));
   m.p(L`\textbf{Relación demanda-capacidad} para la carga axial última $P_u = ${tn(d.Pu, 0)}$ kgf:`);
   m.eq(L`\frac{P_u}{\phi_cP_n} = \frac{${tn(d.Pu, 0)}}{${tn(c.phiPn, 0)}} = ${tn(rP, 3)} \;\rightarrow\; ${tn(rP * 100, 1)}\,\%`);
   m.p(L`La carga axial por sí sola utiliza el ${tn(rP * 100, 1)}\,\% de la capacidad a compresión del perfil; esta razón se combina con la flexión en la ecuación de interacción de la sección H1.`, true);
@@ -980,9 +980,9 @@ function verificarColumna(s, Fy, d, m) {
     m.eq(L`\frac{D}{C} = \frac{P_u}{2\phi_cP_n} + \left(\frac{M_{ux}}{\phi_bM_{nx}} + \frac{M_{uy}}{\phi_bM_{ny}}\right) = \frac{${tn(rP, 3)}}{2} + \left(${tn(rx, 3)} + ${tn(ry, 3)}\right) = ${tn(dc, 3)} ${cmp(dc, 1)} 1.0`, "H1-1b");
   }
   m.p(L`Por lo tanto, como la relación demanda-capacidad ${dc <= 1 ? L`$D/C = ${tn(dc, 3)}$ es menor o igual a 1.0, la sección \textbf{cumple}` : L`$D/C = ${tn(dc, 3)}$ es mayor que 1.0, la sección \textbf{no cumple}`} a flexocompresión.`, true);
-  m.row("Razón de carga axial: P<sub>u</sub>/φP<sub>n</sub>", fmt(rP, 3));
-  m.row("Razón de flexión, eje x: M<sub>ux</sub>/φM<sub>nx</sub>", fmt(rx, 3));
-  m.row("Razón de flexión, eje y: M<sub>uy</sub>/φM<sub>ny</sub>", fmt(ry, 3));
+  m.row("Razón de carga axial: P<sub>u</sub>/𝜙P<sub>n</sub>", fmt(rP, 3));
+  m.row("Razón de flexión, eje x: M<sub>ux</sub>/𝜙M<sub>nx</sub>", fmt(rx, 3));
+  m.row("Razón de flexión, eje y: M<sub>uy</sub>/𝜙M<sub>ny</sub>", fmt(ry, 3));
   m.row(`<b>Interacción flexo-compresión (${rP >= 0.2 ? "P<sub>r</sub>/P<sub>c</sub> ≥ 0.2" : "P<sub>r</sub>/P<sub>c</sub> < 0.2"}): D/C</b>`, `<b>${fmt(dc, 3)}</b> ${tag(dc <= 1, dc <= 1 ? "CUMPLE" : "NO CUMPLE")}`, rP >= 0.2 ? "H1-1a" : "H1-1b");
 
   m.h("Verificación a corte — Capítulo G");
@@ -996,11 +996,11 @@ function verificarColumna(s, Fy, d, m) {
   return {
     dc: inestable ? Infinity : Math.max(dc, dcV), fuera: fx.fuera, inestable,
     cards: [
-      { t: "Compresión P<sub>u</sub>/φP<sub>n</sub>", v: fmt(rP, 3), s: `φP<sub>n</sub> = ${fmt(c.phiPn, 0)} kgf`, r: rP },
-      { t: "M<sub>ux</sub>/φM<sub>nx</sub>", v: fmt(rx, 3), s: `φM<sub>nx</sub> = ${fmt(fx.phiMn / 100, 1)} kgf·m`, r: rx },
-      { t: "M<sub>uy</sub>/φM<sub>ny</sub>", v: fmt(ry, 3), s: `φM<sub>ny</sub> = ${fmt(fy.phiMn / 100, 1)} kgf·m`, r: ry },
+      { t: "Compresión P<sub>u</sub>/𝜙P<sub>n</sub>", v: fmt(rP, 3), s: `𝜙P<sub>n</sub> = ${fmt(c.phiPn, 0)} kgf`, r: rP },
+      { t: "M<sub>ux</sub>/𝜙M<sub>nx</sub>", v: fmt(rx, 3), s: `𝜙M<sub>nx</sub> = ${fmt(fx.phiMn / 100, 1)} kgf·m`, r: rx },
+      { t: "M<sub>uy</sub>/𝜙M<sub>ny</sub>", v: fmt(ry, 3), s: `𝜙M<sub>ny</sub> = ${fmt(fy.phiMn / 100, 1)} kgf·m`, r: ry },
       { t: "Interacción H1", v: fmt(dc, 3), s: rP >= 0.2 ? "Ec. H1-1a" : "Ec. H1-1b", r: dc },
-      { t: "Corte", v: fmt(dcV, 3), s: `φV<sub>n</sub> = ${fmt(v.phiVn, 0)} kgf`, r: dcV },
+      { t: "Corte", v: fmt(dcV, 3), s: `𝜙V<sub>n</sub> = ${fmt(v.phiVn, 0)} kgf`, r: dcV },
     ],
     resumen: [
       { k: "Compresión", dem: L`$P_u = ${tn(d.Pu, 0)}$ kgf`, cap: L`$\phi_cP_n = ${tn(c.phiPn, 0)}$ kgf`, dc: rP, ref: "E3" },

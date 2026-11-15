@@ -194,7 +194,7 @@
           <div><label for="ha">Alto pedestal h<sub>a</sub> <span class="unit">[mm]</span></label><input id="ha" type="number" step="50" value="1000"></div>
           <div><label for="fc">Hormigón f'<sub>c</sub> <span class="unit">[kgf/cm²]</span></label><input id="fc" type="number" step="5" value="250"></div>
           <div><label for="eg">Grout <span class="unit">[mm]</span></label><input id="eg" type="number" step="5" value="30"></div>
-          <div><label for="phic">φ<sub>c</sub> aplastamiento</label><select id="phic"><option value="0.65" selected>0.65 (AISC J8)</option><option value="0.60">0.60 (ICHA 13.9)</option></select></div>
+          <div><label for="phic">𝜙<sub>c</sub> aplastamiento</label><select id="phic"><option value="0.65" selected>0.65 (AISC J8)</option><option value="0.60">0.60 (ICHA 13.9)</option></select></div>
         </div>
       </fieldset>
 
@@ -262,7 +262,7 @@
         <div class="unit" id="llaveNota" style="margin-top:4px">Placa soldada bajo la placa base, centrada y perpendicular al corte (b<sub>L</sub> según b<sub>f</sub>). H<sub>L</sub> incluye el grout; trabaja contra el hormigón solo bajo el grout. Acero y electrodo como la placa y la columna.</div>
         <div class="row2" id="roceBox">
           <div><label for="mu">Coeficiente de roce μ</label><input id="mu" type="number" step="0.05" value="0.55"></div>
-          <div><label for="phiR">φ roce</label><input id="phiR" type="number" step="0.05" value="0.75"></div>
+          <div><label for="phiR">𝜙 roce</label><input id="phiR" type="number" step="0.05" value="0.75"></div>
         </div>
       </fieldset>
 
@@ -628,34 +628,34 @@ function llaveCorte(d, m, Vu, ck, motivos) {
   m.p(L`El corte lo toma una llave de corte: una placa de $b_L \times t_L$ soldada bajo la placa base, centrada y perpendicular al corte, que apoya contra el hormigón bajo el grout en una profundidad $d_L = H_L - e_g$. Se sigue la AISC Design Guide 1 (2.ª ed., 3.5): aplastamiento del hormigón, flexión y corte de la llave, soldadura a la placa y arrancamiento del hormigón frente a la llave. Los pernos no toman corte.`);
   m.row("Profundidad de apoyo en el hormigón: d<sub>L</sub>", `${fmt(MM(dL), 0)} mm`);
   m.eq(L`d_L = H_L - e_g = ${tn(MM(d.HL), 0)} - ${tn(MM(d.eg), 0)} = ${tn(MM(dL), 0)}\ \mathrm{mm}`);
-  // Aplastamiento del hormigón (ACI 318-08 10.14.1, φ = 0.65)
+  // Aplastamiento del hormigón (ACI 318-08 10.14.1, 𝜙 = 0.65)
   const phiBr = 0.65 * 0.85 * d.fc * d.bL * dL, dcBr = Vu / phiBr;
-  m.row("Llave: aplastamiento del hormigón φ0.85f'<sub>c</sub>A<sub>brg</sub> ≥ V<sub>u</sub>", `${fmt(T(phiBr), 2)} tf ${tagDC(dcBr)}`, "ACI 318-08 10.14.1");
+  m.row("Llave: aplastamiento del hormigón 𝜙0.85f'<sub>c</sub>A<sub>brg</sub> ≥ V<sub>u</sub>", `${fmt(T(phiBr), 2)} tf ${tagDC(dcBr)}`, "ACI 318-08 10.14.1");
   m.eq(L`\phi B_n = 0.65\cdot 0.85\,f'_c\,b_L\,d_L = 0.65\cdot 0.85\cdot ${tn(d.fc, 0)}\cdot ${tn(d.bL, 1)}\cdot ${tn(dL, 1)} = ${tn(T(phiBr), 2)}\ \mathrm{tf} \qquad \frac{V_u}{\phi B_n} = ${tn(dcBr, 3)} ${cmp(dcBr)} 1.0`, "10.14.1");
   ck("Llave: aplastamiento del hormigón", L`$V_u = ${tn(T(Vu), 2)}$ tf`, L`$\phi B_n = ${tn(T(phiBr), 2)}$ tf`, dcBr, "v");
   // Flexión de la llave en su unión con la placa: la resultante del aplastamiento a e_g + d_L/2
   const Mu = Vu * (d.eg + dL / 2), phiMn = 0.9 * d.Fy * d.bL * d.tL ** 2 / 4, dcM = Mu / phiMn;
-  m.row("Llave: flexión en la unión con la placa φM<sub>n</sub> ≥ M<sub>u</sub>", `${fmt(Mu / 1e5, 3)} ≤ ${fmt(phiMn / 1e5, 3)} tf·m ${tagDC(dcM)}`, "AISC 360-16 F11-1");
+  m.row("Llave: flexión en la unión con la placa 𝜙M<sub>n</sub> ≥ M<sub>u</sub>", `${fmt(Mu / 1e5, 3)} ≤ ${fmt(phiMn / 1e5, 3)} tf·m ${tagDC(dcM)}`, "AISC 360-16 F11-1");
   m.eq(L`M_u = V_u\left(e_g + \frac{d_L}{2}\right) = ${tn(Vu, 0)}\left(${tn(d.eg, 1)} + \frac{${tn(dL, 1)}}{2}\right) = ${tn(Mu, 0)}\ \mathrm{kgf\,cm} \qquad \phi M_n = 0.90\,F_y\,\frac{b_L t_L^2}{4} = ${tn(phiMn, 0)}\ \mathrm{kgf\,cm}`, "F11-1");
   ck("Llave: flexión", L`$M_u = ${tn(Mu / 1e5, 3)}$ tf·m`, L`$\phi M_n = ${tn(phiMn / 1e5, 3)}$ tf·m`, dcM, "v");
   const phiVL = 1.0 * 0.6 * d.Fy * d.bL * d.tL, dcVL = Vu / phiVL;
-  m.row("Llave: fluencia por corte φR<sub>n</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVL), 2)} tf ${tagDC(dcVL)}`, "AISC 360-16 J4-3");
+  m.row("Llave: fluencia por corte 𝜙R<sub>n</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVL), 2)} tf ${tagDC(dcVL)}`, "AISC 360-16 J4-3");
   m.eq(L`\phi R_n = 1.00\cdot 0.60\,F_y\,b_L\,t_L = 0.60\cdot ${tn(d.Fy, 0)}\cdot ${tn(d.bL, 1)}\cdot ${tn(d.tL, 2)} = ${tn(T(phiVL), 2)}\ \mathrm{tf}`, "J4-3");
   ck("Llave: corte", L`$V_u = ${tn(T(Vu), 2)}$ tf`, L`$\phi R_n = ${tn(T(phiVL), 2)}$ tf`, dcVL, "v");
   // Soldadura llave–placa: dos filetes de largo b_L; el momento como par de fuerzas con brazo t_L (conservador)
   const rnL = PHI_W * 0.6 * d.fexx * 0.707 * d.wL, fMw = Mu / (d.tL * d.bL), fVw = Vu / (2 * d.bL), qL = Math.hypot(fMw, fVw), dcWL = qL / rnL;
-  m.row("Llave: soldadura a la placa base q ≤ φr<sub>n</sub>", `${fmt(qL, 1)} ≤ ${fmt(rnL, 1)} kgf/cm ${tagDC(dcWL)}`, "AISC 360-16 J2-4");
+  m.row("Llave: soldadura a la placa base q ≤ 𝜙r<sub>n</sub>", `${fmt(qL, 1)} ≤ ${fmt(rnL, 1)} kgf/cm ${tagDC(dcWL)}`, "AISC 360-16 J2-4");
   m.eq(L`q = \sqrt{\left(\frac{M_u}{t_L\,b_L}\right)^2 + \left(\frac{V_u}{2\,b_L}\right)^2} = \sqrt{${tn(fMw, 1)}^2 + ${tn(fVw, 1)}^2} = ${tn(qL, 1)}\ \mathrm{kgf/cm} \qquad \phi r_n = 0.75\cdot 0.60\cdot ${tn(d.fexx, 0)}\cdot 0.707\cdot ${tn(d.wL, 2)} = ${tn(rnL, 1)}\ \mathrm{kgf/cm}`, "J2-4");
   m.p(L`Dos filetes de largo $b_L$, uno por cara; el momento se toma como un par de fuerzas con brazo $t_L$, lo que es conservador.`);
   ck("Llave: soldadura", L`$q = ${tn(qL, 1)}$ kgf/cm`, L`$\phi r_n = ${tn(rnL, 1)}$ kgf/cm`, dcWL, "v");
   const tMinL = MM(Math.min(d.tL, d.tp)), wMinL = (tMinL <= 6 ? 3 : tMinL <= 13 ? 5 : tMinL <= 19 ? 6 : 8) / 10, okWL = d.wL >= wMinL - 1e-9;
   m.row("Llave: tamaño mínimo del filete", `${fmt(MM(wMinL), 0)} mm ${tag(okWL, okWL ? "Cumple" : "No cumple")}`, "AISC 360-16 Tabla J2.4");
   if (!okWL) motivos.push(`filete de la llave menor que el mínimo (${fmt(MM(wMinL), 0)} mm)`);
-  // Arrancamiento del hormigón frente a la llave (DG1, criterio de ACI 349): 4φ√f'c A_V [psi] = 0.33φ√f'c A_V [MPa], φ = 0.75
+  // Arrancamiento del hormigón frente a la llave (DG1, criterio de ACI 349): 4𝜙√f'c A_V [psi] = 0.33𝜙√f'c A_V [MPa], 𝜙 = 0.75
   const cL = MM((d.Np - d.tL) / 2), bLm = MM(d.bL), dLm = MM(dL);
   const AV = Math.min(bLm + 2 * cL, MM(d.Bp)) * Math.min(dLm + cL, MM(d.ha)) - bLm * dLm;
   const phiVcL = 0.75 * 0.33 * Math.sqrt(fcM) * AV * KGF, dcVcL = Vu / phiVcL;
-  m.row("Llave: arrancamiento del hormigón frente a la llave φV<sub>c</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVcL), 2)} tf ${tagDC(dcVcL)}`, "DG1 3.5 (ACI 349)");
+  m.row("Llave: arrancamiento del hormigón frente a la llave 𝜙V<sub>c</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVcL), 2)} tf ${tagDC(dcVcL)}`, "DG1 3.5 (ACI 349)");
   m.eq(L`A_V = \min(b_L + 2c;\ B_p)\cdot\min(d_L + c;\ h_a) - b_L\,d_L = ${tn(AV, 0)}\ \mathrm{mm^2},\ c = \frac{N_p - t_L}{2} = ${tn(cL, 0)}\ \mathrm{mm} \qquad \phi V_c = 0.75\cdot 0.33\sqrt{f'_c}\,A_V = 0.75\cdot 0.33\sqrt{${tn(fcM, 1)}}\cdot ${tn(AV, 0)} = ${tn(T(phiVcL), 2)}\ \mathrm{tf}`);
   m.p(L`El área $A_V$ es la proyección en la cara del pedestal de un plano de falla a 45° desde los bordes de la llave, descontando el área de apoyo de la llave ($4\phi\sqrt{f'_c}$ en psi, que en MPa es $0.33\phi\sqrt{f'_c}$).`);
   ck("Llave: arrancamiento del hormigón", L`$V_u = ${tn(T(Vu), 2)}$ tf`, L`$\phi V_c = ${tn(T(phiVcL), 2)}$ tf`, dcVcL, "v");
@@ -689,7 +689,7 @@ function verificar(d, m) {
   m.eq(L`A_1 = N\,B = ${tn(d.N, 1)}\cdot ${tn(d.B, 1)} = ${tn(A1, 0)}\ \mathrm{cm^2}`);
   m.row("Área de apoyo semejante: A<sub>2</sub>", `${fmt(A2, 0)} cm²`);
   m.eq(L`A_2 = \left[\min\left(\frac{N_p}{N};\ \frac{B_p}{B}\right)\right]^2 A_1 = ${tn(rA, 3)}^2\cdot ${tn(A1, 0)} = ${tn(A2, 0)}\ \mathrm{cm^2} \qquad \sqrt{A_2/A_1} = ${tn(rA, 3)} \Rightarrow ${tn(raiz, 3)}`);
-  m.row("Resistencia al aplastamiento: φ<sub>c</sub>P<sub>p</sub> ≥ P<sub>u</sub>", `${fmt(T(phiPp), 2)} tf ${tagDC(dcAp)}`, refAp);
+  m.row("Resistencia al aplastamiento: 𝜙<sub>c</sub>P<sub>p</sub> ≥ P<sub>u</sub>", `${fmt(T(phiPp), 2)} tf ${tagDC(dcAp)}`, refAp);
   m.eq(L`\phi_c P_p = \phi_c\,0.85\,f'_c\,A_1\sqrt{A_2/A_1} = ${tn(d.phic, 2)}\cdot 0.85\cdot ${tn(d.fc, 0)}\cdot ${tn(A1, 0)}\cdot ${tn(raiz, 3)} = ${tn(T(phiPp), 2)}\ \mathrm{tf} \qquad \frac{P_u}{\phi_c P_p} = \frac{${tn(T(d.Pu), 2)}}{${tn(T(phiPp), 2)}} = ${tn(dcAp, 3)} ${cmp(dcAp)} 1.0`, refAp);
   ck("Aplastamiento del hormigón", L`$P_u = ${tn(T(d.Pu), 2)}$ tf`, L`$\phi_c P_p = ${tn(T(phiPp), 2)}$ tf`, dcAp, "ap");
 
@@ -765,7 +765,7 @@ function verificar(d, m) {
     const phiVf = d.Tu > 0 ? 0 : d.phiR * d.mu * d.Pmin, dcF = phiVf > 0 ? d.Vu / phiVf : Infinity;
     m.p(L`El corte se transmite por roce entre la placa y el grout con la menor compresión concomitante $P_{u,m\acute{i}n}$ (AISC Design Guide 1, sección 3.5). Este mecanismo solo vale si siempre hay compresión; en diseño sísmico (NCh 2369) muchas veces no se acepta y el corte se asigna a los pernos o a una llave de corte.`);
     if (d.Tu > 0) m.note("Con levantamiento (T<sub>u</sub> > 0) no hay compresión que genere roce: el corte debe tomarse con los pernos o con una llave de corte.", L`Con levantamiento no hay compresión que genere roce: el corte debe tomarse con los pernos o con una llave de corte.`);
-    m.row("Resistencia por roce: φμP<sub>u,mín</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVf), 2)} tf ${tagDC(dcF)}`, "DG1 3.5");
+    m.row("Resistencia por roce: 𝜙μP<sub>u,mín</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVf), 2)} tf ${tagDC(dcF)}`, "DG1 3.5");
     m.eq(L`\phi\,\mu\,P_{u,m\acute{i}n} = ${tn(d.phiR, 2)}\cdot ${tn(d.mu, 2)}\cdot ${tn(T(d.Tu > 0 ? 0 : d.Pmin), 2)} = ${tn(T(phiVf), 2)}\ \mathrm{tf} \qquad \frac{V_u}{\phi\mu P_{u,m\acute{i}n}} = ${tn(dcF, 3)}`);
     ck("Corte por roce", L`$V_u = ${tn(T(d.Vu), 2)}$ tf`, L`$\phi\mu P_{u,min} = ${tn(T(phiVf), 2)}$ tf`, dcF, "v");
     r.phiVf = phiVf;
@@ -780,7 +780,7 @@ function verificar(d, m) {
     const dcS = d.Vu / phiVsa;
     m.row("Área efectiva a corte: A<sub>se,V</sub>", `${fmt(Ase, 3)} cm²`);
     m.eq(L`A_{se} = \frac{\pi}{4}\left(d_a - \frac{0.9743}{n_t}\right)^2 = \frac{\pi}{4}\left(${tn(d.db, 1)} - 0.9743\cdot ${tn(d.paso, 2)}\right)^2 = ${tn(Ase, 3)}\ \mathrm{cm^2}`);
-    m.row("Resistencia a corte del grupo: φV<sub>sa</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVsa), 2)} tf ${tagDC(dcS)}`, "ACI 318-08 D-20");
+    m.row("Resistencia a corte del grupo: 𝜙V<sub>sa</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVsa), 2)} tf ${tagDC(dcS)}`, "ACI 318-08 D-20");
     m.eq(L`\phi V_{sa} = \phi\,n\,(0.6\,A_{se}\,f_{uta})${d.grout ? L`\cdot 0.8` : ""}${fTex(fR)} = 0.65\cdot ${N_PERNOS}\cdot 0.6\cdot ${tn(Ase, 3)}\cdot ${tn(futa, 0)}${d.grout ? L`\cdot 0.8` : ""}${fTex(fR)} = ${tn(T(phiVsa), 2)}\ \mathrm{tf} \qquad f_{uta} \le \min(1.9 f_{ya};\ 8\,770\ \mathrm{kgf/cm^2})`, "D-20");
     if (d.grout) m.p(L`Con grout bajo la placa, la resistencia a corte del acero se multiplica por 0.8 (ACI 318-08 D.6.1.3).`);
     ck("Corte en el acero de los pernos", L`$V_u = ${tn(T(d.Vu), 2)}$ tf`, L`$\phi V_{sa} = ${tn(T(phiVsa), 2)}$ tf`, dcS, "v");
@@ -796,7 +796,7 @@ function verificar(d, m) {
       m.eq(L`V_b = 0.6\left(\frac{l_e}{d_a}\right)^{0.2}\sqrt{d_a}\,\lambda\sqrt{f'_c}\,c_{a1}^{1.5} = 0.6\left(\frac{${tn(a.le, 0)}}{${tn(MM(d.db), 0)}}\right)^{0.2}\sqrt{${tn(MM(d.db), 0)}}\sqrt{${tn(fcM, 1)}}\cdot ${tn(a.ca1, 0)}^{1.5} = ${tn(a.Vb / 1000, 2)}\ \mathrm{kN}`, "D-24");
       if (a.angosto) m.p(L`Miembro angosto y poco profundo: $c_{a1}$ no debe exceder $\max(c_{a2}/1.5;\ h_a/1.5;\ s/3)$, con lo que $c_{a1} = ${tn(a.ca1, 0)}$ mm (D.6.2.4).`);
       m.eq(L`A_{Vco} = 4.5\,c_{a1}^2 = ${tn(a.Avco, 0)}\ \mathrm{mm^2} \qquad A_{Vc} = (2\min(c_{a2};\ 1.5c_{a1}) + s_2)\min(1.5c_{a1};\ h_a) = ${tn(a.Avc, 0)}\ \mathrm{mm^2}`, "D-23");
-      m.row(`Fila ${nom}: φV<sub>cbg</sub> ≥ ${f === 1 ? "V<sub>u</sub>" : "V<sub>u</sub>/2"}`, `${fmt(T(a.phiV), 2)} tf ${tagDC(dc)}`, "ACI 318-08 D-22");
+      m.row(`Fila ${nom}: 𝜙V<sub>cbg</sub> ≥ ${f === 1 ? "V<sub>u</sub>" : "V<sub>u</sub>/2"}`, `${fmt(T(a.phiV), 2)} tf ${tagDC(dc)}`, "ACI 318-08 D-22");
       m.eq(L`\phi V_{cbg} = \phi\,\frac{A_{Vc}}{A_{Vco}}\,\psi_{ed,V}\,\psi_{c,V}\,\psi_{h,V}\,V_b${fTex(fC * fR)} = 0.70\cdot\frac{${tn(a.Avc, 0)}}{${tn(a.Avco, 0)}}\cdot ${tn(a.psiEd, 3)}\cdot ${tn(a.psiC, 2)}\cdot ${tn(a.psiH, 3)}\cdot ${tn(a.Vb / 1000, 2)}${fTex(fC * fR)} = ${tn(a.phiV / 101.97, 2)}\ \mathrm{kN} = ${tn(T(a.phiV), 2)}\ \mathrm{tf} \qquad \frac{${tn(T(dem), 2)}}{${tn(T(a.phiV), 2)}} = ${tn(dc, 3)} ${cmp(dc)} 1.0`, "D-22");
       ck(`Arrancamiento por corte, fila ${nom}`, L`${f === 1 ? "$V_u$" : "$V_u/2$"} $= ${tn(T(dem), 2)}$ tf`, L`$\phi V_{cbg} = ${tn(T(a.phiV), 2)}$ tf`, dc, "v");
       return { nom, ...a, dem, dc };
@@ -810,7 +810,7 @@ function verificar(d, m) {
       ? L`h'_{ef} = \max\left(\frac{c_{a,m\acute{a}x}}{1.5};\ \frac{s_{m\acute{a}x}}{3}\right) = ${tn(pr.hp, 0)}\ \mathrm{mm} \le h_{ef}`
       : L`h'_{ef} = h_{ef} = ${tn(pr.hp, 0)}\ \mathrm{mm}`, "D.5.2.3");
     m.eq(L`N_b = ${pr.d8 ? L`3.9\sqrt{f'_c}\,h_{ef}'^{5/3}` : L`10\sqrt{f'_c}\,h_{ef}'^{1.5}`} = ${tn(pr.Nb / 1000, 2)}\ \mathrm{kN} \qquad \frac{A_{Nc}}{A_{Nco}} = \frac{${tn(pr.ANc, 0)}}{${tn(pr.ANco, 0)}} \qquad \psi_{ed,N} = ${tn(pr.psiEd, 3)} \qquad N_{cbg} = ${tn(pr.Ncbg / 1000, 2)}\ \mathrm{kN}`, pr.d8 ? "D-8" : "D-7");
-    m.row("Resistencia por palanca: φV<sub>cpg</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVcp), 2)} tf ${tagDC(dcP)}`, "ACI 318-08 D-31");
+    m.row("Resistencia por palanca: 𝜙V<sub>cpg</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVcp), 2)} tf ${tagDC(dcP)}`, "ACI 318-08 D-31");
     m.eq(L`\phi V_{cpg} = \phi\,k_{cp}\,N_{cbg}${fTex(fC * fR)} = 0.70\cdot ${pr.kcp}\cdot ${tn(pr.Ncbg / 1000, 2)}${fTex(fC * fR)} = ${tn(T(phiVcp), 2)}\ \mathrm{tf} \qquad \frac{V_u}{\phi V_{cpg}} = ${tn(dcP, 3)} ${cmp(dcP)} 1.0`, "D-31");
     ck("Desprendimiento por palanca", L`$V_u = ${tn(T(d.Vu), 2)}$ tf`, L`$\phi V_{cpg} = ${tn(T(phiVcp), 2)}$ tf`, dcP, "v");
     // Aplastamiento del perno contra la golilla (AISC 360-16 J3.10): la perforación de la placa es sobredimensionada, de modo que
@@ -820,14 +820,14 @@ function verificar(d, m) {
     const Rn1 = Math.min(1.2 * lc * d.tg * d.Fu, 2.4 * d.db * d.tg * d.Fu), phiRb = 0.75 * N_PERNOS * Rn1, dcB = d.Vu / phiRb;
     m.p(L`Como la perforación de la placa está sobredimensionada, el perno apoya contra la golilla soldada (perforación $d_a + 2$ mm). Se usa la expresión con la deformación en la perforación como consideración de diseño; $l_c$ es la distancia libre, en la dirección de la fuerza, entre el borde de la perforación y el borde de la golilla. La golilla es del mismo acero de la placa.`);
     m.row("Distancia libre al borde de la golilla: l<sub>c</sub>", `${fmt(MM(lc), 1)} mm`);
-    m.row("Aplastamiento del grupo: φR<sub>n</sub> ≥ V<sub>u</sub>", `${fmt(T(phiRb), 2)} tf ${tagDC(dcB)}`, "AISC 360-16 J3-6a");
+    m.row("Aplastamiento del grupo: 𝜙R<sub>n</sub> ≥ V<sub>u</sub>", `${fmt(T(phiRb), 2)} tf ${tagDC(dcB)}`, "AISC 360-16 J3-6a");
     m.eq(L`R_n = 1.2\,l_c\,t_g\,F_u \le 2.4\,d_a\,t_g\,F_u:\ \min(1.2\cdot ${tn(lc, 2)}\cdot ${tn(d.tg, 2)}\cdot ${tn(d.Fu, 0)};\ 2.4\cdot ${tn(d.db, 1)}\cdot ${tn(d.tg, 2)}\cdot ${tn(d.Fu, 0)}) = ${tn(Rn1, 0)}\ \mathrm{kgf} \qquad \phi R_n = 0.75\cdot ${N_PERNOS}\cdot ${tn(Rn1, 0)} = ${tn(T(phiRb), 2)}\ \mathrm{tf} \qquad \frac{V_u}{\phi R_n} = ${tn(dcB, 3)} ${cmp(dcB)} 1.0`, "J3-6a");
     ck("Aplastamiento en la golilla", L`$V_u = ${tn(T(d.Vu), 2)}$ tf`, L`$\phi R_n = ${tn(T(phiRb), 2)}$ tf`, dcB, "v");
     // Soldadura de cada golilla a la placa: filete en su contorno (4 a_g) con V_u/4 (AISC 360-16 J2-4)
     m.sub("Soldadura de las golillas a la placa");
     const rnG = PHI_W * 0.6 * d.fexx * 0.707 * d.wg, phiRg = rnG * 4 * d.ag, demG = d.Vu / N_PERNOS, dcG = demG / phiRg;
     m.p(L`El corte de cada perno pasa a la placa por la soldadura de filete en el contorno de su golilla, de largo $4\,a_g$.`);
-    m.row("Soldadura de una golilla: φR<sub>n</sub> ≥ V<sub>u</sub>/4", `${fmt(T(phiRg), 2)} tf ${tagDC(dcG)}`, "AISC 360-16 J2-4");
+    m.row("Soldadura de una golilla: 𝜙R<sub>n</sub> ≥ V<sub>u</sub>/4", `${fmt(T(phiRg), 2)} tf ${tagDC(dcG)}`, "AISC 360-16 J2-4");
     m.eq(L`\phi R_n = 0.75\cdot 0.60\,F_{EXX}\,(0.707\,w_g)\,(4\,a_g) = 0.75\cdot 0.60\cdot ${tn(d.fexx, 0)}\cdot 0.707\cdot ${tn(d.wg, 2)}\cdot 4\cdot ${tn(d.ag, 1)} = ${tn(T(phiRg), 2)}\ \mathrm{tf} \qquad \frac{V_u/4}{\phi R_n} = \frac{${tn(T(demG), 2)}}{${tn(T(phiRg), 2)}} = ${tn(dcG, 3)} ${cmp(dcG)} 1.0`, "J2-4");
     ck("Soldadura de las golillas", L`$V_u/4 = ${tn(T(demG), 2)}$ tf`, L`$\phi R_n = ${tn(T(phiRg), 2)}$ tf`, dcG, "v");
     const tgm = MM(Math.min(d.tg, d.tp)), wgMin = (tgm <= 6 ? 3 : tgm <= 13 ? 5 : tgm <= 19 ? 6 : 8) / 10;
@@ -850,7 +850,7 @@ function verificar(d, m) {
     m.sub("Resistencia del acero a tracción");
     const Nsa = Ase * futa, phiNsa = 0.75 * Nsa * fR, dcNs = Nua / phiNsa;
     phiNsaG = N_PERNOS * phiNsa;
-    m.row("Tracción en el acero, por perno: φN<sub>sa</sub> ≥ N<sub>ua</sub>", `${fmt(T(phiNsa), 2)} tf ${tagDC(dcNs)}`, "ACI 318-08 D-3");
+    m.row("Tracción en el acero, por perno: 𝜙N<sub>sa</sub> ≥ N<sub>ua</sub>", `${fmt(T(phiNsa), 2)} tf ${tagDC(dcNs)}`, "ACI 318-08 D-3");
     m.eq(L`\phi N_{sa} = 0.75\,A_{se,N}\,f_{uta}${fTex(fR)} = 0.75\cdot ${tn(Ase, 3)}\cdot ${tn(futa, 0)}${fTex(fR)} = ${tn(T(phiNsa), 2)}\ \mathrm{tf} \qquad \frac{N_{ua}}{\phi N_{sa}} = \frac{${tn(T(Nua), 2)}}{${tn(T(phiNsa), 2)}} = ${tn(dcNs, 3)} ${cmp(dcNs)} 1.0`, "D-3");
     ck("Tracción en el acero de los pernos", L`$N_{ua} = ${tn(T(Nua), 2)}$ tf`, L`$\phi N_{sa} = ${tn(T(phiNsa), 2)}$ tf`, dcNs, "t");
     // Cono de hormigón o armadura de anclaje
@@ -858,7 +858,7 @@ function verificar(d, m) {
       m.sub("Armadura de anclaje a tracción");
       const Ab = Math.PI / 4 * d.dbAr ** 2, fyAr = 4200, phiNs = 0.75 * d.nAr * Ab * fyAr * fR, dcAr = d.Tu / phiNs;
       m.p(L`La armadura de anclaje (A630-420H, $f_y = 4\,200$ kgf/cm$^2$) reemplaza el cono de hormigón (D.5.2.9). Debe quedar desarrollada a ambos lados del plano de falla del cono y lo más cerca posible de los pernos; ese desarrollo no se verifica aquí.`);
-      m.row("Armadura de anclaje: φA<sub>s</sub>f<sub>y</sub> ≥ T<sub>u</sub>", `${fmt(T(phiNs), 2)} tf ${tagDC(dcAr)}`, "ACI 318-08 D.5.2.9");
+      m.row("Armadura de anclaje: 𝜙A<sub>s</sub>f<sub>y</sub> ≥ T<sub>u</sub>", `${fmt(T(phiNs), 2)} tf ${tagDC(dcAr)}`, "ACI 318-08 D.5.2.9");
       m.eq(L`\phi N_n = 0.75\,n\,A_b\,f_y${fTex(fR)} = 0.75\cdot ${d.nAr}\cdot ${tn(Ab, 3)}\cdot 4\,200${fTex(fR)} = ${tn(T(phiNs), 2)}\ \mathrm{tf} \qquad \frac{T_u}{\phi N_n} = ${tn(dcAr, 3)} ${cmp(dcAr)} 1.0`, "D.5.2.9");
       ck("Armadura de anclaje a tracción", L`$T_u = ${tn(T(d.Tu), 2)}$ tf`, L`$\phi A_s f_y = ${tn(T(phiNs), 2)}$ tf`, dcAr, "t");
       r.phiNs = phiNs;
@@ -868,7 +868,7 @@ function verificar(d, m) {
       tracConc = Math.min(tracConc, phiNcb);
       m.row("Empotramiento efectivo: h'<sub>ef</sub> ; A<sub>Nc</sub>/A<sub>Nco</sub> ; ψ<sub>ed,N</sub> ; ψ<sub>c,N</sub>", `${fmt(pr.hp, 0)} mm ; ${fmt(pr.ANc / pr.ANco, 3)} ; ${fmt(pr.psiEd, 3)} ; ${fmt(pr.psiC, 2)}`, "ACI 318-08 D.5.2");
       m.eq(L`N_{cbg} = \frac{A_{Nc}}{A_{Nco}}\,\psi_{ec,N}\,\psi_{ed,N}\,\psi_{c,N}\,\psi_{cp,N}\,N_b = \frac{${tn(pr.ANc, 0)}}{${tn(pr.ANco, 0)}}\cdot 1.0\cdot ${tn(pr.psiEd, 3)}\cdot ${tn(pr.psiC, 2)}\cdot 1.0\cdot ${tn(pr.Nb / 1000, 2)} = ${tn(pr.Ncbg / 1000, 2)}\ \mathrm{kN}`, "D-5");
-      m.row("Arrancamiento del grupo: φN<sub>cbg</sub> ≥ T<sub>u</sub>", `${fmt(T(phiNcb), 2)} tf ${tagDC(dcNc)}`, "ACI 318-08 D-5");
+      m.row("Arrancamiento del grupo: 𝜙N<sub>cbg</sub> ≥ T<sub>u</sub>", `${fmt(T(phiNcb), 2)} tf ${tagDC(dcNc)}`, "ACI 318-08 D-5");
       m.eq(L`\phi N_{cbg} = 0.70\cdot ${tn(pr.Ncbg / 1000, 2)}${fTex(fC * fR)} = ${tn(phiNcb / 101.97, 2)}\ \mathrm{kN} = ${tn(T(phiNcb), 2)}\ \mathrm{tf} \qquad \frac{T_u}{\phi N_{cbg}} = ${tn(dcNc, 3)} ${cmp(dcNc)} 1.0`, "D-5");
       if (pr.cuatro) m.p(L`Como los cuatro bordes del pedestal están a menos de $1.5\,h_{ef}$, el cono se calcula con $h'_{ef} = ${tn(pr.hp, 0)}$ mm en vez de $h_{ef} = ${tn(MM(d.hef), 0)}$ mm (D.5.2.3): alargar los pernos no aumenta esta resistencia; sí la aumentan un pedestal más grande o la armadura de anclaje.`);
       ck("Arrancamiento del hormigón por tracción", L`$T_u = ${tn(T(d.Tu), 2)}$ tf`, L`$\phi N_{cbg} = ${tn(T(phiNcb), 2)}$ tf`, dcNc, "t");
@@ -895,7 +895,7 @@ function verificar(d, m) {
     }
     const phiNpn = PHI_CV * psiP * Np * KGF * fC * fR, dcNp = Nua / phiNpn;
     tracConc = Math.min(tracConc, N_PERNOS * phiNpn);
-    m.row("Extracción por perno: φN<sub>pn</sub> ≥ N<sub>ua</sub>", `${fmt(T(phiNpn), 2)} tf ${tagDC(dcNp)}`, "ACI 318-08 D-14");
+    m.row("Extracción por perno: 𝜙N<sub>pn</sub> ≥ N<sub>ua</sub>", `${fmt(T(phiNpn), 2)} tf ${tagDC(dcNp)}`, "ACI 318-08 D-14");
     m.eq(L`\phi N_{pn} = 0.70\,\psi_{c,P}\,N_p${fTex(fC * fR)} = 0.70\cdot ${tn(psiP, 1)}\cdot ${tn(Np / 1000, 2)}${fTex(fC * fR)} = ${tn(T(phiNpn), 2)}\ \mathrm{tf} \qquad \frac{N_{ua}}{\phi N_{pn}} = ${tn(dcNp, 3)} ${cmp(dcNp)} 1.0`, "D-14");
     if (d.cabeza === "gancho") m.p(L`Los pernos con gancho tienen una resistencia a la extracción baja; para tracción importante se prefiere un perno con tuerca o placa en el extremo.`);
     ck("Extracción del perno", L`$N_{ua} = ${tn(T(Nua), 2)}$ tf`, L`$\phi N_{pn} = ${tn(T(phiNpn), 2)}$ tf`, dcNp, "t");
@@ -917,7 +917,7 @@ function verificar(d, m) {
           ? L`N_{sbg} = \left(1 + \frac{s}{6c_{a1}}\right)N_{sb} = \left(1 + \frac{${tn(sBorde, 0)}}{6\cdot ${tn(c, 0)}}\right)${tn(Nsb / 1000, 2)} = ${tn(Nsbg / 1000, 2)}\ \mathrm{kN}`
           : L`s \ge 6c_{a1}:\ \text{pernos individuales},\ 2\,N_{sb}${fEsq !== 1 ? L`\cdot\frac{1 + c_{a2}/c_{a1}}{4}` : ""} = ${tn(Nsbg / 1000, 2)}\ \mathrm{kN}`, grupo ? "D-18" : "D-17");
         if (grupo) m.p(L`En el grupo, $N_{sb}$ se usa sin modificar por la distancia al borde perpendicular (D.5.4.2).`);
-        m.row("Desprendimiento lateral, fila de borde: φN<sub>sbg</sub> ≥ T<sub>u</sub>/2", `${fmt(T(phiNsb), 2)} tf ${tagDC(dcSb)}`, "ACI 318-08 D-18");
+        m.row("Desprendimiento lateral, fila de borde: 𝜙N<sub>sbg</sub> ≥ T<sub>u</sub>/2", `${fmt(T(phiNsb), 2)} tf ${tagDC(dcSb)}`, "ACI 318-08 D-18");
         ck("Desprendimiento lateral", L`$T_u/2 = ${tn(T(dem), 2)}$ tf`, L`$\phi N_{sbg} = ${tn(T(phiNsb), 2)}$ tf`, dcSb, "t");
       } else m.p(L`Desprendimiento lateral: no aplica, porque la menor distancia al borde ($${tn(c, 0)}$ mm) no es menor que $0.4\,h_{ef} = ${tn(0.4 * hefm, 0)}$ mm (D.5.4.1).`);
     }
@@ -948,10 +948,10 @@ function verificar(d, m) {
       const tr = checks.filter(c => c.grupo === "t" && !/Flexión/.test(c.k)), co = checks.filter(c => c.grupo === "v" && !/golilla/.test(c.k));
       const bN = Math.max(...tr.map(c => c.dc)), bV = Math.max(...co.map(c => c.dc));
       const cumpleSolo = bV <= 0.2 || bN <= 0.2, dcI = (bN + bV) / 1.2;
-      m.row("Razones de tracción y de corte: N<sub>ua</sub>/φN<sub>n</sub> ; V<sub>ua</sub>/φV<sub>n</sub>", `${fmt(bN, 3)} ; ${fmt(bV, 3)}`, "ACI 318-08 D.7");
+      m.row("Razones de tracción y de corte: N<sub>ua</sub>/𝜙N<sub>n</sub> ; V<sub>ua</sub>/𝜙V<sub>n</sub>", `${fmt(bN, 3)} ; ${fmt(bV, 3)}`, "ACI 318-08 D.7");
       if (cumpleSolo) m.p(L`Como ${bV <= 0.2 ? L`$V_{ua}/\phi V_n = ${tn(bV, 3)} \le 0.2$, se permite la resistencia completa a tracción (D.7.1)` : L`$N_{ua}/\phi N_n = ${tn(bN, 3)} \le 0.2$, se permite la resistencia completa a corte (D.7.2)`}: no hay reducción por interacción.`);
       else {
-        m.row("Interacción: N<sub>ua</sub>/φN<sub>n</sub> + V<sub>ua</sub>/φV<sub>n</sub> ≤ 1.2", `${fmt(bN + bV, 3)} ${tagDC(dcI)}`, "ACI 318-08 D-32");
+        m.row("Interacción: N<sub>ua</sub>/𝜙N<sub>n</sub> + V<sub>ua</sub>/𝜙V<sub>n</sub> ≤ 1.2", `${fmt(bN + bV, 3)} ${tagDC(dcI)}`, "ACI 318-08 D-32");
         m.eq(L`\frac{N_{ua}}{\phi N_n} + \frac{V_{ua}}{\phi V_n} = ${tn(bN, 3)} + ${tn(bV, 3)} = ${tn(bN + bV, 3)} ${bN + bV <= 1.2 ? LE : ">"} 1.2`, "D-32");
         ck("Interacción tracción–corte", L`$${tn(bN + bV, 3)}$`, "1.2", dcI, "t");
       }
@@ -982,14 +982,14 @@ function verificar(d, m) {
   if (d.Tu > 0) m.p(L`Con levantamiento, la soldadura transmite además la tracción $T_u = ${tn(T(d.Tu), 2)}$ tf, repartida en todo el contorno; se usa la mayor fuerza axial: $P_w = ${tn(T(Pw), 2)}$ tf.`);
   m.row("Largos de cordón: alma (2 lados) ; contorno total", `${fmt(MM(Lw), 0)} ; ${fmt(MM(Lt), 0)} mm`);
   m.eq(L`L_w = 2\,(d - 2t_f - 2r) = ${tn(MM(Lw), 0)}\ \mathrm{mm} \qquad L_t = L_w + 2b_f + 2(b_f - t_w) = ${tn(MM(Lt), 0)}\ \mathrm{mm}`);
-  m.row("Resistencia por unidad de largo: φr<sub>n</sub>", `${fmt(rn, 1)} kgf/cm`, "AISC 360-16 J2-4");
+  m.row("Resistencia por unidad de largo: 𝜙r<sub>n</sub>", `${fmt(rn, 1)} kgf/cm`, "AISC 360-16 J2-4");
   m.eq(L`\phi r_n = \phi\,0.60\,F_{EXX}\,(0.707\,w) = 0.75\cdot 0.60\cdot ${tn(d.fexx, 0)}\cdot 0.707\cdot ${tn(d.w, 2)} = ${tn(rn, 1)}\ \mathrm{kgf/cm}`, "J2-4");
   const q = Math.hypot(Pw / Lt, d.Vu / Lw), dcW = q / rn;
-  m.row("Fuerza resultante en el cordón: q ≤ φr<sub>n</sub>", `${fmt(q, 1)} kgf/cm ${tagDC(dcW)}`, "AISC 360-16 J2.4");
+  m.row("Fuerza resultante en el cordón: q ≤ 𝜙r<sub>n</sub>", `${fmt(q, 1)} kgf/cm ${tagDC(dcW)}`, "AISC 360-16 J2.4");
   m.eq(L`q = \sqrt{\left(\frac{P_w}{L_t}\right)^2 + \left(\frac{V_u}{L_w}\right)^2} = \sqrt{\left(\frac{${tn(Pw, 0)}}{${tn(Lt, 1)}}\right)^2 + \left(\frac{${tn(d.Vu, 0)}}{${tn(Lw, 1)}}\right)^2} = ${tn(q, 1)}\ \mathrm{kgf/cm} \qquad \frac{q}{\phi r_n} = ${tn(dcW, 3)} ${cmp(dcW)} 1.0`);
   ck("Soldadura de filete", L`$q = ${tn(q, 1)}$ kgf/cm`, L`$\phi r_n = ${tn(rn, 1)}$ kgf/cm`, dcW, "w");
   const phiVy = 1.0 * 0.6 * d.Fy * p.tw * hw, dcMB = d.Vu / phiVy;
-  m.row("Metal base del alma, fluencia por corte: φR<sub>n</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVy), 2)} tf ${tagDC(dcMB)}`, "AISC 360-16 J4-3");
+  m.row("Metal base del alma, fluencia por corte: 𝜙R<sub>n</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVy), 2)} tf ${tagDC(dcMB)}`, "AISC 360-16 J4-3");
   m.eq(L`\phi R_n = 1.0\cdot 0.60\,F_y\,t_w\,h_w = 0.60\cdot ${tn(d.Fy, 0)}\cdot ${tn(p.tw, 2)}\cdot ${tn(hw, 2)} = ${tn(T(phiVy), 2)}\ \mathrm{tf}`, "J4-3");
   ck("Metal base del alma", L`$V_u = ${tn(T(d.Vu), 2)}$ tf`, L`$\phi R_n = ${tn(T(phiVy), 2)}$ tf`, dcMB, "w");
   // AISC 360-16 Tabla J2.4: tamaño mínimo según la parte más delgada de cada unión (alma–placa y ala–placa)
@@ -1226,7 +1226,7 @@ ${d.resumenComb.map(c => `${c.i}${c.i === d.comb ? "*" : ""} & ${tn(T(c.Pu), 2)}
   else if (d.modoV === "roce") {
     const phiVf = d.phiR * d.mu * d.Pu, dcF = d.Vu / phiVf;
     m.p(L`El corte se transmite por roce entre la placa y el grout con la compresión $P_u$ de la misma combinación (AISC Design Guide 1, sección 3.5). En diseño sísmico (NCh 2369) muchas veces no se acepta y el corte se asigna a los pernos o a una llave de corte.`);
-    m.row("Resistencia por roce: φμP<sub>u</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVf), 2)} tf ${tagDC(dcF)}`, "DG1 3.5");
+    m.row("Resistencia por roce: 𝜙μP<sub>u</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVf), 2)} tf ${tagDC(dcF)}`, "DG1 3.5");
     m.eq(L`\phi\,\mu\,P_u = ${tn(d.phiR, 2)}\cdot ${tn(d.mu, 2)}\cdot ${tn(T(d.Pu), 2)} = ${tn(T(phiVf), 2)}\ \mathrm{tf} \qquad \frac{V_u}{\phi\mu P_u} = ${tn(dcF, 3)} ${cmp(dcF)} 1.0`);
     ck("Corte por roce", L`$V_u = ${tn(T(d.Vu), 2)}$ tf`, L`$\phi\mu P_u = ${tn(T(phiVf), 2)}$ tf`, dcF, "v");
   } else if (d.modoV === "llave") {
@@ -1237,7 +1237,7 @@ ${d.resumenComb.map(c => `${c.i}${c.i === d.comb ? "*" : ""} & ${tn(T(c.Pu), 2)}
     const Vsa = 0.6 * Ase * futa * (d.grout ? 0.8 : 1);
     phiVsa = PHI_SV * nT * Vsa * fR;
     const dcS = d.Vu / phiVsa;
-    m.row("Resistencia a corte del grupo: φV<sub>sa</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVsa), 2)} tf ${tagDC(dcS)}`, "ACI 318-08 D-20");
+    m.row("Resistencia a corte del grupo: 𝜙V<sub>sa</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVsa), 2)} tf ${tagDC(dcS)}`, "ACI 318-08 D-20");
     m.eq(L`\phi V_{sa} = \phi\,n\,(0.6\,A_{se}\,f_{uta})${d.grout ? L`\cdot 0.8` : ""}${fTex(fR)} = 0.65\cdot ${nT}\cdot 0.6\cdot ${tn(Ase, 3)}\cdot ${tn(futa, 0)}${d.grout ? L`\cdot 0.8` : ""}${fTex(fR)} = ${tn(T(phiVsa), 2)}\ \mathrm{tf}`, "D-20");
     ck("Corte en el acero de los pernos", L`$V_u = ${tn(T(d.Vu), 2)}$ tf`, L`$\phi V_{sa} = ${tn(T(phiVsa), 2)}$ tf`, dcS, "v");
     m.sub("Arrancamiento del hormigón por corte");
@@ -1249,7 +1249,7 @@ ${d.resumenComb.map(c => `${c.i}${c.i === d.comb ? "*" : ""} & ${tn(T(c.Pu), 2)}
       corteConc = Math.min(corteConc, a.phiV / f);
       m.row(`Fila ${nom}: c<sub>a1</sub> ; ψ<sub>ed,V</sub> ; ψ<sub>h,V</sub>`, `${fmt(a.ca1Real, 0)} mm ; ${fmt(a.psiEd, 3)} ; ${fmt(a.psiH, 3)}`, "D.6.2");
       m.eq(L`V_b = ${tn(a.Vb / 1000, 2)}\ \mathrm{kN} \qquad A_{Vc} = ${tn(a.Avc, 0)}\ \mathrm{mm^2},\ A_{Vco} = ${tn(a.Avco, 0)}\ \mathrm{mm^2} \qquad \phi V_{cbg} = 0.70\,\frac{A_{Vc}}{A_{Vco}}\,\psi_{ed,V}\,\psi_{c,V}\,\psi_{h,V}\,V_b${fTex(fC * fR)} = ${tn(T(a.phiV), 2)}\ \mathrm{tf}`, "D-22");
-      m.row(`Fila ${nom}: φV<sub>cbg</sub> ≥ ${f === 1 ? "V<sub>u</sub>" : "V<sub>u</sub>/2"}`, `${fmt(T(a.phiV), 2)} tf ${tagDC(dc)}`, "ACI 318-08 D-22");
+      m.row(`Fila ${nom}: 𝜙V<sub>cbg</sub> ≥ ${f === 1 ? "V<sub>u</sub>" : "V<sub>u</sub>/2"}`, `${fmt(T(a.phiV), 2)} tf ${tagDC(dc)}`, "ACI 318-08 D-22");
       ck(`Arrancamiento por corte, fila ${nom}`, L`${f === 1 ? "$V_u$" : "$V_u/2$"} $= ${tn(T(dem), 2)}$ tf`, L`$\phi V_{cbg} = ${tn(T(a.phiV), 2)}$ tf`, dc, "v");
       return { nom, ...a, dem, dc };
     });
@@ -1257,18 +1257,18 @@ ${d.resumenComb.map(c => `${c.i}${c.i === d.comb ? "*" : ""} & ${tn(T(c.Pu), 2)}
     const pr = palanca(dPal), phiVcp = pr.phiV * fC * fR, dcP = d.Vu / phiVcp;
     corteConc = Math.min(corteConc, phiVcp);
     m.eq(L`h'_{ef} = ${tn(pr.hp, 0)}\ \mathrm{mm} \qquad N_{cbg} = \frac{A_{Nc}}{A_{Nco}}\,\psi_{ed,N}\,\psi_{c,N}\,N_b = \frac{${tn(pr.ANc, 0)}}{${tn(pr.ANco, 0)}}\cdot ${tn(pr.psiEd, 3)}\cdot ${tn(pr.psiC, 2)}\cdot ${tn(pr.Nb / 1000, 2)} = ${tn(pr.Ncbg / 1000, 2)}\ \mathrm{kN}`, "D-5");
-    m.row("Resistencia por palanca: φV<sub>cpg</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVcp), 2)} tf ${tagDC(dcP)}`, "ACI 318-08 D-31");
+    m.row("Resistencia por palanca: 𝜙V<sub>cpg</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVcp), 2)} tf ${tagDC(dcP)}`, "ACI 318-08 D-31");
     m.eq(L`\phi V_{cpg} = 0.70\cdot ${pr.kcp}\cdot ${tn(pr.Ncbg / 1000, 2)}${fTex(fC * fR)} = ${tn(T(phiVcp), 2)}\ \mathrm{tf} \qquad \frac{V_u}{\phi V_{cpg}} = ${tn(dcP, 3)} ${cmp(dcP)} 1.0`, "D-31");
     ck("Desprendimiento por palanca", L`$V_u = ${tn(T(d.Vu), 2)}$ tf`, L`$\phi V_{cpg} = ${tn(T(phiVcp), 2)}$ tf`, dcP, "v");
     m.sub("Aplastamiento en la perforación de la golilla");
     const dhg = d.db + 0.2, lc = d.ag / 2 - dhg / 2;
     const Rn1 = Math.min(1.2 * lc * d.tg * d.Fu, 2.4 * d.db * d.tg * d.Fu), phiRb = 0.75 * nT * Rn1, dcB = d.Vu / phiRb;
-    m.row("Aplastamiento del grupo: φR<sub>n</sub> ≥ V<sub>u</sub>", `${fmt(T(phiRb), 2)} tf ${tagDC(dcB)}`, "AISC 360-16 J3-6a");
+    m.row("Aplastamiento del grupo: 𝜙R<sub>n</sub> ≥ V<sub>u</sub>", `${fmt(T(phiRb), 2)} tf ${tagDC(dcB)}`, "AISC 360-16 J3-6a");
     m.eq(L`R_n = \min(1.2\,l_c\,t_g\,F_u;\ 2.4\,d_a\,t_g\,F_u) = ${tn(Rn1, 0)}\ \mathrm{kgf},\ l_c = ${tn(MM(lc), 1)}\ \mathrm{mm} \qquad \phi R_n = 0.75\cdot ${nT}\cdot ${tn(Rn1, 0)} = ${tn(T(phiRb), 2)}\ \mathrm{tf}`, "J3-6a");
     ck("Aplastamiento en la golilla", L`$V_u = ${tn(T(d.Vu), 2)}$ tf`, L`$\phi R_n = ${tn(T(phiRb), 2)}$ tf`, dcB, "v");
     m.sub("Soldadura de las golillas a la placa");
     const rnG = PHI_W * 0.6 * d.fexx * 0.707 * d.wg, phiRg = rnG * 4 * d.ag, demG = d.Vu / nT, dcG = demG / phiRg;
-    m.row(`Soldadura de una golilla: φR<sub>n</sub> ≥ V<sub>u</sub>/${nT}`, `${fmt(T(phiRg), 2)} tf ${tagDC(dcG)}`, "AISC 360-16 J2-4");
+    m.row(`Soldadura de una golilla: 𝜙R<sub>n</sub> ≥ V<sub>u</sub>/${nT}`, `${fmt(T(phiRg), 2)} tf ${tagDC(dcG)}`, "AISC 360-16 J2-4");
     m.eq(L`\phi R_n = 0.75\cdot 0.60\cdot ${tn(d.fexx, 0)}\cdot 0.707\cdot ${tn(d.wg, 2)}\cdot 4\cdot ${tn(d.ag, 1)} = ${tn(T(phiRg), 2)}\ \mathrm{tf} \qquad \frac{V_u/${nT}}{\phi R_n} = ${tn(dcG, 3)} ${cmp(dcG)} 1.0`, "J2-4");
     ck("Soldadura de las golillas", L`$V_u/${nT} = ${tn(T(demG), 2)}$ tf`, L`$\phi R_n = ${tn(T(phiRg), 2)}$ tf`, dcG, "v");
     const tgm = MM(Math.min(d.tg, d.tp)), wgMin = (tgm <= 6 ? 3 : tgm <= 13 ? 5 : tgm <= 19 ? 6 : 8) / 10;
@@ -1289,14 +1289,14 @@ ${d.resumenComb.map(c => `${c.i}${c.i === d.comb ? "*" : ""} & ${tn(T(c.Pu), 2)}
     m.sub("Resistencia del acero a tracción");
     const Nsa = Ase * futa, phiNsa = 0.75 * Nsa * fR, dcNs = Nua / phiNsa;
     phiNsaF = nF * phiNsa;
-    m.row("Tracción en el acero, por perno: φN<sub>sa</sub> ≥ N<sub>ua</sub>", `${fmt(T(phiNsa), 2)} tf ${tagDC(dcNs)}`, "ACI 318-08 D-3");
+    m.row("Tracción en el acero, por perno: 𝜙N<sub>sa</sub> ≥ N<sub>ua</sub>", `${fmt(T(phiNsa), 2)} tf ${tagDC(dcNs)}`, "ACI 318-08 D-3");
     m.eq(L`\phi N_{sa} = 0.75\,A_{se,N}\,f_{uta}${fTex(fR)} = 0.75\cdot ${tn(Ase, 3)}\cdot ${tn(futa, 0)}${fTex(fR)} = ${tn(T(phiNsa), 2)}\ \mathrm{tf} \qquad \frac{N_{ua}}{\phi N_{sa}} = ${tn(dcNs, 3)} ${cmp(dcNs)} 1.0`, "D-3");
     ck("Tracción en el acero de los pernos", L`$N_{ua} = ${tn(T(Nua), 2)}$ tf`, L`$\phi N_{sa} = ${tn(T(phiNsa), 2)}$ tf`, dcNs, "t");
     if (d.armAnc) {
       m.sub("Armadura de anclaje a tracción");
       const Ab = Math.PI / 4 * d.dbAr ** 2, phiNs = 0.75 * d.nAr * Ab * 4200 * fR, dcAr = g.Tu / phiNs;
       m.p(L`La armadura de anclaje (A630-420H) junto a la fila traccionada reemplaza su cono de hormigón (D.5.2.9); las ramas efectivas son las que cruzan el cono de esa fila. Su desarrollo a ambos lados del plano de falla no se verifica aquí.`);
-      m.row("Armadura de anclaje: φA<sub>s</sub>f<sub>y</sub> ≥ T<sub>u</sub>", `${fmt(T(phiNs), 2)} tf ${tagDC(dcAr)}`, "ACI 318-08 D.5.2.9");
+      m.row("Armadura de anclaje: 𝜙A<sub>s</sub>f<sub>y</sub> ≥ T<sub>u</sub>", `${fmt(T(phiNs), 2)} tf ${tagDC(dcAr)}`, "ACI 318-08 D.5.2.9");
       m.eq(L`\phi N_n = 0.75\,n\,A_b\,f_y${fTex(fR)} = 0.75\cdot ${d.nAr}\cdot ${tn(Ab, 3)}\cdot 4\,200${fTex(fR)} = ${tn(T(phiNs), 2)}\ \mathrm{tf}`, "D.5.2.9");
       ck("Armadura de anclaje a tracción", L`$T_u = ${tn(T(g.Tu), 2)}$ tf`, L`$\phi A_s f_y = ${tn(T(phiNs), 2)}$ tf`, dcAr, "t");
     } else {
@@ -1307,7 +1307,7 @@ ${d.resumenComb.map(c => `${c.i}${c.i === d.comb ? "*" : ""} & ${tn(T(c.Pu), 2)}
       m.eq(L`A_{Nc} = \left[\min(c_{a1};\ 1.5h'_{ef}) + \min(N_p/2 + f;\ 1.5h'_{ef})\right]\left[2\min(c_{a2};\ 1.5h'_{ef}) + s_2\right] = ${tn(cf.ANc, 0)}\ \mathrm{mm^2} \qquad A_{Nco} = 9\,h_{ef}'^2 = ${tn(cf.ANco, 0)}\ \mathrm{mm^2}`, "D-6");
       m.eq(L`N_{cbg} = \frac{A_{Nc}}{A_{Nco}}\,\psi_{ec,N}\,\psi_{ed,N}\,\psi_{c,N}\,N_b = \frac{${tn(cf.ANc, 0)}}{${tn(cf.ANco, 0)}}\cdot 1.0\cdot ${tn(cf.psiEd, 3)}\cdot ${tn(cf.psiC, 2)}\cdot ${tn(cf.Nb / 1000, 2)} = ${tn(cf.Ncbg / 1000, 2)}\ \mathrm{kN}`, "D-5");
       if (cf.tres) m.p(L`Tres bordes del pedestal (el exterior y los laterales) están a menos de $1.5\,h_{ef}$: se usa $h'_{ef} = ${tn(cf.hp, 0)}$ mm (D.5.2.3).`);
-      m.row("Arrancamiento de la fila: φN<sub>cbg</sub> ≥ T<sub>u</sub>", `${fmt(T(phiNcb), 2)} tf ${tagDC(dcNc)}`, "ACI 318-08 D-5");
+      m.row("Arrancamiento de la fila: 𝜙N<sub>cbg</sub> ≥ T<sub>u</sub>", `${fmt(T(phiNcb), 2)} tf ${tagDC(dcNc)}`, "ACI 318-08 D-5");
       m.eq(L`\phi N_{cbg} = 0.70\cdot ${tn(cf.Ncbg / 1000, 2)}${fTex(fC * fR)} = ${tn(T(phiNcb), 2)}\ \mathrm{tf} \qquad \frac{T_u}{\phi N_{cbg}} = ${tn(dcNc, 3)} ${cmp(dcNc)} 1.0`, "D-5");
       ck("Arrancamiento del hormigón por tracción", L`$T_u = ${tn(T(g.Tu), 2)}$ tf`, L`$\phi N_{cbg} = ${tn(T(phiNcb), 2)}$ tf`, dcNc, "t");
       r.cono = cf;
@@ -1329,7 +1329,7 @@ ${d.resumenComb.map(c => `${c.i}${c.i === d.comb ? "*" : ""} & ${tn(T(c.Pu), 2)}
     }
     const phiNpn = PHI_CV * psiP * Np * KGF * fC * fR, dcNp = Nua / phiNpn;
     tracConc = Math.min(tracConc, nF * phiNpn);
-    m.row("Extracción por perno: φN<sub>pn</sub> ≥ N<sub>ua</sub>", `${fmt(T(phiNpn), 2)} tf ${tagDC(dcNp)}`, "ACI 318-08 D-14");
+    m.row("Extracción por perno: 𝜙N<sub>pn</sub> ≥ N<sub>ua</sub>", `${fmt(T(phiNpn), 2)} tf ${tagDC(dcNp)}`, "ACI 318-08 D-14");
     m.eq(L`\phi N_{pn} = 0.70\,\psi_{c,P}\,N_p${fTex(fC * fR)} = 0.70\cdot ${tn(psiP, 1)}\cdot ${tn(Np / 1000, 2)}${fTex(fC * fR)} = ${tn(T(phiNpn), 2)}\ \mathrm{tf} \qquad \frac{N_{ua}}{\phi N_{pn}} = ${tn(dcNp, 3)} ${cmp(dcNp)} 1.0`, "D-14");
     ck("Extracción del perno", L`$N_{ua} = ${tn(T(Nua), 2)}$ tf`, L`$\phi N_{pn} = ${tn(T(phiNpn), 2)}$ tf`, dcNp, "t");
     if (d.cabeza === "tuerca") {
@@ -1352,7 +1352,7 @@ ${d.resumenComb.map(c => `${c.i}${c.i === d.comb ? "*" : ""} & ${tn(T(c.Pu), 2)}
         const phiNsb = PHI_CV * cs.Nsbg * KGF * fC * fR, dcSb = cs.dem / phiNsb;
         tracConc = Math.min(tracConc, phiNsb * g.Tu / cs.dem);
         m.eq(L`N_{sb} = 13\,c\sqrt{A_{brg}}\,\lambda\sqrt{f'_c} = 13\cdot ${tn(cs.c, 0)}\sqrt{${tn(Abrg, 0)}}\sqrt{${tn(fcM, 1)}} = ${tn(Nsb(cs.c) / 1000, 2)}\ \mathrm{kN} \qquad ${cs.ec} = ${tn(cs.Nsbg / 1000, 2)}\ \mathrm{kN}`, cs.ref);
-        m.row(`Desprendimiento lateral, ${cs.txt}: φN<sub>sb</sub> ≥ ${cs.demTxt === "T_u" ? "T<sub>u</sub>" : "N<sub>ua</sub>"}`, `${fmt(T(phiNsb), 2)} tf ${tagDC(dcSb)}`, `ACI 318-08 ${cs.ref}`);
+        m.row(`Desprendimiento lateral, ${cs.txt}: 𝜙N<sub>sb</sub> ≥ ${cs.demTxt === "T_u" ? "T<sub>u</sub>" : "N<sub>ua</sub>"}`, `${fmt(T(phiNsb), 2)} tf ${tagDC(dcSb)}`, `ACI 318-08 ${cs.ref}`);
         ck(`Desprendimiento lateral, ${cs.txt}`, L`$${cs.demTxt} = ${tn(T(cs.dem), 2)}$ tf`, L`$\phi N_{sb} = ${tn(T(phiNsb), 2)}$ tf`, dcSb, "t");
       }
     }
@@ -1362,10 +1362,10 @@ ${d.resumenComb.map(c => `${c.i}${c.i === d.comb ? "*" : ""} & ${tn(T(c.Pu), 2)}
       const tr = checks.filter(c => c.grupo === "t"), co = checks.filter(c => c.grupo === "v" && !/golilla/.test(c.k));
       const bN = Math.max(...tr.map(c => c.dc)), bV = Math.max(...co.map(c => c.dc));
       const dcI = (bN + bV) / 1.2;
-      m.row("Razones de tracción y de corte: N<sub>ua</sub>/φN<sub>n</sub> ; V<sub>ua</sub>/φV<sub>n</sub>", `${fmt(bN, 3)} ; ${fmt(bV, 3)}`, "ACI 318-08 D.7");
+      m.row("Razones de tracción y de corte: N<sub>ua</sub>/𝜙N<sub>n</sub> ; V<sub>ua</sub>/𝜙V<sub>n</sub>", `${fmt(bN, 3)} ; ${fmt(bV, 3)}`, "ACI 318-08 D.7");
       if (bV <= 0.2 || bN <= 0.2) m.p(L`Como ${bV <= 0.2 ? L`$V_{ua}/\phi V_n = ${tn(bV, 3)} \le 0.2$, se permite la resistencia completa a tracción (D.7.1)` : L`$N_{ua}/\phi N_n = ${tn(bN, 3)} \le 0.2$, se permite la resistencia completa a corte (D.7.2)`}.`);
       else {
-        m.row("Interacción: N<sub>ua</sub>/φN<sub>n</sub> + V<sub>ua</sub>/φV<sub>n</sub> ≤ 1.2", `${fmt(bN + bV, 3)} ${tagDC(dcI)}`, "ACI 318-08 D-32");
+        m.row("Interacción: N<sub>ua</sub>/𝜙N<sub>n</sub> + V<sub>ua</sub>/𝜙V<sub>n</sub> ≤ 1.2", `${fmt(bN + bV, 3)} ${tagDC(dcI)}`, "ACI 318-08 D-32");
         m.eq(L`\frac{N_{ua}}{\phi N_n} + \frac{V_{ua}}{\phi V_n} = ${tn(bN, 3)} + ${tn(bV, 3)} = ${tn(bN + bV, 3)} ${bN + bV <= 1.2 ? LE : ">"} 1.2`, "D-32");
         ck("Interacción tracción–corte", L`$${tn(bN + bV, 3)}$`, "1.2", dcI, "t");
       }
@@ -1392,23 +1392,23 @@ ${d.resumenComb.map(c => `${c.i}${c.i === d.comb ? "*" : ""} & ${tn(T(c.Pu), 2)}
   if (Fw <= 0) m.p(L`Ninguna ala queda traccionada${d.contacto ? "" : " y la compresión es nula"}: la soldadura de las alas no recibe fuerza en esta combinación.`);
   else if (d.soldAla === "cjp") {
     const phiRc = 0.9 * d.Fy * p.bf * p.tf, dcC = Fw / phiRc;
-    m.row("Ala con penetración completa: φF<sub>y</sub>b<sub>f</sub>t<sub>f</sub> ≥ F<sub>ala</sub>", `${fmt(T(phiRc), 2)} tf ${tagDC(dcC)}`, "AISC 360-16 Tabla J2.5");
+    m.row("Ala con penetración completa: 𝜙F<sub>y</sub>b<sub>f</sub>t<sub>f</sub> ≥ F<sub>ala</sub>", `${fmt(T(phiRc), 2)} tf ${tagDC(dcC)}`, "AISC 360-16 Tabla J2.5");
     m.eq(L`\phi R_n = 0.90\,F_y\,b_f\,t_f = 0.90\cdot ${tn(d.Fy, 0)}\cdot ${tn(p.bf, 1)}\cdot ${tn(p.tf, 2)} = ${tn(T(phiRc), 2)}\ \mathrm{tf} \qquad \frac{${tn(T(Fw), 2)}}{${tn(T(phiRc), 2)}} = ${tn(dcC, 3)} ${cmp(dcC)} 1.0`, "Tabla J2.5");
     m.p(L`Con soldadura de penetración completa y electrodo compatible, controla el metal base (tracción normal al eje de la soldadura).`);
     ck("Soldadura del ala (penetración completa)", L`$F_{ala} = ${tn(T(Fw), 2)}$ tf`, L`$\phi R_n = ${tn(T(phiRc), 2)}$ tf`, dcC, "w");
   } else {
     const qA = Fw / Lala, dcA = qA / rn;
-    m.row("Soldadura del ala, filete en ambas caras: q ≤ φr<sub>n</sub>", `${fmt(qA, 1)} ≤ ${fmt(rn, 1)} kgf/cm ${tagDC(dcA)}`, "AISC 360-16 J2-4");
+    m.row("Soldadura del ala, filete en ambas caras: q ≤ 𝜙r<sub>n</sub>", `${fmt(qA, 1)} ≤ ${fmt(rn, 1)} kgf/cm ${tagDC(dcA)}`, "AISC 360-16 J2-4");
     m.eq(L`L_{ala} = 2\,b_f - t_w = ${tn(MM(Lala), 0)}\ \mathrm{mm} \qquad q = \frac{F_{ala}}{L_{ala}} = \frac{${tn(Fw, 0)}}{${tn(Lala, 2)}} = ${tn(qA, 1)}\ \mathrm{kgf/cm} \qquad \phi r_n = 0.75\cdot 0.60\cdot ${tn(d.fexx, 0)}\cdot 0.707\cdot ${tn(d.w, 2)} = ${tn(rn, 1)}\ \mathrm{kgf/cm}`, "J2-4");
     m.p(L`Se usa la resistencia del filete sin el aumento por carga transversal (J2-5), lo que es conservador.`);
     ck("Soldadura del ala (filete)", L`$q = ${tn(qA, 1)}$ kgf/cm`, L`$\phi r_n = ${tn(rn, 1)}$ kgf/cm`, dcA, "w");
   }
   const qW = d.Vu / Lw, dcWw = qW / rn;
-  m.row("Soldadura del alma, filete en ambas caras: q ≤ φr<sub>n</sub>", `${fmt(qW, 1)} ≤ ${fmt(rn, 1)} kgf/cm ${tagDC(dcWw)}`, "AISC 360-16 J2-4");
+  m.row("Soldadura del alma, filete en ambas caras: q ≤ 𝜙r<sub>n</sub>", `${fmt(qW, 1)} ≤ ${fmt(rn, 1)} kgf/cm ${tagDC(dcWw)}`, "AISC 360-16 J2-4");
   m.eq(L`L_w = 2\,(d - 2t_f - 2r) = ${tn(MM(Lw), 0)}\ \mathrm{mm} \qquad q = \frac{V_u}{L_w} = \frac{${tn(d.Vu, 0)}}{${tn(Lw, 2)}} = ${tn(qW, 1)}\ \mathrm{kgf/cm}`, "J2-4");
   ck("Soldadura del alma (filete)", L`$q = ${tn(qW, 1)}$ kgf/cm`, L`$\phi r_n = ${tn(rn, 1)}$ kgf/cm`, dcWw, "w");
   const phiVy = 1.0 * 0.6 * d.Fy * p.tw * hw, dcMB = d.Vu / phiVy;
-  m.row("Metal base del alma, fluencia por corte: φR<sub>n</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVy), 2)} tf ${tagDC(dcMB)}`, "AISC 360-16 J4-3");
+  m.row("Metal base del alma, fluencia por corte: 𝜙R<sub>n</sub> ≥ V<sub>u</sub>", `${fmt(T(phiVy), 2)} tf ${tagDC(dcMB)}`, "AISC 360-16 J4-3");
   m.eq(L`\phi R_n = 1.0\cdot 0.60\,F_y\,t_w\,h_w = 0.60\cdot ${tn(d.Fy, 0)}\cdot ${tn(p.tw, 2)}\cdot ${tn(hw, 2)} = ${tn(T(phiVy), 2)}\ \mathrm{tf}`, "J4-3");
   ck("Metal base del alma", L`$V_u = ${tn(T(d.Vu), 2)}$ tf`, L`$\phi R_n = ${tn(T(phiVy), 2)}$ tf`, dcMB, "w");
   const wTabla = (tcm) => { const t = MM(tcm); return (t <= 6 ? 3 : t <= 13 ? 5 : t <= 19 ? 6 : 8) / 10; };
@@ -1700,7 +1700,7 @@ function calcular() {
   $("summary").innerHTML = [
     d.emp
       ? card(r.aplastada ? "Aplastamiento de toda la placa" : r.grande ? "Equilibrio (momento grande)" : "Aplastamiento (momento pequeño)", ap, Number.isFinite(r.e) ? `comb. ${d.comb} · e = ${fmt(MM(r.e), 0)} mm · e<sub>crít</sub> = ${fmt(MM(r.eCrit), 0)} mm` : `comb. ${d.comb}`)
-      : card("Aplastamiento del hormigón", ap, `φ<sub>c</sub>P<sub>p</sub> = ${fmt(T(r.phiPp), 1)} tf`),
+      : card("Aplastamiento del hormigón", ap, `𝜙<sub>c</sub>P<sub>p</sub> = ${fmt(T(r.phiPp), 1)} tf`),
     card("Espesor de la placa", pl, Number.isFinite(r.treq) ? `t<sub>req</sub> = ${fmt(MM(Math.max(r.treq, r.treqT || 0)), 1)} mm / t<sub>p</sub> = ${fmt(MM(d.tp), 0)} mm` : "sin calcular"),
     card("Corte", v, v ? `más exigido: ${v.k.toLowerCase()}` : "sin corte"),
     card("Tracción en los pernos", t, t ? `más exigido: ${t.k.toLowerCase()}` : d.emp ? "sin tracción en los pernos" : "sin levantamiento"),

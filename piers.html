@@ -176,7 +176,7 @@
         <select id="normaACI"><option value="08" selected>ACI 318-08 · planilla IIO348 (vigente en Chile)</option><option value="19">ACI 318-19 (aún no vigente en Chile)</option></select>
         <div id="boxOmega" class="row2 hidden">
           <div><label for="omegaV">Sobrerresistencia Ω<sub>v</sub> si h<sub>w</sub>/L<sub>w</sub> &gt; 1.5</label><input id="omegaV" type="number" step="0.05" min="1" value="1.5"></div>
-          <div><label for="phi19">Factor φ de corte (21.2.4.1)</label>
+          <div><label for="phi19">Factor 𝜙 de corte (21.2.4.1)</label>
             <select id="phi19"><option value="0.6" selected>0.60 — no se verifica V<sub>n</sub> frente a M<sub>n</sub></option><option value="0.75">0.75 — V<sub>n</sub> ≥ corte de M<sub>n</sub>, o muro según 18.10.6.2 (lo verifica el usuario)</option></select></div>
         </div>
       </fieldset>
@@ -184,7 +184,7 @@
         <legend>1. Tablas de ETABS</legend>
           <div><label for="fc">Hormigón f'<sub>c</sub> <span class="unit">[kgf/cm²]</span></label><input id="fc" type="number" step="10" value="250"></div>
           <div><label for="fy">Acero f<sub>y</sub> <span class="unit">[kgf/cm²]</span></label><input id="fy" type="number" step="100" value="4200"></div>
-          <div><label for="db">Barra horizontal φ <span class="unit">[mm]</span></label>
+          <div><label for="db">Barra horizontal 𝜙 <span class="unit">[mm]</span></label>
             <select id="db"><option selected>8</option><option>10</option><option>12</option><option>16</option><option>18</option><option>20</option><option>22</option><option>25</option><option>32</option></select></div>
           <div><label for="pierSel">Pier a desarrollar</label><select id="pierSel"><option value="">Pier crítico</option></select></div>
         </div>
@@ -243,7 +243,7 @@ function corteFila(Vu, Lw, e, c) {
   const rho = Avs / (100 * e * 100);
   const rhoMin = Vu < 0.27 * e * 100 * Lw * 100 * raiz ? 0.002 : 0.0025;
   const As = rho > rhoMin ? rho * 100 * e * 100 : rhoMin * 100 * e * 100;   // cm²/m
-  const alfa = c.Hw / Lw <= 1.5 ? 0.8 : 0.53;                // informativo: la planilla usa 0.53 en φVn
+  const alfa = c.Hw / Lw <= 1.5 ? 0.8 : 0.53;                // informativo: la planilla usa 0.53 en 𝜙Vn
   const phiVn = e * 100 * Lw * 100 * (0.53 * raiz + rhoMin * c.fy) * PHI;
   const limite = Vsmax * 0.75;
   const Ab = Math.PI * (c.db / 20) ** 2;
@@ -258,7 +258,7 @@ function corteFila(Vu, Lw, e, c) {
 const es19 = () => document.getElementById("normaACI")?.value === "19";
 const MPA = 10.1972;
 const kR = (c) => c * Math.sqrt(MPA);
-// φ de corte: 0.60 por defecto, porque 21.2.4.1 la exige si V_n es menor que el corte asociado a M_n y esta página no
+// 𝜙 de corte: 0.60 por defecto, porque 21.2.4.1 la exige si V_n es menor que el corte asociado a M_n y esta página no
 // calcula M_n; 0.75 si el usuario lo verifica o el muro se diseña según 18.10.6.2 (18.10.4.6)
 function corteFila19(Vu, Lw, e, c, ns) {
   const PHI = c.phi19;
@@ -274,7 +274,7 @@ function corteFila19(Vu, Lw, e, c, ns) {
   const Vs = Ve / PHI - Vc;
   const Avs = Vs / (c.fy * Lw * 100) * 100;                     // cm²/m
   const rho = Avs / (100 * e * 100);
-  // 18.10.2.1: ρ_t ≥ 0.0025, salvo V_u ≤ 0.083λ√f'c A_cv, donde se permite la Tabla 11.6.1 (0.0020 con barras ≤ φ16 y A630-420H)
+  // 18.10.2.1: ρ_t ≥ 0.0025, salvo V_u ≤ 0.083λ√f'c A_cv, donde se permite la Tabla 11.6.1 (0.0020 con barras ≤ 𝜙16 y A630-420H)
   const reduce = Vu <= kR(0.083) * raiz * Acv;
   const rhoMin = reduce && c.db <= 16 && c.fy >= 4200 ? 0.0020 : 0.0025;
   const As = Math.max(rho, rhoMin) * 100 * e * 100;              // cm²/m
@@ -309,7 +309,7 @@ const escH = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").repla
 const estado = (dc) => (dc <= 1 + 1e-9 ? "Cumple" : "No cumple");
 const tag = (ok, txt) => `<span class="tag ${ok ? "ok" : "bad"}">${txt}</span>`;
 const tagDC = (dc) => tag(dc <= 1 + 1e-9, `D/C = ${fmt(dc, 3)}`);
-const barra = (db, s) => `φ${db} @ ${s} cm`;
+const barra = (db, s) => `𝜙${db} @ ${s} cm`;
 
 class Memo {
   constructor() { this.out = []; this.tex = []; this.n = 0; }
@@ -758,9 +758,9 @@ function memoPier19(m, r, c, figura) {
   m.eq(L`s_{m\acute{a}x} = \min(3e;\ 450\ \mathrm{mm}) = \min(${tn(3 * e * 100, 1)};\ 45) = ${tn(r.svMax, 1)}\ \mathrm{cm}`, "ACI 318-19 11.7.3.1 y 18.10.2.1");
 
   m.sub("Condiciones de resistencia");
-  m.row("Resistencia al corte: V<sub>e</sub> ≤ φV<sub>n</sub>", `${fmt(f.Ve, 1)} ≤ ${fmt(f.phiVn, 1)} kgf ${tagDC(f.Ve / f.phiVn)}`, "ACI 318-19 18.10.4.1");
+  m.row("Resistencia al corte: V<sub>e</sub> ≤ 𝜙V<sub>n</sub>", `${fmt(f.Ve, 1)} ≤ ${fmt(f.phiVn, 1)} kgf ${tagDC(f.Ve / f.phiVn)}`, "ACI 318-19 18.10.4.1");
   m.eq(L`\phi V_n = \phi\left(\alpha_c\lambda\sqrt{f'_c} + \rho_t f_y\right)A_{cv} = ${tn(f.phi, 2)}\left(${tn(kR(f.alfa), 3)}\sqrt{${tn(c.fc, 0)}} + ${tn(f.rhoP, 5)}\cdot ${tn(c.fy, 0)}\right)\cdot ${tn(f.Acv, 0)} = ${tn(PHI * f.Vn, 1)}\ \mathrm{kgf}${f.Vn > f.VnMax ? L` \to ${tn(f.phiVn, 1)}\ \mathrm{kgf}\ (\text{límite})` : ""} \qquad \frac{V_e}{\phi V_n} = ${tn(f.Ve / f.phiVn, 3)} ${cmp(f.Ve / f.phiVn, 1)} 1`, "ACI 318-19 18.10.4.1");
-  m.row("Límite de un segmento: V<sub>e</sub> ≤ φ 0.83√f'c A<sub>cv</sub>", `${fmt(f.Ve, 1)} ≤ ${fmt(f.limite, 1)} kgf ${tagDC(f.Ve / f.limite)}`, "ACI 318-19 18.10.4.4");
+  m.row("Límite de un segmento: V<sub>e</sub> ≤ 𝜙 0.83√f'c A<sub>cv</sub>", `${fmt(f.Ve, 1)} ≤ ${fmt(f.limite, 1)} kgf ${tagDC(f.Ve / f.limite)}`, "ACI 318-19 18.10.4.4");
   m.eq(L`\phi\,0.83\sqrt{f'_c}\,A_{cv} = ${tn(f.phi, 2)}\cdot ${tn(kR(0.83), 3)}\sqrt{${tn(c.fc, 0)}}\cdot ${tn(f.Acv, 0)} = ${tn(f.limite, 1)}\ \mathrm{kgf} \qquad \frac{V_e}{\phi V_{n,m\acute{a}x}} = ${tn(f.Ve / f.limite, 3)} ${cmp(f.Ve / f.limite, 1)} 1`, "ACI 318-19 18.10.4.4");
   m.row("Límite del conjunto de segmentos (informativo): 0.66√f'c ΣA<sub>cv</sub>", `${fmt(f.Vn066, 0)} kgf con este pier`, "ACI 318-19 18.10.4.4");
   m.p(L`El límite $0.66\sqrt{f'_c}A_{cv}$ se aplica a la suma de los segmentos verticales que comparten una misma fuerza lateral; como esta página verifica cada pier por separado, se informa y no entra en la razón D/C.`);
@@ -809,7 +809,7 @@ function memoPier(m, r, c, figura) {
   m.eq(L`S_{v,m\acute{a}x} = \min\left(\frac{L_w}{3};\ 3e;\ 45\ \mathrm{cm}\right) = \min(${tn(Lw * 100 / 3, 1)};\ ${tn(3 * e * 100, 1)};\ 45) = ${tn(r.svMax, 1)}\ \mathrm{cm}`);
 
   m.sub("Condiciones de resistencia");
-  m.row("Resistencia al corte: V<sub>u</sub> ≤ φV<sub>n</sub>", `${fmt(f.Vu, 1)} ≤ ${fmt(f.phiVn, 1)} kgf ${tagDC(f.Vu / f.phiVn)}`, "ACI 318-08 21.9.4.1");
+  m.row("Resistencia al corte: V<sub>u</sub> ≤ 𝜙V<sub>n</sub>", `${fmt(f.Vu, 1)} ≤ ${fmt(f.phiVn, 1)} kgf ${tagDC(f.Vu / f.phiVn)}`, "ACI 318-08 21.9.4.1");
   m.eq(L`\phi V_n = \phi\,L_w\,e\left(0.53\sqrt{f'_c} + \rho_{m\acute{i}n}\,f_y\right) = ${PHI}\cdot ${tn(Lw * 100, 0)}\cdot ${tn(e * 100, 0)}\left(0.53\sqrt{${tn(c.fc, 0)}} + ${tn(f.rhoMin, 4)}\cdot ${tn(c.fy, 0)}\right) = ${tn(f.phiVn, 1)}\ \mathrm{kgf}`, "ACI 318-08 21.9.4.1");
   m.eq(L`\frac{V_u}{\phi V_n} = \frac{${tn(f.Vu, 1)}}{${tn(f.phiVn, 1)}} = ${tn(f.Vu / f.phiVn, 3)} ${cmp(f.Vu / f.phiVn, 1)} 1`, "ACI 318-08 21.9.4.1");
   m.row("Límite de resistencia: V<sub>u</sub> ≤ 0.75 V<sub>s,máx</sub>", `${fmt(f.Vu, 1)} ≤ ${fmt(f.limite, 1)} kgf ${tagDC(f.Vu / f.limite)}`, "ACI 318-08 21.9.4.4");
@@ -998,12 +998,12 @@ function calcular() {
   if (es19() && c.fy / MPA > 420 + 1e-9) aviso(`f<sub>y</sub> supera 420 MPa, el máximo para armadura de corte en sistemas sísmicos especiales (ACI 318-19 Tabla 20.2.2.4a).`, L`$f_y$ supera 420 MPa, el máximo para armadura de corte en sistemas sísmicos especiales (ACI 318-19 Tabla 20.2.2.4a).`);
   // El veredicto no incluye nombres que vienen del archivo: proyectos.js y tablero.js leen su texto
   const incompleto = sinCalc ? ` · ${cuenta(sinCalc, "pier", "piers")} sin geometría válida` : "";
-  // En el ACI 318-19 también quedan sin verificar Ω_v (sin M_pr, si algún pier tiene h_w/L_w > 1.5), φ = 0.75 si se eligió
+  // En el ACI 318-19 también quedan sin verificar Ω_v (sin M_pr, si algún pier tiene h_w/L_w > 1.5), 𝜙 = 0.75 si se eligió
   // y ρ_ℓ ≥ ρ_t (18.10.4.3, si algún pier tiene h_w/L_w ≤ 2)
   const pend = ["flexocompresión", "elementos de borde"];
   if (es19()) {
     if (A.res.some(r => c.Hw / r.Lw > 1.5)) pend.push("Ω<sub>v</sub> sin M<sub>pr</sub>");
-    if (c.phi19 > 0.7) pend.push("φ = 0.75 de 21.2.4.1");
+    if (c.phi19 > 0.7) pend.push("𝜙 = 0.75 de 21.2.4.1");
     if (A.res.some(r => c.Hw / r.Lw <= 2)) pend.push("ρ<sub>ℓ</sub> ≥ ρ<sub>t</sub>");
   }
   const pendTxt = pend.length > 2 ? pend.slice(0, -1).join(", ") + " y " + pend[pend.length - 1] : pend.join(" y ");
@@ -1026,7 +1026,7 @@ function calcular() {
   memoPier(m, crit, c, true);
   if (sel && sel !== crit) memoPier(m, sel, c);
   m.h("Resumen de todos los piers");
-  m.html_(`<div class="tablaWrap"><table class="alt"><tr><th>Pier</th><th>L<sub>w</sub> [m]</th><th>e [m]</th><th>Piso</th><th>V<sub>u</sub> [kgf]</th><th>φV<sub>n</sub> [kgf]</th><th>Límite [kgf]</th><th>D/C</th><th>A<sub>s</sub> [cm²/m]</th><th>Barra</th><th>S<sub>v,máx</sub> [cm]</th><th>Estado</th></tr>${A.res.map(r => `<tr><td>${escH(r.p)}</td><td>${fmt(r.Lw, 2)}</td><td>${fmt(r.e, 2)}</td><td>${escH(r.crit.piso)}</td><td>${fmt(r.crit.Vu, 0)}</td><td>${fmt(r.crit.phiVn, 0)}</td><td>${fmt(r.crit.limite, 0)}</td><td class="${r.dc > 1 + 1e-9 ? "malo" : ""}">${fmt(r.dc, 3)}</td><td>${fmt(r.gob.As, 2)}</td><td class="${r.gob.s > r.svMax ? "aviso" : ""}">${barra(c.db, r.gob.s)}</td><td>${fmt(r.svMax, 1)}</td><td class="${r.dc > 1 + 1e-9 ? "malo" : ""}">${estado(r.dc)}</td></tr>`).join("")}</table></div>`);
+  m.html_(`<div class="tablaWrap"><table class="alt"><tr><th>Pier</th><th>L<sub>w</sub> [m]</th><th>e [m]</th><th>Piso</th><th>V<sub>u</sub> [kgf]</th><th>𝜙V<sub>n</sub> [kgf]</th><th>Límite [kgf]</th><th>D/C</th><th>A<sub>s</sub> [cm²/m]</th><th>Barra</th><th>S<sub>v,máx</sub> [cm]</th><th>Estado</th></tr>${A.res.map(r => `<tr><td>${escH(r.p)}</td><td>${fmt(r.Lw, 2)}</td><td>${fmt(r.e, 2)}</td><td>${escH(r.crit.piso)}</td><td>${fmt(r.crit.Vu, 0)}</td><td>${fmt(r.crit.phiVn, 0)}</td><td>${fmt(r.crit.limite, 0)}</td><td class="${r.dc > 1 + 1e-9 ? "malo" : ""}">${fmt(r.dc, 3)}</td><td>${fmt(r.gob.As, 2)}</td><td class="${r.gob.s > r.svMax ? "aviso" : ""}">${barra(c.db, r.gob.s)}</td><td>${fmt(r.svMax, 1)}</td><td class="${r.dc > 1 + 1e-9 ? "malo" : ""}">${estado(r.dc)}</td></tr>`).join("")}</table></div>`);
   $("dibujo").innerHTML = svgPier(crit, c);
   $("memo").innerHTML = m.html();
   ultimoR = { r: crit, c };

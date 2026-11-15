@@ -64,6 +64,8 @@ function texUnicode(doc) {
   doc = doc.replace(/\\,\\%/g, "\\%");
   // Elementos guardados con la coma anterior: "12{,}5" → "12.5" (los miles quedan con espacio fino "\,")
   doc = doc.replace(/\{,\}/g, ".");
+  // 𝜙 (U+1D719, el de pantalla) se escribe como φ: pdflatex lo dibuja con \phi, que ya es 𝜙
+  doc = doc.replace(/\u{1D719}/gu, "φ");
   const usados = Object.keys(TEX_UNICODE).filter((c) => doc.includes(String.fromCodePoint(parseInt(c, 16))));
   if (!usados.length) return doc;
   const decl = "\\ifdefined\\DeclareUnicodeCharacter\n"

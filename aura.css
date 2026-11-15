@@ -196,6 +196,8 @@ html.lat-corta { --ancho-lat: 64px; }
   @media (min-width: 900.02px) {
     main > .panel:is(:first-child, .aviso-borrador + *) { position: sticky; top: calc(var(--cab) + 12px); align-self: start; max-height: calc(100vh - var(--cab) - 24px); overflow-y: auto; scrollbar-width: thin; }
     main > .panel:is(:first-child, .aviso-borrador + *) > h2 { position: sticky; top: 0; z-index: 2; }
+    /* El botón «Guía» (fijo abajo a la izquierda) no debe tapar los últimos datos: espacio al final del panel */
+    body:has(.guia-btn) main:not(.datos-plegados) > .panel:is(:first-child, .aviso-borrador + *) { padding-bottom: 72px; scroll-padding-bottom: 72px; }
     div:has(> .verdict) { position: sticky; top: var(--cab); z-index: 20; background: var(--nieve); padding-top: 10px; }
   }
   /* Con el panel del proyecto abierto (empuja la página desde 1180 px), los datos ceden ancho a los resultados */
@@ -228,6 +230,7 @@ html.lat-corta { --ancho-lat: 64px; }
   .memo h4 { color: var(--acento); }
   .ref { color: var(--acento); border-color: #b9bfe6; background: var(--azul-tinte); }
   footer { padding-top: 6px; }
+  body:has(.guia-btn) footer { padding-bottom: 72px; }   /* que el botón «Guía» no tape el pie al final de la página */
 
   /* ---------- Presentación de resultados (tablero.js) ---------- */
   /* Panel de datos plegable */

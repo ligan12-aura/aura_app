@@ -73,6 +73,9 @@
   .leyenda i { display: inline-block; width: 22px; height: 3px; vertical-align: middle; margin-right: 6px; }
   input[type=text], select, input[type=number] { width: 100%; padding: 7px 9px; border: 1px solid var(--line); border-radius: var(--r-m); font: inherit; background: #fff; color: var(--ink); }
   select:focus, input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  details.ayuda { margin-top: 8px; border: 1px dashed var(--line); border-radius: var(--r-m); padding: 6px 10px; font-size: 12px; color: var(--ink); }
+  details.ayuda summary { cursor: pointer; color: var(--head); font-weight: 600; }
+  details.ayuda p { margin: 6px 0; }
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
   .unit { color: var(--muted); font-size: 11px; }
@@ -208,19 +211,24 @@
         <fieldset>
           <legend>Armadura</legend>
           <div class="row2">
-            <div><label for="vdbInf">φ barra inferior <span class="unit">[mm]</span></label><select id="vdbInf" class="barras"></select></div>
-            <div><label for="vdbSup">φ barra superior <span class="unit">[mm]</span></label><select id="vdbSup" class="barras"></select></div>
+            <div><label for="vdbInf">𝜙 barra inferior <span class="unit">[mm]</span></label><select id="vdbInf" class="barras"></select></div>
+            <div><label for="vdbSup">𝜙 barra superior <span class="unit">[mm]</span></label><select id="vdbSup" class="barras"></select></div>
           </div>
           <div class="row2">
-            <div><label for="vde">φ estribo <span class="unit">[mm]</span></label><select id="vde"></select></div>
+            <div><label for="vde">𝜙 estribo <span class="unit">[mm]</span></label><select id="vde"></select></div>
             <div><label for="vramas">N° de ramas</label><input id="vramas" type="number" step="1" min="2" value="2"></div>
           </div>
+          <details class="ayuda">
+            <summary>¿Cómo se elige el diámetro automático?</summary>
+            <p><b>Barras:</b> se usa el diámetro, entre 𝜙10 y 𝜙36, que cubre el área requerida con la menor área dispuesta y cabe en una capa.</p>
+            <p><b>Estribos:</b> el menor entre 𝜙8 y 𝜙12 que deja al menos 10 cm entre estribos.</p>
+            <p>Las demás verificaciones se hacen después, en el procedimiento.</p>
+          </details>
           <label for="vgancho">Gancho del estribo</label>
           <select id="vgancho">
             <option value="sismico">135° sísmico — extensión 6d<sub>b</sub> ≥ 7.5 cm (ACI 21.1)</option>
             <option value="estandar">135° estándar — extensión 6d<sub>b</sub> (ACI 7.1.3)</option>
           </select>
-          <div class="unit" style="margin-top:6px">En "Automático" el programa propone el diámetro; al elegir otro se recalculan el número de barras y los espaciamientos.</div>
           <label for="vsmax">Espaciamiento máximo de estribos</label>
           <select id="vsmax">
             <option value="general">General — ACI 11.4.5 (d/2 o d/4)</option>
@@ -419,7 +427,7 @@ const LE = L`\le`, GE = L`\ge`;
 const cmp = (a, b) => (a <= b ? LE : ">");
 const KG = L`\ \mathrm{kgf}`, KGCM = L`\ \mathrm{kgf\cdot cm}`, KGM = L`\ \mathrm{kgf\cdot m}`, KGCM2 = L`\ \mathrm{kgf/cm^2}`,
   CM = L`\ \mathrm{cm}`, CM2 = L`\ \mathrm{cm^2}`, CM2CM = L`\ \mathrm{cm^2/cm}`;
-const texTxt = (t) => t.replace(/—/g, "---").replace(/%/g, "\\%").replace(/φ/g, "$\\phi$");
+const texTxt = (t) => t.replace(/—/g, "---").replace(/%/g, "\\%").replace(/𝜙/g, "$\\phi$");
 const tag = (ok, txt) => `<span class="tag ${ok ? "ok" : "bad"}">${txt}</span>`;
 const okTxt = (ok) => tag(ok, ok ? "CUMPLE" : "NO CUMPLE");
 
@@ -459,7 +467,7 @@ const beta1 = (fc) => {
   const f = fc / MPA;
   return f <= 28 ? 0.85 : f >= 55 ? 0.65 : 0.85 - 0.05 * (f - 28) / 7;
 };
-// φ según la deformación neta de tracción εt (estribos, no zunchos): 9.3.2 (318-08, entre 0.002 y 0.005)
+// 𝜙 según la deformación neta de tracción εt (estribos, no zunchos): 9.3.2 (318-08, entre 0.002 y 0.005)
 // o Tabla 21.2.2 (318-19, entre εty = fy/Es y εty + 0.003)
 const phiEt = (et, fy) => {
   const ey = es19() ? fy / ES : 0.002, et2 = es19() ? ey + 0.003 : 0.005;
@@ -505,7 +513,7 @@ function flexion(cara, Mu, db, g, m) {
   m.eq(L`\rho_{\max} = 0.85\,\beta_1\frac{f'_c}{f_y}\cdot\frac{\varepsilon_{cu}}{\varepsilon_{cu} + ${tn(eMin, 4)}} = 0.85\cdot ${tn(b1, 3)}\cdot\frac{${tn(fc, 0)}}{${tn(fy, 0)}}\cdot\frac{0.003}{${tn(ECU + eMin, 4)}} = ${tn(rmax, 5)}`, refMax);
   m.eq(L`\rho_b = 0.85\,\beta_1\frac{f'_c}{f_y}\cdot\frac{\varepsilon_{cu}E_s}{\varepsilon_{cu}E_s + f_y} = ${tn(rb, 5)} \qquad 0.75\,\rho_b = ${tn(0.75 * rb, 5)} \ \text{(referencia)}`);
 
-  // ---------- 2. Armadura requerida (φ = 0.9 supuesto, sección controlada por tracción) ----------
+  // ---------- 2. Armadura requerida (𝜙 = 0.9 supuesto, sección controlada por tracción) ----------
   const Mn = Mu / 0.9;
   const mu = Mn / (0.85 * fc * b * d * d);
   const resuelve = 2 * mu < 1;
@@ -549,11 +557,11 @@ function flexion(cara, Mu, db, g, m) {
   const sCC = (anchoUtil - db / 10) / (Nb - 1);
   const okSmin = sLibre >= sMin, okSmax = sCC <= sMax;
   memoGrupo(m, "Disposición de armadura", `${cara}-disp`);
-  m.row(`Área de una barra φ${db} ; número de barras: A<sub>b</sub> ; N<sub>b</sub>`, `${fmt(Ab, 3)} cm² ; ${Nb}φ${db}`);
+  m.row(`Área de una barra 𝜙${db} ; número de barras: A<sub>b</sub> ; N<sub>b</sub>`, `${fmt(Ab, 3)} cm² ; ${Nb}𝜙${db}`);
   m.row("Armadura dispuesta: A<sub>s,disp</sub>", `${fmt(As, 3)} cm²`);
   m.row("Espaciamiento libre entre barras: s ≥ s<sub>mín</sub>", `${fmt(sLibre, 2)} ≥ ${fmt(sMin, 2)} cm ${tag(okSmin, okSmin ? "cumple" : "no cabe en una capa")}`, refSmin);
   m.row("Espaciamiento entre ejes (control de fisuración): s ≤ s<sub>máx</sub>", `${fmt(sCC, 2)} ≤ ${fmt(sMax, 2)} cm ${tag(okSmax, okSmax ? "cumple" : "no cumple")}`, refSmax);
-  if (!okSmin) m.note(`Las ${Nb} barras φ${db} no caben en una capa con el espaciamiento libre mínimo; use un diámetro mayor o dos capas.`,
+  if (!okSmin) m.note(`Las ${Nb} barras 𝜙${db} no caben en una capa con el espaciamiento libre mínimo; use un diámetro mayor o dos capas.`,
     L`Las ${Nb} barras $\phi${db}$ no caben en una capa con el espaciamiento libre mínimo; use un diámetro mayor o dos capas.`);
   m.p(L`\textbf{Disposición de barras.} Se determina el número de barras en función del área nominal de la barra seleccionada $\phi${db}$ ($A_b = ${tn(Ab, 3)}$ cm$^2$) y se verifica que quepan en una capa:`);
   m.eq(L`N_b = \left\lceil\frac{A_s}{A_b}\right\rceil = \left\lceil\frac{${tn(Asreq, 3)}}{${tn(Ab, 3)}}\right\rceil = ${Nb} \;\Rightarrow\; ${Nb}\phi${db},\quad A_{s,\text{disp}} = ${tn(As, 3)}${CM2}`);
@@ -573,8 +581,8 @@ function flexion(cara, Mu, db, g, m) {
   const ok = resuelve && okRho && okSmin && okSmax && okEt && dc <= 1;
   memoGrupo(m, "Verificación de capacidad (resumen)", `${cara}-cap`, { abierto: true, resumen: `D/C = ${fmt(dc, 3)} ${okTxt(ok)}` });
   m.row("Profundidad del bloque de compresión ; eje neutro: a ; c", `${fmt(a, 2)} ; ${fmt(c, 2)} cm`, refN("10.2.7", "22.2.2.4"));
-  m.row("Deformación del acero en tracción ; factor de reducción: ε<sub>t</sub> ; φ", `${fmt(et, 4)} ${tag(okEt, okEt ? "cumple" : "no cumple")} ; ${fmt(phi, 3)}`, refN("10.3.5 / 9.3.2", "9.3.3.1 / Tabla 21.2.2"));
-  m.row("<b>Resistencia de diseño a flexión: φM<sub>n</sub></b>", `<b>${fmt(phiMn / 100, 1)} kgf·m</b>`);
+  m.row("Deformación del acero en tracción ; factor de reducción: ε<sub>t</sub> ; 𝜙", `${fmt(et, 4)} ${tag(okEt, okEt ? "cumple" : "no cumple")} ; ${fmt(phi, 3)}`, refN("10.3.5 / 9.3.2", "9.3.3.1 / Tabla 21.2.2"));
+  m.row("<b>Resistencia de diseño a flexión: 𝜙M<sub>n</sub></b>", `<b>${fmt(phiMn / 100, 1)} kgf·m</b>`);
   m.row("<b>Razón demanda/capacidad en flexión: D/C</b>", `<b>${fmt(dc, 3)}</b> ${okTxt(dc <= 1)}`);
   m.p(L`\textbf{Verificación de la capacidad} con la armadura dispuesta $A_s = ${tn(As, 3)}$ cm$^2$. Se calculan la profundidad del bloque de compresión, el eje neutro y la deformación del acero, que confirma el factor $\phi$:`);
   m.eq(L`a = \frac{A_s f_y}{0.85\,f'_c\,b} = \frac{${tn(As, 3)}\cdot ${tn(fy, 0)}}{0.85\cdot ${tn(fc, 0)}\cdot ${tn(b, 1)}} = ${tn(a, 3)}${CM} \qquad c = \frac{a}{\beta_1} = ${tn(c, 3)}${CM}`, refN("10.2.7", "22.2.2.4"));
@@ -613,8 +621,8 @@ function corte(Vu, g, d, dbMin, criterio, m) {
   const phiVc = phi * Vc;
   const refVc = sis ? refN("21.5.4.2", "18.6.5.2") : refN("11.2.1.1", "Tabla 22.5.5.1"), refVsMax = refN("11.4.7.9", "22.5.1.2");
   memoGrupo(m, "Capacidad del hormigón", "v-hor");
-  m.row("Altura útil ; factor de reducción por corte: d ; φ", `${fmt(d, 2)} cm ; 0.75`, refN("9.3.2.3", "21.2.1"));
-  m.row("Resistencia al corte del hormigón: V<sub>c</sub> ; φV<sub>c</sub>", `${fmt(Vc, 0)} ; ${fmt(phiVc, 0)} kgf${sis ? " (sísmico: V<sub>c</sub> = 0)" : ""}`, refVc);
+  m.row("Altura útil ; factor de reducción por corte: d ; 𝜙", `${fmt(d, 2)} cm ; 0.75`, refN("9.3.2.3", "21.2.1"));
+  m.row("Resistencia al corte del hormigón: V<sub>c</sub> ; 𝜙V<sub>c</sub>", `${fmt(Vc, 0)} ; ${fmt(phiVc, 0)} kgf${sis ? " (sísmico: V<sub>c</sub> = 0)" : ""}`, refVc);
   if (sis) {
     const [c0, c1] = n19 ? ["18.6.5.2", "18.6.5.1"] : ["21.5.4.2", "21.5.4.1"];
     m.note(`Criterio sísmico: se toma V<sub>c</sub> = 0 (${NORMA()} ${c0}). V<sub>u</sub> debe ser el corte de diseño V<sub>e</sub> de ${c1}, con los momentos probables M<sub>pr</sub> (1.25 f<sub>y</sub>) en los extremos más las cargas gravitacionales, que esta página no calcula.`,
@@ -643,7 +651,7 @@ function corte(Vu, g, d, dbMin, criterio, m) {
   if (VsCalc <= 0) m.p(L`Como $V_s \le 0$, el hormigón resiste por sí solo la demanda y no se requiere armadura de corte por cálculo.`);
 
   // ---------- 3. Diseño de estribos ----------
-  // Av,mín exigida: V_u > 0.5φV_c (318-08 11.4.6.1) o V_u > φ 0.083λ√f'c b_w d (318-19 9.6.3.1)
+  // Av,mín exigida: V_u > 0.5𝜙V_c (318-08 11.4.6.1) o V_u > 𝜙 0.083λ√f'c b_w d (318-19 9.6.3.1)
   const umbral = n19 ? phi * kR(0.083) * rf * b * d : 0.5 * phiVc;
   const requiereMin = Vu > umbral;
   const refAvs = refN("11-15", "22.5.8.5.3"), refAvMin = refN("11.4.6.3", "Tabla 9.6.3.4"), refReqMin = refN("11.4.6.1", "9.6.3.1");
@@ -686,7 +694,7 @@ function corte(Vu, g, d, dbMin, criterio, m) {
   memoGrupo(m, "Diseño de estribos", "v-est");
   m.row("Armadura de corte requerida: A<sub>v</sub>/s", `${fmt(AvsReq, 4)} cm²/cm`, refAvs);
   m.row("Armadura de corte mínima: (A<sub>v</sub>/s)<sub>mín</sub>", `${fmt(AvsMin, 4)} cm²/cm`, refAvMin);
-  m.row(`Espaciamiento teórico, estribo φ${de} de ${ramas} ramas: s`, `${fmt(sCalc, 2)} cm`);
+  m.row(`Espaciamiento teórico, estribo 𝜙${de} de ${ramas} ramas: s`, `${fmt(sCalc, 2)} cm`);
   m.row("Espaciamiento máximo normativo: s<sub>máx</sub>", `${fmt(sMax, 2)} cm`, sMaxRef || "d/4");
   const umbralTex = n19 ? L`\phi\,${tn(kR(0.083), 3)}\sqrt{f'_c}\,b_w d = ${tn(umbral, 0)}` : L`0.5\phi V_c = ${tn(umbral, 0)}`;
   m.p(L`\textbf{Armadura transversal.} Se dispone al menos la armadura mínima ${requiereMin ? L`(exigida por ${refReqMin}, pues $V_u > ${umbralTex}$ kgf)` : L`(como $V_u \le ${umbralTex}$ kgf no es exigida por ${refReqMin}; se dispone como armadura constructiva)`}:`);
@@ -703,9 +711,9 @@ function corte(Vu, g, d, dbMin, criterio, m) {
   const phiVn = phi * (Vc + VsP);
   const dc = Vu / phiVn;
   memoGrupo(m, "Verificación de capacidad (resumen)", "v-cap", { abierto: true, resumen: `D/C = ${fmt(dc, 3)} ${okTxt(dc <= 1 && okVs)}` });
-  m.row("<b>Estribo adoptado</b>", `<b>E φ${de} @ ${s} cm</b> (${ramas} ramas)`);
+  m.row("<b>Estribo adoptado</b>", `<b>E 𝜙${de} @ ${s} cm</b> (${ramas} ramas)`);
   m.row("Corte resistido por los estribos adoptados: V<sub>s,disp</sub>", `${fmt(VsP, 0)} kgf`, refAvs);
-  m.row("<b>Resistencia de diseño a corte: φV<sub>n</sub></b>", `<b>${fmt(phiVn, 0)} kgf</b>`);
+  m.row("<b>Resistencia de diseño a corte: 𝜙V<sub>n</sub></b>", `<b>${fmt(phiVn, 0)} kgf</b>`);
   m.row("<b>Razón demanda/capacidad en corte: D/C</b>", `<b>${fmt(dc, 3)}</b> ${okTxt(dc <= 1 && okVs)}`);
   m.p(L`Se adopta \textbf{E$\phi${de}$ @ ${s} cm} (${ramas} ramas). Capacidad con la armadura dispuesta:`);
   m.eq(L`V_{s,\text{disp}} = \frac{n\,A_b\,f_{yt}\,d}{s} = \frac{${ramas}\cdot ${tn(Abe, 3)}\cdot ${tn(fy, 0)}\cdot ${tn(d)}}{${s}} = ${tn(VsP, 0)}${KG}`, refAvs);
@@ -797,9 +805,9 @@ function svgViga(g, inf, sup) {
     ${detalle}
     ${fl(0, -16, B, -16)}${t(B / 2, -21, `b = ${fmt(b, 1)}`, "middle")}
     ${fl(-18, 0, -18, H)}${t(-24, H / 2, `h = ${fmt(h, 1)}`, "middle", -90)}
-    ${t(B + 10, ySup + 4, `${sup.Nb}φ${sup.db}`)}
-    ${t(B + 10, yInf + 4, `${inf.Nb}φ${inf.db}`)}
-    ${t(B + 10, H / 2 + 4, `E φ${de} @ ${g.s}`)}
+    ${t(B + 10, ySup + 4, `${sup.Nb}𝜙${sup.db}`)}
+    ${t(B + 10, yInf + 4, `${inf.Nb}𝜙${inf.db}`)}
+    ${t(B + 10, H / 2 + 4, `E 𝜙${de} @ ${g.s}`)}
     ${t(B + 10, H / 2 + 18, `rec = ${fmt(rec, 1)}`)}
     <text x="-50" y="${H + 120}" font-size="10" fill="#8a93a0">Cotas en cm · detalle sin escala</text>
   </svg>`;
@@ -861,7 +869,7 @@ function proponerBarra(Mu, g) {
   return mejor ? mejor.db : BARRAS[BARRAS.length - 1];
 }
 
-// Estribo propuesto: el menor diámetro (≥ φ8) que entrega una separación de al menos 10 cm.
+// Estribo propuesto: el menor diámetro (≥ 𝜙8) que entrega una separación de al menos 10 cm.
 function proponerEstribo(Vu, g, d, dbMin) {
   for (const de of ESTRIBOS.filter(x => x >= 8)) {
     if (corte(Vu, { ...g, de }, d, dbMin, g.criterio, NOMEMO).s >= 10) return de;
@@ -886,9 +894,9 @@ function resolverDiametros(g) {
   prop.de = proponerEstribo(g.Vu, g, dInf, Math.min(g.dbInf, g.dbSup));
   if (auto.de && prop.de !== g.de) { g.de = prop.de; barras(); }
   // Etiquetas de la opción "Automático" con la propuesta vigente
-  $("vdbInf").options[0].text = `Automático (φ${prop.inf})`;
-  $("vdbSup").options[0].text = `Automático (φ${prop.sup})`;
-  $("vde").options[0].text = `Automático (φ${prop.de})`;
+  $("vdbInf").options[0].text = `Automático (𝜙${prop.inf})`;
+  $("vdbSup").options[0].text = `Automático (𝜙${prop.sup})`;
+  $("vde").options[0].text = `Automático (𝜙${prop.de})`;
   return { auto, prop };
 }
 
@@ -924,10 +932,11 @@ function calcularViga() {
 
   m.h(es19() ? "Verificación a flexión — ACI 318-19, Capítulos 9 y 22" : "Verificación a flexión — Capítulo 10");
   notaUnidades19(m);
-  const origen = (a, p) => (a ? "propuesto" : `seleccionado (propuesto φ${p})`);
+  const origen = (a, p) => (a ? "automático" : `elegido por el usuario (automático: 𝜙${p})`);
   m.row("Diámetros: inferior ; superior ; estribo",
-    `φ${g.dbInf} ${origen(auto.inf, prop.inf)} ; φ${g.dbSup} ${origen(auto.sup, prop.sup)} ; φ${g.de} ${origen(auto.de, prop.de)}`);
-  m.p(L`\textbf{Selección de diámetros.} El diámetro propuesto para cada cara es el que cubre el área de acero requerida con la menor área dispuesta, cabiendo en una sola capa con el espaciamiento libre mínimo (${refN("7.6.1", "25.2.1")}); para los estribos se propone el menor diámetro ($\ge\phi8$) que entrega una separación de al menos 10 cm. Se utilizan: barras inferiores $\phi${g.dbInf}$ (${auto.inf ? "propuesto" : L`seleccionado; propuesto $\phi${prop.inf}$`}), superiores $\phi${g.dbSup}$ (${auto.sup ? "propuesto" : L`seleccionado; propuesto $\phi${prop.sup}$`}) y estribos $\phi${g.de}$ (${auto.de ? "propuesto" : L`seleccionado; propuesto $\phi${prop.de}$`}).`);
+    `𝜙${g.dbInf} ${origen(auto.inf, prop.inf)} ; 𝜙${g.dbSup} ${origen(auto.sup, prop.sup)} ; 𝜙${g.de} ${origen(auto.de, prop.de)}`);
+  const usoTex = (a, d, p) => L`$\phi${d}$ (${a ? "automático" : L`elegido por el usuario; el automático sería $\phi${p}$`})`;
+  m.p(L`\textbf{Selección de diámetros.} Barras: se usa el diámetro, entre $\phi10$ y $\phi36$, que cubre el área requerida con la menor área dispuesta y cabe en una capa (${refN("7.6.1", "25.2.1")}). Estribos: el menor entre $\phi8$ y $\phi12$ que deja al menos 10 cm entre estribos. Las demás verificaciones se hacen a continuación. Se utilizan: barras inferiores ${usoTex(auto.inf, g.dbInf, prop.inf)}, superiores ${usoTex(auto.sup, g.dbSup, prop.sup)} y estribos ${usoTex(auto.de, g.de, prop.de)}.`);
   const inf = flexion("inf", g.Mpos, g.dbInf, g, m);
   const sup = flexion("sup", g.Mneg, g.dbSup, g, m);
   m.h(es19() ? "Verificación a corte — ACI 318-19, Capítulos 9 y 22" : "Verificación a corte — Capítulo 11");
@@ -949,9 +958,9 @@ function calcularViga() {
   const ok = inf.ok && sup.ok && v.ok;
   ultimoViga = { g, inf, sup, v, dc, ok };
   const cards = [
-    { t: "Flexión inferior (M<sub>u</sub><sup>+</sup>)", v: fmt(inf.dc, 3), s: `φM<sub>n</sub> = ${fmt(inf.phiMn / 100, 1)} kgf·m`, r: inf.dc },
-    { t: "Flexión superior (M<sub>u</sub><sup>−</sup>)", v: fmt(sup.dc, 3), s: `φM<sub>n</sub> = ${fmt(sup.phiMn / 100, 1)} kgf·m`, r: sup.dc },
-    { t: "Corte", v: fmt(v.dc, 3), s: `φV<sub>n</sub> = ${fmt(v.phiVn, 0)} kgf`, r: v.dc },
+    { t: "Flexión inferior (M<sub>u</sub><sup>+</sup>)", v: fmt(inf.dc, 3), s: `𝜙M<sub>n</sub> = ${fmt(inf.phiMn / 100, 1)} kgf·m`, r: inf.dc },
+    { t: "Flexión superior (M<sub>u</sub><sup>−</sup>)", v: fmt(sup.dc, 3), s: `𝜙M<sub>n</sub> = ${fmt(sup.phiMn / 100, 1)} kgf·m`, r: sup.dc },
+    { t: "Corte", v: fmt(v.dc, 3), s: `𝜙V<sub>n</sub> = ${fmt(v.phiVn, 0)} kgf`, r: v.dc },
   ];
   $("summary").innerHTML = cards.map(c => {
     const w = Math.min(100, Math.max(0, c.r * 100));
@@ -959,7 +968,7 @@ function calcularViga() {
       <div class="bar ${c.r > 1 ? "bad" : ""}"><i style="width:${w}%"></i></div><div class="s">${c.s}</div></div>`;
   }).join("");
   const rhoTxt = (r) => `ρ = ${fmt(r.rhoD, 4)}${r.rho < r.rmin ? " (mín)" : ""}`;
-  $("armado").innerHTML = `<span>Inferior: ${inf.Nb}φ${inf.db} (${fmt(inf.As, 2)} cm²) · ${rhoTxt(inf)}</span><span>Superior: ${sup.Nb}φ${sup.db} (${fmt(sup.As, 2)} cm²) · ${rhoTxt(sup)}</span><span>Estribos: E φ${g.de} @ ${v.s} cm · ${g.ramas} ramas · ganchos 135° (ext. ${fmt(g.hk.ext, 1)} cm) · L = ${fmt(g.hk.Lt, 0)} cm</span>`;
+  $("armado").innerHTML = `<span>Inferior: ${inf.Nb}𝜙${inf.db} (${fmt(inf.As, 2)} cm²) · ${rhoTxt(inf)}</span><span>Superior: ${sup.Nb}𝜙${sup.db} (${fmt(sup.As, 2)} cm²) · ${rhoTxt(sup)}</span><span>Estribos: E 𝜙${g.de} @ ${v.s} cm · ${g.ramas} ramas · ganchos 135° (ext. ${fmt(g.hk.ext, 1)} cm) · L = ${fmt(g.hk.Lt, 0)} cm</span>`;
   const motivos = [...inf.fallas.map(f => `armadura inferior: ${f}`), ...sup.fallas.map(f => `armadura superior: ${f}`), ...v.fallas.map(f => `corte: ${f}`)];
   $("verdict").innerHTML = `<div class="verdict ${ok ? "ok" : "bad"}">${ok ? "✔ La viga CUMPLE" : "✘ La viga NO CUMPLE"} — razón máxima = ${razonTxt(dc)}${motivos.map(x => ` · ${x}`).join("")}</div>`;
   $("memo").innerHTML = datos.html() + m.html();
@@ -1274,13 +1283,13 @@ function disenoFaja(t, Mu, db, d, g, dosDir, m) {
   m.p(L`${AsCalc >= AsMin ? "Rige la armadura por solicitación." : L`Como $\rho\,b\,d = ${tn(AsCalc, 3)} < \rho_{\min}\,b\,h = ${tn(AsMin, 3)}$ cm$^2$/m, \textbf{rige la cuantía mínima}.`}`, true);
   // ---------- Espaciamiento y armadura adoptada ----------
   memoGrupo(m, "Espaciamiento y armadura adoptada", `${k}-esp`);
-  m.row(`Espaciamiento calculado φ${db} ; espaciamiento máximo: s ; s<sub>máx</sub>`, `${fmt(sCalc, 2)} ; ${fmt(sMax, 1)} cm`, refSmaxLosa(dosDir));
-  m.row(`<b>Armadura adoptada</b>`, `<b>φ${db} @ ${s} cm</b> (${fmt(AsP, 2)} cm²/m)`);
+  m.row(`Espaciamiento calculado 𝜙${db} ; espaciamiento máximo: s ; s<sub>máx</sub>`, `${fmt(sCalc, 2)} ; ${fmt(sMax, 1)} cm`, refSmaxLosa(dosDir));
+  m.row(`<b>Armadura adoptada</b>`, `<b>𝜙${db} @ ${s} cm</b> (${fmt(AsP, 2)} cm²/m)`);
   m.p(L`\textbf{Espaciamiento.} Con barras $\phi${db}$ ($A_b = ${tn(Ab, 3)}$ cm$^2$), el espaciamiento que entrega el área requerida y el máximo normativo son:`, true);
   m.eq(L`s = \frac{b\,A_b}{A_s} = \frac{100\cdot ${tn(Ab, 3)}}{${tn(As, 3)}} = ${tn(sCalc, 2)}${CM} \qquad s_{\max} = \min(${dosDir ? "2h" : "3h"},\ 45) = \min(${tn((dosDir ? 2 : 3) * e, 1)},\ 45) = ${tn(sMax, 1)}${CM}`, refSmaxLosa(dosDir));
   m.p(L`Se adopta \textbf{$\phi${db}$ @ ${s} cm} ($A_s = ${tn(AsP, 2)}$ cm$^2$/m). Verificación de capacidad:`);
   memoGrupo(m, "Verificación de capacidad (resumen)", `${k}-cap`, { abierto: true, resumen: `D/C = ${fmt(dc, 3)} ${okTxt(resuelve && dc <= 1 && okEt)}` });
-  m.row("Deformación del acero ; resistencia de diseño ; razón D/C: ε<sub>t</sub> ; φM<sub>n</sub> ; D/C", `${fmt(et, 4)} ; ${fmt(phiMn / 100, 1)} kgf·m/m ; <b>${fmt(dc, 3)}</b> ${okTxt(dc <= 1 && okEt)}`, refN("10.3.5", dosDir ? "8.3.3.1" : "7.3.3.1"));
+  m.row("Deformación del acero ; resistencia de diseño ; razón D/C: ε<sub>t</sub> ; 𝜙M<sub>n</sub> ; D/C", `${fmt(et, 4)} ; ${fmt(phiMn / 100, 1)} kgf·m/m ; <b>${fmt(dc, 3)}</b> ${okTxt(dc <= 1 && okEt)}`, refN("10.3.5", dosDir ? "8.3.3.1" : "7.3.3.1"));
   m.eq(L`a = \frac{A_s f_y}{0.85 f'_c b} = \frac{${tn(AsP, 2)}\cdot ${tn(fy, 0)}}{0.85\cdot ${tn(fc, 0)}\cdot 100} = ${tn(a, 3)}${CM} \qquad c = \frac{a}{\beta_1} = \frac{${tn(a, 3)}}{${tn(beta1(fc), 3)}} = ${tn(c, 3)}${CM}`);
   m.eq(L`\varepsilon_t = 0.003\frac{d - c}{c} = 0.003\cdot\frac{${tn(d, 2)} - ${tn(c, 3)}}{${tn(c, 3)}} = ${tn(et, 4)} \;${okEt ? GE : "<"}\; ${tn(eMin, 4)} \;\Rightarrow\; \phi = ${tn(phi, 2)}`, refN("10.3.5", dosDir ? "8.3.3.1" : "7.3.3.1"));
   m.eq(L`\phi M_n = \phi\,A_s f_y\left(d - \frac{a}{2}\right) = ${tn(phi, 2)}\cdot ${tn(AsP, 2)}\cdot ${tn(fy, 0)}\left(${tn(d, 2)} - \frac{${tn(a, 3)}}{2}\right) = ${tn(phiMn / 100, 1)}\ \mathrm{kgf\cdot m/m}`);
@@ -1348,7 +1357,7 @@ function ganchosLosa(g, R, m) {
     const peso = r.db * r.db / 162 * Ltot / 100;
     r.hk = { ...h, Lrecta, Ltot, peso, cabe };
     lista.push({ ...h, nombre: nombres[k] });
-    m.sub(`${nombres[k]} — φ${r.db} con gancho de ${h.tipo}°`);
+    m.sub(`${nombres[k]} — 𝜙${r.db} con gancho de ${h.tipo}°`);
     m.row("Diámetro de doblado ; extensión estándar: D ; l<sub>ext</sub>", `${fmt(h.D, 2)} ; ${fmt(std.ext, 2)} cm`, "Manual ICH T.1");
     if (sup) m.row("Altura de la pata estándar vs. espacio disponible", `${fmt(std.alto, 2)} ${cabe ? "≤" : ">"} ${fmt(disp, 2)} cm ${tag(cabe, cabe ? "cabe" : "no cabe → se recorta")}`);
     if (h.recortada) m.row("<b>Pata recortada (constructiva): l<sub>ext</sub></b>", `<b>${fmt(h.ext, 2)} cm</b> (altura ${fmt(h.alto, 2)} cm)`);
@@ -1361,7 +1370,7 @@ function ganchosLosa(g, R, m) {
     if (h.recortada) {
       m.p(L`La pata estándar no cabe en el espesor de la losa, por lo que se recorta a una \textbf{pata constructiva} de altura $e - 2r_{ec}$. Esta pata no cumple función de anclaje: el suple se ancla por su prolongación recta más allá de la sección de momento nulo.`);
       m.eq(L`\ell_{ext} = e - 2r_{ec} - \frac{D}{2} - d_b = ${tn(disp, 2)} - ${tn(h.D / 2, 2)} - ${tn(dbc, 1)} = ${tn(h.ext, 2)}${CM}`);
-      m.note(`Pata de 90° del suple φ${r.db} recortada de ${fmt(std.ext, 1)} a ${fmt(h.ext, 1)} cm (altura exterior ${fmt(h.alto, 1)} cm = e − 2·rec): pata constructiva, sin función de anclaje.`,
+      m.note(`Pata de 90° del suple 𝜙${r.db} recortada de ${fmt(std.ext, 1)} a ${fmt(h.ext, 1)} cm (altura exterior ${fmt(h.alto, 1)} cm = e − 2·rec): pata constructiva, sin función de anclaje.`,
         L`Pata de 90$^\circ$ del suple $\phi${r.db}$ recortada de ${tn(std.ext, 1)} a ${tn(h.ext, 1)} cm (altura exterior $e - 2r_{ec}$): pata constructiva, sin función de anclaje.`);
     }
     m.eq(L`\ell_g = \frac{${h.tipo}}{360}\,\pi\,(D + d_b) + \ell_{ext} = \frac{${h.tipo}}{360}\,\pi\,(${tn(h.D, 2)} + ${tn(dbc, 1)}) + ${tn(h.ext, 2)} = ${tn(h.Lg, 2)}${CM}`);
@@ -1391,7 +1400,7 @@ function svgGanchos(lista) {
         ? `${t(146, 58, "90°")}${t(146, 74, `D = ${fmt(h.D, 1)}`)}${t(138, 92, `l<tspan font-size="9" dy="3">ext</tspan><tspan dy="-3"> = ${fmt(h.ext, 1)} (recortada)</tspan>`)}${t(138, 108, `pata = e − 2rec = ${fmt(h.alto, 1)}`)}`
         : `${t(146, 58, "90°")}${t(146, 74, `D = ${fmt(h.D, 1)}`)}${t(138, 104, `l<tspan font-size="9" dy="3">ext</tspan><tspan dy="-3"> = 12d</tspan><tspan font-size="9" dy="3">b</tspan><tspan dy="-3"> = ${fmt(h.ext, 1)}</tspan>`)}`;
     return `<svg viewBox="0 0 285 146" role="img" aria-label="Detalle de gancho ${h.tipo} grados">
-      ${t(6, 18, `<tspan font-weight="700">${h.nombre}</tspan> · φ${h.db} · ${h.recortada ? "pata 90° constructiva" : `gancho ${h.tipo}°`}`)}
+      ${t(6, 18, `<tspan font-weight="700">${h.nombre}</tspan> · 𝜙${h.db} · ${h.recortada ? "pata 90° constructiva" : `gancho ${h.tipo}°`}`)}
       ${fantasma}
       <path d="${forma}" fill="none" stroke="${col}" stroke-width="3.5" stroke-linecap="round"/>
       ${etq}
@@ -1452,7 +1461,7 @@ function planoLosa(g, R) {
   if (b.der) ach(W, 0, W, H, 0.16, -0.16);
   for (const [x1, y1, x2, y2] of [[0, 0, W, 0], [0, H, W, H], [0, 0, 0, H], [W, 0, W, H]]) P.push({ t: "line", x1, y1, x2, y2, st: "muro" });
 
-  const lbl = (r, cara) => ({ html: `φ${r.db}@${r.s}`, tex: L`$\phi${r.db}$@${r.s}` });
+  const lbl = (r, cara) => ({ html: `𝜙${r.db}@${r.s}`, tex: L`$\phi${r.db}$@${r.s}` });
   // Armadura inferior: una barra por dirección con ganchos de 180°
   const yX = 0.62 * H, xY = 0.36 * W;
   P.push({ t: "poly", st: "inf", pts: [[-0.1 + hk, yX - hk], [-0.1, yX - hk], [-0.1, yX], [W + 0.1, yX], [W + 0.1, yX - hk], [W + 0.1 - hk, yX - hk]] });
@@ -1596,9 +1605,9 @@ function fajasLosa(g, sol, bar, m) {
       const db = usa[key] || prop[key] || 8;
       const dbOut = usa[sol.corta + (cara === "inf" ? "i" : "s")] || 8;
       const d = outer ? dOut(db) : dIn(dbOut)(db);
-      const origen = g.db[key] === "auto" ? "propuesto" : `seleccionado; propuesto φ${prop[key] ?? "—"}`;
+      const origen = g.db[key] === "auto" ? "propuesto" : `seleccionado; propuesto 𝜙${prop[key] ?? "—"}`;
       R[key] = disenoFaja({
-        titulo: `Armadura ${cara === "inf" ? "inferior" : "superior"} dirección ${dir} (${cara === "inf" ? "momento positivo" : "momento negativo"}) — φ${db} ${origen}`,
+        titulo: `Armadura ${cara === "inf" ? "inferior" : "superior"} dirección ${dir} (${cara === "inf" ? "momento positivo" : "momento negativo"}) — 𝜙${db} ${origen}`,
         cara, dTex: dTex(outer, db, dbOut),
       }, M[key], db, d, g, sol.dosDir, m);
     }
@@ -1619,7 +1628,7 @@ function compararLosa(g, C, E, m) {
     const dif = asC > 0 ? (asM - asC) / asC * 100 : NaN;
     return { k, mc, me, rc, re, asC, asM, asE: g.asE[k], dif, difM: mc > 0 ? (me - mc) / mc * 100 : NaN };
   });
-  const disp = (r) => (r ? `φ${r.db} @ ${r.s}` : "—");
+  const disp = (r) => (r ? `𝜙${r.db} @ ${r.s}` : "—");
   const dispT = (r) => (r ? L`$\phi${r.db}$ @ ${r.s}` : "---");
   const r1 = (x) => (Math.abs(x) < 0.05 ? 0 : x);             // sin «−0.0 %»
   const pct = (x) => (Number.isFinite(x) ? `${r1(x) > 0 ? "+" : ""}${fmt(r1(x), 1)} %` : "—");
@@ -1684,7 +1693,7 @@ function calcularLosa() {
   $("lbCentro").textContent = `${g.nombre}`;
 
   const bar = barrasLosa(g, sol), { M, prop } = bar;
-  for (const k of ["Xi", "Yi", "Xs", "Ys"]) $("ldb" + k).options[0].text = prop[k] ? `Automático (φ${prop[k]})` : "Automático (no requiere)";
+  for (const k of ["Xi", "Yi", "Xs", "Ys"]) $("ldb" + k).options[0].text = prop[k] ? `Automático (𝜙${prop[k]})` : "Automático (no requiere)";
 
   m.h(`Diseño de armadura por flexión — ${NORMA()}`);
   notaUnidades19(m);
@@ -1716,10 +1725,10 @@ function calcularLosa() {
     if (!r) return `<div class="card"><div class="t">${nombres[k]}</div><div class="v">—</div><div class="s">No requiere</div></div>`;
     const w = Math.min(100, Math.max(0, r.dc * 100));
     return `<div class="card"><div class="t">${nombres[k]}</div><div class="v">${fmt(r.dc, 3)}</div>
-      <div class="bar ${r.dc > 1 ? "bad" : ""}"><i style="width:${w}%"></i></div><div class="s">M<sub>u</sub> = ${fmt(M[k], 1)} · φM<sub>n</sub> = ${fmt(r.phiMn / 100, 1)} kgf·m/m</div></div>`;
+      <div class="bar ${r.dc > 1 ? "bad" : ""}"><i style="width:${w}%"></i></div><div class="s">M<sub>u</sub> = ${fmt(M[k], 1)} · 𝜙M<sub>n</sub> = ${fmt(r.phiMn / 100, 1)} kgf·m/m</div></div>`;
   }).join("");
   $("larmado").innerHTML = claves.map(k => R[k]
-    ? `<span>${nombres[k].split(" (")[0]}: φ${R[k].db} @ ${R[k].s} cm${R[k].rho < R[k].rmin * g.e / R[k].d ? " (mín)" : ""}</span>` : "").join("");
+    ? `<span>${nombres[k].split(" (")[0]}: 𝜙${R[k].db} @ ${R[k].s} cm${R[k].rho < R[k].rmin * g.e / R[k].d ? " (mín)" : ""}</span>` : "").join("");
   const activos = claves.filter(k => R[k]);
   const dc = Math.max(...activos.map(k => R[k].dc));
   const ok = activos.every(k => R[k].ok);
@@ -1878,9 +1887,9 @@ function actualizarUnidades() {
 
 function init() {
   document.querySelectorAll("select.barras").forEach(s => {
-    s.innerHTML = `<option value="auto">Automático</option>` + BARRAS.map(d => `<option value="${d}">φ${d}</option>`).join("");
+    s.innerHTML = `<option value="auto">Automático</option>` + BARRAS.map(d => `<option value="${d}">𝜙${d}</option>`).join("");
   });
-  $("vde").innerHTML = `<option value="auto">Automático</option>` + ESTRIBOS.map(d => `<option value="${d}">φ${d}</option>`).join("");
+  $("vde").innerHTML = `<option value="auto">Automático</option>` + ESTRIBOS.map(d => `<option value="${d}">𝜙${d}</option>`).join("");
   actualizarUnidades();
 
   $("vunidad").addEventListener("change", () => {
@@ -1898,7 +1907,7 @@ function init() {
   $("normaACI").addEventListener("change", () => { calcularViga(); calcularLosa(); });
 
   document.querySelectorAll("select.barrasLosa").forEach(s => {
-    s.innerHTML = `<option value="auto">Automático</option>` + BARRAS_LOSA.map(d => `<option value="${d}">φ${d}</option>`).join("");
+    s.innerHTML = `<option value="auto">Automático</option>` + BARRAS_LOSA.map(d => `<option value="${d}">𝜙${d}</option>`).join("");
   });
   const panelLosa = document.querySelector('[data-panel="losa"]');
   panelLosa.addEventListener("input", (e) => { if (e.target.tagName === "INPUT") calcularLosa(); });
@@ -2013,7 +2022,7 @@ function descargarDXFLosa() {
   const { P, box } = plano, Lx = g.Lx * 1000, Ly = g.Ly * 1000, e = g.e * 10, rec = g.rec * 10;
   const pl = new PlanoDXF({ titulo: `LOSA ${g.nombre.toUpperCase()} e = ${fmt(g.e, 0)} cm`, contenido: "planta de armadura, corte y cubicación" });
   const CAPA = { muro: "CONTORNO", hatch: "ACHURADO", aux: "COTAS", inf: "ARM_INFERIOR", sup: "ARM_SUPERIOR" };
-  const sinTags = (s) => String(s).replace(/<[^>]+>/g, "").replace(/φ/g, "ø");
+  const sinTags = (s) => String(s).replace(/<[^>]+>/g, "").replace(/𝜙/g, "ø");
 
   // Planta: el mismo dibujo de la página (metros, y hacia abajo) en mm con y hacia arriba
   pl.vista({

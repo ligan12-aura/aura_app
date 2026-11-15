@@ -195,9 +195,9 @@
         <div class="row3">
           <div><label for="ca">a (x) <span class="unit">[cm]</span></label><input id="ca" type="number" step="5" value="30"></div>
           <div><label for="cb">b (y) <span class="unit">[cm]</span></label><input id="cb" type="number" step="5" value="60"></div>
-          <div><label for="dbc">Barra φ<sub>c</sub> <span class="unit">[mm]</span></label><input id="dbc" type="number" step="1" value="16"></div>
+          <div><label for="dbc">Barra 𝜙<sub>c</sub> <span class="unit">[mm]</span></label><input id="dbc" type="number" step="1" value="16"></div>
         </div>
-        <div class="unit" style="margin-top:4px">φ<sub>c</sub>: barra o perno que se ancla en la zapata (longitud de desarrollo con gancho).</div>
+        <div class="unit" style="margin-top:4px">𝜙<sub>c</sub>: barra o perno que se ancla en la zapata (longitud de desarrollo con gancho).</div>
       </fieldset>
 
       <fieldset>
@@ -420,7 +420,7 @@ function anchoNecesario(P, Mx, My, Ly, sna) {
   for (let i = 0; i < 80; i++) { const mid = (lo + hi) / 2; if (f(mid) > 0) lo = mid; else hi = mid; }
   return hi;
 }
-// Flexión por metro de ancho (curso): μ, ε = 1 − √(1 − 2μ), ρ, A_s = máx(ρ ; 0.0018) b d, barras y φM_n
+// Flexión por metro de ancho (curso): μ, ε = 1 − √(1 − 2μ), ρ, A_s = máx(ρ ; 0.0018) b d, barras y 𝜙M_n
 function flexion(Mu, dEf, db, d0) {
   const { fc, fy, hc } = d0;
   const mu = Mu / (PHI_F * 0.85 * fc * BW * dEf * dEf);
@@ -434,7 +434,7 @@ function flexion(Mu, dEf, db, d0) {
   return { Mu, mu, eps, rho, As, Ab, sCalc, s, sMax, Asp, a, phiMn, insuf, db, gob: insuf ? "—" : rho > RHO_MIN ? "ρ calculada" : "ρ mínima",
     dc: insuf ? Infinity : Mu / phiMn };
 }
-const barra = (db, s) => `φ${fmt(db * 10, 0)} @ ${fmt(s, 0)} cm`;
+const barra = (db, s) => `𝜙${fmt(db * 10, 0)} @ ${fmt(s, 0)} cm`;
 const barraTex = (db, s) => L`$\phi$${tn(db * 10, 0)} @ ${tn(s, 0)} cm`;
 
 // Contacto de una zapata rígida sobre un suelo sin tracción, flexión biaxial (Newton sobre una grilla).
@@ -693,15 +693,15 @@ function verificar(d, m) {
     m.p(L`El procedimiento del curso no considera el momento que la columna transfiere a la zapata. Como complemento, se agrega la fracción $\gamma_v$ de ese momento (en el coronamiento de la zapata) transferida por corte excéntrico (${aci("11.11.7.2", "8.4.4.2")}).`);
     m.row("Momentos en el coronamiento de la zapata: M<sub>x</sub> ; M<sub>y</sub>", `${fmt(TM(MxT), 2)} ; ${fmt(TM(MyT), 2)} tf·m`);
     m.eq(L`M_x = \left|M_{xu,c} + H_{yu}\,(h_t + D_f - h_c)\right| = ${tn(TM(MxT), 2)}\ \mathrm{tf\,m} \qquad M_y = \left|M_{yu,c} + H_{xu}\,(h_t + D_f - h_c)\right| = ${tn(TM(MyT), 2)}\ \mathrm{tf\,m}`);
-    m.row("Tensión de corte con transferencia de momento: v<sub>u</sub> ≤ φv<sub>c</sub>", `${fmt(S(vuM), 1)} ≤ ${fmt(S(PHI_V * Vcp / (bo * dEf)), 1)} tf/m² ${tagDC(dcPM)}`, aci("11.11.7.2", "8.4.4.2.3"));
+    m.row("Tensión de corte con transferencia de momento: v<sub>u</sub> ≤ 𝜙v<sub>c</sub>", `${fmt(S(vuM), 1)} ≤ ${fmt(S(PHI_V * Vcp / (bo * dEf)), 1)} tf/m² ${tagDC(dcPM)}`, aci("11.11.7.2", "8.4.4.2.3"));
     m.eq(L`v_u = \frac{V_u}{b_0 d} + \frac{\gamma_{v}\,M_y\,c}{J_c} + \frac{\gamma_{v}\,M_x\,c}{J_c} = ${tn(S(vuM), 1)}\ \mathrm{tf/m^2} \qquad \gamma_v = 1 - \frac{1}{1 + \frac{2}{3}\sqrt{b_1/b_2}} \qquad \phi v_c = \frac{\phi V_c}{b_0 d} = ${tn(S(PHI_V * Vcp / (bo * dEf)), 1)}\ \mathrm{tf/m^2} \qquad \frac{v_u}{\phi v_c} = ${tn(dcPM, 3)} ${cmp(dcPM)} 1`, aci("11.11.7.2", "8.4.4.2.3"));
     ck("Punzonamiento con momento", L`$v_u = ${tn(S(vuM), 1)}$ tf/m$^2$`, L`$\phi v_c = ${tn(S(PHI_V * Vcp / (bo * dEf)), 1)}$ tf/m$^2$`, dcPM, "Punzonamiento con momento", "ha");
   }
-  // Aplastamiento en la zapata bajo la columna (ACI 318-08 10.14.1, φ = 0.65, √(A2/A1) ≤ 2)
+  // Aplastamiento en la zapata bajo la columna (ACI 318-08 10.14.1, 𝜙 = 0.65, √(A2/A1) ≤ 2)
   m.sub("Aplastamiento bajo la columna");
   const A1 = d.a * d.b, rA = Math.min(2, Math.sqrt(Math.min(B / d.a, Ly / d.b) ** 2));
   const phiBn = 0.65 * 0.85 * d.fc * A1 * rA, dcAp = Pu / phiBn;
-  m.row("Resistencia al aplastamiento: φB<sub>n</sub>", `${fmt(T(phiBn), 1)} tf ${tagDC(dcAp)}`, aci("10.14.1", "22.8.3.2"));
+  m.row("Resistencia al aplastamiento: 𝜙B<sub>n</sub>", `${fmt(T(phiBn), 1)} tf ${tagDC(dcAp)}`, aci("10.14.1", "22.8.3.2"));
   m.eq(L`\phi B_n = 0.65\cdot 0.85\,f'_c\,A_1\sqrt{A_2/A_1},\ \ \sqrt{A_2/A_1} \le 2 \;\Rightarrow\; \phi B_n = 0.65\cdot 0.85\cdot ${tn(d.fc, 0)}\cdot ${tn(A1, 0)}\cdot ${tn(rA, 2)} = ${tn(T(phiBn), 1)}\ \mathrm{tf} \qquad \frac{P_u}{\phi B_n} = ${tn(dcAp, 3)} ${cmp(dcAp)} 1`, aci("10.14.1", "22.8.3.2"));
   m.p(L`La resistencia al aplastamiento de la columna o del pedestal y la armadura mínima de traspaso ($0.005\,A_g$, ${aci("15.8.2", "16.3.4.1")}) dependen de la columna y no se verifican aquí.`);
   ck("Aplastamiento en la zapata", L`$P_u = ${tn(T(Pu), 1)}$ tf`, L`$\phi B_n = ${tn(T(phiBn), 1)}$ tf`, dcAp, "Aplastamiento", "ha");
@@ -721,7 +721,7 @@ function verificar(d, m) {
     m.eq(L`\mu = \frac{M_u}{\phi\,0.85\,f'_c\,b\,d^2} = ${tn(f.mu, 4)} \qquad \varepsilon = 1 - \sqrt{1 - 2\mu} = ${tn(f.eps, 4)} \qquad \rho = 0.85\,f'_c\,\frac{\varepsilon}{f_y} = ${tn(f.rho, 5)} ${f.rho > RHO_MIN ? ">" : "<"} \rho_{m\acute{i}n} = 0.0018`);
     m.row(`Armadura requerida (${f.gob}), ${cara}: A<sub>s${eje}</sub>`, `${fmt(f.As, 2)} cm²/m → <b>${barra(f.db, f.s)}</b>`, "criterio del curso");
     m.eq(L`A_{s${eje}} = \max(\rho;\ \rho_{m\acute{i}n})\cdot 100\cdot d = ${tn(Math.max(f.rho, RHO_MIN), 5)}\cdot 100\cdot ${tn(dEf, 1)} = ${tn(f.As, 2)}\ \mathrm{cm^2/m} \;\Rightarrow\; \phi${tn(f.db * 10, 0)}\ @\ ${tn(f.s, 0)}\ \mathrm{cm}\ (${tn(f.Asp, 2)}\ \mathrm{cm^2/m})`);
-    m.row("Resistencia de diseño con la armadura propuesta: φM<sub>n</sub>", `${fmt(TM(f.phiMn), 2)} tf·m/m ${tagDC(f.dc)}`, aci("10.2", "22.2"));
+    m.row("Resistencia de diseño con la armadura propuesta: 𝜙M<sub>n</sub>", `${fmt(TM(f.phiMn), 2)} tf·m/m ${tagDC(f.dc)}`, aci("10.2", "22.2"));
   };
   memoFlex(fx, "x", "S1-S1", ssx, lx, "barras paralelas a B");
   memoFlex(fy, "y", "S2-S2", ssy, ly, "barras paralelas a L");
@@ -877,7 +877,7 @@ ${filasU.map(f => `$${f.nTex}$ & ${celdaU(f).map(v => v.replace(/ /g, "\\,").re
     m.row("Corte tipo viga y en la franja más exigida: V<sub>u</sub>", `${fmt(T(VY * BW), 2)} tf/m ${tagDC(dcVy)}`, refVcS);
     if (es19()) m.eq(L`\phi V_{cx} = \phi\,${vcVigaTex(rWx)}\,b\,d = ${tn(T(vcVx * BW), 2)}\ \mathrm{tf/m} \qquad \phi V_{cy} = \phi\,${vcVigaTex(rWy)}\,b\,d = ${tn(T(vcVy * BW), 2)}\ \mathrm{tf/m} \qquad \frac{V_{ux}}{\phi V_{cx}} = ${tn(dcVx, 3)} \qquad \frac{V_{uy}}{\phi V_{cy}} = ${tn(dcVy, 3)}`, refVcS);
     else m.eq(L`\phi V_c = \phi\,0.53\sqrt{f'_c}\,b\,d = ${tn(T(vcV * BW), 2)}\ \mathrm{tf/m} \qquad \frac{V_{ux}}{\phi V_c} = ${tn(dcVx, 3)} \qquad \frac{V_{uy}}{\phi V_c} = ${tn(dcVy, 3)}`, refVcS);
-    m.row("Punzonamiento con transferencia de momento: v<sub>u</sub> ≤ φv<sub>c</sub>", `${fmt(S(vuP), 1)} ≤ ${fmt(S(PHI_V * vc), 1)} tf/m² ${tagDC(dcPu)}`, aci("11.11.7.2", "8.4.4.2.3"));
+    m.row("Punzonamiento con transferencia de momento: v<sub>u</sub> ≤ 𝜙v<sub>c</sub>", `${fmt(S(vuP), 1)} ≤ ${fmt(S(PHI_V * vc), 1)} tf/m² ${tagDC(dcPu)}`, aci("11.11.7.2", "8.4.4.2.3"));
     m.eq(L`v_u = \frac{V_u}{b_0\,d} + \frac{\gamma_{vx}\,M_{y}\,c_x}{J_{cx}} + \frac{\gamma_{vy}\,M_{x}\,c_y}{J_{cy}} = ${tn(S(vuP), 1)}\ \mathrm{tf/m^2} \qquad \gamma_v = 1 - \frac{1}{1 + \frac{2}{3}\sqrt{b_1/b_2}} \qquad \frac{v_u}{\phi v_c} = ${tn(dcPu, 3)} ${cmp(dcPu)} 1`, aci("11.11.7.2", "8.4.4.2.3"));
     m.row(`Flexión inferior x con la armadura estática ${barra(d.dbx, r.fx.s)}`, `M<sub>u</sub> = ${fmt(TM(MpX), 2)} tf·m/m ${tagDC(dcMx)}`);
     m.row(`Flexión inferior y con la armadura estática ${barra(d.dby, r.fy.s)}`, `M<sub>u</sub> = ${fmt(TM(MpY), 2)} tf·m/m ${tagDC(dcMy)}`);
@@ -1081,7 +1081,7 @@ Ubicación & Armadura\\
 \midrule
 Parrilla inferior, barras según $x$ ($A_{sx}$) & ${barraTex(d.dbx, r.fx.s)}\\
 Parrilla inferior, barras según $y$ ($A_{sy}$) & ${barraTex(d.dby, r.fy.s)}\\
-${r.parrillaSup ? L`Parrilla superior (sismo, por verificar) & ${r.parrillaSup.replace("φ", "$\\phi$")}\\` : ""}
+${r.parrillaSup ? L`Parrilla superior (sismo, por verificar) & ${r.parrillaSup.replace("𝜙", "$\\phi$")}\\` : ""}
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1154,7 +1154,7 @@ function descargarDXF() {
   const d = ultimoD, r = ultimoR, k = 10;                     // cm → mm
   const B = r.B * k, Ly = r.Ly * k, hc = d.hc * k, Df = d.Df * k, ht = d.ht * k, a = d.a * k, b = d.b * k, rec = d.rec * k;
   const dbx = d.dbx * 10, dby = d.dby * 10, sx = r.fx.s * k, sy = r.fy.s * k;
-  const ø = (t) => String(t).replace(/φ/g, "ø");
+  const ø = (t) => String(t).replace(/𝜙/g, "ø");
   const pata = (db) => Math.max(0, Math.min(12 * db, hc - 2 * rec - 2 * db));
   const grado = { 170: "G17", 200: "G20", 250: "G25", 300: "G30", 350: "G35", 400: "G40" }[d.fc] || `f'c = ${d.fc} kgf/cm²`;
   const pl = new PlanoDXF({ titulo: `ZAPATA AISLADA ${fmt(M(r.B), 2)} x ${fmt(M(r.Ly), 2)} m`, contenido: "planta, corte, armaduras y especificaciones" });

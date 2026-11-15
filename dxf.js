@@ -57,7 +57,7 @@ class DxfR12 {
     // Windows-1252. Diámetro y grado con los códigos de AutoCAD (%%c, %%d); símbolos sin equivalente se simplifican
     const txt = c.join("\r\n") + "\r\n";
     const map = { "—": "-", "–": "-", "≤": "<=", "≥": ">=", "φ": "phi", "Δ": "Delta", "λ": "lambda", "ξ": "xi", "α": "alfa", "→": "->", "π": "pi", "·": " ", "²": "2", "³": "3", "×": "x", "ø": "%%c", "Ø": "%%c", "°": "%%d", "±": "%%p" };
-    const limpio = txt.replace(/\u00a0/g, " ").replace(/[—–≤≥φΔλξα→π·²³×øØ°±]/g, (ch) => map[ch]).replace(/[^\x00-\xff]/g, "?");
+    const limpio = txt.replace(/\u{1D719}/gu, "φ").replace(/\u00a0/g, " ").replace(/[—–≤≥φΔλξα→π·²³×øØ°±]/g, (ch) => map[ch]).replace(/[^\x00-\xff]/g, "?");
     return Uint8Array.from(limpio, (ch) => ch.charCodeAt(0));
   }
 }

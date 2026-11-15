@@ -131,7 +131,7 @@ const Guia = (() => {
       { en: "t:5. Placa nodal", titulo: "5 · Placa nodal", texto: "Espesor, tamaño y soldadura a la columna, a la viga o a ambas. Se verifican el bloque de corte, la sección de Whitmore y los filetes." },
     ],
     "piers.html": [
-      { en: "t:Código de diseño", titulo: "Versión del código", texto: "Elija la planilla IIO348 con ACI 318-08 (por defecto) o el ACI 318-19 para muros especiales, que amplifica el corte con Ωv y ωv y usa φ = 0.60 salvo que usted verifique la condición de 21.2.4.1." },
+      { en: "t:Código de diseño", titulo: "Versión del código", texto: "Elija la planilla IIO348 con ACI 318-08 (por defecto) o el ACI 318-19 para muros especiales, que amplifica el corte con Ωv y ωv y usa 𝜙 = 0.60 salvo que usted verifique la condición de 21.2.4.1." },
       { en: "t:1. Tablas", titulo: "1 · Tablas de ETABS", texto: "Importe las tablas de piers exportadas desde ETABS: cada pier trae sus fuerzas por combinación." },
       { en: "t:2. Materiales", titulo: "2 · Materiales y armadura", texto: "Hormigón, acero y armadura horizontal de los muros." },
       { en: "t:3. Geometría", titulo: "3 · Geometría", texto: "Largo y espesor de cada muro; con ellos se verifica el corte y la armadura horizontal." },

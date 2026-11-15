@@ -328,7 +328,7 @@ class Memo {
 }
 
 // ---------------------------------------------------------------------------
-// Estados límite (AISC 360-16). Cada función devuelve la resistencia de diseño φRn en kgf.
+// Estados límite (AISC 360-16). Cada función devuelve la resistencia de diseño 𝜙Rn en kgf.
 // ---------------------------------------------------------------------------
 const EL = {
   // J3.6 (J3-1): corte en un perno, un plano de corte. Tabla J3.2 nota [b]: 83.3 % si el largo del patrón > 965 mm.
@@ -451,7 +451,7 @@ ${lin.join("\n")}
 `;
 }
 const subBloque = (p, phi, dc) => Object.assign(p, {
-  sub: `φR<tspan font-size="7" dy="2">n</tspan><tspan dy="-2"> = ${fmt(T(phi), 2)} tf · D/C = ${fmt(dc, 3)}</tspan>`,
+  sub: `𝜙R<tspan font-size="7" dy="2">n</tspan><tspan dy="-2"> = ${fmt(T(phi), 2)} tf · D/C = ${fmt(dc, 3)}</tspan>`,
   subTex: L`$\phi R_n =${tn(T(phi), 2)}$ tf, $D/C = ${tn(dc, 3)}$`,
 });
 // Panel de la placa de corte (elevación): bloque en L entre la línea de pernos y el borde libre, desde el perno superior al borde inferior
@@ -504,7 +504,7 @@ function verificar(d, m) {
   const texGeo = (ok, t, info = false) => m.p(t + (ok ? " (cumple)." : info ? " (criterio no cumplido)." : " (\\textbf{no cumple})."), true);
   const Pu = d.Pu, PuT = L`$P_u = ${tn(T(Pu), 2)}$ tf`;
   const cap = (x) => L`$\phi R_n = ${tn(T(x), 2)}$ tf`;
-  const fila = (k, phi, ref) => { const dc = Pu / phi; m.row(`${k}: φR<sub>n</sub> ≥ P<sub>u</sub>`, `${fmt(T(phi), 2)} tf ${tagDC(dc)}`, ref); return dc; };
+  const fila = (k, phi, ref) => { const dc = Pu / phi; m.row(`${k}: 𝜙R<sub>n</sub> ≥ P<sub>u</sub>`, `${fmt(T(phi), 2)} tf ${tagDC(dc)}`, ref); return dc; };
   const cociente = (phi) => { const dc = Pu / phi; return L`\frac{P_u}{\phi R_n} = \frac{${tn(T(Pu), 2)}}{${tn(T(phi), 2)}} = ${tn(dc, 3)} ${cmp(dc)} 1.0`; };
 
   // ---------- 1. Datos ----------
@@ -568,7 +568,7 @@ function verificar(d, m) {
     const lcP = i === 0 ? lcPE : lcF, lcN = i === d.nf - 1 ? lcNE : lcF;
     phiP += d.nc * Math.min(rv, EL.aplast(lcP, d.tp, d, d.FuP), EL.aplast(lcN, d.tn, d, d.FuP));
   }
-  m.row("Corte de un perno: φr<sub>nv</sub>", `${fmt(T(rv), 2)} tf`, `AISC 360-16 J3-1${largoPat > 96.5 ? ", Tabla J3.2 [b]" : ""}`);
+  m.row("Corte de un perno: 𝜙r<sub>nv</sub>", `${fmt(T(rv), 2)} tf`, `AISC 360-16 J3-1${largoPat > 96.5 ? ", Tabla J3.2 [b]" : ""}`);
   m.eq(L`\phi r_{nv} = \phi\,F_{nv}A_b${largoPat > 96.5 ? L`\cdot 0.833` : ""} = 0.75\cdot ${tn(d.Fnv, 0)}\cdot ${tn(d.Ab, 3)}${largoPat > 96.5 ? L`\cdot 0.833` : ""} = ${tn(rv, 0)}\ \mathrm{kgf}`, "J3-1");
   m.eq(L`l_c:\ \text{placa (extremo) } ${tn(MM(lcPE), 1)}\ \mathrm{mm};\ \text{nodal (borde) } ${tn(MM(lcNE), 1)}\ \mathrm{mm}${d.nf > 1 ? L`;\ \text{entre filas } ${tn(MM(lcF), 1)}\ \mathrm{mm}` : ""}`);
   m.eq(L`\phi r_n = 0.75\min(1.2\,l_c\,t\,F_u;\ 2.4\,d\,t\,F_u)\ \text{en la placa: extremo } ${tn(EL.aplast(lcPE, d.tp, d, d.FuP), 0)}${d.nf > 1 ? L`,\ \text{entre filas } ${tn(EL.aplast(lcF, d.tp, d, d.FuP), 0)}` : ""}\ \mathrm{kgf}`, "J3-6a, J3-6c");
@@ -618,7 +618,7 @@ function verificar(d, m) {
   m.p(L`Bloque de corte en la placa, desde su extremo del lado de la columna hasta la fila de pernos más alejada: corte a lo largo de ${d.nc === 2 ? "las dos líneas" : "la línea"} de pernos y tracción ${d.nc === 2 ? "hacia los bordes laterales (bloques exteriores) o entre las dos líneas (bloque central)" : "hacia el borde lateral"} ($U_{bs} = 1$).`);
   m.eq(L`A_{gv} = ${d.nc === 2 ? "2" : ""}\,(l_{e,placa} + (n_f - 1)s)\,t_p = ${tn(pAgv, 2)} \qquad A_{nv} = A_{gv} - ${d.nc === 2 ? "2" : ""}(n_f - 0.5)\,d_h'\,t_p = ${tn(pAnv, 2)}\ \mathrm{cm^2}`);
   m.eq(L`\text{${d.nc === 2 ? "exteriores" : "lateral"}: } A_{gt} = ${tn(pExtAgt, 2)},\ A_{nt} = ${tn(pExtAnt, 2)}\ \mathrm{cm^2} \Rightarrow \phi R_n = ${tn(T(pExt), 2)}\ \mathrm{tf}${d.nc === 2 ? L` \qquad \text{central: } A_{gt} = g\,t_p = ${tn(d.g * d.tp, 2)},\ A_{nt} = (g - d_h')\,t_p = ${tn((d.g - d.dhn) * d.tp, 2)}\ \mathrm{cm^2} \Rightarrow \phi R_n = ${tn(T(pCen), 2)}\ \mathrm{tf}` : ""}`, d.crit === "icha" ? "13.4.3" : "J4-5");
-  m.row("Bloque de corte de la placa: φR<sub>n</sub> ≥ P<sub>u</sub>", `${fmt(T(phiBlP), 2)} tf ${tagDC(dcBlP)}`, refBloque(d.crit));
+  m.row("Bloque de corte de la placa: 𝜙R<sub>n</sub> ≥ P<sub>u</sub>", `${fmt(T(phiBlP), 2)} tf ${tagDC(dcBlP)}`, refBloque(d.crit));
   {
     const paneles = [subBloque(Object.assign(panelPlaca(d, "ext"), { titulo: d.nc === 2 ? "Placa: exteriores" : "Placa: lateral" }), pExt, Pu / pExt)];
     if (d.nc === 2) paneles.push(subBloque(Object.assign(panelPlaca(d, "cen"), { titulo: "Placa: central" }), pCen, Pu / pCen));
@@ -635,7 +635,7 @@ function verificar(d, m) {
     phiBlN = EL.bloque(nAgv, nAnv, nAgt, nAnt, d.FyP, d.FuP, d.crit); dcBlN = Pu / phiBlN;
     m.p(L`Bloque de corte central en la placa nodal, desde la fila de pernos más cercana a la columna hasta su borde libre: corte a lo largo de las dos líneas de pernos y tracción entre ellas ($U_{bs} = 1$). Los bloques exteriores no se forman porque la placa nodal continúa a ambos lados.`);
     m.eq(L`A_{gv} = 2\,(l_{e,nodal} + (n_f - 1)s)\,t_n = ${tn(nAgv, 2)} \qquad A_{nv} = ${tn(nAnv, 2)} \qquad A_{gt} = g\,t_n = ${tn(nAgt, 2)} \qquad A_{nt} = (g - d_h')\,t_n = ${tn(nAnt, 2)}\ \mathrm{cm^2}`);
-    m.row("Bloque de corte de la placa nodal: φR<sub>n</sub> ≥ P<sub>u</sub>", `${fmt(T(phiBlN), 2)} tf ${tagDC(dcBlN)}`, refBloque(d.crit));
+    m.row("Bloque de corte de la placa nodal: 𝜙R<sub>n</sub> ≥ P<sub>u</sub>", `${fmt(T(phiBlN), 2)} tf ${tagDC(dcBlN)}`, refBloque(d.crit));
     m.eq(L`${texBloque(nAgv, nAnv, nAgt, nAnt, d.FyP, d.FuP, d.crit)} = ${tn(T(phiBlN), 2)}\ \mathrm{tf} \qquad ${cociente(phiBlN)}`, d.crit === "icha" ? "13.4.3" : "J4-5");
     const pn = subBloque(Object.assign(panelNodal(d), { titulo: "Placa nodal: central" }), phiBlN, dcBlN);
     m.fig(svgBloques([pn], "Bloque de corte de la placa nodal"), tikzBloques([pn], L`Bloque de corte central de la placa nodal: corte por las dos líneas de pernos desde la fila más cercana a la columna hasta el borde libre y tracción entre las líneas.`));
