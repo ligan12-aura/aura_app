@@ -783,9 +783,9 @@ function compresion(s, Fy, Lc, Kx, Ky, Kz, m) {
   const lw = s.hw / s.tw, lrw = 1.49 * rEF;
   m.sub("Clasificación de esbeltez en compresión — Tabla B4.1a");
   m.p(L`Según la Tabla B4.1a del AISC 360-16, cada elemento de la sección se clasifica comparando su relación ancho-espesor $\lambda$ con el límite $\lambda_r$: si $\lambda \le \lambda_r$ el elemento es no esbelto y puede alcanzar la fluencia antes de pandearse localmente.`, true);
-  m.row("Esbeltez del ala (caso 1) ; límite: λ<sub>f</sub> ; λ<sub>r</sub>", `${fmt(lf, 3)} ; ${fmt(lrf, 3)}`);
+  m.row("Esbeltez del ala (caso 1) ; límite de esbeltez del ala: λ<sub>f</sub> ; λ<sub>r</sub>", `${fmt(lf, 3)} ; ${fmt(lrf, 3)}`);
   m.row("Clasificación ala", tag(lf <= lrf, lf <= lrf ? "no esbelta" : "esbelta"));
-  m.row("Esbeltez del alma (caso 5) ; límite: λ<sub>w</sub> ; λ<sub>r</sub>", `${fmt(lw, 3)} ; ${fmt(lrw, 3)}`);
+  m.row("Esbeltez del alma (caso 5) ; límite de esbeltez del alma: λ<sub>w</sub> ; λ<sub>r</sub>", `${fmt(lw, 3)} ; ${fmt(lrw, 3)}`);
   m.row("Clasificación alma", tag(lw <= lrw, lw <= lrw ? "no esbelta" : "esbelta"));
   m.p(L`\textbf{Alas (caso 1).} Relación ancho-espesor y límite de esbeltez:`);
   m.eq(L`\lambda_f = \frac{b_f}{2\,t_f} = \frac{${tn(s.b, 1)}}{2\cdot ${tn(s.tf)}} = ${tn(lf, 3)} \qquad \lambda_{rf} = 0.56\sqrt{\frac{E}{F_y}} = 0.56\sqrt{\frac{${tn(E, 0)}}{${tn(Fy, 0)}}} = ${tn(lrf, 3)}`);
@@ -960,7 +960,7 @@ function verificarColumna(s, Fy, d, m) {
     // M·∞ con M = 0 daría NaN: la inestabilidad se reporta como D/C = ∞
     Mux = Number.isFinite(B1x) ? Mux * B1x : Infinity;
     Muy = Number.isFinite(B1y) ? Muy * B1y : Infinity;
-    m.row("Momentos amplificados: M<sub>ux</sub> ; M<sub>uy</sub>", `${fmt(Mux / 100, 1)} ; ${fmt(Muy / 100, 1)} kgf·m`);
+    m.row("Momentos amplificados: M<sub>ux</sub> ; M<sub>uy</sub>", `${fmt(Mux / 100, 1)} kgf·m ; ${fmt(Muy / 100, 1)} kgf·m`);
     m.eq(L`M_{ux} = B_{1x}M_{ux,1} = ${tn(Mux / 100, 1)}${KGM} \qquad M_{uy} = B_{1y}M_{uy,1} = ${tn(Muy / 100, 1)}${KGM}`);
   }
 
@@ -1170,7 +1170,7 @@ function calcular() {
   const m = new Memo();
   m.out.push(`<h3>Datos generales</h3>`);
   m.row("Perfil", s.nombre);
-  m.row(`Acero ${acero}: F<sub>y</sub> ; F<sub>u</sub> ; E`, `${Fy} ; ${Fu} ; ${fmt(E, 0)} kgf/cm²`);
+  m.row(`Acero ${acero}: F<sub>y</sub> ; F<sub>u</sub> ; E`, `${fmt(Fy, 0)} kgf/cm² ; ${fmt(Fu, 0)} kgf/cm² ; ${fmt(E, 0)} kgf/cm²`);
   const P = (k, v, u) => `<div>${k} = <b>${v}</b> ${u}</div>`;
   m.out.push(`<div class="secwrap">${svgSeccion(s)}<div class="props">
     ${P("h", fmt(s.h, 1), "cm")}${P("b<sub>f</sub>", fmt(s.b, 1), "cm")}${P("t<sub>w</sub>", fmt(s.tw, 2), "cm")}${P("t<sub>f</sub>", fmt(s.tf, 2), "cm")}

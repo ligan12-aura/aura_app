@@ -757,12 +757,12 @@ function verificar(d, m) {
     filasPl.push(nP * EL.aplast(lcP, d.tp, d, d.FuP)); filasAl.push(EL.aplast(lcA, v.tw, d, d.FuV));
   }
   const rbP = (lc) => nP * EL.aplast(lc, d.tp, d, d.FuP), rbA = (lc) => EL.aplast(lc, v.tw, d, d.FuV);
-  m.row(dos ? "Placas: l<sub>c</sub> borde ; l<sub>c</sub> entre pernos" : "Placa: l<sub>c</sub> borde ; l<sub>c</sub> entre pernos", `${fmt(MM(lcPlBorde), 1)} ; ${d.nb > 1 ? fmt(MM(lcEntre), 1) : "—"} mm`);
+  m.row(dos ? "Placas: l<sub>c</sub> borde ; l<sub>c</sub> entre pernos" : "Placa: l<sub>c</sub> borde ; l<sub>c</sub> entre pernos", `${fmt(MM(lcPlBorde), 1)} mm ; ${d.nb > 1 ? fmt(MM(lcEntre), 1) + " mm" : "—"}`);
   m.eq(L`l_c = l_{ev} - d_h/2 = ${tn(MM(d.lev), 1)} - ${tn(MM(d.dh) / 2, 2)} = ${tn(MM(lcPlBorde), 2)}\ \mathrm{mm} \qquad l_c = s - d_h = ${tn(MM(d.s), 1)} - ${tn(MM(d.dh), 2)} = ${tn(MM(lcEntre), 2)}\ \mathrm{mm}`);
   m.eq(dos
     ? L`\phi r_n = 2\cdot 0.75\min\left(1.2\,l_c\,t_p\,F_u;\ 2.4\,d\,t_p\,F_u\right):\\text{borde } ${tn(rbP(lcPlBorde), 0)}\ \mathrm{kgf};\ \text{entre pernos } ${tn(rbP(lcEntre), 0)}\ \mathrm{kgf}\ (t_p = ${tn(d.tp, 2)}\ \mathrm{cm})`
     : L`\phi r_n = 0.75\min\left(1.2\,l_c\,t\,F_u;\ 2.4\,d\,t\,F_u\right):\ \text{borde } ${tn(rbP(lcPlBorde), 0)}\ \mathrm{kgf};\ \text{entre pernos } ${tn(rbP(lcEntre), 0)}\ \mathrm{kgf}\ (t_p = ${tn(d.tp, 2)}\ \mathrm{cm})`, "J3-6a, J3-6c");
-  m.row("Alma de la viga: l<sub>c</sub> perno superior ; entre pernos", `${fmt(MM(lcAlmaTop), 1)} ; ${d.nb > 1 ? fmt(MM(lcEntre), 1) : "—"} mm`);
+  m.row("Alma de la viga: l<sub>c</sub> perno superior ; l<sub>c</sub> entre pernos", `${fmt(MM(lcAlmaTop), 1)} mm ; ${d.nb > 1 ? fmt(MM(lcEntre), 1) + " mm" : "—"}`);
   m.eq(L`\phi r_n:\ \text{perno superior } ${tn(rbA(lcAlmaTop), 0)}\ \mathrm{kgf};\ \text{entre pernos } ${tn(rbA(lcEntre), 0)}\ \mathrm{kgf}\ (t_w = ${tn(v.tw, 2)}\ \mathrm{cm})`, "J3-6a, J3-6c");
   let phiGrupo, demPerno, dcPA;
   if (d.ePer > 0 && d.nb > 1) {
@@ -964,7 +964,7 @@ function verificar(d, m) {
     // F13.1: ruptura del ala traccionada perforada
     const Afg = v.bf * v.tf, Afn = (v.bf - 2 * d.dhn) * v.tf, Yt = d.FyV / d.FuV <= 0.8 ? 1.0 : 1.1;
     const aplicaF13 = d.FuV * Afn < Yt * d.FyV * Afg;
-    m.row("Ala traccionada perforada: F<sub>u</sub>A<sub>fn</sub> ; Y<sub>t</sub>F<sub>y</sub>A<sub>fg</sub>", `${fmt(T(d.FuV * Afn), 2)} ; ${fmt(T(Yt * d.FyV * Afg), 2)} tf`, "AISC 360-16 F13.1");
+    m.row("Ala traccionada perforada: F<sub>u</sub>A<sub>fn</sub> ; Y<sub>t</sub>F<sub>y</sub>A<sub>fg</sub>", `${fmt(T(d.FuV * Afn), 2)} tf ; ${fmt(T(Yt * d.FyV * Afg), 2)} tf`, "AISC 360-16 F13.1");
     if (aplicaF13) {
       const phiMr = 0.90 * d.FuV * Afn / Afg * v.Sx, dcMr = d.Mu / phiMr;
       m.row("Ruptura en flexión del ala perforada: 𝜙M<sub>n</sub> ≥ M<sub>u</sub>", `${fmt(phiMr / 1e5, 2)} tf·m ${tagDC(dcMr)}`, "AISC 360-16 F13-1");

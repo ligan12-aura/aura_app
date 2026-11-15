@@ -509,7 +509,7 @@ function calcular(d, m) {
     });
     EE = tot;
     m.row("Factor direccional ; factor de pista: FD ; FP", `${fmt(d.FD, 2)} ; ${fmt(FP, 3)}`, "3.603.202(5)(6)");
-    det.forEach(x => m.row(`Vehículo ${x.n}: vehículos en el año de puesta en servicio ; en la vida de diseño ; EE`, `${fmt(x.t, 1)} ; ${fmt(x.T / 1e6, 3)}·10⁶ ; ${fmt(x.ee / 1e6, 3)}·10⁶`));
+    det.forEach(x => m.row(`Vehículo ${x.n}, vehículos en el año de puesta en servicio ; vehículo ${x.n}, vehículos en la vida de diseño ; vehículo ${x.n}, ejes equivalentes`, `${fmt(x.t, 1)} ; ${fmt(x.T / 1e6, 3)}·10⁶ ; ${fmt(x.ee / 1e6, 3)}·10⁶`));
     m.row("<b>Ejes equivalentes acumulados: EE</b>", `<b>${fmt(EE / 1e6, 3)} millones</b>`);
     m.p(L`Factor de pista: ${fpTxt.replace(/≈/g, L`$\approx$`)}. Para cada tipo de vehículo $j$ se calcula:`);
     m.eq(L`t_j = TMDA\cdot C_j\cdot (1 + i_j)^m\cdot FD\cdot FP \qquad T_j = \frac{(1 + i_j)^N - 1}{i_j}\cdot 365\cdot t_j \qquad EE = \sum T_j\cdot FEE_j`, "3.603.202(1)");
@@ -532,7 +532,7 @@ function calcular(d, m) {
   const S0 = d.S0man ?? fila[3][d.cv];
   const FR = 10 ** (-ZRv * S0);
   const dPSI = d.pi - d.pf;
-  m.row("Índices de serviciabilidad inicial ; final ; pérdida: p<sub>i</sub> ; p<sub>f</sub> ; ΔPSI", `${fmt(d.pi, 1)} ; ${fmt(d.pf, 1)} ; ${fmt(dPSI, 1)}`, "Tabla 3.604.102.A");
+  m.row("Índice de serviciabilidad inicial ; índice de serviciabilidad final ; pérdida de serviciabilidad: p<sub>i</sub> ; p<sub>f</sub> ; ΔPSI", `${fmt(d.pi, 1)} ; ${fmt(d.pf, 1)} ; ${fmt(dPSI, 1)}`, "Tabla 3.604.102.A");
   m.row("Nivel de confianza ; coeficiente estadístico: R ; Z<sub>R</sub>", `${R} % ; ${fmt(ZRv, 3)}`, "Tabla 3.603.204.A");
   m.row("Desviación estándar del error combinado: S<sub>0</sub>", `${fmt(S0, 2)}${d.S0man === null ? ` (CV = ${CV_TXT[d.cv]})` : " (ingresado)"}`, "Tabla 3.604.104.A");
   m.row("Factor de confiabilidad: F<sub>R</sub>", fmt(FR, 3), "3.603.204(1)");
@@ -608,7 +608,7 @@ function calcular(d, m) {
   r.NEA = NEA;
   m.row("Temperatura media anual ponderada del aire: TMAPA", `${fmt(T, 1)} °C`);
   m.row("Ejes equivalentes afectados por la confiabilidad: EE·F<sub>R</sub>", `${fmt(EEgraf, 2)} millones`);
-  m.row(`NE en las láminas de ${ne.lo} °C ; ${ne.hi} °C`, `${fmt(ne.a, 1)} ; ${fmt(ne.b, 1)} mm`, `Láminas 3.604.108.B${ne.lo === 6 ? "1/B2" : "2/B3"}`);
+  m.row(`NE en las láminas de ${ne.lo} °C ; NE en las láminas de ${ne.hi} °C`, `${fmt(ne.a, 1)} mm ; ${fmt(ne.b, 1)} mm`, `Láminas 3.604.108.B${ne.lo === 6 ? "1/B2" : "2/B3"}`);
   m.row("<b>Número estructural mínimo de capas asfálticas: NE<sub>A</sub></b>", `<b>${fmt(NEA, 1)} mm</b>`);
   m.p(L`Los gráficos se calcularon con un nivel de confianza de 50\,\%, por lo que se ingresa con $EE\cdot F_R$. Se interpola linealmente en $\log EE$, en $M_R$ entre las curvas de ${MR_CURVAS.join(", ")} MPa, y en TMAPA entre los gráficos de ${ne.lo} y ${ne.hi}\,$^\circ$C.`);
   m.eq(L`EE\cdot F_R = ${tn(EEm, 3)}\cdot ${tn(FR, 3)} = ${tn(EEgraf, 2)}\times 10^6 \qquad NE_A = ${tn(ne.a, 1)} + (${tn(ne.b, 1)} - ${tn(ne.a, 1)})\,\frac{${tn(ne.Tc, 1)} - ${ne.lo}}{${ne.hi} - ${ne.lo}} = ${tn(NEA, 1)}\ \mathrm{mm}`, "3.604.108(2)");
@@ -649,7 +649,7 @@ function calcular(d, m) {
   const NEasf = asf.reduce((s, c) => s + c.a * c.h, 0);
   r.NEasf = NEasf;
   m.row("Número estructural de las capas asfálticas superiores (espesor ingresado)", `${fmt(neSup, 1)} mm`);
-  m.row(`Espesor requerido de la capa ${ult.corto.toLowerCase()} ; adoptado (múltiplo de 5 mm, mín. ${ult.min} mm)`, `${fmt(ult.req, 1)} ; <b>${fmt(ult.h, 0)} mm</b>`, "3.604.108(2).2");
+  m.row(`Espesor requerido de la capa ${ult.corto.toLowerCase()} ; espesor adoptado de la capa ${ult.corto.toLowerCase()} (múltiplo de 5 mm, mín. ${ult.min} mm)`, `${fmt(ult.req, 1)} mm ; <b>${fmt(ult.h, 0)} mm</b>`, "3.604.108(2).2");
   m.row("<b>Número estructural asfáltico provisto: NE<sub>asf</sub> ≥ NE<sub>A</sub></b>", `<b>${fmt(NEasf, 1)} ≥ ${fmt(NEA, 1)} mm</b> ${okTxt(NEasf >= NEA - 1e-6)}`);
   m.eq(L`h_{${ult.corto === "Rodadura" ? "rod" : ult.corto === "Intermedia" ? "int" : "BA"},req} = \frac{NE_A - \sum_{sup} a_i h_i}{a} = \frac{${tn(NEA, 1)} - ${tn(neSup, 1)}}{${tn(ult.a, 2)}} = ${tn(ult.req, 1)}\ \mathrm{mm} \;\Rightarrow\; ${tn(ult.h, 0)}\ \mathrm{mm}`, "3.604.108(2).2");
   m.eq(L`NE_{asf} = \sum a_i h_i = ${asf.map(c => `${tn(c.a, 2)}\\cdot ${tn(c.h, 0)}`).join(" + ")} = ${tn(NEasf, 1)}\ \mathrm{mm} \;${GE}\; NE_A = ${tn(NEA, 1)}\ \mathrm{mm}`);
@@ -674,8 +674,8 @@ function calcular(d, m) {
   const NEgran = gran.reduce((s, c) => s + c.a * c.mm * c.h, 0);
   r.NEgReq = NEgReq; r.NEgran = NEgran;
   m.row("Número estructural requerido a las capas granulares: NE<sub>T</sub> − NE<sub>A</sub>", `${fmt(NEgReq, 1)} mm`, "3.604.108(2).3");
-  if (d.usaSB) m.row("Espesor requerido de la subbase ; adoptado (múltiplo de 10 mm, mín. 150 mm)", `${fmt(sb.req, 1)} ; <b>${fmt(sb.h, 0)} mm</b>`);
-  else m.row("Espesor requerido de la base ; adoptado (múltiplo de 10 mm, mín. 150 mm)", `${fmt(base.req, 1)} ; <b>${fmt(base.h, 0)} mm</b>`);
+  if (d.usaSB) m.row("Espesor requerido de la subbase ; espesor adoptado de la subbase (múltiplo de 10 mm, mín. 150 mm)", `${fmt(sb.req, 1)} mm ; <b>${fmt(sb.h, 0)} mm</b>`);
+  else m.row("Espesor requerido de la base ; espesor adoptado de la base (múltiplo de 10 mm, mín. 150 mm)", `${fmt(base.req, 1)} mm ; <b>${fmt(base.h, 0)} mm</b>`);
   m.row("<b>Número estructural granular provisto</b>", `<b>${fmt(NEgran, 1)} ≥ ${fmt(NEgReq, 1)} mm</b> ${okTxt(NEgran >= NEgReq - 1e-6)}`);
   m.eq(L`NE_T - NE_A = ${tn(NET, 1)} - ${tn(NEA, 1)} = ${tn(NEgReq, 1)}\ \mathrm{mm} = a_2 h_2 m_2${d.usaSB ? " + a_3 h_3 m_3" : ""}`, "3.604.108(2).3");
   if (d.usaSB) m.eq(L`h_{3,req} = \frac{${tn(NEgReq, 1)} - ${tn(a2, 3)}\cdot ${tn(base.h, 0)}\cdot ${tn(m2, 2)}}{${tn(a3, 3)}\cdot ${tn(m3, 2)}} = ${tn(sb.req, 1)}\ \mathrm{mm} \;\Rightarrow\; h_3 = ${tn(sb.h, 0)}\ \mathrm{mm}`);

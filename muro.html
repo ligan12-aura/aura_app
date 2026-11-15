@@ -527,14 +527,17 @@ function memoFlexion(m, f, d0, cara) {
   m.row(`Armadura requerida (${cara}): A<sub>s</sub>`, `${fmt(f.As, 2)} cm²/m`);
   m.eq(L`A_s = \max(\rho;\ \rho_{m\acute{i}n})\,b\,d = ${tn(f.rhoReq, 5)}\cdot 100\cdot ${tn(f.d, 2)} = ${tn(f.As, 2)}\ \mathrm{cm^2/m}`);
   memoGrupo(m, "Espaciamiento y armadura adoptada", `${k}-esp`);
-  m.row("Separación calculada ; separación máxima → armadura adoptada: s ; s<sub>máx</sub>", `${fmt(f.sCalc, 1)} ; ${fmt(f.sMaxN, 1)} cm → <b>${barra(f.db, f.s)}</b>`, aci("7.6.5", "7.7.2.3"));
+  m.row("Separación calculada: s", `${fmt(f.sCalc, 1)} cm`);
+  m.row("Separación máxima: s<sub>máx</sub>", `${fmt(f.sMaxN, 1)} cm`, aci("7.6.5", "7.7.2.3"));
+  m.row("Armadura adoptada", barra(f.db, f.s));
   m.eq(L`s \le \frac{100\,A_b}{A_s} = \frac{100\cdot ${tn(f.Ab, 3)}}{${tn(f.As, 2)}} = ${tn(f.sCalc, 1)}\ \mathrm{cm} \qquad s_{m\acute{a}x} = \min(3h;\ 45\ \mathrm{cm}) = ${tn(f.sMaxN, 1)}\ \mathrm{cm} \;\Rightarrow\; s = ${tn(f.s, 1)}\ \mathrm{cm}`, aci("7.6.5", "7.7.2.3"));
   if (f.s < 10) m.note(`Separación de ${fmt(f.s, 1)} cm: considere un diámetro mayor.`, L`Separación reducida (${tn(f.s, 1)} cm); se recomienda un diámetro mayor.`);
   memoGrupo(m, "Verificación de capacidad (resumen)", `${k}-cap`, { resumen: `D/C = ${fmt(Math.max(f.dc, f.dcEt), 3)} ${tag(Math.max(f.dc, f.dcEt) <= 1 + 1e-9, Math.max(f.dc, f.dcEt) <= 1 + 1e-9 ? "Cumple" : "No cumple")}` });
-  m.row("Bloque de compresión ; eje neutro ; deformación del acero: a ; c ; ε<sub>t</sub>", `${fmt(f.a, 2)} ; ${fmt(f.c, 2)} cm ; ${fmt(f.et, 4)}`, aci("10.2.7", "22.2.2.4"));
+  m.row("Bloque de compresión ; eje neutro ; deformación del acero: a ; c ; ε<sub>t</sub>", `${fmt(f.a, 2)} cm ; ${fmt(f.c, 2)} cm ; ${fmt(f.et, 4)}`, aci("10.2.7", "22.2.2.4"));
   m.eq(L`a = \frac{A_s f_y}{0.85\,f'_c\,b} = ${tn(f.a, 2)}\ \mathrm{cm} \qquad c = \frac{a}{\beta_1} = \frac{${tn(f.a, 2)}}{${tn(f.b1, 3)}} = ${tn(f.c, 2)}\ \mathrm{cm} \qquad \varepsilon_t = 0.003\,\frac{d - c}{c} = ${tn(f.et, 4)}`, aci("10.2.7", "22.2.2.4"));
   const tracc = f.phi >= 0.9 - 1e-9, eTx = fmt(f.eMin, 4), eTt = tn(f.eMin, 4);
-  m.row(`Deformación mínima del acero (${tracc ? "controlada por tracción" : "zona de transición"}): ε<sub>t</sub> ≥ ${eTx} ; 𝜙`, `${fmt(f.phi, 3)} ${tagDC(f.dcEt)}`, aci("10.3.5 y 9.3.2", "7.3.3.1 y Tabla 21.2.2"));
+  m.row(`Deformación del acero (${tracc ? "controlada por tracción" : "zona de transición"}): ε<sub>t</sub> ≥ ${eTx}`, `${fmt(f.et, 4)} ${tagDC(f.dcEt)}`, aci("10.3.5", "7.3.3.1"));
+  m.row("Factor de reducción: 𝜙", fmt(f.phi, 3), aci("9.3.2", "Tabla 21.2.2"));
   if (es19()) m.eq(L`\varepsilon_{t,m\acute{i}n} = \varepsilon_{ty} + 0.003 = \frac{f_y}{E_s} + 0.003 = \frac{${tn(d0.fy, 0)}}{${tn(ES, 0)}} + 0.003 = ${eTt} \qquad \frac{\varepsilon_{t,m\acute{i}n}}{\varepsilon_t} = \frac{${eTt}}{${tn(f.et, 4)}} = ${tn(f.dcEt, 3)} ${f.dcEt <= 1 ? LE : ">"} 1.0`, "ACI 318-19 7.3.3.1");
   else m.eq(L`\frac{0.004}{\varepsilon_t} = \frac{0.004}{${tn(f.et, 4)}} = ${tn(f.dcEt, 3)} ${f.dcEt <= 1 ? LE : ">"} 1.0`, "ACI 318-08 10.3.5");
   m.row("Resistencia de diseño con la armadura dispuesta: 𝜙M<sub>n</sub>", `${fmt(TM(f.phiMn), 2)} tf·m ${tagDC(f.dc)}`, aci("10.2", "22.2"));
@@ -549,7 +552,7 @@ function memoCorte(m, Vu, dEf, d0, rho0, fund) {
   // 318-19 Tabla 22.5.5.1(c): losa o fundación sin armadura de corte (A_v < A_v,mín), 0.66 λs λ ρw^(1/3) √f'c b d en MPa
   const Vc = (n19 ? kR(0.66) * ls * Math.cbrt(rho) : 0.53) * Math.sqrt(d0.fc) * BW * dEf;
   const dc = Vu / (PHI_V * Vc);
-  m.row("Resistencia al corte del hormigón: V<sub>c</sub> ; 𝜙V<sub>c</sub>", `${fmt(T(Vc), 2)} ; ${fmt(T(PHI_V * Vc), 2)} tf`, aci("11-3", "Tabla 22.5.5.1(c)"));
+  m.row("Resistencia al corte del hormigón: V<sub>c</sub> ; 𝜙V<sub>c</sub>", `${fmt(T(Vc), 2)} tf ; ${fmt(T(PHI_V * Vc), 2)} tf`, aci("11-3", "Tabla 22.5.5.1(c)"));
   m.row("Razón de corte: V<sub>u</sub> / 𝜙V<sub>c</sub>", tagDC(dc));
   if (n19) m.eq(L`V_c = 0.66\,\lambda_s\lambda\,\rho_w^{1/3}\sqrt{f'_c}\,b\,d\ (\mathrm{MPa}) = ${tn(kR(0.66), 3)}\cdot ${tn(ls, 3)}\cdot ${tn(rho, 5)}^{1/3}\sqrt{${tn(d0.fc, 0)}}\cdot 100\cdot ${tn(dEf, 2)} = ${tn(T(Vc), 2)}\ \mathrm{tf} \qquad ${fund ? L`\lambda_s = 1\ \text{(13.2.6.2)}` : L`\lambda_s = \sqrt{\frac{2}{1 + 0.004\,d}} = ${tn(ls, 3)}\ (d\ \text{en mm})`}`, fund ? "ACI 318-19 Tabla 22.5.5.1(c) y 13.2.6.2" : "ACI 318-19 Tabla 22.5.5.1(c) y 22.5.5.1.3");
   else m.eq(L`V_c = 0.53\sqrt{f'_c}\,b\,d = 0.53\sqrt{${tn(d0.fc, 0)}}\cdot 100\cdot ${tn(dEf, 2)} = ${tn(T(Vc), 2)}\ \mathrm{tf}`, "ACI 318-08 11-3");
@@ -639,7 +642,7 @@ function verificar(d, m) {
       const sp1 = Kp * d.gS * d.Df, sp2 = Kp * d.gS * (d.Df + d.hd);
       Ep = (sp1 + sp2) / 2 * d.hd * BW;
       m.p(L`El empuje pasivo de la puntera no se considera, porque no se asegura su compactación ni que mantenga sus condiciones en el tiempo; solo se considera el desarrollado en el dentellón.`, true);
-      m.row("Tensiones pasivas en el dentellón: σ<sub>p1</sub> ; σ<sub>p2</sub>", `${fmt(S(sp1), 3)} ; ${fmt(S(sp2), 3)} tf/m²`);
+      m.row("Tensiones pasivas en el dentellón: σ<sub>p1</sub> ; σ<sub>p2</sub>", `${fmt(S(sp1), 3)} tf/m² ; ${fmt(S(sp2), 3)} tf/m²`);
       m.row("Empuje pasivo (solo el dentellón): E<sub>p</sub>", `${fmt(T(Ep), 3)} tf`);
       m.eq(L`\sigma_{p1} = K_p\,\gamma_s\,D_f = ${tn(Kp, 4)}\cdot ${tn(d.gS * 1000, 2)}\cdot ${tn(M(d.Df), 2)} = ${tn(S(sp1), 3)}\ \mathrm{tf/m^2} \qquad \sigma_{p2} = K_p\,\gamma_s\,(D_f + h_d) = ${tn(S(sp2), 3)}\ \mathrm{tf/m^2}`);
       m.eq(L`E_p = \frac{\sigma_{p1} + \sigma_{p2}}{2}\,h_d = \frac{${tn(S(sp1), 3)} + ${tn(S(sp2), 3)}}{2}\cdot ${tn(M(d.hd), 2)} = ${tn(T(Ep), 3)}\ \mathrm{tf}`);
@@ -686,10 +689,10 @@ function verificar(d, m) {
       ck(`Resultante dentro de la base${sufijo}`, "fuera de la base", "dentro de la base", Infinity, `el muro vuelca${sufijo}`, "estab");
       return { FSv, FSd, c, sadm, Mv, FD };
     }
-    m.row("Posición de la resultante ; excentricidad ; límite del tercio central: x ; e ; B/6", `${fmt(M(c.x), 3)} ; ${fmt(M(c.e), 3)} ; ${fmt(M(B / 6), 3)} m`);
+    m.row("Posición de la resultante ; excentricidad ; límite del tercio central: x ; e ; B/6", `${fmt(M(c.x), 3)} m ; ${fmt(M(c.e), 3)} m ; ${fmt(M(B / 6), 3)} m`);
     m.eq(L`x = \frac{M_R - M_V}{N} = \frac{${tn(TM(Mr), 3)} - ${tn(TM(Mv), 3)}}{${tn(T(N), 3)}} = ${tn(M(c.x), 3)}\ \mathrm{m} \qquad e = \frac{B}{2} - x = ${tn(M(c.e), 3)}\ \mathrm{m}`);
     if (!c.tri) {
-      m.row("Resultante en el tercio central, tensiones: σ<sub>máx</sub> ; σ<sub>mín</sub>", `${fmt(S(c.smax), 2)} ; ${fmt(S(Math.min(c.s1, c.s2)), 2)} tf/m²`);
+      m.row("Resultante en el tercio central, tensiones: σ<sub>máx</sub> ; σ<sub>mín</sub>", `${fmt(S(c.smax), 2)} tf/m² ; ${fmt(S(Math.min(c.s1, c.s2)), 2)} tf/m²`);
       m.eq(L`|e| = ${tn(M(Math.abs(c.e)), 3)} \le \frac{B}{6} = ${tn(M(B / 6), 3)}\ \mathrm{m} \;\Rightarrow\; \sigma = \frac{N}{B\,L}\left(1 \pm \frac{6e}{B}\right) = ${tn(S(c.smax), 2)}\ ;\ ${tn(S(Math.min(c.s1, c.s2)), 2)}\ \mathrm{tf/m^2}`);
     } else {
       const xx = c.e > 0 ? c.x : B - c.x;
@@ -748,7 +751,7 @@ function verificar(d, m) {
       m.p(L`Las fuerzas inerciales son $F_i = C_{sh}\,W_i$ para el muro y la sobrecarga, y $F_i = C_{sh}\,W_i\,R_i$ para el relleno sobre el talón, con $R_i = ${tn(d.Ri, 2)}$ (Manual de Carreteras Vol. 3, lámina 3.1003.403(2)F).`);
       const PS = tablaPesos(m, E, true, "Pesos y fuerzas inerciales (caso sísmico).");
       F = PS.F; MyS = PS.My;
-      m.row("Fuerza inercial total ; su momento: ΣF<sub>i</sub> ; ΣF<sub>i</sub> d<sub>y</sub>", `${fmt(T(F), 3)} tf ; ${fmt(TM(MyS), 3)} tf·m`);
+      m.row("Fuerza inercial total ; momento de las fuerzas inerciales: ΣF<sub>i</sub> ; ΣF<sub>i</sub> d<sub>y</sub>", `${fmt(T(F), 3)} tf ; ${fmt(TM(MyS), 3)} tf·m`);
       m.h("Caso 2: estabilidad del muro");
       const Mv2 = Mv1 + MyS + dEa * 2 * H / 3 + dEq * H / 2, FD2 = FD1 + F + dEa + dEq;
       m.p(L`La componente vertical del sismo no se descuenta del peso estabilizante, como en el procedimiento del curso. La fuerza resistente al deslizamiento es la misma del caso estático.`, true);
@@ -765,7 +768,7 @@ function verificar(d, m) {
   const Psm = 0.5 * Ka * d.gR * d.Hm * d.Hm * BW, Pqm = Ka * d.q * d.Hm * BW;
   const Vu1 = 1.6 * (Psm + Pqm), Mu1 = 1.6 * (Psm * d.Hm / 3 + Pqm * d.Hm / 2);
   m.sub("Solicitaciones estáticas (1.6 H)");
-  m.row("Empujes sobre la pantalla: P<sub>s</sub> ; P<sub>q</sub>", `${fmt(T(Psm), 3)} ; ${fmt(T(Pqm), 3)} tf`);
+  m.row("Empujes sobre la pantalla: P<sub>s</sub> ; P<sub>q</sub>", `${fmt(T(Psm), 3)} tf ; ${fmt(T(Pqm), 3)} tf`);
   m.row("Corte y momento últimos estáticos: V<sub>u</sub> ; M<sub>u</sub>", `${fmt(T(Vu1), 3)} tf ; ${fmt(TM(Mu1), 3)} tf·m`);
   m.eq(L`P_s = \tfrac{1}{2}K_a\gamma_r H_m^2 = ${tn(T(Psm), 3)}\ \mathrm{tf} \qquad P_q = K_a\,q\,H_m = ${tn(T(Pqm), 3)}\ \mathrm{tf}`);
   m.eq(L`V_u = 1.6\,(P_s + P_q) = ${tn(T(Vu1), 3)}\ \mathrm{tf} \qquad M_u = 1.6\left(P_s\frac{H_m}{3} + P_q\frac{H_m}{2}\right) = ${tn(TM(Mu1), 3)}\ \mathrm{tf\,m}`);
@@ -835,8 +838,8 @@ function verificar(d, m) {
     const pr = presionPie(c, d.Bp), pv = presionPie(c, d.Bp, xv);
     const Wv = d.Hf * xv * d.gH * BW;
     const Mu = U * pr.M - 0.9 * Wpie * d.Bp / 2, Vu = Math.max(0, U * pv.F - 0.9 * Wv);
-    m.row(`${nom}: presión en la punta y en la cara (servicio)`, `${fmt(S(c.p(0)), 2)} ; ${fmt(S(c.p(d.Bp)), 2)} tf/m²`);
-    m.row(`${nom}: momento de la presión en la cara ; momento último: M<sub>R</sub> ; M<sub>u</sub>`, `${fmt(TM(pr.M), 3)} ; ${fmt(TM(Mu), 3)} tf·m`);
+    m.row(`${nom}, presión en la punta (servicio) ; ${nom.toLowerCase()}, presión en la cara (servicio)`, `${fmt(S(c.p(0)), 2)} tf/m² ; ${fmt(S(c.p(d.Bp)), 2)} tf/m²`);
+    m.row(`${nom}, momento de la presión en la cara ; ${nom.toLowerCase()}, momento último: M<sub>R</sub> ; M<sub>u</sub>`, `${fmt(TM(pr.M), 3)} tf·m ; ${fmt(TM(Mu), 3)} tf·m`);
     m.row(`${nom}: corte a d = ${fmt(dPie, 1)} cm de la cara: V<sub>u</sub>`, `${fmt(T(Vu), 3)} tf`);
     m.eq(L`M_u = U\,M_R - 0.9\,W_{pie}\,\frac{B_p}{2} = ${Ufmt}\cdot ${tn(TM(pr.M), 3)} - 0.9\cdot ${tn(T(Wpie), 3)}\cdot\frac{${tn(M(d.Bp), 2)}}{2} = ${tn(TM(Mu), 3)}\ \mathrm{tf\,m}`);
     m.eq(L`V_u = U\,R_d - 0.9\,W_d = ${Ufmt}\cdot ${tn(T(pv.F), 3)} - 0.9\cdot ${tn(T(Wv), 3)} = ${tn(T(Vu), 3)}\ \mathrm{tf} \quad (\text{tramo de } ${tn(M(xv), 3)}\ \mathrm{m\ desde\ la\ punta})`, aci("15.5.2", "13.2.7.2"));
@@ -878,7 +881,7 @@ function verificar(d, m) {
   const Wt = d.Hf * d.Bt * d.gH * BW, Wr = d.Bt * d.Hm * d.gR * BW, Wq = d.q * d.Bt * BW;
   const Vt1 = 1.2 * (Wt + Wr) + 1.6 * Wq, Vt2 = conSismo && d.talSis === "csv" ? (1.2 + Csv) * (Wt + Wr) + 1.0 * Wq : 0;
   const tal = { Vu: Math.max(Vt1, Vt2), Mu: Math.max(Vt1, Vt2) * d.Bt / 2 };
-  m.row("Peso del talón ; del relleno ; de la sobrecarga: W<sub>t</sub> ; W<sub>r</sub> ; W<sub>q</sub>", `${fmt(T(Wt), 3)} ; ${fmt(T(Wr), 3)} ; ${fmt(T(Wq), 3)} tf`);
+  m.row("Peso del talón ; peso del relleno ; peso de la sobrecarga: W<sub>t</sub> ; W<sub>r</sub> ; W<sub>q</sub>", `${fmt(T(Wt), 3)} tf ; ${fmt(T(Wr), 3)} tf ; ${fmt(T(Wq), 3)} tf`);
   m.eq(L`W_t = H_f\,B_t\,\gamma_h = ${tn(T(Wt), 3)}\ \mathrm{tf} \qquad W_r = B_t\,H_m\,\gamma_r = ${tn(T(Wr), 3)}\ \mathrm{tf} \qquad W_q = q\,B_t = ${tn(T(Wq), 3)}\ \mathrm{tf}`);
   m.row("Corte último estático: V<sub>u</sub>", `${fmt(T(Vt1), 3)} tf`);
   m.eq(L`V_u = 1.2\,(W_t + W_r) + 1.6\,W_q = 1.2\,(${tn(T(Wt), 3)} + ${tn(T(Wr), 3)}) + 1.6\cdot ${tn(T(Wq), 3)} = ${tn(T(Vt1), 3)}\ \mathrm{tf}`);

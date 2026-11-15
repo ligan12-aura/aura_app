@@ -702,7 +702,7 @@ function calcularViento(d, m) {
       m.note(`No se cumplen las condiciones de 5.6.1 (H/L<sub>h</sub> ≥ 0.2 y H ≥ ${fmt(tp.Hmin, 1)} m en exposición ${d.expo}): K<sub>zt</sub> = 1.`,
         L`No se cumplen las condiciones de 5.6.1 ($H/L_h \ge 0.2$ y $H \ge ${tn(tp.Hmin, 1)}$ m en exposición ${d.expo}): $K_{zt} = 1$.`);
     } else {
-      m.row("Factores K<sub>1</sub> ; K<sub>2</sub> ; K<sub>3</sub> a la altura h", `${fmt(tp.K1, 3)} ; ${fmt(tp.K2, 3)} ; ${fmt(tp.K3(g.h), 3)}`, "Figura 3");
+      m.row("Factor topográfico K<sub>1</sub> ; factor topográfico K<sub>2</sub> ; factor topográfico K<sub>3</sub> a la altura h", `${fmt(tp.K1, 3)} ; ${fmt(tp.K2, 3)} ; ${fmt(tp.K3(g.h), 3)}`, "Figura 3");
       m.eq(L`K_1 = ${tn(tp.t.k1[d.expo], 2)} \cdot ${tn(tp.hlK, 3)} = ${tn(tp.K1, 3)} \qquad K_2 = 1 - \frac{|x|}{\mu L_h} = 1 - \frac{${tn(d.tx, 1)}}{${tn(tp.mu, 1)} \cdot ${tn(tp.LhEf, 1)}} = ${tn(tp.K2, 3)} \qquad K_3 = e^{-\gamma z/L_h} = e^{-${tn(tp.t.gama, 1)} \cdot ${tn(g.h, 2)}/${tn(tp.LhEf, 1)}} = ${tn(tp.K3(g.h), 3)}`, "Figura 3");
       m.row("Factor topográfico a la altura h: K<sub>zt</sub>", fmt(Kzth, 3), "Ec. (1)");
       m.eq(L`K_{zt} = (1 + K_1 K_2 K_3)^2 = (1 + ${tn(tp.K1, 3)} \cdot ${tn(tp.K2, 3)} \cdot ${tn(tp.K3(g.h), 3)})^2 = ${tn(Kzth, 3)}`, "Ec. (1)");
@@ -744,7 +744,7 @@ function calcularViento(d, m) {
     m.p(L`La presión de diseño de cada superficie es $p = q\,K_d\,G\,C_p - q_i\,K_d\,(GC_{pi})$ (Ec. (4)), con $q = q_z$ en el muro de barlovento y $q = q_h$ en el muro de sotavento, los muros laterales y el techo. Los coeficientes $C_p$ son los de la Figura 4.`);
     for (const x of dr.dirs) {
       m.sub(x.nombre);
-      m.row("Dimensiones paralela y normal al viento: L ; B", `${fmt(x.Lw, 2)} ; ${fmt(x.B, 2)} m`, "Figura 4");
+      m.row("Dimensiones paralela y normal al viento: L ; B", `${fmt(x.Lw, 2)} m ; ${fmt(x.B, 2)} m`, "Figura 4");
       m.eq(L`L = ${tn(x.Lw, 2)}\ \mathrm{m} \qquad B = ${tn(x.B, 2)}\ \mathrm{m} \qquad \frac{L}{B} = ${tn(x.Lw / x.B, 3)} \qquad \frac{h}{L} = ${tn(g.h / x.Lw, 3)}`);
       m.row("Muro de sotavento: C<sub>p</sub>", sg(x.cpL, 3), "Figura 4");
       m.eq(L`C_p = ${tn(x.cpL, 3)} \quad \text{(interpolado con } L/B = ${tn(x.Lw / x.B, 3)}\text{)}`, "Figura 4");

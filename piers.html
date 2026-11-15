@@ -721,7 +721,7 @@ function memoPier19(m, r, c, figura) {
   m.h(`Pier ${p}`);
   if (figura) m.raw(tikzPier(r, c));
   m.sub("Geometría y demanda");
-  m.row("Largo ; espesor ; área de corte: L<sub>w</sub> ; e ; A<sub>cv</sub>", `${fmt(Lw, 2)} ; ${fmt(e, 2)} m ; ${fmt(Acv, 3)} m²`);
+  m.row("Largo ; espesor ; área de corte: L<sub>w</sub> ; e ; A<sub>cv</sub>", `${fmt(Lw, 2)} m ; ${fmt(e, 2)} m ; ${fmt(Acv, 3)} m²`);
   m.eq(L`A_{cv} = L_w\,e = ${tn(Lw, 2)}\cdot ${tn(e, 2)} = ${tn(Acv, 3)}\ \mathrm{m^2}`);
   m.row(`Corte máximo (${escH(f.piso)}, ${escH(f.ubic)}${f.paso ? ", " + escH(f.paso) : ""}): V<sub>u</sub>`, `${fmt(f.Vu, 1)} kgf`);
   m.p(L`Largo $L_w = ${tn(Lw, 2)}$ m y espesor $e = ${tn(e, 2)}$ m. El corte máximo del pier es $V_u = ${tn(f.Vu, 1)}$ kgf, en ${escTex(f.piso)}, ${escTex(f.ubic)}${f.paso ? ", " + escTex(f.paso) : ""}.`, true);
@@ -768,9 +768,10 @@ function memoPier(m, r, c, figura) {
   m.h(`Pier ${p}`);
   if (figura) m.raw(tikzPier(r, c));
   m.sub("Geometría y demanda");
-  m.row("Largo ; espesor ; altura útil: L<sub>w</sub> ; e ; d", `${fmt(Lw, 2)} ; ${fmt(e, 2)} ; ${fmt(d, 2)} m`);
+  m.row("Largo ; espesor ; altura útil: L<sub>w</sub> ; e ; d", `${fmt(Lw, 2)} m ; ${fmt(e, 2)} m ; ${fmt(d, 2)} m`);
   m.eq(L`d = 0.8\,L_w = 0.8\cdot ${tn(Lw, 2)} = ${tn(d, 2)}\ \mathrm{m}`);
-  m.row("Esbeltez del muro ; clasificación: H<sub>w</sub>/L<sub>w</sub>", `${fmt(hl, 3)} ; ${hl > 2 ? "esbelto" : "chato"}`);
+  m.row("Esbeltez del muro: H<sub>w</sub>/L<sub>w</sub>", fmt(hl, 3));
+  m.row("Clasificación del muro", hl > 2 ? "esbelto" : "chato");
   m.row("Coeficiente de la clasificación: α<sub>c</sub>", fmt(f.alfa, 2));
   m.eq(L`\frac{H_w}{L_w} = \frac{${tn(c.Hw, 2)}}{${tn(Lw, 2)}} = ${tn(hl, 3)} \qquad \alpha_c = ${hl <= 1.5 ? L`0.80\ \ (H_w/L_w \le 1.5)` : L`0.53\ \ (H_w/L_w > 1.5)`}`);
   m.row(`Corte máximo (${escH(f.piso)}, ${escH(f.ubic)}${f.paso ? ", " + escH(f.paso) : ""}): V<sub>u</sub>`, `${fmt(f.Vu, 1)} kgf`);
@@ -809,8 +810,8 @@ function memoPier(m, r, c, figura) {
     L`La razón máxima de este pier, $D/C = ${tn(r.crit.dc, 3)}$, se da en ${escTex(r.crit.piso)}, ${escTex(r.crit.ubic)}, con $V_u = ${tn(r.crit.Vu, 1)}$ kgf y $\rho_{m\acute{i}n} = ${tn(r.crit.rhoMin, 4)}$.`);
 
   m.sub("Límites para machones");
-  m.row("Área del largo ; área de la altura: A<sub>cv</sub> ; A<sub>cw</sub>", `${fmt(Acv, 3)} ; ${fmt(Acw, 3)} m²`);
-  m.row("Límite con A<sub>cv</sub> ; límite con A<sub>cw</sub>", `${fmt(limAcv, 0)} ; ${fmt(limAcw, 0)} kgf`, "ACI 318-08 21.9.4.4");
+  m.row("Área del largo ; área de la altura: A<sub>cv</sub> ; A<sub>cw</sub>", `${fmt(Acv, 3)} m² ; ${fmt(Acw, 3)} m²`);
+  m.row("Límite con A<sub>cv</sub> ; límite con A<sub>cw</sub>", `${fmt(limAcv, 0)} kgf ; ${fmt(limAcw, 0)} kgf`, "ACI 318-08 21.9.4.4");
   m.eq(L`2.12\,A_{cv}\sqrt{f'_c} = ${tn(limAcv, 0)}\ \mathrm{kgf} \qquad 2.65\,A_{cw}\sqrt{f'_c} = ${tn(limAcw, 0)}\ \mathrm{kgf}`, "ACI 318-08 21.9.4.4");
   m.p(L`La planilla calcula estos límites como referencia y no los compara con la demanda, por lo que no entran en la razón D/C.`);
 }

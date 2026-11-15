@@ -691,7 +691,7 @@ function traccion(s, Fy, Fu, d, m) {
   const Pny = Fy * Ag, Pnr = Fu * Ae;
   const phiY = 0.9 * Pny, phiR = 0.75 * Pnr, phiPn = Math.min(phiY, phiR);
   m.p(L`La resistencia de diseño en tracción es el menor valor entre la fluencia en la sección bruta y la ruptura en la sección neta efectiva (Sección D2).`, true);
-  m.row("Área bruta ; área neta: A<sub>g</sub> ; A<sub>n</sub>", `${fmt(Ag, 2)} ; ${fmt(An, 2)} cm²`, "B4.3");
+  m.row("Área bruta ; área neta: A<sub>g</sub> ; A<sub>n</sub>", `${fmt(Ag, 2)} cm² ; ${fmt(An, 2)} cm²`, "B4.3");
   m.row(`Factor de corte diferido U (${refU})`, fmt(U, 3), "D3");
   m.row("Área neta efectiva: A<sub>e</sub>", `${fmt(Ae, 2)} cm²`, "D3-1");
   m.p(s.tipo === "R" ? L`\textbf{Área neta efectiva.} Tubo conectado mediante cartela:` : L`\textbf{Área neta efectiva.} Conexión por ${s.conTxt}, $\bar{x} = ${tn(s.xbU, 3)}$ cm medido desde el plano de conexión:`);
@@ -845,7 +845,7 @@ function compresion(s, Fy, d, m, gid = "") {
     }
     const Fex = fe(slx), Fey = fe(sly);
     slMax = Math.max(slx, sly);
-    m.row("Pandeo por flexión: F<sub>ex</sub> ; F<sub>ey</sub>", `${fmt(Fex, 1)} ; ${fmt(Fey, 1)} kgf/cm²`, "E3-4");
+    m.row("Pandeo por flexión: F<sub>ex</sub> ; F<sub>ey</sub>", `${fmt(Fex, 1)} kgf/cm² ; ${fmt(Fey, 1)} kgf/cm²`, "E3-4");
     m.eq(L`F_{ex} = \frac{\pi^2E}{\left(L_{cx}/r_x\right)^2} = ${tn(Fex, 1)}${KGCM2} \qquad F_{ey} = \frac{\pi^2E}{\left(L_{cy}/r_y\right)^2} = ${tn(Fey, 1)}${KGCM2}`, "E3-4");
     Fe = Math.min(Fex, Fey); modo = Fe === Fex ? "flexión eje x" : "flexión eje y";
     if (s.tipo === "R") m.p(L`Sección tubular cerrada y doblemente simétrica: el pandeo torsional no controla (Sección E4, nota de usuario), por lo que se considera solo el pandeo por flexión (E3).`);
@@ -862,7 +862,7 @@ function compresion(s, Fy, d, m, gid = "") {
       m.eq(L`H = 1 - \frac{x_o^2 + y_o^2}{\bar{r}_o^2} = ${tn(H, 4)}`, "E4-8");
       m.eq(L`F_{ez} = \left(\frac{\pi^2EC_w}{L_{cz}^2} + GJ\right)\frac{1}{A_g\bar{r}_o^2} = \left(\frac{\pi^2\cdot ${tn(E, 0)}\cdot ${tn(s.Cw, 1)}}{${tn(Lcz, 1)}^2} + ${tn(G, 0)}\cdot ${tn(s.J, 4)}\right)\frac{1}{${tn(s.A)}\cdot ${tn(ro2, 3)}} = ${tn(Fez, 1)}${KGCM2}`, "E4-7");
       m.eq(L`F_e = \left(\frac{F_{e${ejeS}} + F_{ez}}{2H}\right)\left[1 - \sqrt{1 - \frac{4F_{e${ejeS}}F_{ez}H}{\left(F_{e${ejeS}} + F_{ez}\right)^2}}\right] = ${tn(Fft, 1)}${KGCM2}`, "E4-3");
-      m.row("Pandeo flexo-torsional: F<sub>ez</sub> ; F<sub>e</sub>", `${fmt(Fez, 1)} ; ${fmt(Fft, 1)} kgf/cm²`, "E4-3");
+      m.row("Pandeo flexo-torsional: F<sub>ez</sub> ; F<sub>e</sub>", `${fmt(Fez, 1)} kgf/cm² ; ${fmt(Fft, 1)} kgf/cm²`, "E4-3");
       if (Fft < Fe) { Fe = Fft; modo = "flexo-torsional"; ref = "E4-3"; }
     }
   }
@@ -940,7 +940,7 @@ function flexCanal(s, Fy, Lb, Vu, m) {
   const Zx = s.b * s.tf * (s.h - s.tf) + s.tw * (s.h - 2 * s.tf) ** 2 / 4;
   const ho = s.h - s.tf, rts = Math.sqrt(Math.sqrt(s.Iy * s.Cw) / Sx), cc = ho / 2 * Math.sqrt(s.Iy / s.Cw);
   const Mp = Fy * Zx;
-  m.row("Módulos de sección: S<sub>x</sub> ; Z<sub>x</sub>", `${fmt(Sx, 2)} ; ${fmt(Zx, 2)} cm³`);
+  m.row("Módulos de sección: S<sub>x</sub> ; Z<sub>x</sub>", `${fmt(Sx, 2)} cm³ ; ${fmt(Zx, 2)} cm³`);
   m.eq(L`S_x = \frac{I_x}{h/2} = \frac{${tn(s.Ix, 2)}}{${tn(s.h / 2, 2)}} = ${tn(Sx, 2)}\ \mathrm{cm^3} \qquad Z_x = b_f t_f (h - t_f) + \frac{t_w (h - 2t_f)^2}{4} = ${tn(Zx, 2)}\ \mathrm{cm^3}`);
 
   // Clasificación en flexión (Tabla B4.1b)
@@ -967,7 +967,7 @@ function flexCanal(s, Fy, Lb, Vu, m) {
     const Fcr = PI2 * E / (Lb / rts) ** 2 * Math.sqrt(1 + 0.078 * jc * (Lb / rts) ** 2);
     Mltb = Math.min(Mp, Fcr * Sx); refL = "F2-3";
   }
-  m.row("Longitud no arriostrada ; límites (C<sub>b</sub> = 1): L<sub>b</sub> ; L<sub>p</sub> ; L<sub>r</sub>", `${fmt(Lb, 1)} ; ${fmt(Lp, 1)} ; ${fmt(Lr, 1)} cm`, "F2-5/F2-6");
+  m.row("Longitud no arriostrada ; límites (C<sub>b</sub> = 1): L<sub>b</sub> ; L<sub>p</sub> ; L<sub>r</sub>", `${fmt(Lb, 1)} cm ; ${fmt(Lp, 1)} cm ; ${fmt(Lr, 1)} cm`, "F2-5/F2-6");
   m.row(`Fluencia y pandeo lateral-torsional: M<sub>n</sub>`, `${fmt(Mltb / 100, 1)} kgf·m`, refL);
   m.p(L`\textbf{Pandeo lateral-torsional (F2).} Con $c = \frac{h_o}{2}\sqrt{I_y/C_w} = ${tn(cc, 3)}$ (canales, F2-8b), $r_{ts} = ${tn(rts, 3)}$ cm y $C_b = 1.0$ (conservador):`);
   m.eq(L`L_p = 1.76\,r_y\sqrt{\frac{E}{F_y}} = ${tn(Lp, 1)}${CM} \qquad L_r = 1.95\,r_{ts}\frac{E}{0.7F_y}\sqrt{\frac{Jc}{S_xh_o} + \sqrt{\left(\frac{Jc}{S_xh_o}\right)^2 + 6.76\left(\frac{0.7F_y}{E}\right)^2}} = ${tn(Lr, 1)}${CM}`, "F2-5");
@@ -990,7 +990,7 @@ function flexCanal(s, Fy, Lb, Vu, m) {
   // Corte (G2.1, k_v = 5.34)
   const hw = s.h - 2 * s.tf, htw = hw / s.tw, Aw = s.h * s.tw, lim = 1.10 * Math.sqrt(5.34 * E / Fy);
   const Cv1 = htw <= lim ? 1 : lim / htw, phiVn = 0.9 * 0.6 * Fy * Aw * Cv1, dcV = Vu / phiVn;
-  m.row("Corte, resistencia de diseño ; razón: 𝜙<sub>v</sub>V<sub>n</sub> ; V<sub>u</sub>/𝜙<sub>v</sub>V<sub>n</sub>", `${fmt(phiVn, 0)} kgf ; ${fmt(dcV, 3)} ${tag(dcV <= 1, dcV <= 1 ? "CUMPLE" : "NO CUMPLE")}`, "G2-1");
+  m.row("Resistencia de diseño a corte ; razón de corte: 𝜙<sub>v</sub>V<sub>n</sub> ; V<sub>u</sub>/𝜙<sub>v</sub>V<sub>n</sub>", `${fmt(phiVn, 0)} kgf ; ${fmt(dcV, 3)} ${tag(dcV <= 1, dcV <= 1 ? "CUMPLE" : "NO CUMPLE")}`, "G2-1");
   m.eq(L`\frac{h}{t_w} = ${tn(htw, 2)} ${cmp(htw, lim)} 1.10\sqrt{k_vE/F_y} = ${tn(lim, 2)} \Rightarrow C_{v1} = ${tn(Cv1, 3)} \qquad \phi_vV_n = 0.9\cdot 0.6\,F_yA_wC_{v1} = 0.9\cdot 0.6\cdot ${tn(Fy, 0)}\cdot ${tn(Aw, 2)}\cdot ${tn(Cv1, 3)} = ${tn(phiVn, 0)}${KG}`, "G2-1");
   return { Mn, refM, phiVn };
 }
@@ -1007,7 +1007,7 @@ function flexCanalDebil(s, Fy, Vu, m) {
     ? h * (xp ** 2 + (tw - xp) ** 2) / 2 + 2 * tf * (b - tw) * ((tw + b) / 2 - xp)
     : h * tw * (xp - tw / 2) + 2 * tf * ((xp - tw) ** 2 + (b - xp) ** 2) / 2;
   const Mp = Math.min(Fy * Zy, 1.6 * Fy * Sy);
-  m.row("Flexión en el eje débil del perfil: S<sub>y</sub> (puntas de alas) ; Z<sub>y</sub>", `${fmt(Sy, 2)} ; ${fmt(Zy, 2)} cm³`);
+  m.row("Flexión en el eje débil del perfil: S<sub>y</sub> (puntas de alas) ; Z<sub>y</sub>", `${fmt(Sy, 2)} cm³ ; ${fmt(Zy, 2)} cm³`);
   m.eq(L`S_y = \frac{I_{y}}{b_f - \bar{x}} = \frac{${tn(Iy, 2)}}{${tn(b - s.xb, 3)}} = ${tn(Sy, 2)}\ \mathrm{cm^3} \qquad Z_y = ${tn(Zy, 2)}\ \mathrm{cm^3}`);
   m.row("Fluencia: M<sub>n</sub>", `${fmt(Mp / 100, 1)} kgf·m`, "F6-1");
   m.eq(L`M_n = M_p = \min(F_yZ_y;\ 1.6F_yS_y) = \min(${tn(Fy * Zy / 100, 1)};\ ${tn(1.6 * Fy * Sy / 100, 1)}) = ${tn(Mp / 100, 1)}\ \mathrm{kgf\cdot m}`, "F6-1");
@@ -1031,7 +1031,7 @@ function flexCanalDebil(s, Fy, Vu, m) {
   const kv = 1.2, l1 = 1.10 * Math.sqrt(kv * E / Fy), l2 = 1.37 * Math.sqrt(kv * E / Fy);
   const Cv2 = lf <= l1 ? 1 : lf <= l2 ? l1 / lf : 1.51 * kv * E / (lf * lf * Fy);
   const Aw = 2 * b * tf, phiVn = 0.9 * 0.6 * Fy * Aw * Cv2, dcV = Vu / phiVn;
-  m.row("Corte en las alas, resistencia de diseño ; razón: 𝜙<sub>v</sub>V<sub>n</sub> ; V<sub>u</sub>/𝜙<sub>v</sub>V<sub>n</sub>", `${fmt(phiVn, 0)} kgf ; ${fmt(dcV, 3)} ${tag(dcV <= 1, dcV <= 1 ? "CUMPLE" : "NO CUMPLE")}`, "G6-1");
+  m.row("Resistencia de diseño a corte en las alas ; razón de corte en las alas: 𝜙<sub>v</sub>V<sub>n</sub> ; V<sub>u</sub>/𝜙<sub>v</sub>V<sub>n</sub>", `${fmt(phiVn, 0)} kgf ; ${fmt(dcV, 3)} ${tag(dcV <= 1, dcV <= 1 ? "CUMPLE" : "NO CUMPLE")}`, "G6-1");
   m.eq(L`\phi_vV_n = 0.9\cdot 0.6F_y\cdot 2b_ft_f\cdot C_{v2} = 0.9\cdot 0.6\cdot ${tn(Fy, 0)}\cdot ${tn(Aw, 2)}\cdot ${tn(Cv2, 3)} = ${tn(phiVn, 0)}${KG}`, "G6-1");
   return { Mn, refM, phiVn };
 }
@@ -1039,7 +1039,7 @@ function flexCanalDebil(s, Fy, Vu, m) {
 // Tubo rectangular flectando en torno al eje x (lado H en el plano de la reticulada): Sección F7 y corte G4
 function flexTubo(s, Fy, Lb, Vu, m) {
   const rEF = Math.sqrt(E / Fy), Sx = s.Sx, Mp = Fy * s.Zx;
-  m.row("Módulos de sección (t de diseño): S<sub>x</sub> ; Z<sub>x</sub>", `${fmt(Sx, 2)} ; ${fmt(s.Zx, 2)} cm³`);
+  m.row("Módulos de sección (t de diseño): S<sub>x</sub> ; Z<sub>x</sub>", `${fmt(Sx, 2)} cm³ ; ${fmt(s.Zx, 2)} cm³`);
   m.eq(L`S_x = \frac{I_x}{H/2} = ${tn(Sx, 2)}\ \mathrm{cm^3} \qquad Z_x = ${tn(s.Zx, 2)}\ \mathrm{cm^3} \qquad M_p = F_yZ_x = ${tn(Mp / 100, 1)}\ \mathrm{kgf\cdot m}`, "F7-1");
   // Clasificación en flexión (Tabla B4.1b, casos 17 y 19)
   const lf = s.bf / s.td, lpf = 1.12 * rEF, lrf = 1.40 * rEF;
@@ -1084,14 +1084,14 @@ function flexTubo(s, Fy, Lb, Vu, m) {
   let Mltb = Mp, refL = "F7.4(a)";
   if (Lb > Lr) { Mltb = Math.min(Mp, 2 * E * JA / (Lb / s.ry)); refL = "F7-11"; }
   else if (Lb > Lp) { Mltb = Math.min(Mp, Mp - (Mp - 0.7 * Fy * Sx) * (Lb - Lp) / (Lr - Lp)); refL = "F7-10"; }
-  m.row("Pandeo lateral-torsional, longitud no arriostrada ; límites (C<sub>b</sub> = 1): L<sub>b</sub> ; L<sub>p</sub> ; L<sub>r</sub>", `${fmt(Lb, 1)} ; ${fmt(Lp, 1)} ; ${fmt(Lr, 1)} cm`, "F7-12/F7-13");
+  m.row("Pandeo lateral-torsional, longitud no arriostrada ; límites (C<sub>b</sub> = 1): L<sub>b</sub> ; L<sub>p</sub> ; L<sub>r</sub>", `${fmt(Lb, 1)} cm ; ${fmt(Lp, 1)} cm ; ${fmt(Lr, 1)} cm`, "F7-12/F7-13");
   m.eq(L`L_p = 0.13\,E\,r_y\frac{\sqrt{JA_g}}{M_p} = ${tn(Lp, 1)}${CM} \qquad L_r = 2\,E\,r_y\frac{\sqrt{JA_g}}{0.7F_yS_x} = ${tn(Lr, 1)}${CM} \;\Rightarrow\; M_n = ${tn(Mltb / 100, 1)}\ \mathrm{kgf\cdot m}`, refL);
   usar(Mltb, refL);
   // Corte (G4): A_w = 2ht, k_v = 5, C_v2 según G2.2
   const kv = 5, ht = s.hf / s.td, l1 = 1.10 * Math.sqrt(kv * E / Fy), l2 = 1.37 * Math.sqrt(kv * E / Fy);
   const Cv2 = ht <= l1 ? 1 : ht <= l2 ? l1 / ht : 1.51 * kv * E / (ht * ht * Fy);
   const Aw = 2 * s.hf * s.td, phiVn = 0.9 * 0.6 * Fy * Aw * Cv2, dcV = Vu / phiVn;
-  m.row("Corte, resistencia de diseño ; razón: 𝜙<sub>v</sub>V<sub>n</sub> ; V<sub>u</sub>/𝜙<sub>v</sub>V<sub>n</sub>", `${fmt(phiVn, 0)} kgf ; ${fmt(dcV, 3)} ${tag(dcV <= 1, dcV <= 1 ? "CUMPLE" : "NO CUMPLE")}`, "G4-1");
+  m.row("Resistencia de diseño a corte ; razón de corte: 𝜙<sub>v</sub>V<sub>n</sub> ; V<sub>u</sub>/𝜙<sub>v</sub>V<sub>n</sub>", `${fmt(phiVn, 0)} kgf ; ${fmt(dcV, 3)} ${tag(dcV <= 1, dcV <= 1 ? "CUMPLE" : "NO CUMPLE")}`, "G4-1");
   m.eq(L`A_w = 2ht = 2\cdot ${tn(s.hf, 2)}\cdot ${tn(s.td, 3)} = ${tn(Aw, 2)}\ \mathrm{cm^2} \qquad \frac{h}{t} = ${tn(ht, 2)} \Rightarrow C_{v2} = ${tn(Cv2, 3)} \qquad \phi_vV_n = 0.9\cdot 0.6\,F_yA_wC_{v2} = ${tn(phiVn, 0)}${KG}`, "G4-1");
   return { Mn, refM, phiVn };
 }
@@ -1112,13 +1112,17 @@ function flexoCordon(s, Fy, d, c, t, m, dem, nom = "cordón superior", conCargas
     pares = dem.pares;
     const mx = pares.reduce((a, b) => (b.M > a.M ? b : a), pares[0]);
     m.p(L`Las solicitaciones del ${nom} provienen del análisis de structura con el cordón continuo${conCargas ? " y la carga distribuida" : ""}, por lo que el momento incluye la flexión local de cada tramo y los momentos secundarios por la deformación de la reticulada. Para cada combinación y cada barra del cordón se evalúa la interacción con su propia fuerza axial y su propio momento.`, true);
-    m.row(`Momento máximo del ${nom} (${mx.combo}, barra ${mx.barra}) ; momento local de un tramo`, `${fmt(mx.M / 100, 1)} ; ${fmt(Mloc / 100, 1)} kgf·m`);
+    m.row(`Momento máximo del ${nom} (${mx.combo}, barra ${mx.barra}) ; momento local de un tramo`, `${fmt(mx.M / 100, 1)} kgf·m ; ${fmt(Mloc / 100, 1)} kgf·m`);
     m.p(L`\textbf{Solicitaciones de flexión.} Momento máximo del cordón continuo $M_u = ${tn(mx.M / 100, 1)}$ kgf$\cdot$m (combinación ${mx.combo}, barra ${mx.barra}), frente al momento local de un tramo simplemente apoyado $w_ua^2/8 = ${tn(Mloc / 100, 1)}$ kgf$\cdot$m con $w_u = ${tn(wu.w, 1)}$ kgf/m (${wu.c.replace(/:.*/, "")}).`);
   } else {
     // Modelo externo: momento y corte del modelo, con el del tramo simplemente apoyado como mínimo de control
     const M = Math.max(d.Mu, Mloc), V = Math.max(d.Vu, Vloc);
-    m.row(`Momento del modelo externo ; mínimo de control (${wu.c.replace(/:.*/, "")}) → M<sub>u</sub>`, `${fmt(d.Mu / 100, 1)} ; ${fmt(Mloc / 100, 1)} → ${fmt(M / 100, 1)} kgf·m`);
-    m.row("Corte del modelo externo ; mínimo de control → V<sub>u</sub>", `${fmt(d.Vu, 0)} ; ${fmt(Vloc, 0)} → ${fmt(V, 0)} kgf`);
+    m.row("Momento del modelo externo", `${fmt(d.Mu / 100, 1)} kgf·m`);
+    m.row(`Momento mínimo de control (${wu.c.replace(/:.*/, "")})`, `${fmt(Mloc / 100, 1)} kgf·m`);
+    m.row("Momento de diseño (el mayor): M<sub>u</sub>", `${fmt(M / 100, 1)} kgf·m`);
+    m.row("Corte del modelo externo", `${fmt(d.Vu, 0)} kgf`);
+    m.row("Corte mínimo de control", `${fmt(Vloc, 0)} kgf`);
+    m.row("Corte de diseño (el mayor): V<sub>u</sub>", `${fmt(V, 0)} kgf`);
     m.p(L`\textbf{Solicitaciones de flexión.} Se usa el mayor entre el momento del modelo externo y el de un tramo simplemente apoyado con la carga mayorada máxima $w_u = ${tn(wu.w, 1)}$ kgf/m (${wu.c.replace(/:.*/, "")}, incluye el peso propio del cordón):`);
     m.eq(L`M_u = \max\left(${tn(d.Mu / 100, 1)};\ \frac{w_ua^2}{8} = ${tn(Mloc / 100, 1)}\right) = ${tn(M / 100, 1)}\ \mathrm{kgf\cdot m} \qquad V_u = \max\left(${tn(d.Vu, 0)};\ \frac{w_ua}{2} = ${tn(Vloc, 0)}\right) = ${tn(V, 0)}${KG}`);
     m.p(L`Como los valores del modelo son envolventes, se combinan las fuerzas axiales máximas con el momento máximo aunque provengan de combinaciones distintas (conservador).`, true);
@@ -1162,7 +1166,9 @@ function flexoCordon(s, Fy, d, c, t, m, dem, nom = "cordón superior", conCargas
   m.eq(peor.r >= 0.2
     ? L`\frac{${Pt}}{${Pc}} + \frac{8}{9}\frac{${Mr}}{\phi_bM_n} = ${tn(peor.r, 3)} + \frac{8}{9}\cdot ${tn(peor.rm, 3)} = ${tn(peor.dc, 3)} ${cmp(peor.dc, 1)} 1.0`
     : L`\frac{${Pt}}{2\,${Pc}} + \frac{${Mr}}{\phi_bM_n} = \frac{${tn(peor.r, 3)}}{2} + ${tn(peor.rm, 3)} = ${tn(peor.dc, 3)} ${cmp(peor.dc, 1)} 1.0`, peor.r >= 0.2 ? "H1-1a" : "H1-1b");
-  m.row(`Interacción: ${comp ? "P<sub>u</sub>/𝜙<sub>c</sub>P<sub>n</sub>" : "T<sub>u</sub>/𝜙<sub>t</sub>P<sub>n</sub>"} ; ${comp ? "B<sub>1</sub>" : ""}M<sub>u</sub>/𝜙<sub>b</sub>M<sub>n</sub> → D/C`, `${fmt(peor.r, 3)} ; ${fmt(peor.rm, 3)} → ${fmt(peor.dc, 3)}`, peor.r >= 0.2 ? "H1-1a" : "H1-1b");
+  m.row(`Razón axial: ${comp ? "P<sub>u</sub>/𝜙<sub>c</sub>P<sub>n</sub>" : "T<sub>u</sub>/𝜙<sub>t</sub>P<sub>n</sub>"}`, fmt(peor.r, 3));
+  m.row(`Razón de flexión: ${comp ? "B<sub>1</sub>" : ""}M<sub>u</sub>/𝜙<sub>b</sub>M<sub>n</sub>`, fmt(peor.rm, 3));
+  m.row("Razón de interacción: D/C", fmt(peor.dc, 3), peor.r >= 0.2 ? "H1-1a" : "H1-1b");
   const dc = Math.max(peor.dc, dcV);
   m.row(`<b>Razón de flexocompresión y corte del ${nom}</b>`, `<b>${fmt(dc, 3)}</b> ${tag(dc <= 1, dc <= 1 ? "CUMPLE" : "NO CUMPLE")}`);
   return { dc, dcH: peor.dc, dcV, Mu: peor.M, Vu: Vmax, phiMn, phiVn, B1: peor.B1, wu };
@@ -1460,7 +1466,7 @@ function memoAnalisis(m, sol, modoC) {
   const an = sol.an, NOM = { cs: "Cordón superior", ci: "Cordón inferior", di: "Diagonales", mo: "Montantes" };
   m.h("Análisis estructural");
   m.p(L`Modelo plano de la reticulada con ${an.geo.nudos.length} nudos y ${an.barras.length} barras, apoyo fijo a la izquierda y deslizante a la derecha, resuelto por el método de rigidez (análisis elástico lineal de primer orden, $E = ${tn(E, 0)}$ kgf/cm$^2$, secciones con su espesor nominal). ${modoC === "nudos" ? "Todas las barras están articuladas en sus extremos y las cargas del cordón superior se aplican como fuerzas en los nudos superiores, según su longitud tributaria." : "Los cordones son continuos, las diagonales y los montantes están articulados, y las cargas del cordón superior se aplican distribuidas sobre él."} El peso propio de todas las barras se incluye en D. Se usan las combinaciones de resistencia de la NCh 3171 sin las sísmicas (C1, C2, C3, C4 y C6, con L$_r$ o S y L o 0.8W desarrolladas) y las de servicio D + L, D + L$_r$, D + S y D + W; la flecha se mide en los nudos.`);
-  m.row("Comprobación de equilibrio (patrón D): carga total ; suma de reacciones verticales", `${fmt(sol.cargaD, 1)} ; ${fmt(sol.reacD, 1)} kgf`);
+  m.row("Comprobación de equilibrio (patrón D): carga total ; suma de reacciones verticales", `${fmt(sol.cargaD, 1)} kgf ; ${fmt(sol.reacD, 1)} kgf`);
   const filas = GRUPOS.map(g => { const v = sol.env[g.id]; return { g: NOM[g.id], v }; });
   m.out.push(`<table class="alt" style="margin:6px 0 4px"><tr><th>Grupo</th><th>Tracción máx. [kgf]</th><th>Compresión máx. [kgf]</th>${modoC === "tramo" ? "<th>Momento máx. [kgf·m]</th>" : ""}</tr>${filas.map(({ g, v }) =>
     `<tr><td>${g}</td><td>${fmt(v.T, 0)} (${v.cT})</td><td>${fmt(v.C, 0)} (${v.cC})</td>${modoC === "tramo" ? `<td>${fmt(v.M, 1)} (${v.cM})</td>` : ""}</tr>`).join("")}</table>`);
@@ -1521,7 +1527,7 @@ function calcular() {
 
   const m = new Memo();
   m.out.push(`<h3>Datos generales</h3>`);
-  m.row(`Acero ${acero}: F<sub>y</sub> ; F<sub>u</sub> ; E`, `${Fy} ; ${Fu} ; ${fmt(E, 0)} kgf/cm²`);
+  m.row(`Acero ${acero}: F<sub>y</sub> ; F<sub>u</sub> ; E`, `${fmt(Fy, 0)} kgf/cm² ; ${fmt(Fu, 0)} kgf/cm² ; ${fmt(E, 0)} kgf/cm²`);
   m.row("Reticulada: tipo ; luz ; altura ; L/h", `${tipo === "pratt" ? "Pratt" : tipo === "howe" ? "Howe" : "Warren"} ; ${fmt(Lt, 2)} m ; ${fmt(h, 2)} m ; ${fmt(Lt / h, 1)}`);
   const modoC = $("sModo").value;
 

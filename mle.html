@@ -574,7 +574,7 @@ function calcularViga(d, m) {
   const qPP = d.qPPa + pp, q = qPP + d.qSC;
   const M = q * d.Lm ** 2 / 8 + d.P * d.Lm / 4;                   // kgf·m
   const V = q * d.Lm / 2 + d.P / 2;                               // kgf
-  m.row("Peso propio de la viga ; carga permanente total ; carga total: q<sub>pp</sub> ; q<sub>PP</sub> ; q", `${fmt(pp, 2)} ; ${fmt(qPP, 2)} ; ${fmt(q, 2)} kgf/m`);
+  m.row("Peso propio de la viga ; carga permanente total ; carga total: q<sub>pp</sub> ; q<sub>PP</sub> ; q", `${fmt(pp, 2)} kgf/m ; ${fmt(qPP, 2)} kgf/m ; ${fmt(q, 2)} kgf/m`);
   m.row("Momento máximo ; corte máximo: M ; V", `${fmt(M, 2)} kgf·m ; ${fmt(V, 2)} kgf`);
   m.p(L`\textbf{Cargas.} El peso propio se calcula con la densidad promedio $\rho_{mle,prom} = ${tn(P.rhoP, 0)}$ kg/m$^3$ y se suma a la carga permanente adicional:`);
   m.eq(L`q_{pp} = \rho_{mle,prom}\,b\,h = ${tn(P.rhoP, 0)}\cdot ${tn(d.b / 1000, 3)}\cdot ${tn(d.h / 1000, 3)} = ${tn(pp, 2)}\ \mathrm{kgf/m}`);
@@ -596,7 +596,7 @@ function calcularViga(d, m) {
   if (fx.necesita) { r.lamv = fx.lamv; if (fx.lamv > 50) r.avisos.push(`La esbeltez de volcamiento λ<sub>v</sub> = ${fmt(fx.lamv, 1)} supera 50 (8.2.1.8).`); }
   m.row("Módulo resistente ; tensión de trabajo: W ; f<sub>f</sub>", `${fmt(W, 1)} cm³ ; ${fmt(ff, 2)} kgf/cm²`);
   m.row("Tensión de diseño, canto traccionado: F<sub>ft,dis</sub>", `${fmt(fx.Fft, 2)} kgf/cm²`, "11.3");
-  if (fx.necesita) m.row("Volcamiento: l<sub>v</sub> ; λ<sub>v</sub> ; F<sub>fE</sub> ; K<sub>λv</sub>", `${fmt(fx.lv, 1)} cm ; ${fmt(fx.lamv, 2)} ; ${fmt(fx.FfE, 1)} ; ${fmt(fx.Klv, 4)}`, "8.2.2.4 / 11.3.1.3");
+  if (fx.necesita) m.row("Longitud efectiva de volcamiento ; esbeltez de volcamiento ; tensión crítica de volcamiento ; factor de volcamiento: l<sub>v</sub> ; λ<sub>v</sub> ; F<sub>fE</sub> ; K<sub>λv</sub>", `${fmt(fx.lv, 1)} cm ; ${fmt(fx.lamv, 2)} ; ${fmt(fx.FfE, 1)} kgf/cm² ; ${fmt(fx.Klv, 4)}`, "8.2.2.4 / 11.3.1.3");
   else m.row("Factor por volcamiento: K<sub>λv</sub>", "1", "8.2.2.4");
   m.row("Tensión de diseño, canto comprimido: F<sub>fv,dis</sub>", `${fmt(fx.Ffv, 2)} kgf/cm²`);
   m.row("<b>Razón de flexión: f<sub>f</sub> / F<sub>f,dis</sub></b>", `<b>${fmt(r.flex, 3)}</b> ${okTxt(r.flex <= 1)}`);
@@ -636,7 +636,7 @@ function calcularViga(d, m) {
     const fczp = 1.5 * Vpp / (bc * hEf), Fczp = F.cz * f.KH("cz") * KDp * Kr;
     r.flexPP = ffp / fp.Fdis; r.cizPP = fczp / Fczp;
     Object.assign(r, { ffp, FdisPP: fp.Fdis, fczp, Fczp });
-    m.row("Momento ; corte de peso propio: M<sub>PP</sub> ; V<sub>PP</sub>", `${fmt(Mpp, 2)} kgf·m ; ${fmt(Vpp, 2)} kgf`);
+    m.row("Momento de peso propio ; corte de peso propio: M<sub>PP</sub> ; V<sub>PP</sub>", `${fmt(Mpp, 2)} kgf·m ; ${fmt(Vpp, 2)} kgf`);
     m.row("<b>Flexión con peso propio (K<sub>D</sub> = 0.90): f<sub>f</sub> / F<sub>f,dis</sub></b>", `<b>${fmt(ffp, 2)} / ${fmt(fp.Fdis, 2)} = ${fmt(r.flexPP, 3)}</b> ${okTxt(r.flexPP <= 1)}`);
     m.row("<b>Cizalle con peso propio (K<sub>D</sub> = 0.90): f<sub>cz</sub> / F<sub>cz,dis</sub></b>", `<b>${fmt(fczp, 3)} / ${fmt(Fczp, 2)} = ${fmt(r.cizPP, 3)}</b> ${okTxt(r.cizPP <= 1)}`);
     m.p(L`Como el peso propio actúa de forma permanente, se verifica también la carga permanente sola con $K_D = 0.90$ (Anexo G), combinación que puede controlar cuando la carga permanente es una fracción importante de la total:`, true);
@@ -679,8 +679,10 @@ function calcularViga(d, m) {
   const limSC = divSC ? Math.min(Lc * 10 / divSC, maxSC ?? Infinity) : Infinity;
   r.defT = divT ? dT / limT : 0; r.defSC = divSC ? dSC / limSC : 0;
   Object.assign(r, { dT, limT, dSC, limSC, divT, divSC });
-  m.row("Módulo de diseño ; módulo de corte: E<sub>dis</sub> ; G", `${fmt(Edis, 0)} ; ${fmt(G, 0)} kgf/cm²`, "NCh 2165, Tablas 4 a 6");
-  m.row("Razón g/q ; creep ; factor ρ", `${fmt(gq, 3)} ; ${creep ? "aplica" : "no aplica"} ; ${fmt(rho, 3)}`, "8.2.4.11");
+  m.row("Módulo de diseño ; módulo de corte: E<sub>dis</sub> ; G", `${fmt(Edis, 0)} kgf/cm² ; ${fmt(G, 0)} kgf/cm²`, "NCh 2165, Tablas 4 a 6");
+  m.row("Razón carga permanente/total: g/q", fmt(gq, 3), "8.2.4.11");
+  m.row("Creep", creep ? "aplica" : "no aplica", "8.2.4.11");
+  m.row("Factor de creep: ρ", fmt(rho, 3), "8.2.4.11");
   m.row("Deformación por corte (L/h < 20)", `${corte ? "aplica" : "no aplica"} (L/h = ${fmt(Lc / hc, 1)})`, "8.2.4.12");
   if (divT) m.row("Deformación SC + PP: δ ≤ δ<sub>adm</sub>", `${fmt(dT, 2)} ≤ ${fmt(limT, 2)} mm ${okTxt(dT <= limT)}`, "Tabla 6");
   if (divSC) m.row("Deformación SC: δ ≤ δ<sub>adm</sub>", `${fmt(dSC, 2)} ≤ ${fmt(limSC, 2)} mm ${okTxt(dSC <= limSC)}`, "Tabla 6");
@@ -738,7 +740,7 @@ function calcularColumna(d, m) {
   const MV = d.w * d.Lm ** 2 / 8 * 100, VV = d.w * d.Lm / 2;   // kgf·cm ; kgf
   m.row("Peso propio de la columna", `${fmt(ppc, 2)} kgf`);
   combos.forEach(c => m.row(`Carga axial, ${c.n} (${c.txt}), K<sub>D</sub> = ${fmt(c.KD, 2)}: P`, `${fmt(c.P, 1)} kgf`));
-  if (d.w > 0) m.row("Viento: momento ; corte: M<sub>V</sub> ; V<sub>V</sub>", `${fmt(MV / 100, 2)} kgf·m ; ${fmt(VV, 2)} kgf`);
+  if (d.w > 0) m.row("Momento por viento ; corte por viento: M<sub>V</sub> ; V<sub>V</sub>", `${fmt(MV / 100, 2)} kgf·m ; ${fmt(VV, 2)} kgf`);
   m.p(L`\textbf{Cargas.} La carga axial es la descarga de las vigas por el ancho tributario $B = ${tn(d.B, 2)}$ m más el peso propio de la columna (densidad promedio $${tn(P.rhoP, 0)}$ kg/m$^3$). Cada combinación usa el $K_D$ de su carga de menor duración:`);
   m.eq(L`P_{pp} = \rho_{mle,prom}\,b\,h\,L = ${tn(P.rhoP, 0)}\cdot ${tn(d.b / 1000, 3)}\cdot ${tn(d.h / 1000, 3)}\cdot ${tn(d.Lm, 2)} = ${tn(ppc, 2)}\ \mathrm{kgf}`);
   combos.forEach(c => m.eq(L`P_{${c.n}} = (${c.tex.replace(/PP/g, "q_{PP}").replace(/SC_\{piso\}/g, "q_{SC,p}").replace(/SC_\{techo\}/g, "q_{SC,t}").replace(/ \+ V/, "")})\,B + P_{pp} = ${tn(c.q, 2)}\cdot ${tn(d.B, 2)} + ${tn(ppc, 2)} = ${tn(c.P, 1)}\ \mathrm{kgf}`));
@@ -846,9 +848,9 @@ function calcularColumna(d, m) {
   m.modo = "pantalla";
   m.h(`Compresión paralela — combinación ${sel.n} (8.3 y 11.3.1.4)`);
   m.row("Factor de longitud efectiva: K<sub>p</sub>", `${fmt(d.Kp, 2)} — ${d.kpTxt}`, "Anexo J");
-  m.row("Esbeltez en torno a x ; en torno a y: λ<sub>x</sub> ; λ<sub>y</sub>", `${fmt(lx, 2)} ; ${fmt(ly, 2)}`);
+  m.row("Esbeltez en torno a x ; esbeltez en torno a y: λ<sub>x</sub> ; λ<sub>y</sub>", `${fmt(lx, 2)} ; ${fmt(ly, 2)}`);
   m.row(`Esbeltez reguladora: λ ≤ ${d.lamMax}`, `${fmt(lam, 2)} ${okTxt(lam <= d.lamMax)}`, "8.3.2");
-  m.row("Módulo de diseño ; tensión crítica: E<sub>dis</sub> ; F<sub>cE</sub>", `${fmt(Edis, 0)} ; ${fmt(FcE, 2)} kgf/cm²`, "11.3.1.4");
+  m.row("Módulo de diseño ; tensión crítica: E<sub>dis</sub> ; F<sub>cE</sub>", `${fmt(Edis, 0)} kgf/cm² ; ${fmt(FcE, 2)} kgf/cm²`, "11.3.1.4");
   m.row(`<b>${sel.n} — ${sel.txt} (K<sub>D</sub> = ${fmt(sel.KD, 2)}): f<sub>c</sub> / F<sub>cλ,dis</sub></b>`, `<b>${fmt(sel.fc, 2)} / ${fmt(sel.Fcl, 2)} = ${fmt(sel.ratio, 3)}</b> ${okTxt(sel.ratio <= 1)}`);
   secEsbeltez();
   m.p(L`\textbf{Combinación ${sel.n}} ($${sel.tex}$, $K_D = ${tn(sel.KD, 2)}$, ${sel.kdTxt}):`);
@@ -859,7 +861,7 @@ function calcularColumna(d, m) {
     if (fx.necesita) { r.lamv = fx.lamv; if (fx.lamv > 50) r.avisos.push(`La esbeltez de volcamiento λ<sub>v</sub> = ${fmt(fx.lamv, 1)} supera 50 (8.2.1.8).`); }
     m.h("Flexión por viento — 8.2.2 y 11.3");
     m.row("Módulo resistente ; tensión de trabajo: W<sub>x</sub> ; f<sub>fx</sub>", `${fmt(Wx, 1)} cm³ ; ${fmt(ffx, 2)} kgf/cm²`);
-    m.row("Tensiones de diseño (K<sub>D</sub> viento): F<sub>ft,dis</sub> ; F<sub>fv,dis</sub>", `${fmt(fx.Fft, 2)} ; ${fmt(fx.Ffv, 2)} kgf/cm²`);
+    m.row("Tensiones de diseño (K<sub>D</sub> viento): F<sub>ft,dis</sub> ; F<sub>fv,dis</sub>", `${fmt(fx.Fft, 2)} kgf/cm² ; ${fmt(fx.Ffv, 2)} kgf/cm²`);
     m.row("<b>Razón de flexión: f<sub>fx</sub> / F<sub>fx,dis</sub></b>", `<b>${fmt(r.flexV, 3)}</b> ${okTxt(r.flexV <= 1)}`);
     devFlexion();
     m.h("Cizalle por viento — 8.2.3");
@@ -867,7 +869,7 @@ function calcularColumna(d, m) {
     devCizalle();
     if (d.def) {
       m.h("Deformación por viento (flexión y corte) — 8.2.4");
-      m.row("Deformación por flexión ; por corte: δ<sub>V,f</sub> ; δ<sub>V,Q</sub>", `${fmt(r.dVf, 2)} ; ${fmt(r.dVq, 2)} mm`);
+      m.row("Deformación por flexión ; deformación por corte: δ<sub>V,f</sub> ; δ<sub>V,Q</sub>", `${fmt(r.dVf, 2)} mm ; ${fmt(r.dVq, 2)} mm`);
       m.row(`<b>Deformación lateral: δ<sub>V</sub> ≤ L/${d.def}</b>`, `<b>${fmt(r.dV, 2)} ≤ ${fmt(r.limV, 2)} mm</b> ${okTxt(r.dV <= r.limV)}`, "Tabla 6");
       devDef();
     }

@@ -533,10 +533,10 @@ function verificar(d, m) {
   const Pu = Math.abs(cu.P), Mxu = Math.abs(cu.Mx), Myu = Math.abs(cu.My);
   m.row("Brazo de las fuerzas horizontales: D<sub>f</sub> + h<sub>t</sub>", `${fmt(M(h), 2)} m`);
   m.eq(L`D_f + h_t = ${tn(M(d.Df), 2)} + ${tn(M(d.ht), 2)} = ${tn(M(h), 2)}\ \mathrm{m}`);
-  m.row("Cargas de servicio (ASD): P<sub>a</sub> ; H<sub>xa</sub> ; H<sub>ya</sub>", `${fmt(T(Pa), 2)} ; ${fmt(T(ca.Hx), 3)} ; ${fmt(T(ca.Hy), 3)} tf`);
-  m.row("Momentos de servicio en el sello (ASD): M<sub>xa</sub> ; M<sub>ya</sub>", `${fmt(TM(Mxa), 2)} ; ${fmt(TM(Mya), 2)} tf·m`);
+  m.row("Cargas de servicio (ASD): P<sub>a</sub> ; H<sub>xa</sub> ; H<sub>ya</sub>", `${fmt(T(Pa), 2)} tf ; ${fmt(T(ca.Hx), 3)} tf ; ${fmt(T(ca.Hy), 3)} tf`);
+  m.row("Momentos de servicio en el sello (ASD): M<sub>xa</sub> ; M<sub>ya</sub>", `${fmt(TM(Mxa), 2)} tf·m ; ${fmt(TM(Mya), 2)} tf·m`);
   m.eq(L`P_a = |P_D + P_L| = ${tn(T(Pa), 2)}\ \mathrm{tf} \qquad M_{xa} = |M_x + H_y\,(D_f + h_t)| = ${tn(TM(Mxa), 2)}\ \mathrm{tf\,m} \qquad M_{ya} = |M_y + H_x\,(D_f + h_t)| = ${tn(TM(Mya), 2)}\ \mathrm{tf\,m}`);
-  m.row("Solicitaciones mayoradas (LRFD): P<sub>u</sub> ; M<sub>xu</sub> ; M<sub>yu</sub>", `${fmt(T(Pu), 2)} tf ; ${fmt(TM(Mxu), 2)} ; ${fmt(TM(Myu), 2)} tf·m`, gob14 ? `1.4D (${aci("9-1", "5.3.1a")})` : "1.2D + 1.6L");
+  m.row("Solicitaciones mayoradas (LRFD): P<sub>u</sub> ; M<sub>xu</sub> ; M<sub>yu</sub>", `${fmt(T(Pu), 2)} tf ; ${fmt(TM(Mxu), 2)} tf·m ; ${fmt(TM(Myu), 2)} tf·m`, gob14 ? `1.4D (${aci("9-1", "5.3.1a")})` : "1.2D + 1.6L");
   m.eq(gob14
     ? L`P_u = |1.4\,P_D| = ${tn(T(Pu), 2)}\ \mathrm{tf} > |1.2\,P_D + 1.6\,P_L| = ${tn(T(Math.abs(cu16.P)), 2)}\ \mathrm{tf} \qquad M_{xu} = ${tn(TM(Mxu), 2)}\ \mathrm{tf\,m} \qquad M_{yu} = ${tn(TM(Myu), 2)}\ \mathrm{tf\,m}`
     : L`P_u = |1.2\,P_D + 1.6\,P_L| = ${tn(T(Pu), 2)}\ \mathrm{tf} \qquad M_{xu} = ${tn(TM(Mxu), 2)}\ \mathrm{tf\,m} \qquad M_{yu} = ${tn(TM(Myu), 2)}\ \mathrm{tf\,m}`);
@@ -594,13 +594,13 @@ function verificar(d, m) {
   const exa = Mya / Pa, eya = Mxa / Pa, nucleo = nav.kx + nav.ky;
   m.row("Área basal: A<sub>c</sub>", `${fmt(nav.A / 1e4, 2)} m²`);
   m.eq(L`A_c = B\,L = ${tn(M(B), 2)}\cdot ${tn(M(Ly), 2)} = ${tn(nav.A / 1e4, 2)}\ \mathrm{m^2}`);
-  m.row("Excentricidades de servicio: e<sub>xa</sub> ; e<sub>ya</sub>", `${fmt(M(exa), 3)} ; ${fmt(M(eya), 3)} m`);
+  m.row("Excentricidades de servicio: e<sub>xa</sub> ; e<sub>ya</sub>", `${fmt(M(exa), 3)} m ; ${fmt(M(eya), 3)} m`);
   m.row("Resultante dentro del núcleo central", `${fmt(nucleo, 3)} ${tagDC(nucleo)}`);
   m.eq(L`e_{xa} = \frac{M_{ya}}{P_a} = ${tn(M(exa), 3)}\ \mathrm{m} \qquad e_{ya} = \frac{M_{xa}}{P_a} = ${tn(M(eya), 3)}\ \mathrm{m} \qquad 6\,\frac{e_{xa}}{B} + 6\,\frac{e_{ya}}{L} = ${tn(nucleo, 3)} ${cmp(nucleo)} 1`);
   if (nucleo <= 1 + 1e-9) m.p(L`La resultante queda dentro del núcleo central: la distribución de tensiones es trapecial y toda la base está en compresión.`);
   else m.note("La resultante cae fuera del núcleo central: parte de la base se levanta y la fórmula de Navier deja de valer. Aumente las dimensiones.", L`La resultante cae fuera del núcleo central: parte de la base se levanta y la fórmula de Navier deja de ser válida; se deben aumentar las dimensiones.`);
   ck("Resultante en el núcleo central", L`$6e_x/B + 6e_y/L = ${tn(nucleo, 3)}$`, "1", nucleo, "Núcleo central");
-  m.row("Tensiones de servicio en las esquinas: σ<sub>1a</sub> ; σ<sub>2a</sub> ; σ<sub>3a</sub> ; σ<sub>4a</sub>", `${fmt(S(nav.s1), 2)} ; ${fmt(S(nav.s2), 2)} ; ${fmt(S(nav.s3), 2)} ; ${fmt(S(nav.s4), 2)} tf/m²`);
+  m.row("Tensiones de servicio en las esquinas: σ<sub>1a</sub> ; σ<sub>2a</sub> ; σ<sub>3a</sub> ; σ<sub>4a</sub>", `${fmt(S(nav.s1), 2)} tf/m² ; ${fmt(S(nav.s2), 2)} tf/m² ; ${fmt(S(nav.s3), 2)} tf/m² ; ${fmt(S(nav.s4), 2)} tf/m²`);
   m.eq(L`\sigma_{ia} = \frac{P_a}{A_c}\left(1 \pm \frac{6\,e_{xa}}{B} \pm \frac{6\,e_{ya}}{L}\right) \;\Rightarrow\; \sigma_{1a} = ${tn(S(nav.s1), 2)},\ \sigma_{2a} = ${tn(S(nav.s2), 2)},\ \sigma_{3a} = ${tn(S(nav.s3), 2)},\ \sigma_{4a} = ${tn(S(nav.s4), 2)}\ \mathrm{tf/m^2}`);
   const dcS = nav.s1 / sna;
   m.row("Tensión máxima de servicio: σ<sub>1a</sub> ≤ σ<sub>na</sub>", `${fmt(S(nav.s1), 2)} ≤ ${fmt(S(sna), 2)} tf/m² ${tagDC(dcS)}`);
@@ -613,9 +613,9 @@ function verificar(d, m) {
   const nu = navier(Pu, Myu / Pu, Mxu / Pu, B, Ly);
   m.row("Altura útil: d", `${fmt(dEf, 1)} cm`, "criterio del curso");
   m.eq(L`d = h_c - r = ${tn(d.hc, 1)} - ${tn(d.rec, 1)} = ${tn(dEf, 1)}\ \mathrm{cm}`);
-  m.row("Excentricidades mayoradas ; razón del núcleo central: e<sub>xu</sub> ; e<sub>yu</sub> ; D/C", `${fmt(M(Myu / Pu), 3)} ; ${fmt(M(Mxu / Pu), 3)} m ; ${fmt(nu.kx + nu.ky, 3)}`);
+  m.row("Excentricidad mayorada en x ; excentricidad mayorada en y ; razón del núcleo central: e<sub>xu</sub> ; e<sub>yu</sub> ; D/C", `${fmt(M(Myu / Pu), 3)} m ; ${fmt(M(Mxu / Pu), 3)} m ; ${fmt(nu.kx + nu.ky, 3)}`);
   m.eq(L`e_{xu} = \frac{M_{yu}}{P_u} = ${tn(M(Myu / Pu), 3)}\ \mathrm{m} \qquad e_{yu} = \frac{M_{xu}}{P_u} = ${tn(M(Mxu / Pu), 3)}\ \mathrm{m} \qquad 6\,\frac{e_{xu}}{B} + 6\,\frac{e_{yu}}{L} = ${tn(nu.kx + nu.ky, 3)}`);
-  m.row("Tensiones mayoradas en las esquinas: σ<sub>1u</sub> ; σ<sub>2u</sub> ; σ<sub>3u</sub> ; σ<sub>4u</sub>", `${fmt(S(nu.s1), 2)} ; ${fmt(S(nu.s2), 2)} ; ${fmt(S(nu.s3), 2)} ; ${fmt(S(nu.s4), 2)} tf/m²`);
+  m.row("Tensiones mayoradas en las esquinas: σ<sub>1u</sub> ; σ<sub>2u</sub> ; σ<sub>3u</sub> ; σ<sub>4u</sub>", `${fmt(S(nu.s1), 2)} tf/m² ; ${fmt(S(nu.s2), 2)} tf/m² ; ${fmt(S(nu.s3), 2)} tf/m² ; ${fmt(S(nu.s4), 2)} tf/m²`);
   m.eq(L`\sigma_{iu} = \frac{P_u}{A_c}\left(1 \pm \frac{6\,e_{xu}}{B} \pm \frac{6\,e_{yu}}{L}\right) \;\Rightarrow\; \sigma_{1u} = ${tn(S(nu.s1), 2)},\ \sigma_{2u} = ${tn(S(nu.s2), 2)},\ \sigma_{3u} = ${tn(S(nu.s3), 2)},\ \sigma_{4u} = ${tn(S(nu.s4), 2)}\ \mathrm{tf/m^2}`);
   const nucU = nu.kx + nu.ky;
   if (nucU > 1 + 1e-9) m.note("La resultante mayorada cae fuera del núcleo central: las presiones de Navier dejan de valer y subestiman el corte y la flexión. Aumente las dimensiones.", L`La resultante mayorada cae fuera del núcleo central: las presiones de Navier dejan de ser válidas y subestiman el corte y la flexión; se deben aumentar las dimensiones.`);
@@ -691,7 +691,7 @@ function verificar(d, m) {
   if (MxT + MyT > 0) {
     memoGrupo(m, "Transferencia de momento (complemento ACI)", "zap-p-mom", { resumen: tagDC(dcPM) });
     m.p(L`El procedimiento del curso no considera el momento que la columna transfiere a la zapata. Como complemento, se agrega la fracción $\gamma_v$ de ese momento (en el coronamiento de la zapata) transferida por corte excéntrico (${aci("11.11.7.2", "8.4.4.2")}).`);
-    m.row("Momentos en el coronamiento de la zapata: M<sub>x</sub> ; M<sub>y</sub>", `${fmt(TM(MxT), 2)} ; ${fmt(TM(MyT), 2)} tf·m`);
+    m.row("Momentos en el coronamiento de la zapata: M<sub>x</sub> ; M<sub>y</sub>", `${fmt(TM(MxT), 2)} tf·m ; ${fmt(TM(MyT), 2)} tf·m`);
     m.eq(L`M_x = \left|M_{xu,c} + H_{yu}\,(h_t + D_f - h_c)\right| = ${tn(TM(MxT), 2)}\ \mathrm{tf\,m} \qquad M_y = \left|M_{yu,c} + H_{xu}\,(h_t + D_f - h_c)\right| = ${tn(TM(MyT), 2)}\ \mathrm{tf\,m}`);
     m.row("Tensión de corte con transferencia de momento: v<sub>u</sub> ≤ 𝜙v<sub>c</sub>", `${fmt(S(vuM), 1)} ≤ ${fmt(S(PHI_V * Vcp / (bo * dEf)), 1)} tf/m² ${tagDC(dcPM)}`, aci("11.11.7.2", "8.4.4.2.3"));
     m.eq(L`v_u = \frac{V_u}{b_0 d} + \frac{\gamma_{v}\,M_y\,c}{J_c} + \frac{\gamma_{v}\,M_x\,c}{J_c} = ${tn(S(vuM), 1)}\ \mathrm{tf/m^2} \qquad \gamma_v = 1 - \frac{1}{1 + \frac{2}{3}\sqrt{b_1/b_2}} \qquad \phi v_c = \frac{\phi V_c}{b_0 d} = ${tn(S(PHI_V * Vcp / (bo * dEf)), 1)}\ \mathrm{tf/m^2} \qquad \frac{v_u}{\phi v_c} = ${tn(dcPM, 3)} ${cmp(dcPM)} 1`, aci("11.11.7.2", "8.4.4.2.3"));
@@ -776,7 +776,7 @@ function sismico(d, m, r, sis) {
   const Wc = d.gh * B * Ly * d.hc, Ws = d.gs * B * Ly * (d.Df - d.hc), W = Wc + Ws;
   m.sub("Pesos propios");
   m.p(L`Con sismo no se desprecian los pesos de la zapata ni del suelo sobre ella, porque estabilizan frente al volcamiento. El peso del pedestal se asimila al del suelo que reemplaza. Se suman a la carga muerta en todas las combinaciones.`);
-  m.row("Peso de la zapata ; peso del suelo sobre ella: W<sub>c</sub> ; W<sub>s</sub>", `${fmt(T(Wc), 2)} ; ${fmt(T(Ws), 2)} tf`);
+  m.row("Peso de la zapata ; peso del suelo sobre ella: W<sub>c</sub> ; W<sub>s</sub>", `${fmt(T(Wc), 2)} tf ; ${fmt(T(Ws), 2)} tf`);
   m.eq(L`W_c = \gamma_h\,B\,L\,h_c = ${tn(T(Wc), 2)}\ \mathrm{tf} \qquad W_s = \gamma_s\,B\,L\,(D_f - h_c) = ${tn(T(Ws), 2)}\ \mathrm{tf}`);
   if (W <= 0) m.note("Con γ<sub>h</sub> = γ<sub>s</sub> = 0 la zapata no tiene peso estabilizante: ingrese los pesos específicos para el análisis sísmico.", L`Con $\gamma_h = \gamma_s = 0$ la zapata no tiene peso estabilizante; el análisis sísmico requiere los pesos específicos.`);
 

@@ -225,6 +225,7 @@ html.lat-corta { --ancho-lat: 64px; }
   .card { background: var(--sup); border-color: var(--linea); border-radius: var(--r-l); box-shadow: none; }
   .card .v { color: var(--acento); }
   .bar { height: 6px; border-radius: 3px; }
+  html[data-tema="oscuro"] .bar { background: var(--sup-3); }   /* pista de la barra D/C (las páginas la fijan clara) */
   .verdict { border-radius: var(--r-l); border-left: 4px solid currentColor; }
   .memo h3 { border-bottom-color: var(--acento); color: var(--acento); }
   .memo h4 { color: var(--acento); }

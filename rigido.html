@@ -483,7 +483,7 @@ function calcular(d, m) {
     });
     EE = tot;
     m.row("Factor direccional ; factor de pista: FD ; FP", `${fmt(d.FD, 2)} ; ${fmt(FP, 3)}`, "3.603.202(5)(6)");
-    det.forEach(x => m.row(`Vehículo ${x.n}: vehículos en el año de puesta en servicio ; en la vida de diseño ; EE`, `${fmt(x.t, 1)} ; ${fmt(x.T / 1e6, 3)}·10⁶ ; ${fmt(x.ee / 1e6, 3)}·10⁶`));
+    det.forEach(x => m.row(`Vehículo ${x.n}, vehículos en el año de puesta en servicio ; vehículo ${x.n}, vehículos en la vida de diseño ; vehículo ${x.n}, ejes equivalentes`, `${fmt(x.t, 1)} ; ${fmt(x.T / 1e6, 3)}·10⁶ ; ${fmt(x.ee / 1e6, 3)}·10⁶`));
     m.row("<b>Ejes equivalentes acumulados: EE</b>", `<b>${fmt(EE / 1e6, 3)} millones</b>`);
     m.p(L`Factor de pista: ${fpTxt.replace(/≈/g, L`$\approx$`)}. Para cada tipo de vehículo $j$ se calcula:`);
     m.eq(L`t_j = TMDA\cdot C_j\cdot (1 + i_j)^m\cdot FD\cdot FP \qquad T_j = \frac{(1 + i_j)^N - 1}{i_j}\cdot 365\cdot t_j \qquad EE = \sum T_j\cdot FEE_j`, "3.603.202(1)");
@@ -504,7 +504,7 @@ function calcular(d, m) {
   const ZRv = ZR[R];
   const S0 = d.S0man ?? fila[3][d.cv];
   const FR = 10 ** (-ZRv * S0);
-  m.row("Índices de serviciabilidad inicial ; final: p<sub>i</sub> ; p<sub>f</sub>", `${fmt(d.pi, 1)} ; ${fmt(d.pf, 1)}`, "Tabla 3.604.203.A");
+  m.row("Índice de serviciabilidad inicial ; índice de serviciabilidad final: p<sub>i</sub> ; p<sub>f</sub>", `${fmt(d.pi, 1)} ; ${fmt(d.pf, 1)}`, "Tabla 3.604.203.A");
   m.row("Nivel de confianza ; coeficiente estadístico: R ; Z<sub>R</sub>", `${R} % ; ${fmt(ZRv, 3)}`, "Tabla 3.603.204.A");
   m.row("Desviación estándar del error combinado: S<sub>0</sub>", `${fmt(S0, 2)}${d.S0man === null ? ` (CV = ${CV_TXT[d.cv]})` : " (ingresado)"}`, "Tabla 3.604.205.A");
   m.row("Factor de confiabilidad: F<sub>R</sub>", fmt(FR, 3), "3.603.204(1)");

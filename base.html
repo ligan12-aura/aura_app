@@ -677,7 +677,7 @@ function verificar(d, m) {
   m.row("Perfil de la columna", `${p.nombre} · d = ${fmt(MM(p.d), 0)} · b<sub>f</sub> = ${fmt(MM(p.bf), 0)} · t<sub>f</sub> = ${fmt(MM(p.tf), 1)} · t<sub>w</sub> = ${fmt(MM(p.tw), 1)} mm`);
   m.row("Placa base: N × B × t<sub>p</sub>", `${fmt(MM(d.N), 0)} × ${fmt(MM(d.B), 0)} × ${fmt(MM(d.tp), 0)} mm · ${ACEROS[d.acero].nombre}`);
   m.row("Pedestal: N<sub>p</sub> × B<sub>p</sub> ; f'<sub>c</sub>", `${fmt(MM(d.Np), 0)} × ${fmt(MM(d.Bp), 0)} mm ; ${fmt(d.fc, 0)} kgf/cm²`);
-  m.row("Cargas mayoradas: P<sub>u</sub> ; P<sub>u,mín</sub> ; V<sub>u</sub> ; T<sub>u</sub>", `${fmt(T(d.Pu), 2)} ; ${fmt(T(d.Pmin), 2)} ; ${fmt(T(d.Vu), 2)} ; ${fmt(T(d.Tu), 2)} tf`);
+  m.row("Cargas mayoradas: P<sub>u</sub> ; P<sub>u,mín</sub> ; V<sub>u</sub> ; T<sub>u</sub>", `${fmt(T(d.Pu), 2)} tf ; ${fmt(T(d.Pmin), 2)} tf ; ${fmt(T(d.Vu), 2)} tf ; ${fmt(T(d.Tu), 2)} tf`);
 
   // ---------- 2. Aplastamiento ----------
   m.h("Aplastamiento del hormigón");
@@ -701,7 +701,7 @@ function verificar(d, m) {
   const lnp = lam * Math.sqrt(p.d * p.bf) / 4, ell = Math.max(mV, nV, lnp);
   const treq = ell * Math.sqrt(2 * d.Pu / (PHI_T * d.Fy * d.B * d.N)), dcT = treq / d.tp;
   m.p(L`La placa se analiza como voladizos desde el perfil, con la presión uniforme $P_u/(B\,N)$, y entre las alas con el modelo de Thornton (factor $\lambda$). El espesor requerido corresponde al mayor voladizo $\ell = \max(m;\ n;\ \lambda n')$ (AISC Design Guide 1, sección 3.1).`);
-  m.row("Voladizos: m ; n", `${fmt(MM(mV), 1)} ; ${fmt(MM(nV), 1)} mm`, "DG1 3.1");
+  m.row("Voladizos: m ; n", `${fmt(MM(mV), 1)} mm ; ${fmt(MM(nV), 1)} mm`, "DG1 3.1");
   m.eq(L`m = \frac{N - 0.95\,d}{2} = \frac{${tn(d.N, 1)} - 0.95\cdot ${tn(p.d, 1)}}{2} = ${tn(mV, 2)}\ \mathrm{cm} \qquad n = \frac{B - 0.8\,b_f}{2} = \frac{${tn(d.B, 1)} - 0.8\cdot ${tn(p.bf, 1)}}{2} = ${tn(nV, 2)}\ \mathrm{cm}`);
   m.row("Zona entre alas: X ; λ ; λn'", `${fmt(X, 3)} ; ${fmt(lam, 3)} ; ${fmt(MM(lnp), 1)} mm`, "DG1 3.1");
   m.eq(L`X = \frac{4\,d\,b_f}{(d + b_f)^2}\,\frac{P_u}{\phi_c P_p} = ${tn(X, 3)} \qquad \lambda = \frac{2\sqrt{X}}{1 + \sqrt{1 - X}} = ${tn(lam, 3)} \le 1 \qquad \lambda n' = \lambda\,\frac{\sqrt{d\,b_f}}{4} = ${tn(lnp, 2)}\ \mathrm{cm}`);
@@ -736,8 +736,8 @@ function verificar(d, m) {
   const eN = (d.N - d.s1) / 2, eB = (d.B - d.s2) / 2, ca1 = (d.Np - d.s1) / 2, ca2 = (d.Bp - d.s2) / 2;
   const caMin = Math.min(ca1, ca2);
   const okC = d.torque ? caMin >= 6 * d.db - 1e-9 : caMin - d.db / 2 >= cub - 1e-9;
-  m.row("Borde de la placa: (N − s<sub>1</sub>)/2 ; (B − s<sub>2</sub>)/2", `${fmt(MM(eN), 0)} ; ${fmt(MM(eB), 0)} mm`);
-  m.row("Borde del pedestal: c<sub>a1</sub> (según el corte) ; c<sub>a2</sub>", `${fmt(MM(ca1), 0)} ; ${fmt(MM(ca2), 0)} mm`);
+  m.row("Borde de la placa: (N − s<sub>1</sub>)/2 ; (B − s<sub>2</sub>)/2", `${fmt(MM(eN), 0)} mm ; ${fmt(MM(eB), 0)} mm`);
+  m.row("Borde del pedestal: c<sub>a1</sub> (según el corte) ; c<sub>a2</sub>", `${fmt(MM(ca1), 0)} mm ; ${fmt(MM(ca2), 0)} mm`);
   m.row(d.torque ? "Distancia mínima al borde con torque: c<sub>a,mín</sub> ≥ 6d<sub>a</sub>" : "Distancia mínima al borde sin torque: recubrimiento del perno ≥ recubrimiento mínimo",
     d.torque ? `${fmt(MM(caMin), 0)} ≥ ${fmt(MM(6 * d.db), 0)} mm ${tag(okC, okC ? "Cumple" : "No cumple")}` : `${fmt(MM(caMin - d.db / 2), 0)} ≥ ${fmt(MM(cub), 0)} mm ${tag(okC, okC ? "Cumple" : "No cumple")}`, "ACI 318-08 D.8.2");
   if (!d.torque) m.p(L`Sin torque, la distancia mínima al borde se basa en el recubrimiento de 7.7: se usa ${tn(MM(cub), 0)} mm, el de hormigón expuesto a la intemperie o en contacto con el suelo para el diámetro del perno (7.7.1c).`);
@@ -832,7 +832,7 @@ function verificar(d, m) {
     ck("Soldadura de las golillas", L`$V_u/4 = ${tn(T(demG), 2)}$ tf`, L`$\phi R_n = ${tn(T(phiRg), 2)}$ tf`, dcG, "v");
     const tgm = MM(Math.min(d.tg, d.tp)), wgMin = (tgm <= 6 ? 3 : tgm <= 13 ? 5 : tgm <= 19 ? 6 : 8) / 10;
     const wgMax = MM(d.tg) < 6 ? d.tg : d.tg - 0.2, okWg = d.wg >= wgMin - 1e-9 && d.wg <= wgMax + 1e-9;
-    m.row("Filete de la golilla: mínimo ; máximo en su borde", `${fmt(MM(wgMin), 0)} ; ${fmt(MM(wgMax), 0)} mm ${tag(okWg, okWg ? "Cumple" : "No cumple")}`, "AISC 360-16 Tabla J2.4, J2.2b");
+    m.row("Filete mínimo de la golilla ; filete máximo en el borde de la golilla", `${fmt(MM(wgMin), 0)} mm ; ${fmt(MM(wgMax), 0)} mm ${tag(okWg, okWg ? "Cumple" : "No cumple")}`, "AISC 360-16 Tabla J2.4, J2.2b");
     m.p(L`El máximo de J2.2b aplica aquí porque el filete corre a lo largo del borde de la golilla, apoyada sobre la placa.`);
     if (!okWg) motivos.push(d.wg < wgMin ? `filete de las golillas menor que el mínimo (${fmt(MM(wgMin), 0)} mm)` : `filete de las golillas mayor que el máximo (${fmt(MM(wgMax), 0)} mm)`);
     if (casos.some(c => c.dc > 1 + 1e-9)) m.note("El cono de hormigón no resiste el corte. Opciones: tomar el corte por roce (solo con compresión permanente), usar una llave de corte o disponer armadura de anclaje para corte en el pedestal (D.6.2.9, no calculada aquí).", L`El cono de hormigón no resiste el corte: tomar el corte por roce (solo con compresión permanente), usar una llave de corte o disponer armadura de anclaje para corte en el pedestal (ACI 318-08 D.6.2.9).`);
@@ -933,7 +933,7 @@ function verificar(d, m) {
       : Math.min(xT, d.s1 / 2) + Math.min(xT, d.N / 2 - xPb);
     const treqT = Math.sqrt(4 * Nua * xT / (PHI_T * d.Fy * bef)), dcTT = treqT / d.tp;
     m.p(L`Cada perno tira de la placa, que trabaja en voladizo desde la cara del perfil más cercana (${haciaAla ? "el ala" : "el alma"}, a una distancia $x$). El ancho efectivo se reparte a 45° (AISC Design Guide 1), con hasta $x$ a cada lado del perno, limitado por la mitad de la separación al perno vecino y por el borde de la placa. No se considera el efecto de palanca.`);
-    m.row("Brazo y ancho efectivo: x ; b<sub>ef</sub>", `${fmt(MM(xT), 1)} ; ${fmt(MM(bef), 1)} mm`, "DG1 3.4");
+    m.row("Brazo y ancho efectivo: x ; b<sub>ef</sub>", `${fmt(MM(xT), 1)} mm ; ${fmt(MM(bef), 1)} mm`, "DG1 3.4");
     m.eq(haciaAla
       ? L`b_{ef} = \min(x;\ s_2/2) + \min(x;\ B/2 - s_2/2) = \min(${tn(MM(xT), 1)};\ ${tn(MM(d.s2 / 2), 1)}) + \min(${tn(MM(xT), 1)};\ ${tn(MM(d.B / 2 - zPb), 1)}) = ${tn(MM(bef), 1)}\ \mathrm{mm}`
       : L`b_{ef} = \min(x;\ s_1/2) + \min(x;\ N/2 - s_1/2) = \min(${tn(MM(xT), 1)};\ ${tn(MM(d.s1 / 2), 1)}) + \min(${tn(MM(xT), 1)};\ ${tn(MM(d.N / 2 - xPb), 1)}) = ${tn(MM(bef), 1)}\ \mathrm{mm}`);
@@ -980,7 +980,7 @@ function verificar(d, m) {
     ? L`Con contacto pleno entre el extremo de la columna y la placa, la compresión se transmite por apoyo directo (Especificación ICHA 13.1.4) y la soldadura de filete en todo el contorno toma el corte, asignado a los cordones del alma.`
     : L`Sin contacto pleno, la soldadura de filete en todo el contorno toma la compresión $P_u$ repartida en su largo y el corte en los cordones del alma; se verifica la resultante por unidad de largo.`);
   if (d.Tu > 0) m.p(L`Con levantamiento, la soldadura transmite además la tracción $T_u = ${tn(T(d.Tu), 2)}$ tf, repartida en todo el contorno; se usa la mayor fuerza axial: $P_w = ${tn(T(Pw), 2)}$ tf.`);
-  m.row("Largos de cordón: alma (2 lados) ; contorno total", `${fmt(MM(Lw), 0)} ; ${fmt(MM(Lt), 0)} mm`);
+  m.row("Largos de cordón: alma (2 lados) ; contorno total", `${fmt(MM(Lw), 0)} mm ; ${fmt(MM(Lt), 0)} mm`);
   m.eq(L`L_w = 2\,(d - 2t_f - 2r) = ${tn(MM(Lw), 0)}\ \mathrm{mm} \qquad L_t = L_w + 2b_f + 2(b_f - t_w) = ${tn(MM(Lt), 0)}\ \mathrm{mm}`);
   m.row("Resistencia por unidad de largo: 𝜙r<sub>n</sub>", `${fmt(rn, 1)} kgf/cm`, "AISC 360-16 J2-4");
   m.eq(L`\phi r_n = \phi\,0.60\,F_{EXX}\,(0.707\,w) = 0.75\cdot 0.60\cdot ${tn(d.fexx, 0)}\cdot 0.707\cdot ${tn(d.w, 2)} = ${tn(rn, 1)}\ \mathrm{kgf/cm}`, "J2-4");
@@ -997,7 +997,7 @@ function verificar(d, m) {
   const wMinAlma = wTabla(Math.min(p.tw, d.tp)), wMinAla = wTabla(Math.min(p.tf, d.tp)), wMin = Math.max(wMinAlma, wMinAla);
   const wMinAnt = wTabla(Math.max(p.tf, d.tp));
   const okMin = d.w >= wMin - 1e-9;
-  m.row("Tamaño mínimo del filete: alma ; alas", `${fmt(MM(wMinAlma), 0)} ; ${fmt(MM(wMinAla), 0)} mm ${tag(okMin, okMin ? "Cumple" : "No cumple")}`, "AISC 360-16 Tabla J2.4");
+  m.row("Tamaño mínimo del filete del alma ; tamaño mínimo del filete de las alas", `${fmt(MM(wMinAlma), 0)} mm ; ${fmt(MM(wMinAla), 0)} mm ${tag(okMin, okMin ? "Cumple" : "No cumple")}`, "AISC 360-16 Tabla J2.4");
   m.eq(L`w_{m\acute{i}n} = \max\left[w(\min(t_w;\ t_p));\ w(\min(t_f;\ t_p))\right] = \max(${tn(MM(wMinAlma), 0)};\ ${tn(MM(wMinAla), 0)}) = ${tn(MM(wMin), 0)}\ \mathrm{mm} \qquad w = ${tn(MM(d.w), 0)}\ \mathrm{mm}`, "Tabla J2.4");
   m.p(L`El tamaño máximo de J2.2b se refiere a filetes a lo largo de los bordes de una plancha en uniones traslapadas; no aplica a esta unión en T.`);
   if (d.w < wMinAnt - 1e-9) m.note(`La especificación anterior (AISC de los 90, base del Manual ICHA) fija el mínimo con la parte más gruesa: ${fmt(MM(wMinAnt), 0)} mm. Si el proyecto la exige, aumente el filete.`, L`La especificación anterior (AISC de los 90, base del Manual ICHA) fija el mínimo con la parte más gruesa: ${tn(MM(wMinAnt), 0)} mm.`);
@@ -1117,8 +1117,8 @@ ${d.resumenComb.map(c => `${c.i}${c.i === d.comb ? "*" : ""} & ${tn(T(c.Pu), 2)}
   if (!okS) motivos.push("separación entre pernos menor que la mínima");
   const eN = d.N / 2 - d.f, eB = (d.B - d.s2) / 2, ca1 = d.Np / 2 - d.f, ca2 = (d.Bp - d.s2) / 2, caMin = Math.min(ca1, ca2);
   const okC = d.torque ? caMin >= 6 * d.db - 1e-9 : caMin - d.db / 2 >= cub - 1e-9;
-  m.row("Borde de la placa: N/2 − f ; (B − s<sub>2</sub>)/2", `${fmt(MM(eN), 0)} ; ${fmt(MM(eB), 0)} mm`);
-  m.row("Borde del pedestal: c<sub>a1</sub> = N<sub>p</sub>/2 − f ; c<sub>a2</sub>", `${fmt(MM(ca1), 0)} ; ${fmt(MM(ca2), 0)} mm`);
+  m.row("Borde de la placa: N/2 − f ; (B − s<sub>2</sub>)/2", `${fmt(MM(eN), 0)} mm ; ${fmt(MM(eB), 0)} mm`);
+  m.row("Borde del pedestal: c<sub>a1</sub> = N<sub>p</sub>/2 − f ; c<sub>a2</sub>", `${fmt(MM(ca1), 0)} mm ; ${fmt(MM(ca2), 0)} mm`);
   m.row(d.torque ? "Distancia mínima al borde con torque: c<sub>a,mín</sub> ≥ 6d<sub>a</sub>" : "Distancia mínima al borde sin torque: recubrimiento del perno ≥ recubrimiento mínimo",
     d.torque ? `${fmt(MM(caMin), 0)} ≥ ${fmt(MM(6 * d.db), 0)} mm ${tag(okC, okC ? "Cumple" : "No cumple")}` : `${fmt(MM(caMin - d.db / 2), 0)} ≥ ${fmt(MM(cub), 0)} mm ${tag(okC, okC ? "Cumple" : "No cumple")}`, "ACI 318-08 D.8.2");
   if (!okC) motivos.push("pernos demasiado cerca del borde del pedestal");
@@ -1157,7 +1157,7 @@ ${d.resumenComb.map(c => `${c.i}${c.i === d.comb ? "*" : ""} & ${tn(T(c.Pu), 2)}
   Object.assign(r, g);
   m.row("Carga lineal máxima: q<sub>máx</sub>", `${fmt(g.qMax, 1)} kgf/cm`);
   m.eq(L`q_{m\acute{a}x} = f_{p,m\acute{a}x}\,B = ${tn(fpMax, 1)}\cdot ${tn(d.B, 1)} = ${tn(g.qMax, 1)}\ \mathrm{kgf/cm}`);
-  m.row("Excentricidad: e ; e<sub>crít</sub>", `${fmt(MM(g.e), 1)} ; ${fmt(MM(g.eCrit), 1)} mm · ${g.grande ? "momento grande" : "momento pequeño"}`, g.grande ? "DG1 3.4" : "DG1 3.3");
+  m.row("Excentricidad: e ; e<sub>crít</sub>", `${fmt(MM(g.e), 1)} mm ; ${fmt(MM(g.eCrit), 1)} mm · ${g.grande ? "momento grande" : "momento pequeño"}`, g.grande ? "DG1 3.4" : "DG1 3.3");
   if (g.aplastada) {
     m.row("Aplastamiento de toda la placa: P<sub>u</sub> ≤ q<sub>máx</sub> N", `${fmt(T(d.Pu), 2)} ≤ ${fmt(T(g.qMax * d.N), 2)} tf ${tagDC(g.dcAp)}`, d.phic === 0.65 ? "AISC 360-16 J8-2" : "Espec. ICHA 13.9.2");
     m.eq(L`q_{m\acute{a}x}\,N = ${tn(g.qMax, 1)}\cdot ${tn(d.N, 1)} = ${tn(T(g.qMax * d.N), 2)}\ \mathrm{tf} \qquad \frac{P_u}{q_{m\acute{a}x} N} = ${tn(g.dcAp, 3)} > 1.0`);
@@ -1196,13 +1196,13 @@ ${d.resumenComb.map(c => `${c.i}${c.i === d.comb ? "*" : ""} & ${tn(T(c.Pu), 2)}
     ? L`Y \ge ${nom}:\quad t_{${nom}} = ${nom}\sqrt{\frac{2\,f_p}{\phi\,F_y}} = ${tn(l, 2)}\sqrt{\frac{2\cdot ${tn(fp, 1)}}{0.90\cdot ${tn(d.Fy, 0)}}} = ${tn(t, 2)}\ \mathrm{cm}`
     : L`Y < ${nom}:\quad t_{${nom}} = \sqrt{\frac{4\,f_p\,Y\,(${nom} - Y/2)}{\phi\,F_y}} = \sqrt{\frac{4\cdot ${tn(fp, 1)}\cdot ${tn(g.Y, 2)}\,(${tn(l, 2)} - ${tn(g.Y / 2, 2)})}{0.90\cdot ${tn(d.Fy, 0)}}} = ${tn(t, 2)}\ \mathrm{cm}`);
   m.p(L`En el lado comprimido la placa trabaja como voladizo desde el perfil con la presión $f_p${g.grande ? L` = f_{p,m\acute{a}x}` : ""}$ en el largo $Y$; se evalúa con el voladizo $m$ y, como indica la Design Guide 1, también con $n$ en su lugar (las expresiones con $\phi = 0.90$ equivalen a los coeficientes 1.5 y 2.11 de la guía).${g.Tu > 0 ? L` En el lado traccionado, la fila de pernos flexiona la placa con el brazo $x = f - d/2 + t_f/2$ y el ancho $B$.` : ""}`);
-  m.row("Voladizos: m ; n", `${fmt(MM(mV), 1)} ; ${fmt(MM(nV), 1)} mm`);
+  m.row("Voladizos: m ; n", `${fmt(MM(mV), 1)} mm ; ${fmt(MM(nV), 1)} mm`);
   m.eq(L`m = \frac{N - 0.95\,d}{2} = ${tn(mV, 2)}\ \mathrm{cm} \qquad n = \frac{B - 0.8\,b_f}{2} = ${tn(nV, 2)}\ \mathrm{cm}`);
-  m.row("Lado comprimido: t<sub>m</sub> ; t<sub>n</sub>", `${fmt(MM(g.tm), 1)} ; ${fmt(MM(g.tn), 1)} mm`, g.grande ? "DG1 3.4" : "DG1 3.3");
+  m.row("Lado comprimido: t<sub>m</sub> ; t<sub>n</sub>", `${fmt(MM(g.tm), 1)} mm ; ${fmt(MM(g.tn), 1)} mm`, g.grande ? "DG1 3.4" : "DG1 3.3");
   m.eq(eqApoyo(mV, "m", g.tm));
   m.eq(eqApoyo(nV, "n", g.tn));
   if (g.Tu > 0) {
-    m.row("Lado traccionado: x ; t<sub>T</sub>", `${fmt(MM(g.x), 1)} ; ${fmt(MM(g.tT), 1)} mm`, "DG1 3.4");
+    m.row("Lado traccionado: x ; t<sub>T</sub>", `${fmt(MM(g.x), 1)} mm ; ${fmt(MM(g.tT), 1)} mm`, "DG1 3.4");
     m.eq(L`x = f - \frac{d}{2} + \frac{t_f}{2} = ${tn(g.x, 2)}\ \mathrm{cm} \qquad t_T = \sqrt{\frac{4\,T_u\,x}{\phi\,F_y\,B}} = \sqrt{\frac{4\cdot ${tn(g.Tu, 0)}\cdot ${tn(g.x, 2)}}{0.90\cdot ${tn(d.Fy, 0)}\cdot ${tn(d.B, 1)}}} = ${tn(g.tT, 2)}\ \mathrm{cm}`);
   }
   const dcT = g.treq / d.tp;
@@ -1273,7 +1273,7 @@ ${d.resumenComb.map(c => `${c.i}${c.i === d.comb ? "*" : ""} & ${tn(T(c.Pu), 2)}
     ck("Soldadura de las golillas", L`$V_u/${nT} = ${tn(T(demG), 2)}$ tf`, L`$\phi R_n = ${tn(T(phiRg), 2)}$ tf`, dcG, "v");
     const tgm = MM(Math.min(d.tg, d.tp)), wgMin = (tgm <= 6 ? 3 : tgm <= 13 ? 5 : tgm <= 19 ? 6 : 8) / 10;
     const wgMax = MM(d.tg) < 6 ? d.tg : d.tg - 0.2, okWg = d.wg >= wgMin - 1e-9 && d.wg <= wgMax + 1e-9;
-    m.row("Filete de la golilla: mínimo ; máximo en su borde", `${fmt(MM(wgMin), 0)} ; ${fmt(MM(wgMax), 0)} mm ${tag(okWg, okWg ? "Cumple" : "No cumple")}`, "AISC 360-16 Tabla J2.4, J2.2b");
+    m.row("Filete mínimo de la golilla ; filete máximo en el borde de la golilla", `${fmt(MM(wgMin), 0)} mm ; ${fmt(MM(wgMax), 0)} mm ${tag(okWg, okWg ? "Cumple" : "No cumple")}`, "AISC 360-16 Tabla J2.4, J2.2b");
     if (!okWg) motivos.push(d.wg < wgMin ? `filete de las golillas menor que el mínimo (${fmt(MM(wgMin), 0)} mm)` : `filete de las golillas mayor que el máximo (${fmt(MM(wgMax), 0)} mm)`);
     Object.assign(r, { Ase, futa, phiVsa, casos, pr, phiVcp });
   }
@@ -1387,7 +1387,7 @@ ${d.resumenComb.map(c => `${c.i}${c.i === d.comb ? "*" : ""} & ${tn(T(c.Pu), 2)}
   const Fala = d.Mu / (p.d - p.tf), Ft = Fala - d.Pu / 2, Fc = Fala + d.Pu / 2;
   const Fw = Math.max(d.contacto ? 0 : Fc, Ft, 0);
   m.p(L`El momento pasa por las alas como un par de fuerzas de brazo $d - t_f$, y la compresión se reparte por mitades: el ala traccionada lleva $M_u/(d - t_f) - P_u/2$ y la comprimida $M_u/(d - t_f) + P_u/2$. ${d.contacto ? "Con contacto pleno, la compresión pasa por apoyo directo (Especificación ICHA 13.1.4) y la soldadura del ala toma la tracción." : "Sin contacto pleno, la soldadura del ala toma la mayor de las dos fuerzas."} El alma toma el corte.`);
-  m.row("Fuerzas en las alas: traccionada ; comprimida", `${fmt(T(Ft), 2)} ; ${fmt(T(Fc), 2)} tf`);
+  m.row("Fuerzas en las alas: traccionada ; comprimida", `${fmt(T(Ft), 2)} tf ; ${fmt(T(Fc), 2)} tf`);
   m.eq(L`F_{ala} = \frac{M_u}{d - t_f} \pm \frac{P_u}{2} = \frac{${tn(d.Mu, 0)}}{${tn(p.d - p.tf, 2)}} \pm \frac{${tn(d.Pu, 0)}}{2} = ${tn(T(Ft), 2)}\ ;\ ${tn(T(Fc), 2)}\ \mathrm{tf}`);
   if (Fw <= 0) m.p(L`Ninguna ala queda traccionada${d.contacto ? "" : " y la compresión es nula"}: la soldadura de las alas no recibe fuerza en esta combinación.`);
   else if (d.soldAla === "cjp") {
@@ -1414,7 +1414,7 @@ ${d.resumenComb.map(c => `${c.i}${c.i === d.comb ? "*" : ""} & ${tn(T(c.Pu), 2)}
   const wTabla = (tcm) => { const t = MM(tcm); return (t <= 6 ? 3 : t <= 13 ? 5 : t <= 19 ? 6 : 8) / 10; };
   const wMinAlma = wTabla(Math.min(p.tw, d.tp)), wMinAla = d.soldAla === "filete" ? wTabla(Math.min(p.tf, d.tp)) : 0, wMin = Math.max(wMinAlma, wMinAla);
   const okMin = d.w >= wMin - 1e-9;
-  m.row(d.soldAla === "filete" ? "Tamaño mínimo del filete: alma ; alas" : "Tamaño mínimo del filete del alma", `${d.soldAla === "filete" ? fmt(MM(wMinAlma), 0) + " ; " + fmt(MM(wMinAla), 0) : fmt(MM(wMinAlma), 0)} mm ${tag(okMin, okMin ? "Cumple" : "No cumple")}`, "AISC 360-16 Tabla J2.4");
+  m.row(d.soldAla === "filete" ? "Tamaño mínimo del filete del alma ; tamaño mínimo del filete de las alas" : "Tamaño mínimo del filete del alma", `${d.soldAla === "filete" ? fmt(MM(wMinAlma), 0) + " mm ; " + fmt(MM(wMinAla), 0) : fmt(MM(wMinAlma), 0)} mm ${tag(okMin, okMin ? "Cumple" : "No cumple")}`, "AISC 360-16 Tabla J2.4");
   if (!okMin) motivos.push(`filete menor que el mínimo (${fmt(MM(wMin), 0)} mm)`);
   m.p(L`Las placas atiesadoras (sillas) para momentos grandes no se consideran en esta versión.`);
   Object.assign(r, { hw, Lw, Lala, rn, Fala, Ft, Fc, Fw, phiVy, wMin });

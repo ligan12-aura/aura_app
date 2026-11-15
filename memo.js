@@ -205,24 +205,54 @@ function memoGrupo(m, titulo, clave, op = {}) {
 // clave → abierto (lo que el usuario abrió o cerró), recordado al recalcular. Al cargar la página o cambiar de
 // programa (evento "aura:programa" de lateral.js) se olvida y todos los acordeones parten cerrados.
 const acordAbiertos = new Map();
-// Símbolo junto al valor (cada página lo activa con window.AURA_SIMBOLO_EN_VALOR): la fila
-// "Momento último: M<sub>u</sub>" | "5 470.0 kgf·m" se muestra como "Momento último" | "M<sub>u</sub> = 5 470.0 kgf·m",
-// con el símbolo destacado. Solo si la etiqueta termina en un símbolo único (sin « ; » ni condiciones como ≤).
+// Formato de las filas de resultados, en todas las páginas (una página lo desactiva con
+// window.AURA_SIMBOLO_EN_VALOR = false):
+//  1) una fila por resultado: "Luz corta ; luz larga: l_x ; l_y" | "4.00 m ; 5.00 m" se muestra en dos filas (cada
+//     valor debe llevar su unidad: no se copia, porque "ρ ; A_s" con "0.0033 ; 4.6 cm²" la tomaría mal);
+//  2) sin negrita en etiquetas ni valores;
+//  3) símbolo junto al valor y destacado: "Momento último" | "M_u = 5 470.0 kgf·m" (no en condiciones como ≤);
+//  4) factor de reducción sin ceros de sobra: "𝜙 = 0.90" → "𝜙 = 0.9".
+// Solo cambia la pantalla: la memoria .tex no usa las filas.
+const mayuscula = (t) => t.replace(/^([a-záéíóúñ])/, (c) => c.toUpperCase());
+function separarFila(it) {
+  const k = String(it.k), v = String(it.v);
+  if (!v.includes(" ; ")) return [it];
+  const i = k.lastIndexOf(": ");
+  // Sin símbolos ("Corte basal ; momento volcante en la base"): una fila por descripción
+  const descs = (i < 0 ? k : k.slice(0, i)).split(" ; "), sims = i < 0 ? descs.map(() => "") : k.slice(i + 2).split(" ; ");
+  const vals = v.split(" ; ");
+  // Lista entre paréntesis con un solo símbolo ("Factor por humedad (flexión ; cizalle ; E): K_H" | "1.0 ; 1.0 ; 1.0"):
+  // una fila por elemento de la lista, "Factor por humedad, flexión: K_H"
+  const lista = sims.length === 1 && i > 0 && k.slice(0, i).match(/^(.*?)\s*\(([^()]*)\)(.*)$/);
+  if (lista && lista[2].split(" ; ").length === vals.length && vals.length > 1) {
+    return lista[2].split(" ; ").map((x, j) => ({ ...it, ref: j ? "" : it.ref, k: `${lista[1]}, ${x.trim()}${lista[3]}: ${sims[0]}`, v: vals[j].trim() }));
+  }
+  const n = sims.length;
+  if (n < 2 || vals.length !== n || (descs.length !== n && descs.length !== 1)) return [it];
+  return sims.map((sim, j) => ({
+    ...it,
+    ref: j ? "" : it.ref,                   // la referencia, una vez
+    k: `${mayuscula((descs.length === n ? descs[j] : descs[0]).trim())}${sim ? `: ${sim.trim()}` : ""}`,
+    v: vals[j].trim(),
+  }));
+}
 function simboloEnValor(it) {
-  if (!window.AURA_SIMBOLO_EN_VALOR) return it;
-  let k = String(it.k), negrita = false;
-  const mb = k.match(/^<b>([\s\S]*)<\/b>$/);
-  if (mb) { k = mb[1]; negrita = true; }
+  const k = String(it.k), v = String(it.v).trim();
   const i = k.lastIndexOf(": ");
   if (i < 0) return it;
-  const desc = k.slice(0, i), sim = k.slice(i + 2), v = String(it.v);
-  const simTexto = sim.replace(/<\/?(sub|sup|b|i)>/g, "");
+  const desc = k.slice(0, i), sim = k.slice(i + 2);
+  const simTexto = sim.replace(/<\/?(sub|sup|i)>/g, "");
   if (!desc || !sim || / ; |[≤≥<>=]/.test(simTexto) || v.includes(" ; ")) return it;
-  return { ...it, k: negrita ? `<b>${desc}</b>` : desc, v: `<span class="simv">${sim}</span> = ${v}` };
+  if (simTexto.length > 24 || simTexto.trim().split(/\s+/).length > 3) return it;   // texto, no un símbolo
+  // 𝜙, 𝜙_b, 𝜙_c…: factor de reducción como número (0.90 → 0.9)
+  const val = /^\u{1D719}[A-Za-z]*$/u.test(simTexto) && /^0\.\d+$/.test(v) ? String(+v) : v;
+  return { ...it, k: desc, v: `<span class="simv">${sim}</span> = ${val}` };
 }
 function filaHTML(it, antes = "") {
-  const f = simboloEnValor(it);
-  return `<tr><td class="k">${antes}${f.k}${f.ref ? `<span class="ref">${f.ref}</span>` : ""}</td><td class="v">${f.v}</td></tr>`;
+  const limpia = { ...it, k: String(it.k).replace(/<\/?b>/g, ""), v: String(it.v).replace(/<\/?b>/g, "") };
+  const formato = window.AURA_SIMBOLO_EN_VALOR !== false;
+  const partes = formato ? separarFila(limpia).map(simboloEnValor) : [it];
+  return partes.map((f, j) => `<tr><td class="k">${j ? "" : antes}${f.k}${f.ref ? `<span class="ref">${f.ref}</span>` : ""}</td><td class="v">${f.v}</td></tr>`).join("");
 }
 function acordeonHTML(gr, items) {
   if (!items.length) return "";             // bloque sin contenido (por ejemplo, una sección sin elementos que clasificar)

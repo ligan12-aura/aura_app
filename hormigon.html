@@ -451,7 +451,6 @@ const NOMEMO = { h() {}, sub() {}, row() {}, note() {}, eq() {}, p() {} };
 // Versión del código: ACI 318-08 (vigente en Chile, por defecto) o ACI 318-19 (casilla normaACI)
 // ---------------------------------------------------------------------------
 const es19 = () => $("normaACI")?.value === "19";
-window.AURA_SIMBOLO_EN_VALOR = true;   // memo.js: el símbolo de cada fila se muestra junto a su valor
 const NORMA = () => (es19() ? "ACI 318-19" : "ACI 318-08");
 const refN = (r08, r19) => (es19() ? r19 : r08);           // cláusula según la versión elegida
 // El ACI 318-19 (318M) está en MPa. Se convierte con 1 MPa = 10 kgf/cm² (criterio de cálculo usado en Chile), así que c·√f'c[MPa] = 3.162·c·√f'c[kgf/cm²]:
@@ -1192,8 +1191,8 @@ function solicitacionesLosa(g, m) {
   if (g.modo === "manual") {
     m.p(L`Los momentos últimos por metro de ancho fueron ingresados directamente (por ejemplo, desde el modelo ETABS):`);
     m.eq(L`M_X^{+} = ${tn(g.man.MXp, 1)} \qquad M_Y^{+} = ${tn(g.man.MYp, 1)} \qquad M_X^{-} = ${tn(g.man.MXn, 1)} \qquad M_Y^{-} = ${tn(g.man.MYn, 1)}\ \mathrm{kgf\cdot m/m}`);
-    m.row("Momentos positivos ingresados: M<sub>X</sub><sup>+</sup> ; M<sub>Y</sub><sup>+</sup>", `${fmt(g.man.MXp, 1)} ; ${fmt(g.man.MYp, 1)} kgf·m/m`);
-    m.row("Momentos negativos ingresados: M<sub>X</sub><sup>−</sup> ; M<sub>Y</sub><sup>−</sup>", `${fmt(g.man.MXn, 1)} ; ${fmt(g.man.MYn, 1)} kgf·m/m`);
+    m.row("Momentos positivos ingresados: M<sub>X</sub><sup>+</sup> ; M<sub>Y</sub><sup>+</sup>", `${fmt(g.man.MXp, 1)} kgf·m/m ; ${fmt(g.man.MYp, 1)} kgf·m/m`);
+    m.row("Momentos negativos ingresados: M<sub>X</sub><sup>−</sup> ; M<sub>Y</sub><sup>−</sup>", `${fmt(g.man.MXn, 1)} kgf·m/m ; ${fmt(g.man.MYn, 1)} kgf·m/m`);
     m.row("Relación de luces (clasificación): ε", `${fmt(eps, 3)} — ${dosDir ? "losa en dos direcciones" : "losa en una dirección"}`);
     return { ...res, MXp: g.man.MXp, MYp: g.man.MYp, MXn: g.man.MXn, MYn: g.man.MYn };
   }
@@ -1211,9 +1210,9 @@ function solicitacionesLosa(g, m) {
   m.sub("Coeficientes de Czerny");
   const t = CZERNY[caso];
   const lado = (v) => (v ? "empotrado" : "apoyado");
-  m.row("Luz corta ; luz larga: l<sub>x</sub> ; l<sub>y</sub>", `${fmt(lx, 2)} ; ${fmt(ly, 2)} m (dir. corta = ${corta})`);
+  m.row("Luz corta ; luz larga: l<sub>x</sub> ; l<sub>y</sub>", `${fmt(lx, 2)} m ; ${fmt(ly, 2)} m (dir. corta = ${corta})`);
   m.row("Relación de luces: ε", fmt(eps, 4));
-  m.row("Bordes mayores ; bordes menores empotrados", `${nM} ; ${nm} → ${t.nombre}`);
+  m.row("Bordes mayores empotrados ; bordes menores empotrados ; caso de Czerny", `${nM} ; ${nm} ; ${t.nombre}`);
   m.p(L`La luz corta $l_x = ${tn(lx, 2)}$ m corresponde a la dirección ${corta} del plano y la luz larga $l_y = ${tn(ly, 2)}$ m a la dirección ${corta === "X" ? "Y" : "X"}. Los bordes mayores (longitud $l_y$) son ${corta === "X" ? "izquierdo y derecho" : "superior e inferior"}: ${lado(mayores[0])} y ${lado(mayores[1])}; los menores: ${lado(menores[0])} y ${lado(menores[1])}. Corresponde la \textbf{${t.nombre.replace(/—/g, "---")}} de Czerny.`);
   m.p(L`\textbf{Relación de luces.} Se relaciona siempre la luz mayor con la luz menor:`, true);
   m.eq(L`\varepsilon = \frac{l_y}{l_x} = \frac{${tn(ly, 2)}}{${tn(lx, 2)}} = ${tn(eps, 4)}`);
@@ -1238,7 +1237,7 @@ function solicitacionesLosa(g, m) {
   const Mx = K / coef.mx, My = K / coef.my;
   const Mex = coef.mex ? K / coef.mex : 0, Mey = coef.mey ? K / coef.mey : 0;
   m.row("Carga total sobre el paño: K", `${fmt(K, 1)} kgf·m/m`);
-  m.row("Momentos de diseño: M<sub>x</sub> ; M<sub>y</sub> ; M<sub>ex</sub> ; M<sub>ey</sub>", `${fmt(Mx, 1)} ; ${fmt(My, 1)} ; ${fmt(Mex, 1)} ; ${fmt(Mey, 1)} kgf·m/m`);
+  m.row("Momentos de diseño: M<sub>x</sub> ; M<sub>y</sub> ; M<sub>ex</sub> ; M<sub>ey</sub>", `${fmt(Mx, 1)} kgf·m/m ; ${fmt(My, 1)} kgf·m/m ; ${fmt(Mex, 1)} kgf·m/m ; ${fmt(Mey, 1)} kgf·m/m`);
   m.p(L`\textbf{Momentos de diseño.} Se define el parámetro de carga $K$ para carga uniforme y los momentos en tramos (positivos) y apoyos (negativos) se obtienen dividiendo $K$ por cada coeficiente:`, true);
   m.eq(L`K = q\,l_x\,l_y = ${tn(q, 1)}\cdot ${tn(lx, 2)}\cdot ${tn(ly, 2)} = ${tn(K, 1)}\ \mathrm{kgf\cdot m/m}`);
   m.eq(L`M_x = \frac{K}{m_x} = \frac{${tn(K, 1)}}{${tn(coef.mx, 2)}} = ${tn(Mx, 1)} \qquad M_y = \frac{K}{m_y} = \frac{${tn(K, 1)}}{${tn(coef.my, 2)}} = ${tn(My, 1)}\ \mathrm{kgf\cdot m/m}`);
@@ -1298,7 +1297,7 @@ function disenoFaja(t, Mu, db, d, g, dosDir, m) {
   m.p(L`${AsCalc >= AsMin ? "Rige la armadura por solicitación." : L`Como $\rho\,b\,d = ${tn(AsCalc, 3)} < \rho_{\min}\,b\,h = ${tn(AsMin, 3)}$ cm$^2$/m, \textbf{rige la cuantía mínima}.`}`, true);
   // ---------- Espaciamiento y armadura adoptada ----------
   memoGrupo(m, "Espaciamiento y armadura adoptada", `${k}-esp`);
-  m.row(`Espaciamiento calculado 𝜙${db} ; espaciamiento máximo: s ; s<sub>máx</sub>`, `${fmt(sCalc, 2)} ; ${fmt(sMax, 1)} cm`, refSmaxLosa(dosDir));
+  m.row(`Espaciamiento calculado 𝜙${db} ; espaciamiento máximo: s ; s<sub>máx</sub>`, `${fmt(sCalc, 2)} cm ; ${fmt(sMax, 1)} cm`, refSmaxLosa(dosDir));
   m.row(`<b>Armadura adoptada</b>`, `<b>𝜙${db} @ ${s} cm</b> (${fmt(AsP, 2)} cm²/m)`);
   m.p(L`\textbf{Espaciamiento.} Con barras $\phi${db}$ ($A_b = ${tn(Ab, 3)}$ cm$^2$), el espaciamiento que entrega el área requerida y el máximo normativo son:`, true);
   m.eq(L`s = \frac{b\,A_b}{A_s} = \frac{100\cdot ${tn(Ab, 3)}}{${tn(As, 3)}} = ${tn(sCalc, 2)}${CM} \qquad s_{\max} = \min(${dosDir ? "2h" : "3h"},\ 45) = \min(${tn((dosDir ? 2 : 3) * e, 1)},\ 45) = ${tn(sMax, 1)}${CM}`, refSmaxLosa(dosDir));
@@ -1373,7 +1372,7 @@ function ganchosLosa(g, R, m) {
     r.hk = { ...h, Lrecta, Ltot, peso, cabe };
     lista.push({ ...h, nombre: nombres[k] });
     m.sub(`${nombres[k]} — 𝜙${r.db} con gancho de ${h.tipo}°`);
-    m.row("Diámetro de doblado ; extensión estándar: D ; l<sub>ext</sub>", `${fmt(h.D, 2)} ; ${fmt(std.ext, 2)} cm`, "Manual ICH T.1");
+    m.row("Diámetro de doblado ; extensión estándar: D ; l<sub>ext</sub>", `${fmt(h.D, 2)} cm ; ${fmt(std.ext, 2)} cm`, "Manual ICH T.1");
     if (sup) m.row("Altura de la pata estándar vs. espacio disponible", `${fmt(std.alto, 2)} ${cabe ? "≤" : ">"} ${fmt(disp, 2)} cm ${tag(cabe, cabe ? "cabe" : "no cabe → se recorta")}`);
     if (h.recortada) m.row("<b>Pata recortada (constructiva): l<sub>ext</sub></b>", `<b>${fmt(h.ext, 2)} cm</b> (altura ${fmt(h.alto, 2)} cm)`);
     m.row(`Largo de cada gancho ${h.tipo}°: L<sub>g</sub>`, `${fmt(h.Lg, 2)} cm`);

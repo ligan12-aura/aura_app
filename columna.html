@@ -706,11 +706,12 @@ function verificar(d, combos, m) {
   // ---------- 1. Sección y materiales ----------
   m.h("Sección y materiales — 22.2 y 22.4");
   m.p(L`La resistencia se calcula por compatibilidad de deformaciones con $\varepsilon_{cu} = 0.003$, sin resistencia a tracción del hormigón y con el bloque rectangular equivalente de $0.85f'_c$ y profundidad $a = \beta_1 c$, recortado sobre el contorno real de la sección. El acero es elastoplástico con $E_s = 200\,000$ MPa.`);
-  m.row("Área bruta ; área de acero longitudinal: A<sub>g</sub> ; A<sub>st</sub>", `${fmt(S.Ag, 1)} ; ${fmt(S.Ast, 2)} cm² (${S.n} 𝜙${fmt(d.db * 10, 0)})`);
+  m.row("Área bruta ; área de acero longitudinal: A<sub>g</sub> ; A<sub>st</sub>", `${fmt(S.Ag, 1)} cm² ; ${fmt(S.Ast, 2)} cm² (${S.n} 𝜙${fmt(d.db * 10, 0)})`);
   m.eq(S.rect
     ? L`A_g = b\,h = ${tn(d.b, 0)}\cdot ${tn(d.h, 0)} = ${tn(S.Ag, 1)}\ \mathrm{cm^2} \qquad A_{st} = ${S.n}\cdot\frac{\pi\,${tn(d.db, 1)}^2}{4} = ${tn(S.Ast, 2)}\ \mathrm{cm^2}`
     : L`A_g = \frac{\pi D^2}{4} = \frac{\pi\cdot ${tn(d.D, 0)}^2}{4} = ${tn(S.Ag, 1)}\ \mathrm{cm^2} \qquad A_{st} = ${S.n}\cdot\frac{\pi\,${tn(d.db, 1)}^2}{4} = ${tn(S.Ast, 2)}\ \mathrm{cm^2}`);
-  m.row(`Hormigón ${GRADOS[d.fc] || ""} ; acero ${ACEROS[d.fy] || ""}: f'<sub>c</sub> ; f<sub>y</sub>`, `${fmt(d.fc, 0)} ; ${fmt(d.fy, 0)} kgf/cm² (${fmt(fcM, 1)} ; ${fmt(d.fy / KMPA, 0)} MPa)`);
+  m.row(`Hormigón ${GRADOS[d.fc] || ""}: f'<sub>c</sub>`, `${fmt(d.fc, 0)} kgf/cm² (${fmt(fcM, 1)} MPa)`);
+  m.row(`Acero ${ACEROS[d.fy] || ""}: f<sub>y</sub>`, `${fmt(d.fy, 0)} kgf/cm² (${fmt(d.fy / KMPA, 0)} MPa)`);
   m.row("Factor del bloque de compresiones: β<sub>1</sub>", fmt(S.b1, 3), "Tabla 22.2.2.4.3");
   m.row("Deformación de fluencia: ε<sub>ty</sub>", fmt(S.ety, 5), "21.2.2.1");
   m.eq(L`\varepsilon_{ty} = \frac{f_y}{E_s} = \frac{${tn(d.fy, 0)}}{${tn(ES, 0)}} = ${tn(S.ety, 5)}`, "21.2.2.1");
@@ -757,8 +758,8 @@ ${combos.map(c => `${c.n}. ${nomTex(c.nombre)}${c.sis ? " (E)" : ""} & ${tn(T(c.
   const algunaEsbelta = esb.some(e => !e.x.ignora || !e.y.ignora);
   m.h("Efectos de esbeltez — 6.2.5 y 6.6.4");
   const e0 = esb[0];
-  m.row("Radio de giro: r<sub>x</sub> ; r<sub>y</sub>", `${fmt(e0.x.r, 2)} ; ${fmt(e0.y.r, 2)} cm`, "6.2.5.2");
-  m.row("Esbeltez: kℓ<sub>u</sub>/r para M<sub>x</sub> ; para M<sub>y</sub>", `${fmt(e0.x.klr, 1)} ; ${fmt(e0.y.klr, 1)}`, "6.2.5.1");
+  m.row("Radio de giro: r<sub>x</sub> ; r<sub>y</sub>", `${fmt(e0.x.r, 2)} cm ; ${fmt(e0.y.r, 2)} cm`, "6.2.5.2");
+  m.row("Esbeltez para M<sub>x</sub> ; esbeltez para M<sub>y</sub>: kℓ<sub>u</sub>/r ; kℓ<sub>u</sub>/r", `${fmt(e0.x.klr, 1)} ; ${fmt(e0.y.klr, 1)}`, "6.2.5.1");
   m.eq(L`\frac{k_x \ell_u}{r_x} = \frac{${tn(d.kx, 2)}\cdot ${tn(d.lu, 0)}}{${tn(e0.x.r, 2)}} = ${tn(e0.x.klr, 1)} \qquad \frac{k_y \ell_u}{r_y} = \frac{${tn(d.ky, 2)}\cdot ${tn(d.lu, 0)}}{${tn(e0.y.r, 2)}} = ${tn(e0.y.klr, 1)}`, "6.2.5.1");
   m.p(L`Se pueden despreciar los efectos de esbeltez si $k\ell_u/r \le 22$ en pórticos no arriostrados (6.2.5.1a) o $k\ell_u/r \le 34 + 12\,(M_1/M_2) \le 40$ en pórticos arriostrados (6.2.5.1b y c), con $M_1/M_2$ negativo en curvatura simple. Si no, el momento se amplifica con $\delta = C_m/(1 - P_u/0.75P_c) \ge 1$ (6.6.4.5.2), con $C_m = 0.6 - 0.4\,M_1/M_2$, $P_c = \pi^2 (EI)_{ef\!f}/(k\ell_u)^2$ y $(EI)_{ef\!f} = (0.2E_cI_g + E_sI_{se})/(1 + \beta_{dns})$, y $M_2$ no menor que $M_{2,m\acute{i}n} = P_u\,(15 + 0.03h)$ mm.`);
   if (d.arrX === "desp" || d.arrY === "desp") {
@@ -783,7 +784,7 @@ ${combos.map(c => `${c.n}. ${nomTex(c.nombre)}${c.sis ? " (E)" : ""} & ${tn(T(c.
       m.eq(L`E_c = 4700\sqrt{f'_c} = ${tn(o.Ec, 0)}\ \mathrm{kgf/cm^2} \qquad (EI)_{ef\!f} = \frac{0.2E_cI_g + E_sI_{se}}{1 + \beta_{dns}} = ${tn(o.EI / 1e10, 3)}\cdot 10^{10}\ \mathrm{kgf\,cm^2}`, "6.6.4.4.4b");
       m.row("Carga crítica de pandeo: P<sub>c</sub>", `${fmt(T(o.Pc), 1)} tf`, "6.6.4.4.2");
       m.eq(L`P_c = \frac{\pi^2 (EI)_{ef\!f}}{(k\ell_u)^2} = \frac{\pi^2\cdot ${tn(o.EI / 1e10, 3)}\cdot 10^{10}}{(${tn(o.kb, 2)}\cdot ${tn(d.lu, 0)})^2} = ${tn(T(o.Pc), 1)}\ \mathrm{tf}`, "6.6.4.4.2");
-      m.row(`Momentos de primer orden: M<sub>1</sub> ; M<sub>2</sub> ; M<sub>2,mín</sub>`, `${fmt(TM(o.M1), 2)} ; ${fmt(TM(o.M2), 2)} ; ${fmt(TM(o.M2min), 2)} tf·m`, "6.6.4.5.4");
+      m.row(`Momentos de primer orden: M<sub>1</sub> ; M<sub>2</sub> ; M<sub>2,mín</sub>`, `${fmt(TM(o.M1), 2)} tf·m ; ${fmt(TM(o.M2), 2)} tf·m ; ${fmt(TM(o.M2min), 2)} tf·m`, "6.6.4.5.4");
       m.eq(L`M_{2,m\acute{i}n} = P_u\,(15 + 0.03h) = ${tn(T(c.P), 2)}\,(0.015 + 0.03\cdot ${tn(o.h / 100, 2)}) = ${tn(TM(o.M2min), 2)}\ \mathrm{tf\,m} \qquad \frac{M_1}{M_2} = ${tn(o.r12, 3)}`, "6.6.4.5.4");
       if (!o.arr) m.row("Magnificador del piso: δ<sub>s</sub>", fmt(o.ds, 3), d.segOrden === "q" ? "6.6.4.6.2a" : "6.6.4.6.2c");
       m.row("Factor de momento ; magnificador: C<sub>m</sub> ; δ", `${fmt(o.Cm, 3)} ; ${o.inestable ? "inestable" : fmt(o.delta, 3)}`, "6.6.4.5.2");
@@ -918,8 +919,8 @@ ${pm.map(p => `${p.c.n}. ${nomTex(p.c.nombre)} & ${p.ext} & ${tn(T(p.c.P), 2)} &
     m.sub(`Corte según ${eje}${zona ? ` — ${zona}` : ""}`);
     const kc = `col-v${eje}-${zona || "todo"}`;
     memoGrupo(m, "Resistencia del hormigón", `${kc}-vc`);
-    m.row("Ancho ; altura útil ; cuantía ρ<sub>w</sub>: b<sub>w</sub> ; d ; ρ<sub>w</sub>", `${fmt(r.bw, 1)} ; ${fmt(r.dd, 1)} cm ; ${fmt(r.rhow, 4)}`, ref);
-    m.row("Refuerzo: A<sub>v</sub> ; A<sub>v,mín</sub> (s = " + fmt(s, 1) + " cm)", `${fmt(r.Av, 2)} ; ${fmt(r.Avmin, 2)} cm²`, S.rect ? "10.6.2.2" : "22.5.8.5.6");
+    m.row("Ancho ; altura útil ; cuantía ρ<sub>w</sub>: b<sub>w</sub> ; d ; ρ<sub>w</sub>", `${fmt(r.bw, 1)} cm ; ${fmt(r.dd, 1)} cm ; ${fmt(r.rhow, 4)}`, ref);
+    m.row("Refuerzo transversal con s = " + fmt(s, 1) + " cm ; refuerzo transversal mínimo con s = " + fmt(s, 1) + " cm: A<sub>v</sub> ; A<sub>v,mín</sub>", `${fmt(r.Av, 2)} cm² ; ${fmt(r.Avmin, 2)} cm²`, S.rect ? "10.6.2.2" : "22.5.8.5.6");
     m.eq(L`A_{v,m\acute{i}n} = \max\left(0.062\sqrt{f'_c};\ 0.35\right)\frac{b_w s}{f_{yt}} = ${tn(r.Avmin, 2)}\ \mathrm{cm^2}`, "10.6.2.2");
     if (r.Vc0) {
       m.row("Resistencia del hormigón: V<sub>c</sub>", `0 (V<sub>c</sub> = 0 en ℓ<sub>o</sub>)`, "18.7.6.2.1");
@@ -1056,7 +1057,7 @@ ${pm.map(p => `${p.c.n}. ${nomTex(p.c.nombre)} & ${p.ext} & ${tn(T(p.c.P), 2)} &
     memoGrupo(m, "Zona de confinamiento y separación", "col-conf-sep");
     m.row("Longitud de confinamiento: ℓ<sub>o</sub> = máx(h ; ℓ<sub>u</sub>/6 ; 450 mm)", `${fmt(lo, 1)} cm`, "18.7.5.1");
     const PuE = PsisMax, alta = PuE > 0.3 * S.Ag * d.fc || fcM > 70;
-    m.row("Carga axial sísmica máxima ; 0.3A<sub>g</sub>f'<sub>c</sub>", `${fmt(T(PuE), 2)} ; ${fmt(T(0.3 * S.Ag * d.fc), 2)} tf`, "18.7.5.2f");
+    m.row("Carga axial sísmica máxima ; 0.3A<sub>g</sub>f'<sub>c</sub>", `${fmt(T(PuE), 2)} tf ; ${fmt(T(0.3 * S.Ag * d.fc), 2)} tf`, "18.7.5.2f");
     const kf = Math.max(1, fcM / 175 + 0.6), fytC = Math.min(d.fyt, 690 * KMPA);
     if (S.rect) {
       const so = Math.min(Math.max(10 + (35 - hx) / 3, 10), 15);
