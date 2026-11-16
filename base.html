@@ -199,75 +199,7 @@
       </fieldset>
 
       <fieldset>
-        <legend>3. Cargas mayoradas</legend>
-        <div id="cargasArt">
-        <div class="row3">
-          <div><label for="Pu">Compresión P<sub>u</sub> <span class="unit">[tf]</span></label><input id="Pu" type="number" step="1" value="80"></div>
-          <div><label for="Pmin">P<sub>u,mín</sub> con el corte <span class="unit">[tf]</span></label><input id="Pmin" type="number" step="0.5" value="15"></div>
-          <div><label for="Vu">Corte V<sub>u</sub> <span class="unit">[tf]</span></label><input id="Vu" type="number" step="0.5" value="4"></div>
-          <div><label for="Tu">Tracción T<sub>u</sub> (levantamiento) <span class="unit">[tf]</span></label><input id="Tu" type="number" step="0.5" value="0"></div>
-        </div>
-        <div class="unit" style="margin-top:4px">El corte actúa según el alto d del perfil (paralelo al alma). P<sub>u,mín</sub> es la menor compresión que acompaña al corte (0 si hay levantamiento). T<sub>u</sub> es la tracción concéntrica de la combinación de levantamiento; se supone concomitante con V<sub>u</sub> y se reparte por igual entre los 4 pernos.</div>
-        </div>
-        <div id="cargasEmp">
-          <label for="nComb">Número de combinaciones</label>
-          <select id="nComb"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select>
-          <div class="row3" style="margin-top:6px">
-            <div class="unit">P<sub>u</sub> [tf]</div><div class="unit">M<sub>u</sub> [tf·m]</div><div class="unit">V<sub>u</sub> [tf]</div>
-          </div>
-          <div class="row3 comb" id="combRow1">
-            <div><label for="cP1" class="sr-only">Comb. 1: P<sub>u</sub> [tf]</label><input id="cP1" type="number" step="1" value="80"></div>
-            <div><label for="cM1" class="sr-only">Comb. 1: M<sub>u</sub> [tf·m]</label><input id="cM1" type="number" step="0.5" value="6"></div>
-            <div><label for="cV1" class="sr-only">Comb. 1: V<sub>u</sub> [tf]</label><input id="cV1" type="number" step="0.5" value="4"></div>
-          </div>
-          <div class="row3 comb" id="combRow2">
-            <div><label for="cP2" class="sr-only">Comb. 2: P<sub>u</sub> [tf]</label><input id="cP2" type="number" step="1" value="30"></div>
-            <div><label for="cM2" class="sr-only">Comb. 2: M<sub>u</sub> [tf·m]</label><input id="cM2" type="number" step="0.5" value="8"></div>
-            <div><label for="cV2" class="sr-only">Comb. 2: V<sub>u</sub> [tf]</label><input id="cV2" type="number" step="0.5" value="5"></div>
-          </div>
-          <div class="row3 comb" id="combRow3">
-            <div><label for="cP3" class="sr-only">Comb. 3: P<sub>u</sub> [tf]</label><input id="cP3" type="number" step="1" value="60"></div>
-            <div><label for="cM3" class="sr-only">Comb. 3: M<sub>u</sub> [tf·m]</label><input id="cM3" type="number" step="0.5" value="4"></div>
-            <div><label for="cV3" class="sr-only">Comb. 3: V<sub>u</sub> [tf]</label><input id="cV3" type="number" step="0.5" value="3"></div>
-          </div>
-          <div class="row3 comb" id="combRow4">
-            <div><label for="cP4" class="sr-only">Comb. 4: P<sub>u</sub> [tf]</label><input id="cP4" type="number" step="1" value="20"></div>
-            <div><label for="cM4" class="sr-only">Comb. 4: M<sub>u</sub> [tf·m]</label><input id="cM4" type="number" step="0.5" value="3"></div>
-            <div><label for="cV4" class="sr-only">Comb. 4: V<sub>u</sub> [tf]</label><input id="cV4" type="number" step="0.5" value="2"></div>
-          </div>
-          <div class="row3 comb" id="combRow5">
-            <div><label for="cP5" class="sr-only">Comb. 5: P<sub>u</sub> [tf]</label><input id="cP5" type="number" step="1" value="10"></div>
-            <div><label for="cM5" class="sr-only">Comb. 5: M<sub>u</sub> [tf·m]</label><input id="cM5" type="number" step="0.5" value="2"></div>
-            <div><label for="cV5" class="sr-only">Comb. 5: V<sub>u</sub> [tf]</label><input id="cV5" type="number" step="0.5" value="1"></div>
-          </div>
-          <div class="row3 comb" id="combRow6">
-            <div><label for="cP6" class="sr-only">Comb. 6: P<sub>u</sub> [tf]</label><input id="cP6" type="number" step="1" value="5"></div>
-            <div><label for="cM6" class="sr-only">Comb. 6: M<sub>u</sub> [tf·m]</label><input id="cM6" type="number" step="0.5" value="1"></div>
-            <div><label for="cV6" class="sr-only">Comb. 6: V<sub>u</sub> [tf]</label><input id="cV6" type="number" step="0.5" value="1"></div>
-          </div>
-          <div class="unit" style="margin-top:4px">Una fila por combinación LRFD, con P<sub>u</sub> (compresión positiva), M<sub>u</sub> en el eje fuerte (según el alto d) y V<sub>u</sub> según d, concomitantes. Se verifican todas y se desarrolla la crítica. Una combinación con P<sub>u</sub> ≤ 0 (tracción neta) queda SIN VERIFICAR.</div>
-        </div>
-        <label for="modoV">Transferencia del corte</label>
-        <select id="modoV">
-          <option value="pernos" selected>Por los pernos de anclaje (ACI 318-08 Apéndice D)</option>
-          <option value="roce">Por roce placa–grout (solo con compresión)</option>
-          <option value="llave">Por llave de corte (AISC Design Guide 1)</option>
-        </select>
-        <div class="row2" id="llaveBox">
-          <div><label for="bL">Llave: ancho b<sub>L</sub> <span class="unit">[mm]</span></label><input id="bL" type="number" step="10" value="150"></div>
-          <div><label for="tL">Llave: espesor t<sub>L</sub> <span class="unit">[mm]</span></label><input id="tL" type="number" step="1" value="20"></div>
-          <div><label for="HL">Llave: alto bajo la placa H<sub>L</sub> <span class="unit">[mm]</span></label><input id="HL" type="number" step="10" value="100"></div>
-          <div><label for="wL">Llave: filete w<sub>L</sub> <span class="unit">[mm]</span></label><input id="wL" type="number" step="1" value="8"></div>
-        </div>
-        <div class="unit" id="llaveNota" style="margin-top:4px">Placa soldada bajo la placa base, centrada y perpendicular al corte (b<sub>L</sub> según b<sub>f</sub>). H<sub>L</sub> incluye el grout; trabaja contra el hormigón solo bajo el grout. Acero y electrodo como la placa y la columna.</div>
-        <div class="row2" id="roceBox">
-          <div><label for="mu">Coeficiente de roce μ</label><input id="mu" type="number" step="0.05" value="0.55"></div>
-          <div><label for="phiR">𝜙 roce</label><input id="phiR" type="number" step="0.05" value="0.75"></div>
-        </div>
-      </fieldset>
-
-      <fieldset>
-        <legend>4. Pernos de anclaje <span id="pernosLeg">(4 pernos)</span></legend>
+        <legend>3. Pernos de anclaje <span id="pernosLeg">(4 pernos)</span></legend>
         <div class="row3">
           <div><label for="db">Diámetro <span class="unit">[mm]</span></label><select id="db"><option>16</option><option selected>20</option><option>22</option><option>24</option><option>27</option><option>30</option><option>36</option></select></div>
           <div><label for="aceroP">Acero</label><select id="aceroP"><option value="A36" selected>A36 / F1554 Gr. 36</option><option value="F55">F1554 Gr. 55</option><option value="A37">A37-24ES</option></select></div>
@@ -297,7 +229,7 @@
       </fieldset>
 
       <fieldset>
-        <legend>5. Soldadura columna–placa</legend>
+        <legend>4. Soldadura columna–placa</legend>
         <div class="row2">
           <div><label for="w">Filete w <span class="unit">[mm]</span></label><input id="w" type="number" step="1" value="6"></div>
           <div id="alaBox"><label for="soldAla">Unión de las alas</label><select id="soldAla"><option value="filete" selected>Filete en ambas caras</option><option value="cjp">Penetración completa</option></select></div>
@@ -305,6 +237,83 @@
         </div>
         <label class="chk"><input id="contacto" type="checkbox" checked> Contacto pleno columna–placa (extremo cepillado)</label>
         <div class="unit" style="margin-top:4px">Con contacto pleno la compresión pasa por apoyo directo (Espec. ICHA 13.1.4; holgura ≤ 2 mm, 16.4.4) y la soldadura toma el corte. Sin contacto, toma también P<sub>u</sub>.</div>
+      </fieldset>
+
+      <fieldset>
+        <legend>5. Cargas mayoradas (LRFD)</legend>
+        <label for="bunidad">Unidades</label>
+        <select id="bunidad">
+          <option value="tf" selected>tf y tf·m</option>
+          <option value="kgf">kgf y kgf·m</option>
+        </select>
+        <div id="cargasArt">
+        <div class="row3">
+          <div><label for="Pu">Compresión P<sub>u</sub> <span class="unit u-f"></span></label><input id="Pu" type="number" step="1" value="80"></div>
+          <div><label for="Pmin">P<sub>u,mín</sub> con el corte <span class="unit u-f"></span></label><input id="Pmin" type="number" step="0.5" value="15"></div>
+          <div><label for="Vu">Corte V<sub>u</sub> <span class="unit u-f"></span></label><input id="Vu" type="number" step="0.5" value="4"></div>
+          <div><label for="Tu">Tracción T<sub>u</sub> (levantamiento) <span class="unit u-f"></span></label><input id="Tu" type="number" step="0.5" value="0"></div>
+        </div>
+        <div class="unit" style="margin-top:4px">El corte actúa según el alto d del perfil (paralelo al alma). P<sub>u,mín</sub> es la menor compresión que acompaña al corte (0 si hay levantamiento). T<sub>u</sub> es la tracción concéntrica de la combinación de levantamiento; se supone concomitante con V<sub>u</sub> y se reparte por igual entre los 4 pernos.</div>
+        </div>
+        <div id="cargasEmp">
+          <label for="nComb">Número de combinaciones</label>
+          <select id="nComb"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select>
+          <div class="row3" style="margin-top:6px">
+            <div class="unit">P<sub>u</sub> <span class="u-f"></span></div><div class="unit">M<sub>u</sub> <span class="u-m"></span></div><div class="unit">V<sub>u</sub> <span class="u-f"></span></div>
+          </div>
+          <div class="row3 comb" id="combRow1">
+            <div><label for="cP1" class="sr-only">Comb. 1: P<sub>u</sub></label><input id="cP1" type="number" step="1" value="80"></div>
+            <div><label for="cM1" class="sr-only">Comb. 1: M<sub>u</sub></label><input id="cM1" type="number" step="0.5" value="6"></div>
+            <div><label for="cV1" class="sr-only">Comb. 1: V<sub>u</sub></label><input id="cV1" type="number" step="0.5" value="4"></div>
+          </div>
+          <div class="row3 comb" id="combRow2">
+            <div><label for="cP2" class="sr-only">Comb. 2: P<sub>u</sub></label><input id="cP2" type="number" step="1" value="30"></div>
+            <div><label for="cM2" class="sr-only">Comb. 2: M<sub>u</sub></label><input id="cM2" type="number" step="0.5" value="8"></div>
+            <div><label for="cV2" class="sr-only">Comb. 2: V<sub>u</sub></label><input id="cV2" type="number" step="0.5" value="5"></div>
+          </div>
+          <div class="row3 comb" id="combRow3">
+            <div><label for="cP3" class="sr-only">Comb. 3: P<sub>u</sub></label><input id="cP3" type="number" step="1" value="60"></div>
+            <div><label for="cM3" class="sr-only">Comb. 3: M<sub>u</sub></label><input id="cM3" type="number" step="0.5" value="4"></div>
+            <div><label for="cV3" class="sr-only">Comb. 3: V<sub>u</sub></label><input id="cV3" type="number" step="0.5" value="3"></div>
+          </div>
+          <div class="row3 comb" id="combRow4">
+            <div><label for="cP4" class="sr-only">Comb. 4: P<sub>u</sub></label><input id="cP4" type="number" step="1" value="20"></div>
+            <div><label for="cM4" class="sr-only">Comb. 4: M<sub>u</sub></label><input id="cM4" type="number" step="0.5" value="3"></div>
+            <div><label for="cV4" class="sr-only">Comb. 4: V<sub>u</sub></label><input id="cV4" type="number" step="0.5" value="2"></div>
+          </div>
+          <div class="row3 comb" id="combRow5">
+            <div><label for="cP5" class="sr-only">Comb. 5: P<sub>u</sub></label><input id="cP5" type="number" step="1" value="10"></div>
+            <div><label for="cM5" class="sr-only">Comb. 5: M<sub>u</sub></label><input id="cM5" type="number" step="0.5" value="2"></div>
+            <div><label for="cV5" class="sr-only">Comb. 5: V<sub>u</sub></label><input id="cV5" type="number" step="0.5" value="1"></div>
+          </div>
+          <div class="row3 comb" id="combRow6">
+            <div><label for="cP6" class="sr-only">Comb. 6: P<sub>u</sub></label><input id="cP6" type="number" step="1" value="5"></div>
+            <div><label for="cM6" class="sr-only">Comb. 6: M<sub>u</sub></label><input id="cM6" type="number" step="0.5" value="1"></div>
+            <div><label for="cV6" class="sr-only">Comb. 6: V<sub>u</sub></label><input id="cV6" type="number" step="0.5" value="1"></div>
+          </div>
+          <div class="unit" style="margin-top:4px">Una fila por combinación LRFD, con P<sub>u</sub> (compresión positiva), M<sub>u</sub> en el eje fuerte (según el alto d) y V<sub>u</sub> según d, concomitantes. Se verifican todas y se desarrolla la crítica. Una combinación con P<sub>u</sub> ≤ 0 (tracción neta) queda SIN VERIFICAR.</div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>6. Transferencia del corte</legend>
+        <label for="modoV">Transferencia del corte</label>
+        <select id="modoV">
+          <option value="pernos" selected>Por los pernos de anclaje (ACI 318-08 Apéndice D)</option>
+          <option value="roce">Por roce placa–grout (solo con compresión)</option>
+          <option value="llave">Por llave de corte (AISC Design Guide 1)</option>
+        </select>
+        <div class="row2" id="llaveBox">
+          <div><label for="bL">Llave: ancho b<sub>L</sub> <span class="unit">[mm]</span></label><input id="bL" type="number" step="10" value="150"></div>
+          <div><label for="tL">Llave: espesor t<sub>L</sub> <span class="unit">[mm]</span></label><input id="tL" type="number" step="1" value="20"></div>
+          <div><label for="HL">Llave: alto bajo la placa H<sub>L</sub> <span class="unit">[mm]</span></label><input id="HL" type="number" step="10" value="100"></div>
+          <div><label for="wL">Llave: filete w<sub>L</sub> <span class="unit">[mm]</span></label><input id="wL" type="number" step="1" value="8"></div>
+        </div>
+        <div class="unit" id="llaveNota" style="margin-top:4px">Placa soldada bajo la placa base, centrada y perpendicular al corte (b<sub>L</sub> según b<sub>f</sub>). H<sub>L</sub> incluye el grout; trabaja contra el hormigón solo bajo el grout. Acero y electrodo como la placa y la columna.</div>
+        <div class="row2" id="roceBox">
+          <div><label for="mu">Coeficiente de roce μ</label><input id="mu" type="number" step="0.05" value="0.55"></div>
+          <div><label for="phiR">𝜙 roce</label><input id="phiR" type="number" step="0.05" value="0.75"></div>
+        </div>
       </fieldset>
     </div>
   </section>
@@ -509,7 +518,7 @@ const nCombos = () => parseInt($("nComb").value, 10) || 1;
 // Combinaciones de la base empotrada [kgf y kgf·cm]: P (compresión +), M (valor absoluto, eje fuerte) y V (valor absoluto)
 function combinaciones() {
   const out = [];
-  for (let i = 1; i <= nCombos(); i++) out.push({ i, Pu: num(`cP${i}`) * 1000, Mu: Math.abs(num(`cM${i}`)) * 1e5, Vu: Math.abs(num(`cV${i}`)) * 1000 });
+  for (let i = 1; i <= nCombos(); i++) out.push({ i, Pu: num(`cP${i}`) * 1000 * enTf("bunidad"), Mu: Math.abs(num(`cM${i}`)) * 1e5 * enTf("bunidad"), Vu: Math.abs(num(`cV${i}`)) * 1000 * enTf("bunidad") });
   return out;
 }
 // Posiciones de los pernos en planta [cm]: x según d (N), z según b_f (B)
@@ -528,7 +537,7 @@ function leerDatos() {
     tipo: emp ? "empotrada" : "articulada", emp, combos, nFila, nP: emp ? 2 * nFila : N_PERNOS, f: c("fP"), soldAla: $("soldAla").value, Mu: 0,
     p: perfil(), acero: $("acero").value, Fy: ac.Fy, Fu: ac.Fu,
     N: c("N"), B: c("B"), tp: c("tp"), Np: c("Np"), Bp: c("Bp"), ha: c("ha"), fc: num("fc"), eg: c("eg"), phic: parseFloat($("phic").value),
-    Pu: num("Pu") * 1000, Pmin: num("Pmin") * 1000, Vu: num("Vu") * 1000, Tu: num("Tu") * 1000,
+    Pu: num("Pu") * 1000 * enTf("bunidad"), Pmin: num("Pmin") * 1000 * enTf("bunidad"), Vu: num("Vu") * 1000 * enTf("bunidad"), Tu: num("Tu") * 1000 * enTf("bunidad"),
     bL: c("bL"), tL: c("tL"), HL: c("HL"), wL: c("wL"),
     cabeza: $("cabeza").value, eh: c("eh"), sis: $("sis").value, armAnc: $("armAnc").checked, nAr: Math.round(num("nAr")), dbAr: parseFloat($("dbAr").value) / 10,
     modoV: $("modoV").value, mu: num("mu"), phiR: num("phiR"),
@@ -1820,6 +1829,8 @@ function defectosTipo(tipo) {
   for (const k in este) if ($(k).value === String(otro[k])) $(k).value = este[k];
 }
 function init() {
+  grados("fc", "hormigon");
+  unidadFuerza("bunidad", ["Pu", "Pmin", "Vu", "Tu", ...[1, 2, 3, 4, 5, 6].flatMap(i => [`cP${i}`, `cM${i}`, `cV${i}`])]);
   const q = new URLSearchParams(location.search).get("tipo");
   if (q === "articulada" || q === "empotrada") $("tipo").value = q;
   if ($("tipo").value === "empotrada") defectosTipo("empotrada");
@@ -1868,7 +1879,8 @@ window.Zona2D3D?.montar({
 window.AURA_MEMO = {
   get tipo() { return esEmpotrada() ? "Placa base empotrada (prueba)" : "Placa base articulada (prueba)"; },
   elemento: () => "", tex: () => ultimoTex, nombre: () => ultimoNombre,
-  recalcular: (v) => { llenarPerfiles(); if (v && v.perfil) $("perfil").value = v.perfil; calcular(); },
+  recalcular: (v) => { if (v && typeof v === "object" && !("bunidad" in v)) $("bunidad").value = "tf";   // datos anteriores a la lista: estaban en tf
+    llenarPerfiles(); if (v && v.perfil) $("perfil").value = v.perfil; calcular(); },
 };
 </script>
 <script src="proyectos.js"></script>

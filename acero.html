@@ -156,67 +156,79 @@
         <input type="hidden" id="perfilesModo">
         <button type="button" id="tabCol" data-modo="columna">Columna</button>
       </div>
-      <div class="row2">
-        <div>
-          <label for="serie">Serie</label>
-          <select id="serie"></select>
-        </div>
-        <div>
-          <label for="perfil">Perfil</label>
-          <select id="perfil"></select>
-        </div>
-      </div>
-
-      <label for="acero">Calidad del acero</label>
-      <select id="acero">
-        <option value="A37-24ES">A37-24 ES (Fy = 2400 kgf/cm²)</option>
-        <option value="A42-27ES" selected>A42-27 ES (Fy = 2700 kgf/cm²)</option>
-        <option value="A52-34ES">A52-34 ES (Fy = 3400 kgf/cm²)</option>
-      </select>
-
-      <label for="unidad">Unidades de solicitaciones</label>
-      <select id="unidad">
-        <option value="kgf">kgf y kgf·m</option>
-        <option value="tf">tf y tf·m</option>
-      </select>
-
-      <!-- Viga -->
-      <fieldset id="fsViga">
-        <legend>Viga — flexión y corte</legend>
-        <label for="vLb">Longitud no arriostrada L<sub>b</sub> <span class="unit">[m]</span></label>
-        <input id="vLb" type="number" step="0.01" min="0" value="4.43">
+      <fieldset>
+        <legend>1. Perfil</legend>
         <div class="row2">
           <div>
-            <label for="vMux">Momento último M<sub>ux</sub> <span class="unit u-m"></span></label>
-            <input id="vMux" type="number" step="any" min="0" value="2256.2">
+            <label for="serie">Serie</label>
+            <select id="serie"></select>
           </div>
           <div>
-            <label for="vVu">Corte último V<sub>u</sub> <span class="unit u-f"></span></label>
-            <input id="vVu" type="number" step="any" min="0" value="2500">
+            <label for="perfil">Perfil</label>
+            <select id="perfil"></select>
           </div>
-        </div>
-        <div class="row2">
-          <div>
-            <label for="vMuy">M<sub>uy</sub> eje débil <span class="unit u-m"></span></label>
-            <input id="vMuy" type="number" step="any" min="0" value="0">
-          </div>
-          <div>
-            <label>Factor C<sub>b</sub> (ec. F1-1)</label>
-            <output id="vCbOut" class="cbOut">—</output>
-          </div>
-        </div>
-        <div class="cbTit">Momentos del tramo no arriostrado para C<sub>b</sub> <span class="unit u-m"></span></div>
-        <div class="row2">
-          <div><label for="vMmax">M<sub>máx</sub> (vacío = M<sub>ux</sub>)</label><input id="vMmax" type="number" step="any" value="491.433"></div>
-          <div><label for="vMA">M<sub>A</sub> (a L/4)</label><input id="vMA" type="number" step="any" value="285.52"></div>
-          <div><label for="vMB">M<sub>B</sub> (a L/2)</label><input id="vMB" type="number" step="any" value="475.37"></div>
-          <div><label for="vMC">M<sub>C</sub> (a 3L/4)</label><input id="vMC" type="number" step="any" value="370.73"></div>
         </div>
       </fieldset>
 
+      <fieldset>
+        <legend>2. Material</legend>
+        <label for="acero">Calidad del acero</label>
+        <select id="acero">
+          <option value="A37-24ES">A37-24 ES (Fy = 2400 kgf/cm²)</option>
+          <option value="A42-27ES" selected>A42-27 ES (Fy = 2700 kgf/cm²)</option>
+          <option value="A52-34ES">A52-34 ES (Fy = 3400 kgf/cm²)</option>
+        </select>
+      </fieldset>
+
+      <!-- La lista de unidades va en el grupo de cargas del programa visible (fijarModo la mueve) -->
+      <div id="boxUnidad">
+        <label for="unidad">Unidades</label>
+        <select id="unidad">
+          <option value="tf" selected>tf y tf·m</option>
+          <option value="kgf">kgf y kgf·m</option>
+        </select>
+      </div>
+
+      <!-- Viga -->
+      <div id="fsViga">
+        <fieldset>
+          <legend>3. Geometría</legend>
+          <label for="vLb">Longitud no arriostrada L<sub>b</sub> <span class="unit">[m]</span></label>
+          <input id="vLb" type="number" step="0.01" min="0" value="4.43">
+        </fieldset>
+        <fieldset id="fsCargasV">
+          <legend>4. Cargas mayoradas (LRFD)</legend>
+          <div class="row2">
+            <div>
+              <label for="vMux">Momento último M<sub>ux</sub> <span class="unit u-m"></span></label>
+              <input id="vMux" type="number" step="any" min="0" value="2.2562">
+            </div>
+            <div>
+              <label for="vVu">Corte último V<sub>u</sub> <span class="unit u-f"></span></label>
+              <input id="vVu" type="number" step="any" min="0" value="2.5">
+            </div>
+          </div>
+          <label for="vMuy">M<sub>uy</sub> eje débil <span class="unit u-m"></span></label>
+          <input id="vMuy" type="number" step="any" min="0" value="0">
+        </fieldset>
+        <fieldset>
+          <legend>5. Criterios de diseño</legend>
+          <label>Factor C<sub>b</sub> (ec. F1-1)</label>
+          <output id="vCbOut" class="cbOut">—</output>
+          <div class="cbTit">Momentos del tramo no arriostrado para C<sub>b</sub> <span class="unit u-m"></span></div>
+          <div class="row2">
+            <div><label for="vMmax">M<sub>máx</sub> (vacío = M<sub>ux</sub>)</label><input id="vMmax" type="number" step="any" value="0.491433"></div>
+            <div><label for="vMA">M<sub>A</sub> (a L/4)</label><input id="vMA" type="number" step="any" value="0.28552"></div>
+            <div><label for="vMB">M<sub>B</sub> (a L/2)</label><input id="vMB" type="number" step="any" value="0.47537"></div>
+            <div><label for="vMC">M<sub>C</sub> (a 3L/4)</label><input id="vMC" type="number" step="any" value="0.37073"></div>
+          </div>
+        </fieldset>
+      </div>
+
       <!-- Columna -->
-      <fieldset id="fsCol" class="hidden">
-        <legend>Columna — flexocompresión</legend>
+      <div id="fsCol" class="hidden">
+        <fieldset>
+        <legend>3. Geometría</legend>
         <label for="cL">Longitud no arriostrada L <span class="unit">[m]</span></label>
         <input id="cL" type="number" step="0.01" min="0" value="2.62">
         <div class="row3">
@@ -280,31 +292,38 @@
           <button class="mini" type="button" data-k="cKy">Usar como K<sub>y</sub></button>
           <div id="kOut" class="unit" style="margin-top:6px"></div>
         </details>
-        <div class="row2">
-          <div><label for="cPu">Carga axial última P<sub>u</sub> (compresión) <span class="unit u-f"></span></label><input id="cPu" type="number" step="any" min="0" value="73793.14"></div>
-          <div><label for="cVu">Corte último V<sub>u</sub> (eje fuerte) <span class="unit u-f"></span></label><input id="cVu" type="number" step="any" min="0" value="0"></div>
-        </div>
-        <div class="row2">
-          <div><label for="cMux">M<sub>ux</sub> <span class="unit u-m"></span></label><input id="cMux" type="number" step="any" min="0" value="464.011"></div>
-          <div><label for="cMuy">M<sub>uy</sub> <span class="unit u-m"></span></label><input id="cMuy" type="number" step="any" min="0" value="3290.402"></div>
-        </div>
-        <div class="row2">
-          <div><label for="cLb">L<sub>b</sub> para PLT <span class="unit">[m]</span></label><input id="cLb" type="number" step="0.01" min="0" value="2.62"></div>
-          <div><label>Factor C<sub>b</sub> (ec. F1-1)</label><output id="cCbOut" class="cbOut">—</output></div>
-        </div>
-        <div class="cbTit">Momentos del tramo no arriostrado para C<sub>b</sub> <span class="unit u-m"></span></div>
-        <div class="row2">
-          <div><label for="cMmax">M<sub>máx</sub> (vacío = M<sub>ux</sub>)</label><input id="cMmax" type="number" step="any" value=""></div>
-          <div><label for="cMA">M<sub>A</sub> (a L/4)</label><input id="cMA" type="number" step="any" value="464.011"></div>
-          <div><label for="cMB">M<sub>B</sub> (a L/2)</label><input id="cMB" type="number" step="any" value="464.011"></div>
-          <div><label for="cMC">M<sub>C</sub> (a 3L/4)</label><input id="cMC" type="number" step="any" value="464.011"></div>
-        </div>
-        <label class="chk"><input id="cB1" type="checkbox"> Amplificar momentos por efecto P-δ (B<sub>1</sub>, Anexo 8)</label>
-        <div id="b1Box" class="row2 hidden">
-          <div><label for="cCmx">C<sub>m,x</sub></label><input id="cCmx" type="number" step="0.01" value="1"></div>
-          <div><label for="cCmy">C<sub>m,y</sub></label><input id="cCmy" type="number" step="0.01" value="1"></div>
-        </div>
-      </fieldset>
+        <label for="cLb">L<sub>b</sub> para PLT <span class="unit">[m]</span></label>
+        <input id="cLb" type="number" step="0.01" min="0" value="2.62">
+        </fieldset>
+        <fieldset id="fsCargasC">
+          <legend>4. Cargas mayoradas (LRFD)</legend>
+          <div class="row2">
+            <div><label for="cPu">Carga axial última P<sub>u</sub> (compresión) <span class="unit u-f"></span></label><input id="cPu" type="number" step="any" min="0" value="73.79314"></div>
+            <div><label for="cVu">Corte último V<sub>u</sub> (eje fuerte) <span class="unit u-f"></span></label><input id="cVu" type="number" step="any" min="0" value="0"></div>
+          </div>
+          <div class="row2">
+            <div><label for="cMux">M<sub>ux</sub> <span class="unit u-m"></span></label><input id="cMux" type="number" step="any" min="0" value="0.464011"></div>
+            <div><label for="cMuy">M<sub>uy</sub> <span class="unit u-m"></span></label><input id="cMuy" type="number" step="any" min="0" value="3.290402"></div>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>5. Criterios de diseño</legend>
+          <label>Factor C<sub>b</sub> (ec. F1-1)</label>
+          <output id="cCbOut" class="cbOut">—</output>
+          <div class="cbTit">Momentos del tramo no arriostrado para C<sub>b</sub> <span class="unit u-m"></span></div>
+          <div class="row2">
+            <div><label for="cMmax">M<sub>máx</sub> (vacío = M<sub>ux</sub>)</label><input id="cMmax" type="number" step="any" value=""></div>
+            <div><label for="cMA">M<sub>A</sub> (a L/4)</label><input id="cMA" type="number" step="any" value="0.464011"></div>
+            <div><label for="cMB">M<sub>B</sub> (a L/2)</label><input id="cMB" type="number" step="any" value="0.464011"></div>
+            <div><label for="cMC">M<sub>C</sub> (a 3L/4)</label><input id="cMC" type="number" step="any" value="0.464011"></div>
+          </div>
+          <label class="chk"><input id="cB1" type="checkbox"> Amplificar momentos por efecto P-δ (B<sub>1</sub>, Anexo 8)</label>
+          <div id="b1Box" class="row2 hidden">
+            <div><label for="cCmx">C<sub>m,x</sub></label><input id="cCmx" type="number" step="0.01" value="1"></div>
+            <div><label for="cCmy">C<sub>m,y</sub></label><input id="cCmy" type="number" step="0.01" value="1"></div>
+          </div>
+        </fieldset>
+      </div>
     </div>
   </section>
 
@@ -1301,6 +1320,7 @@ function setModo(m) {
   history.replaceState(null, "", `?${q}`);
   $("fsViga").classList.toggle("hidden", m !== "viga");
   $("fsCol").classList.toggle("hidden", m !== "columna");
+  $(m === "viga" ? "fsCargasV" : "fsCargasC").querySelector("legend").after($("boxUnidad"));
   // Valores por defecto de los ejemplos del informe (HEB 140 viga / HEB 240 columna), solo en la
   // serie HEB; en otra serie se conserva el perfil elegido.
   // Al volver a un programa ya usado se recupera su serie y su perfil.
@@ -1527,6 +1547,7 @@ window.AURA_MEMO = {
   get tipo() { return modo === "columna" ? "Acero estructural — columna" : "Acero estructural — viga"; },
   elemento: () => modo, tex: () => ultimoTex, nombre: () => ultimoNombre,
   recalcular: (v) => {
+    if (v && typeof v === "object" && !("unidad" in v)) $("unidad").value = "kgf";   // datos anteriores a tf por defecto
     // Elemento de proyecto con una serie o un perfil que ya no está en el catálogo: se usa el primero y se avisa
     // (un borrador así se descarta con aviso en proyectos.js)
     const deProyecto = new URLSearchParams(location.search).has("el");

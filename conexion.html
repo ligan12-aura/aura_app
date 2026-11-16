@@ -197,16 +197,9 @@
         <label class="chk soloMom"><input id="colExtremo" type="checkbox"> <span>La unión está en el extremo superior de la columna (a menos de d<sub>c</sub>)</span></label>
       </fieldset>
 
-      <fieldset>
-        <legend>3. Solicitaciones mayoradas (LRFD)</legend>
-        <div class="row2">
-          <div><label for="Vu">Corte V<sub>u</sub> <span class="unit">[tf]</span></label><input id="Vu" type="number" step="0.1" value="4.54"></div>
-          <div class="soloMom"><label for="Mu">Momento M<sub>u</sub> <span class="unit">[tf·m]</span></label><input id="Mu" type="number" step="0.1" value="5.79"></div>
-        </div>
-      </fieldset>
 
       <fieldset>
-        <legend>4. Pernos y soldadura</legend>
+        <legend>3. Pernos y soldadura</legend>
         <div class="row2">
           <div><label for="grado">Pernos</label><select id="grado">
             <option value="A307">ASTM A307</option>
@@ -228,7 +221,7 @@
       </fieldset>
 
       <fieldset>
-        <legend>5. Placa de corte en el alma</legend>
+        <legend>4. Placa de corte en el alma</legend>
         <label for="nPl">Placas de corte</label>
         <select id="nPl">
           <option value="1" selected>Una, a un lado del alma (placa simple)</option>
@@ -246,6 +239,19 @@
           <div><label for="ePer">Excentricidad pernos <span class="unit">[mm]</span></label><input id="ePer" type="number" step="5" value="0"></div>
         </div>
         <div class="unit" style="margin-top:4px">a: desde la cara de la columna (soldadura) a la línea de pernos. Largo de la placa L<sub>p</sub> = 2l<sub>ev</sub> + (n − 1)s; ancho a + l<sub>eh</sub>. Los pernos quedan centrados en el alto de la viga. Con excentricidad 0 el grupo toma solo corte; con un valor, se usa el método elástico. Con dos placas, ambas son iguales (mismo espesor, filete y pernos) y el alma de la viga queda entre ellas.</div>
+      </fieldset>
+
+      <fieldset>
+        <legend>5. Cargas mayoradas (LRFD)</legend>
+        <label for="cxunidad">Unidades</label>
+        <select id="cxunidad">
+          <option value="tf" selected>tf y tf·m</option>
+          <option value="kgf">kgf y kgf·m</option>
+        </select>
+        <div class="row2">
+          <div><label for="Vu">Corte V<sub>u</sub> <span class="unit u-f"></span></label><input id="Vu" type="number" step="0.1" value="4.54"></div>
+          <div class="soloMom"><label for="Mu">Momento M<sub>u</sub> <span class="unit u-m"></span></label><input id="Mu" type="number" step="0.1" value="5.79"></div>
+        </div>
       </fieldset>
 
       <fieldset class="soloMom">
@@ -482,7 +488,7 @@ function leerDatos() {
     v: perfilDe("serieV", "perfilV", "v"), c: perfilDe("serieC", "perfilC", "c"),
     aceroV: $("aceroV").value, FyV: av.Fy, FuV: av.Fu, aceroC: $("aceroC").value, FyC: ac.Fy, FuC: ac.Fu, aceroP: $("aceroP").value, FyP: ap.Fy, FuP: ap.Fu,
     colExtremo: $("colExtremo").checked,
-    Vu: Math.abs(num("Vu")) * 1000, Mu: $("tipo").value === "momento" ? Math.abs(num("Mu")) * 1e5 : 0,
+    Vu: Math.abs(num("Vu")) * 1000 * enTf("cxunidad"), Mu: $("tipo").value === "momento" ? Math.abs(num("Mu")) * 1e5 * enTf("cxunidad") : 0,
     grado: $("grado").value, Fnv: g.Fnv, Fnt: g.Fnt, dbTxt: $("db").value, db, dh, dhn: dh + 0.16, emin: pb.emin * PULG, Ab: Math.PI / 4 * db * db,
     fexx: parseFloat($("fexx").value), crit: $("critBloque").value,
     nPl: $("nPl").value === "2" ? 2 : 1,
@@ -1502,6 +1508,7 @@ function descargarDXF() {
 }
 
 function init() {
+  unidadFuerza("cxunidad", ["Vu", "Mu"]);
   const q = new URLSearchParams(location.search).get("tipo");
   if (q === "momento" || q === "corte") $("tipo").value = q;
   llenarPerfiles("perfilV", "otroV", DEF_V); llenarPerfiles("perfilC", "otroC", DEF_C);
@@ -1544,6 +1551,7 @@ window.AURA_MEMO = {
   elemento: () => ($("tipo").value === "momento" ? "Corte y momento" : "Corte") + ($("nPl").value === "2" ? ", doble placa" : ""),
   tex: () => ultimoTex, nombre: () => ultimoNombre,
   recalcular: (vals) => {
+    if (vals && typeof vals === "object" && !("cxunidad" in vals)) $("cxunidad").value = "tf";   // datos anteriores a la lista: estaban en tf
     llenarPerfiles("perfilV", "otroV", DEF_V); llenarPerfiles("perfilC", "otroC", DEF_C);
     if (vals && vals.perfilV) $("perfilV").value = vals.perfilV;
     if (vals && vals.perfilC) $("perfilC").value = vals.perfilC;

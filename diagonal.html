@@ -155,15 +155,7 @@
       <div class="unit" style="text-align:center">Elevación · la diagonal llega a una placa nodal soldada a la columna y a la viga · cotas en mm</div>
 
       <fieldset>
-        <legend>1. Solicitación</legend>
-        <div class="row2">
-          <div><label for="Pu">Tracción mayorada P<sub>u</sub> <span class="unit">[tf]</span></label><input id="Pu" type="number" step="0.1" value="20.275"></div>
-          <div><label for="alfa">Ángulo con la horizontal α <span class="unit">[°]</span></label><input id="alfa" type="number" step="0.5" value="31.65"></div>
-        </div>
-      </fieldset>
-
-      <fieldset>
-        <legend>2. Diagonal (tubo rectangular)</legend>
+        <legend>1. Diagonal (tubo rectangular)</legend>
         <div class="row3">
           <div><label for="tH">Alto H (en el plano) <span class="unit">[mm]</span></label><input id="tH" type="number" step="5" value="100"></div>
           <div><label for="tB">Ancho B <span class="unit">[mm]</span></label><input id="tB" type="number" step="5" value="100"></div>
@@ -171,11 +163,13 @@
         </div>
         <label for="aceroT">Acero del tubo</label>
         <select id="aceroT"><option value="A36">ASTM A36</option><option>A37-24ES</option><option selected>A42-27ES</option><option>A52-34ES</option></select>
+        <label for="alfa">Ángulo con la horizontal α <span class="unit">[°]</span></label>
+        <input id="alfa" type="number" step="0.5" value="31.65">
         <div class="unit" style="margin-top:4px">H: alto del tubo en el plano de la conexión; B: ancho normal a ese plano (Tabla D3.1). Área bruta con esquinas rectas: A<sub>g</sub> = 2t(B + H − 2t).</div>
       </fieldset>
 
       <fieldset>
-        <legend>3. Placa de conexión y soldadura al tubo</legend>
+        <legend>2. Placa de conexión y soldadura al tubo</legend>
         <div class="row3">
           <div><label for="bp">Ancho b<sub>p</sub> <span class="unit">[mm]</span></label><input id="bp" type="number" step="5" value="115"></div>
           <div><label for="tp">Espesor t<sub>p</sub> <span class="unit">[mm]</span></label><input id="tp" type="number" step="1" value="10"></div>
@@ -190,7 +184,7 @@
       </fieldset>
 
       <fieldset>
-        <legend>4. Pernos</legend>
+        <legend>3. Pernos</legend>
         <div class="row2">
           <div><label for="grado">Pernos</label><select id="grado">
             <option value="A307">ASTM A307</option>
@@ -218,7 +212,7 @@
       </fieldset>
 
       <fieldset>
-        <legend>5. Placa nodal y su soldadura</legend>
+        <legend>4. Placa nodal y su soldadura</legend>
         <div class="row3">
           <div><label for="tn">Espesor t<sub>n</sub> <span class="unit">[mm]</span></label><input id="tn" type="number" step="1" value="10"></div>
           <div><label for="Lc">Largo en la columna <span class="unit">[mm]</span></label><input id="Lc" type="number" step="10" value="300"></div>
@@ -229,6 +223,17 @@
         </div>
         <label class="chk"><input id="direccional" type="checkbox" checked> <span>Incremento direccional de los filetes (J2-5)</span></label>
         <div class="unit" style="margin-top:4px">Placa nodal rectangular de L<sub>viga</sub> × L<sub>columna</sub> en la esquina entre la columna y el ala inferior de la viga; el eje de la diagonal pasa por esa esquina. Filetes por ambas caras en cada borde soldado. El electrodo rige para todas las soldaduras.</div>
+      </fieldset>
+
+      <fieldset>
+        <legend>5. Cargas mayoradas (LRFD)</legend>
+        <label for="dgunidad">Unidades</label>
+        <select id="dgunidad">
+          <option value="tf" selected>tf</option>
+          <option value="kgf">kgf</option>
+        </select>
+        <label for="Pu">Tracción mayorada P<sub>u</sub> <span class="unit u-f"></span></label>
+        <input id="Pu" type="number" step="0.1" value="20.275">
       </fieldset>
     </div>
   </section>
@@ -466,7 +471,7 @@ function leerDatos() {
   const at = ACEROS[$("aceroT").value], ap = ACEROS[$("aceroP").value];
   const db = pb.d * PULG, dh = pb.dh * PULG;
   return {
-    Pu: Math.abs(num("Pu")) * 1000, alfa: num("alfa"),
+    Pu: Math.abs(num("Pu")) * 1000 * enTf("dgunidad"), alfa: num("alfa"),
     B: c("tB"), H: c("tH"), t: c("tt"), aceroT: $("aceroT").value, FyT: at.Fy, FuT: at.Fu,
     bp: c("bp"), tp: c("tp"), hr: c("hr"), lw: c("lw"), w: c("w"), gapT: c("gapT"), aceroP: $("aceroP").value, FyP: ap.Fy, FuP: ap.Fu,
     grado: $("grado").value, Fnv: g.Fnv, Fnt: g.Fnt, dbTxt: $("db").value, db, dh, dhn: dh + 0.16, emin: pb.emin * PULG, Ab: Math.PI / 4 * db * db,
@@ -1066,6 +1071,7 @@ function descargarDXF() {
 }
 
 function init() {
+  unidadFuerza("dgunidad", ["Pu"]);
   $("inputs").addEventListener("input", (e) => { if (e.target.tagName === "INPUT" && e.target.type !== "checkbox") calcular(); });
   $("inputs").addEventListener("change", () => calcular());
   calcular();
@@ -1104,7 +1110,8 @@ window.AURA_MEMO = {
   tipo: "Conexión de diagonal (prueba)",
   elemento: () => "Tracción",
   tex: () => ultimoTex, nombre: () => ultimoNombre,
-  recalcular: () => calcular(),
+  // datos anteriores a la lista de unidades: estaban en tf
+  recalcular: (v) => { if (v && typeof v === "object" && !("dgunidad" in v)) $("dgunidad").value = "tf"; calcular(); },
 };
 
 </script>

@@ -70,8 +70,38 @@ function sincronizarGrados() {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Lista de unidades de fuerza (estándar: tf y tf·m por defecto, o kgf y kgf·m): unidadFuerza(idLista, ids) convierte
+// los valores escritos en esos campos al cambiar la lista y actualiza los rótulos .u-f y .u-m; enTf(idLista) es el
+// factor que lleva un valor escrito a tf (1 o 1/1000). Un dato guardado antes de la lista se lee en tf (el defecto).
+// ---------------------------------------------------------------------------
+const listasFuerza = [];
+function unidadFuerza(idLista, ids) {
+  const sel = document.getElementById(idLista);
+  if (!sel) return;
+  sel.addEventListener("change", () => {
+    const k = sel.value === "tf" ? 1 / 1000 : 1000;
+    for (const id of typeof ids === "function" ? ids() : ids) {
+      const el = document.getElementById(id), v = parseFloat(el?.value);
+      if (Number.isFinite(v)) el.value = +(v * k).toPrecision(8);
+    }
+    refrescarUnidades();
+  });
+  listasFuerza.push(sel);
+  refrescarUnidades();
+}
+const enTf = (idLista) => (document.getElementById(idLista)?.value === "kgf" ? 1 / 1000 : 1);
+function refrescarUnidades() {
+  for (const sel of listasFuerza) {
+    const tf = sel.value !== "kgf";
+    document.querySelectorAll("span.u-f").forEach((e) => { e.textContent = tf ? "[tf]" : "[kgf]"; });
+    document.querySelectorAll("span.u-m").forEach((e) => { e.textContent = tf ? "[tf·m]" : "[kgf·m]"; });
+  }
+}
+
 function datosInvalidos(reglas) {
   sincronizarGrados();
+  refrescarUnidades();
   const malos = [];
   for (const [id, min = 0, estricto = false] of reglas) {
     const el = document.getElementById(id);
@@ -81,6 +111,7 @@ function datosInvalidos(reglas) {
     el.classList.toggle("invalido", bad);
     if (bad) malos.push((el.labels && el.labels[0] ? el.labels[0].textContent : el.getAttribute("aria-label") || id).replace(/\s+/g, " ").trim());
   }
+  for (const [inp, sel] of camposGrado) sel.classList.toggle("invalido", inp.classList.contains("invalido"));
   return malos;
 }
 // Limpia la marca de los campos que ya no se validan (p. ej. al cambiar de pestaña).
