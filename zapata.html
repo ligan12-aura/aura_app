@@ -177,19 +177,19 @@
       <div class="unit" style="text-align:center">Planta (B según x, L según y) y elevación · H aplicada a h<sub>t</sub> sobre el terreno</div>
 
       <fieldset>
-        <legend>1. Geometría [m]</legend>
+        <legend>1. Geometría</legend>
         <label for="modo">Dimensiones en planta</label>
         <select id="modo">
           <option value="dim" selected>Calcular B con L fijo (como el ejercicio del curso)</option>
           <option value="ver">Verificar B y L dados</option>
         </select>
         <div class="row3">
-          <div id="boxB"><label for="B">Ancho B (x)</label><input id="B" type="number" step="0.05" value="2.4"></div>
-          <div><label for="Lz">Largo L (y)</label><input id="Lz" type="number" step="0.05" value="2.9"></div>
-          <div id="boxPaso"><label for="paso">Redondeo de B</label><input id="paso" type="number" step="0.05" value="0.1"></div>
-          <div><label for="hc">Altura h<sub>c</sub></label><input id="hc" type="number" step="0.05" value="0.55"></div>
-          <div><label for="Df">Sello D<sub>f</sub></label><input id="Df" type="number" step="0.05" value="0.7"></div>
-          <div><label for="ht">Carga sobre terreno h<sub>t</sub></label><input id="ht" type="number" step="0.05" value="0.1"></div>
+          <div id="boxB"><label for="B">Ancho B (x) <span class="unit">[m]</span></label><input id="B" type="number" step="0.05" value="2.4"></div>
+          <div><label for="Lz">Largo L (y) <span class="unit">[m]</span></label><input id="Lz" type="number" step="0.05" value="2.9"></div>
+          <div id="boxPaso"><label for="paso">Redondeo de B <span class="unit">[m]</span></label><input id="paso" type="number" step="0.05" value="0.1"></div>
+          <div><label for="hc">Altura h<sub>c</sub> <span class="unit">[m]</span></label><input id="hc" type="number" step="0.05" value="0.55"></div>
+          <div><label for="Df">Sello D<sub>f</sub> <span class="unit">[m]</span></label><input id="Df" type="number" step="0.05" value="0.7"></div>
+          <div><label for="ht">Carga sobre terreno h<sub>t</sub> <span class="unit">[m]</span></label><input id="ht" type="number" step="0.05" value="0.1"></div>
         </div>
         <div class="cbTit">Columna o pedestal</div>
         <div class="row3">
@@ -211,10 +211,37 @@
       </fieldset>
 
       <fieldset>
-        <legend>3. Cargas en la base de la columna</legend>
-        <div class="unit">P en compresión positiva [tf]; H horizontales [tf]; M momentos de la columna [tf·m] (0 en un pilar rotulado). En el sello: M<sub>x</sub> + H<sub>y</sub>(D<sub>f</sub> + h<sub>t</sub>) y M<sub>y</sub> + H<sub>x</sub>(D<sub>f</sub> + h<sub>t</sub>).</div>
+        <legend>3. Materiales</legend>
+        <div class="row2">
+          <div><label for="fc">Hormigón f'<sub>c</sub> <span class="unit">[kgf/cm²]</span></label><input id="fc" type="number" step="10" value="250"></div>
+          <div><label for="fy">Acero f<sub>y</sub> <span class="unit">[kgf/cm²]</span></label><input id="fy" type="number" step="100" value="4200"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>4. Armadura</legend>
+        <div class="row2">
+          <div><label for="rec">Recubrimiento r <span class="unit">[cm]</span></label><input id="rec" type="number" step="0.5" value="5"></div>
+          <div id="boxPsir" class="hidden"><label for="psir">Gancho de la barra de la columna, ψ<sub>r</sub> (ACI 318-19)</label>
+            <select id="psir"><option value="1.6" selected>1.6 — sin confinamiento comprobado</option><option value="1">1.0 — s ≥ 6d<sub>b</sub> entre barras o A<sub>th</sub> ≥ 0.4A<sub>hs</sub></option></select></div>
+        </div>
+        <div class="row2">
+          <div><label for="dbx">Barras según x (A<sub>sx</sub>) <span class="unit">[mm]</span></label><input id="dbx" type="number" step="1" value="12"></div>
+          <div><label for="dby">Barras según y (A<sub>sy</sub>) <span class="unit">[mm]</span></label><input id="dby" type="number" step="1" value="16"></div>
+        </div>
+        <div class="unit" style="margin-top:4px">Parrilla inferior. Espaciamiento propuesto: el entero en cm que da el área requerida, con s ≤ mín(3h<sub>c</sub> ; 45 cm).</div>
+      </fieldset>
+
+      <fieldset>
+        <legend>5. Cargas por estado (sin mayorar)</legend>
+        <label for="zunidad">Unidades</label>
+        <select id="zunidad">
+          <option value="tf" selected>tf y tf·m</option>
+          <option value="kgf">kgf y kgf·m</option>
+        </select>
+        <div class="unit" style="margin-top:6px">En la base de la columna. P en compresión positiva; H horizontales; M momentos de la columna (0 en un pilar rotulado). En el sello: M<sub>x</sub> + H<sub>y</sub>(D<sub>f</sub> + h<sub>t</sub>) y M<sub>y</sub> + H<sub>x</sub>(D<sub>f</sub> + h<sub>t</sub>).</div>
         <table class="cargas">
-          <thead><tr><th></th><th>P</th><th>H<sub>x</sub></th><th>H<sub>y</sub></th><th>M<sub>x</sub></th><th>M<sub>y</sub></th></tr></thead>
+          <thead><tr><th></th><th>P <span class="unit u-f"></span></th><th>H<sub>x</sub> <span class="unit u-f"></span></th><th>H<sub>y</sub> <span class="unit u-f"></span></th><th>M<sub>x</sub> <span class="unit u-m"></span></th><th>M<sub>y</sub> <span class="unit u-m"></span></th></tr></thead>
           <tbody>
             <tr><td>D</td><td><input id="PD" type="number" step="0.5" value="20" aria-label="P de la carga muerta"></td><td><input id="HxD" type="number" step="0.1" value="-0.625" aria-label="Hx de la carga muerta"></td><td><input id="HyD" type="number" step="0.1" value="-0.625" aria-label="Hy de la carga muerta"></td><td><input id="MxD" type="number" step="0.1" value="0" aria-label="Mx de la carga muerta"></td><td><input id="MyD" type="number" step="0.1" value="0" aria-label="My de la carga muerta"></td></tr>
             <tr><td>L</td><td><input id="PL" type="number" step="0.5" value="60" aria-label="P de la sobrecarga"></td><td><input id="HxL" type="number" step="0.1" value="10.625" aria-label="Hx de la sobrecarga"></td><td><input id="HyL" type="number" step="0.1" value="-14.375" aria-label="Hy de la sobrecarga"></td><td><input id="MxL" type="number" step="0.1" value="0" aria-label="Mx de la sobrecarga"></td><td><input id="MyL" type="number" step="0.1" value="0" aria-label="My de la sobrecarga"></td></tr>
@@ -236,22 +263,9 @@
       </fieldset>
 
       <fieldset>
-        <legend>4. Materiales y armaduras</legend>
-        <div class="row2">
-          <div><label for="fc">Hormigón f'<sub>c</sub> <span class="unit">[kgf/cm²]</span></label><input id="fc" type="number" step="10" value="250"></div>
-          <div><label for="fy">Acero f<sub>y</sub> <span class="unit">[kgf/cm²]</span></label><input id="fy" type="number" step="100" value="4200"></div>
-          <div><label for="rec">Recubrimiento r <span class="unit">[cm]</span></label><input id="rec" type="number" step="0.5" value="5"></div>
-          <div><label for="vc3">Punzonamiento, 3.ª expresión</label>
-            <select id="vc3"><option value="1" selected>√f'c b₀ d (pauta del curso)</option><option value="1.06">1.06 √f'c b₀ d (ACI 318-08 11-33)</option></select></div>
-          <div id="boxPsir" class="hidden"><label for="psir">Gancho de la barra de la columna, ψ<sub>r</sub> (ACI 318-19)</label>
-            <select id="psir"><option value="1.6" selected>1.6 — sin confinamiento comprobado</option><option value="1">1.0 — s ≥ 6d<sub>b</sub> entre barras o A<sub>th</sub> ≥ 0.4A<sub>hs</sub></option></select></div>
-        </div>
-        <div class="cbTit">Diámetros de la parrilla inferior [mm]</div>
-        <div class="row2">
-          <div><label for="dbx">Barras según x (A<sub>sx</sub>)</label><input id="dbx" type="number" step="1" value="12"></div>
-          <div><label for="dby">Barras según y (A<sub>sy</sub>)</label><input id="dby" type="number" step="1" value="16"></div>
-        </div>
-        <div class="unit" style="margin-top:4px">Espaciamiento propuesto: el entero en cm que da el área requerida, con s ≤ mín(3h<sub>c</sub> ; 45 cm).</div>
+        <legend>6. Criterios de diseño</legend>
+        <label for="vc3">Punzonamiento, 3.ª expresión</label>
+        <select id="vc3"><option value="1" selected>√f'c b₀ d (pauta del curso)</option><option value="1.06">1.06 √f'c b₀ d (ACI 318-08 11-33)</option></select>
       </fieldset>
     </div>
   </section>
@@ -366,7 +380,8 @@ class Memo {
 // ---------------------------------------------------------------------------
 function leerDatos() {
   const m = (id) => num(id) * 100;
-  const carga = (s) => ({ P: num("P" + s) * 1000, Hx: num("Hx" + s) * 1000, Hy: num("Hy" + s) * 1000, Mx: num("Mx" + s) * 1e5, My: num("My" + s) * 1e5 });
+  const uF = $("zunidad").value === "kgf" ? 1 : 1000;      // tf → kgf; tf·m → kgf·cm (×100 más)
+  const carga = (s) => ({ P: num("P" + s) * uF, Hx: num("Hx" + s) * uF, Hy: num("Hy" + s) * uF, Mx: num("Mx" + s) * uF * 100, My: num("My" + s) * uF * 100 });
   return {
     modo: $("modo").value, B: m("B"), Ly: m("Lz"), paso: m("paso"), hc: m("hc"), Df: m("Df"), ht: m("ht"),
     a: num("ca"), b: num("cb"), dbc: num("dbc") / 10,
@@ -1096,6 +1111,7 @@ Por lo tanto, como la relación demanda-capacidad máxima de la condición está
 // Cálculo e interfaz
 // ---------------------------------------------------------------------------
 function calcular() {
+  unidadesCargas();                        // rótulos según la unidad (también tras restaurar un borrador)
   textosNorma();
   const sismo = $("sismo").checked, ver = $("modo").value === "ver";
   $("sismoBox").classList.toggle("hidden", !sismo);
@@ -1213,7 +1229,24 @@ function descargarDXF() {
   descargarPlano(pl, `plano_zapata_${fmt(M(r.B), 2).replace(".", "_")}x${fmt(M(r.Ly), 2).replace(".", "_")}.dxf`);
 }
 
+// Unidades de las cargas (tf y tf·m por defecto, o kgf y kgf·m): rótulos de la tabla
+function unidadesCargas() {
+  const tf = $("zunidad").value === "tf";
+  document.querySelectorAll(".u-f").forEach(e => e.textContent = tf ? "[tf]" : "[kgf]");
+  document.querySelectorAll(".u-m").forEach(e => e.textContent = tf ? "[tf·m]" : "[kgf·m]");
+}
 function init() {
+  grados("fc", "hormigon"); grados("fy", "refuerzo");
+  unidadesCargas();
+  // Al cambiar la unidad se convierten los valores escritos (antes de que el panel recalcule)
+  $("zunidad").addEventListener("change", () => {
+    const k = $("zunidad").value === "tf" ? 1 / 1000 : 1000;
+    for (const e of ["D", "L", "E"]) for (const c of ["P", "Hx", "Hy", "Mx", "My"]) {
+      const el = $(c + e), v = parseFloat(el.value);
+      if (Number.isFinite(v)) el.value = +(v * k).toPrecision(8);
+    }
+    unidadesCargas();
+  });
   $("inputs").addEventListener("input", (e) => { if (e.target.tagName === "INPUT" && e.target.type !== "checkbox") calcular(); });
   $("inputs").addEventListener("change", () => calcular());
   calcular();

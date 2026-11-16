@@ -167,6 +167,7 @@ function restaurarFormulario(v, estricto = false) {
       else el.value = x;
     } catch (e) { console.warn(`AURA: no se pudo restaurar el campo ${id}`, e); }
   }
+  if (typeof sincronizarGrados === "function") sincronizarGrados();   // listas de grados de material (memo.js)
 }
 // Borrador por página: lo último que se escribió en cada herramienta se guarda en el navegador y vuelve
 // al regresar a ella (también desde otra página). Va por usuario y se borra al cerrar sesión (equipos compartidos).

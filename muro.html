@@ -171,24 +171,24 @@
       <div class="unit" style="text-align:center">Trasdós vertical, talud de la pantalla hacia el pie, relleno horizontal</div>
 
       <fieldset>
-        <legend>1. Geometría [m]</legend>
+        <legend>1. Geometría</legend>
         <div class="row3">
-          <div><label for="Hm">Altura pantalla H<sub>m</sub></label><input id="Hm" type="number" step="0.05" value="6.8"></div>
-          <div><label for="Hf">Espesor zapata H<sub>f</sub></label><input id="Hf" type="number" step="0.05" value="0.7"></div>
-          <div><label for="Df">Prof. fundación D<sub>f</sub></label><input id="Df" type="number" step="0.05" value="1.2"></div>
-          <div><label for="Bp">Pie B<sub>p</sub></label><input id="Bp" type="number" step="0.05" value="1.5"></div>
-          <div><label for="eb">Espesor base e<sub>b</sub></label><input id="eb" type="number" step="0.05" value="0.75"></div>
-          <div><label for="Bt">Talón B<sub>t</sub></label><input id="Bt" type="number" step="0.05" value="2.4"></div>
+          <div><label for="Hm">Altura pantalla H<sub>m</sub> <span class="unit">[m]</span></label><input id="Hm" type="number" step="0.05" value="6.8"></div>
+          <div><label for="Hf">Espesor zapata H<sub>f</sub> <span class="unit">[m]</span></label><input id="Hf" type="number" step="0.05" value="0.7"></div>
+          <div><label for="Df">Prof. fundación D<sub>f</sub> <span class="unit">[m]</span></label><input id="Df" type="number" step="0.05" value="1.2"></div>
+          <div><label for="Bp">Pie B<sub>p</sub> <span class="unit">[m]</span></label><input id="Bp" type="number" step="0.05" value="1.5"></div>
+          <div><label for="eb">Espesor base e<sub>b</sub> <span class="unit">[m]</span></label><input id="eb" type="number" step="0.05" value="0.75"></div>
+          <div><label for="Bt">Talón B<sub>t</sub> <span class="unit">[m]</span></label><input id="Bt" type="number" step="0.05" value="2.4"></div>
         </div>
         <div class="row2">
-          <div><label for="ec">Espesor coronamiento e<sub>c</sub></label><input id="ec" type="number" step="0.05" value="0.3"></div>
+          <div><label for="ec">Espesor coronamiento e<sub>c</sub> <span class="unit">[m]</span></label><input id="ec" type="number" step="0.05" value="0.3"></div>
           <div></div>
         </div>
         <div class="cbTit">Dentellón (0 = sin dentellón)</div>
         <div class="row3">
-          <div><label for="bd">Ancho b<sub>d</sub></label><input id="bd" type="number" step="0.05" value="0.75"></div>
-          <div><label for="hd">Alto h<sub>d</sub></label><input id="hd" type="number" step="0.05" value="0.65"></div>
-          <div><label for="xd">Desde el pie x<sub>d</sub></label><input id="xd" type="number" step="0.05" value="1.5"></div>
+          <div><label for="bd">Ancho b<sub>d</sub> <span class="unit">[m]</span></label><input id="bd" type="number" step="0.05" value="0.75"></div>
+          <div><label for="hd">Alto h<sub>d</sub> <span class="unit">[m]</span></label><input id="hd" type="number" step="0.05" value="0.65"></div>
+          <div><label for="xd">Desde el pie x<sub>d</sub> <span class="unit">[m]</span></label><input id="xd" type="number" step="0.05" value="1.5"></div>
         </div>
       </fieldset>
 
@@ -215,7 +215,33 @@
       </fieldset>
 
       <fieldset>
-        <legend>3. Cargas y sismo</legend>
+        <legend>3. Materiales</legend>
+        <div class="row2">
+          <div><label for="fc">Hormigón f'<sub>c</sub> <span class="unit">[kgf/cm²]</span></label><input id="fc" type="number" step="10" value="250"></div>
+          <div><label for="fy">Acero f<sub>y</sub> <span class="unit">[kgf/cm²]</span></label><input id="fy" type="number" step="100" value="4200"></div>
+          <div><label for="gH">Peso esp. hormigón γ<sub>h</sub> <span class="unit">[tf/m³]</span></label><input id="gH" type="number" step="0.05" value="2.4"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>4. Armadura</legend>
+        <div class="row2">
+          <div><label for="rec">Recubrimiento <span class="unit">[cm]</span></label><input id="rec" type="number" step="0.5" value="5"></div>
+          <div></div>
+        </div>
+        <div class="row3">
+          <div><label for="dbP">Pantalla, trasdós <span class="unit">[mm]</span></label><input id="dbP" type="number" step="1" value="25"></div>
+          <div><label for="dbPc">Pantalla, cara ext. <span class="unit">[mm]</span></label><input id="dbPc" type="number" step="1" value="12"></div>
+          <div><label for="dbH">Pantalla, horizontal <span class="unit">[mm]</span></label><input id="dbH" type="number" step="1" value="10"></div>
+          <div><label for="dbZp">Pie (inferior) <span class="unit">[mm]</span></label><input id="dbZp" type="number" step="1" value="18"></div>
+          <div><label for="dbZt">Talón (superior) <span class="unit">[mm]</span></label><input id="dbZt" type="number" step="1" value="22"></div>
+          <div><label for="dbZr">Zapata, repartición <span class="unit">[mm]</span></label><input id="dbZr" type="number" step="1" value="12"></div>
+        </div>
+        <div class="unit" style="margin-top:4px">Diámetros de barra. Espaciamiento propuesto: el mayor múltiplo de 2.5 cm que da el área requerida, con s ≤ mín(3h ; 45 cm).</div>
+      </fieldset>
+
+      <fieldset>
+        <legend>5. Cargas y sismo</legend>
         <div class="row2">
           <div><label for="q">Sobrecarga q <span class="unit">[tf/m²]</span></label><input id="q" type="number" step="0.05" value="1.14"></div>
           <div><label for="zona">Zona sísmica (NCh 433)</label>
@@ -234,7 +260,7 @@
       </fieldset>
 
       <fieldset>
-        <legend>4. Factores de seguridad mínimos</legend>
+        <legend>6. Factores de seguridad mínimos</legend>
         <div class="row3">
           <div><label for="fsV">Volcamiento</label><input id="fsV" type="number" step="0.05" value="1.5"></div>
           <div><label for="fsD">Deslizamiento</label><input id="fsD" type="number" step="0.05" value="1.5"></div>
@@ -250,26 +276,6 @@
           <div></div>
         </div>
         <div class="unit" style="margin-top:4px">Valores del ejemplo del curso: volcamiento sísmico 1.15 × 1.1.</div>
-      </fieldset>
-
-      <fieldset>
-        <legend>5. Materiales y armaduras</legend>
-        <div class="row2">
-          <div><label for="fc">Hormigón f'<sub>c</sub> <span class="unit">[kgf/cm²]</span></label><input id="fc" type="number" step="10" value="250"></div>
-          <div><label for="fy">Acero f<sub>y</sub> <span class="unit">[kgf/cm²]</span></label><input id="fy" type="number" step="100" value="4200"></div>
-          <div><label for="gH">Peso esp. hormigón γ<sub>h</sub> <span class="unit">[tf/m³]</span></label><input id="gH" type="number" step="0.05" value="2.4"></div>
-          <div><label for="rec">Recubrimiento <span class="unit">[cm]</span></label><input id="rec" type="number" step="0.5" value="5"></div>
-        </div>
-        <div class="cbTit">Diámetros de barra [mm]</div>
-        <div class="row3">
-          <div><label for="dbP">Pantalla, trasdós</label><input id="dbP" type="number" step="1" value="25"></div>
-          <div><label for="dbPc">Pantalla, cara ext.</label><input id="dbPc" type="number" step="1" value="12"></div>
-          <div><label for="dbH">Pantalla, horizontal</label><input id="dbH" type="number" step="1" value="10"></div>
-          <div><label for="dbZp">Pie (inferior)</label><input id="dbZp" type="number" step="1" value="18"></div>
-          <div><label for="dbZt">Talón (superior)</label><input id="dbZt" type="number" step="1" value="22"></div>
-          <div><label for="dbZr">Zapata, repartición</label><input id="dbZr" type="number" step="1" value="12"></div>
-        </div>
-        <div class="unit" style="margin-top:4px">Espaciamiento propuesto: el mayor múltiplo de 2.5 cm que da el área requerida, con s ≤ mín(3h ; 45 cm).</div>
       </fieldset>
     </div>
   </section>
@@ -1486,6 +1492,7 @@ function descargarDXFLamina() {
 }
 
 function init() {
+  grados("fc", "hormigon"); grados("fy", "refuerzo");
   $("inputs").addEventListener("input", (e) => { if (e.target.tagName === "INPUT" && e.target.type !== "checkbox") calcular(); });
   $("inputs").addEventListener("change", () => calcular());
   calcular();

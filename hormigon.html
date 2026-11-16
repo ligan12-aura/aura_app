@@ -172,7 +172,7 @@
       <!-- Viga -->
       <div data-panel="viga">
         <fieldset>
-          <legend>Geometría de la sección</legend>
+          <legend>1. Geometría de la sección</legend>
           <div class="row3">
             <div><label for="vb">Ancho b <span class="unit">[cm]</span></label><input id="vb" type="number" step="0.5" min="10" value="20"></div>
             <div><label for="vh">Altura h <span class="unit">[cm]</span></label><input id="vh" type="number" step="0.5" min="15" value="76"></div>
@@ -182,7 +182,7 @@
         </fieldset>
 
         <fieldset>
-          <legend>Materiales</legend>
+          <legend>2. Materiales</legend>
           <div class="row2">
             <div>
               <label for="vfc">Hormigón</label>
@@ -208,7 +208,7 @@
         </fieldset>
 
         <fieldset>
-          <legend>Armadura</legend>
+          <legend>3. Armadura</legend>
           <div class="row2">
             <div><label for="vdbInf">𝜙 barra inferior <span class="unit">[mm]</span></label><select id="vdbInf" class="barras" data-sin-borrador></select></div>
             <div><label for="vdbSup">𝜙 barra superior <span class="unit">[mm]</span></label><select id="vdbSup" class="barras" data-sin-borrador></select></div>
@@ -223,6 +223,25 @@
             <p><b>Estribos:</b> el menor entre 𝜙8 y 𝜙12 que deja al menos 10 cm entre estribos.</p>
             <p>Las demás verificaciones se hacen después, en el procedimiento.</p>
           </details>
+        </fieldset>
+
+        <fieldset>
+          <legend>4. Cargas mayoradas (LRFD)</legend>
+          <label for="vunidad">Unidades</label>
+          <select id="vunidad">
+            <option value="tf" selected>tf y tf·m</option>
+            <option value="kgf">kgf y kgf·m</option>
+          </select>
+          <div class="row2">
+            <div><label for="vMpos">M<sub>u</sub><sup>+</sup> (tracción inf.) <span class="unit u-m"></span></label><input id="vMpos" type="number" step="any" min="0" value="5.47001"></div>
+            <div><label for="vMneg">M<sub>u</sub><sup>−</sup> (tracción sup.) <span class="unit u-m"></span></label><input id="vMneg" type="number" step="any" min="0" value="2.74652"></div>
+          </div>
+          <label for="vVu">Corte último V<sub>u</sub> <span class="unit u-f"></span></label>
+          <input id="vVu" type="number" step="any" min="0" value="4.578">
+        </fieldset>
+
+        <fieldset>
+          <legend>5. Criterios de diseño</legend>
           <label for="vgancho">Gancho del estribo</label>
           <select id="vgancho">
             <option value="sismico">135° sísmico — extensión 6d<sub>b</sub> ≥ 7.5 cm (ACI 21.1)</option>
@@ -235,27 +254,12 @@
             <option value="sismico">Sísmico — ACI 21.5.3.2 (d/4, 6d<sub>b</sub>, 15 cm)</option>
           </select>
         </fieldset>
-
-        <fieldset>
-          <legend>Solicitaciones últimas</legend>
-          <label for="vunidad">Unidades</label>
-          <select id="vunidad">
-            <option value="kgf">kgf y kgf·m</option>
-            <option value="tf">tf y tf·m</option>
-          </select>
-          <div class="row2">
-            <div><label for="vMpos">M<sub>u</sub><sup>+</sup> (tracción inf.) <span class="unit u-m"></span></label><input id="vMpos" type="number" step="any" min="0" value="5470.01"></div>
-            <div><label for="vMneg">M<sub>u</sub><sup>−</sup> (tracción sup.) <span class="unit u-m"></span></label><input id="vMneg" type="number" step="any" min="0" value="2746.52"></div>
-          </div>
-          <label for="vVu">Corte último V<sub>u</sub> <span class="unit u-f"></span></label>
-          <input id="vVu" type="number" step="any" min="0" value="4578">
-        </fieldset>
       </div>
 
       <!-- Losa -->
       <div data-panel="losa" class="hidden">
         <fieldset>
-          <legend>Geometría</legend>
+          <legend>1. Geometría</legend>
           <div class="row2">
             <div><label for="lnom">Nombre</label><input id="lnom" type="text" value="L01"></div>
             <div><label for="le">Espesor e <span class="unit">[cm]</span></label><input id="le" type="number" step="0.5" min="8" value="14"></div>
@@ -269,7 +273,7 @@
         </fieldset>
 
         <fieldset>
-          <legend>Condiciones de borde</legend>
+          <legend>2. Condiciones de borde</legend>
           <div class="bordes">
             <select id="lbSup" aria-label="Borde superior"><option value="1" selected>Continuo</option><option value="0">Apoyado</option></select>
             <select id="lbIzq" aria-label="Borde izquierdo"><option value="1" selected>Continuo</option><option value="0">Apoyado</option></select>
@@ -281,7 +285,7 @@
         </fieldset>
 
         <fieldset>
-          <legend>Materiales</legend>
+          <legend>3. Materiales</legend>
           <div class="row2">
             <div>
               <label for="lfc">Hormigón</label>
@@ -306,7 +310,18 @@
         </fieldset>
 
         <fieldset>
-          <legend>Solicitaciones</legend>
+          <legend>4. Armadura</legend>
+          <div class="row2">
+            <div><label for="ldbXi">Inferior X</label><select id="ldbXi" class="barrasLosa"></select></div>
+            <div><label for="ldbYi">Inferior Y</label><select id="ldbYi" class="barrasLosa"></select></div>
+            <div><label for="ldbXs">Superior X</label><select id="ldbXs" class="barrasLosa"></select></div>
+            <div><label for="ldbYs">Superior Y</label><select id="ldbYs" class="barrasLosa"></select></div>
+          </div>
+          <div class="unit" style="margin-top:6px">"Automático" propone el menor diámetro que permite una separación ≥ 15 cm.</div>
+        </fieldset>
+
+        <fieldset>
+          <legend>5. Cargas</legend>
           <label for="lmodo">Método</label>
           <select id="lmodo">
             <option value="czerny">Tablas de Czerny (carga uniforme)</option>
@@ -325,11 +340,16 @@
             </select>
           </div>
           <div id="lgManual" class="hidden">
+            <label for="lunidad">Unidades</label>
+            <select id="lunidad">
+              <option value="tf" selected>tf·m/m</option>
+              <option value="kgf">kgf·m/m</option>
+            </select>
             <div class="row2">
-              <div><label for="lMXp">M<sub>X</sub><sup>+</sup> tramo <span class="unit">[kgf·m/m]</span></label><input id="lMXp" type="number" step="any" min="0" value="822.7"></div>
-              <div><label for="lMYp">M<sub>Y</sub><sup>+</sup> tramo <span class="unit">[kgf·m/m]</span></label><input id="lMYp" type="number" step="any" min="0" value="522.9"></div>
-              <div><label for="lMXn">M<sub>X</sub><sup>−</sup> apoyo <span class="unit">[kgf·m/m]</span></label><input id="lMXn" type="number" step="any" min="0" value="1759.8"></div>
-              <div><label for="lMYn">M<sub>Y</sub><sup>−</sup> apoyo <span class="unit">[kgf·m/m]</span></label><input id="lMYn" type="number" step="any" min="0" value="1030.7"></div>
+              <div><label for="lMXp">M<sub>X</sub><sup>+</sup> tramo <span class="unit u-mm"></span></label><input id="lMXp" type="number" step="any" min="0" value="0.8227"></div>
+              <div><label for="lMYp">M<sub>Y</sub><sup>+</sup> tramo <span class="unit u-mm"></span></label><input id="lMYp" type="number" step="any" min="0" value="0.5229"></div>
+              <div><label for="lMXn">M<sub>X</sub><sup>−</sup> apoyo <span class="unit u-mm"></span></label><input id="lMXn" type="number" step="any" min="0" value="1.7598"></div>
+              <div><label for="lMYn">M<sub>Y</sub><sup>−</sup> apoyo <span class="unit u-mm"></span></label><input id="lMYn" type="number" step="any" min="0" value="1.0307"></div>
             </div>
             <div class="unit" style="margin-top:6px">M<sub>X</sub>: momento que tracciona las barras en dirección X (ETABS M11 si el eje local 1 es X). Valores últimos por metro de ancho.</div>
           </div>
@@ -345,16 +365,6 @@
           </div>
         </fieldset>
 
-        <fieldset>
-          <legend>Armadura</legend>
-          <div class="row2">
-            <div><label for="ldbXi">Inferior X</label><select id="ldbXi" class="barrasLosa"></select></div>
-            <div><label for="ldbYi">Inferior Y</label><select id="ldbYi" class="barrasLosa"></select></div>
-            <div><label for="ldbXs">Superior X</label><select id="ldbXs" class="barrasLosa"></select></div>
-            <div><label for="ldbYs">Superior Y</label><select id="ldbYs" class="barrasLosa"></select></div>
-          </div>
-          <div class="unit" style="margin-top:6px">"Automático" propone el menor diámetro que permite una separación ≥ 15 cm.</div>
-        </fieldset>
       </div>
 
       <!-- Muro -->
@@ -933,6 +943,7 @@ let ultimoTex = "", ultimoNombre = "memoria_viga.tex";
 let ultimoViga = null, ultimoLosa = null;   // resultados del último cálculo, para el plano DXF
 
 function calcularViga() {
+  actualizarUnidades();                    // rótulos según la unidad (también tras restaurar un borrador)
   textosNorma();                                     // la cabecera y las opciones cambian aunque los datos de la viga sean inválidos
   const panel = document.querySelector('[data-panel="viga"]');
   limpiarInvalidos(panel);
@@ -1166,7 +1177,8 @@ function leerLosa() {
     fc: +$("lfc").value, fy: +$("lfy").value,
     bordes: { sup: $("lbSup").value === "1", inf: $("lbInf").value === "1", izq: $("lbIzq").value === "1", der: $("lbDer").value === "1" },
     modo: $("lmodo").value, D: num("lD"), L: num("lL"), gam: num("lgam"), coef: $("lcoef").value,
-    man: { MXp: num("lMXp"), MYp: num("lMYp"), MXn: num("lMXn"), MYn: num("lMYn") },
+    man: (() => { const f = $("lunidad").value === "tf" ? 1000 : 1;      // momentos ingresados, a kgf·m/m
+      return { MXp: num("lMXp") * f, MYp: num("lMYp") * f, MXn: num("lMXn") * f, MYn: num("lMYn") * f }; })(),
     // Comparación con ETABS: momentos de lgManual y, opcional, el área de acero que entrega el diseño de ETABS
     comp: $("lcomp").checked,
     asE: { Xi: num("lAsXi"), Yi: num("lAsYi"), Xs: num("lAsXs"), Ys: num("lAsYs") },
@@ -1683,6 +1695,7 @@ ${filas.map(f => `${nom[f.k]} & ${tn(f.mc, 1)} & ${f.rc ? tn(f.asC, 2) : "---"} 
 }
 
 function calcularLosa() {
+  actualizarUnidades();
   const g = leerLosa();
   const m = new Memo();
   // Con la comparación activa se ven y se validan las cargas de Czerny y los momentos de ETABS
@@ -1896,6 +1909,7 @@ function actualizarUnidades() {
   const tf = $("vunidad").value === "tf";
   document.querySelectorAll(".u-f").forEach(e => e.textContent = tf ? "[tf]" : "[kgf]");
   document.querySelectorAll(".u-m").forEach(e => e.textContent = tf ? "[tf·m]" : "[kgf·m]");
+  document.querySelectorAll(".u-mm").forEach(e => e.textContent = $("lunidad").value === "tf" ? "[tf·m/m]" : "[kgf·m/m]");
 }
 
 function init() {
@@ -1912,6 +1926,15 @@ function init() {
       if (Number.isFinite(v)) $(id).value = +(toTf ? v / 1000 : v * 1000).toPrecision(8);
     });
     actualizarUnidades(); calcularViga();
+  });
+  // Momentos de la losa: al cambiar la unidad se convierten los valores escritos (antes de que el panel recalcule)
+  $("lunidad").addEventListener("change", () => {
+    const toTf = $("lunidad").value === "tf";
+    ["lMXp", "lMYp", "lMXn", "lMYn"].forEach(id => {
+      const v = parseFloat($(id).value);
+      if (Number.isFinite(v)) $(id).value = +(toTf ? v / 1000 : v * 1000).toPrecision(8);
+    });
+    actualizarUnidades();
   });
   const panelViga = document.querySelector('[data-panel="viga"]');
   // Diámetros: parten en «Automático» (no se toman del borrador) y vuelven a él al cambiar la geometría
@@ -2212,7 +2235,14 @@ window.AURA_MEMO = {
   elemento: () => elActual(), tex: () => (elActual() === "losa" ? ultimoTexLosa : elActual() === "viga" ? ultimoTex : ""),
   nombre: () => (elActual() === "losa" ? ultimoNombreLosa : ultimoNombre),
   // Los dos programas: el oculto también queda con los datos restaurados (se ve al cambiar de pestaña sin recargar)
-  recalcular: () => { calcularViga(); calcularLosa(); },
+  // Datos guardados antes de la lista de unidades de la losa: sus momentos ingresados estaban en kgf·m/m
+  recalcular: (v) => {
+    if (v && typeof v === "object") {                      // datos de antes de la unidad en tf por defecto: estaban en kgf
+      if (!("lunidad" in v)) $("lunidad").value = "kgf";
+      if (!("vunidad" in v)) $("vunidad").value = "kgf";
+    }
+    calcularViga(); calcularLosa();
+  },
 };
 </script>
 <script src="proyectos.js"></script>

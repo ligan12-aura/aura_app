@@ -127,6 +127,16 @@ Todo el texto de la interfaz, las memorias y los commits va en **español (Chile
 - El veredicto usa la clase `.verdict ok|bad`. Para que `proyectos.js` lea el resumen, el texto debe contener `razón máxima = X`.
 - Si falta una verificación exigida que la página no calcula, el veredicto y la memoria dicen `SIN VERIFICAR`, no `CUMPLE`; `proyectos.js` lo guarda sin estado de cumple o no cumple. Si además algo falla, manda `NO CUMPLE`: "NO CUMPLE (…; además SIN VERIFICAR: …)", y el tablero y `proyectos.js` lo tratan como no cumple. Un requisito que no entra en la razón D/C y falla se indica como motivo en el veredicto.
 
+## Estándar de los datos de entrada
+
+Para que todas las herramientas se ingresen igual (aplicado hoy en las de hormigón: viga, losa, columna, zapata, muro y muros de corte; el resto se irá llevando a este formato):
+
+- **Orden de los grupos** (`fieldset` con `legend` numerada «1. …», «2. …»): «Código de diseño» (si aplica, sin número) → Geometría o sección (y condiciones de apoyo o suelo) → Materiales → Armadura → Cargas → Criterios de diseño (esbeltez, disposiciones sísmicas, factores de seguridad, opciones de cálculo). Se omiten los grupos que no correspondan.
+- **Nombre del grupo de cargas**: «Cargas mayoradas (LRFD)», «Cargas de servicio» o «Cargas por estado (sin mayorar)» (D, L, E sin mayorar; la página arma las combinaciones NCh 3171).
+- **Unidades**: la unidad va en cada rótulo entre corchetes (`<span class="unit">[m]</span>`), no en el título del grupo. Fuerzas en **tf y tf·m por defecto, con la lista de unidades para cambiar a kgf y kgf·m** (`vunidad`, `lunidad` de la losa, `zunidad`, `cunidad`); al cambiar la lista se convierten los valores escritos y los rótulos (`.u-f`, `.u-m`, `.u-mm`) se actualizan también al calcular, por si vienen de un borrador. Cargas de superficie en kgf/m² (en el muro, la sobrecarga q y las presiones del suelo van en tf/m², como en el curso; en la zapata, las presiones del suelo). Compatibilidad: un dato guardado sin la lista de unidades se interpreta en la unidad anterior (hormigon.html `recalcular`: sin `vunidad` o `lunidad`, kgf); en columna y zapata la unidad anterior ya era tf. En columna, ΣM<sub>nb</sub> y V<sub>e</sub> de las vigas van siempre en tf.
+- **Materiales como lista de grados**: hormigón G17 a G45 y refuerzo A630-420H / A440-280H. Donde el dato es un número (`fc`, `fy`), `grados(id, "hormigon" | "refuerzo")` de memo.js agrega la lista con «Otro valor»; el número sigue siendo el dato que se calcula y se guarda, y la lista se deriva de él (`sincronizarGrados`, al comienzo de `datosInvalidos` y al salir del campo).
+- Al cambiar los títulos de los grupos, actualizar los pasos `t:…` de la página en `guia.js`.
+
 ## Al agregar o cambiar una página de cálculo
 
 1. **Página:** copiar la cabecera (con la marca structura) y los estilos de `acero.html`, cargar `aura.css` y `lateral.js` al final del `<head>` y `tablero.js` y `guia.js` después de `memo.js`, para mantener el aspecto y la presentación de resultados. Las marcas `.tag.bad` que no sean una falla (clasificaciones, recortes constructivos) deben agregarse a `INFORMATIVAS` en `tablero.js`.

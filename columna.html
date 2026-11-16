@@ -189,7 +189,16 @@
       </fieldset>
 
       <fieldset>
-        <legend>2. Armaduras</legend>
+        <legend>2. Materiales</legend>
+        <div class="row3">
+          <div><label for="fc">Hormigón</label><select id="fc"></select></div>
+          <div><label for="fy">Acero longitudinal</label><select id="fy"></select></div>
+          <div><label for="fyt">Acero transversal</label><select id="fyt"></select></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>3. Armadura</legend>
         <div class="cbTit">Longitudinal</div>
         <div class="row3">
           <div><label for="db">Barra 𝜙 <span class="unit">[mm]</span></label><select id="db"></select></div>
@@ -213,16 +222,22 @@
       </fieldset>
 
       <fieldset>
-        <legend>3. Materiales</legend>
-        <div class="row3">
-          <div><label for="fc">Hormigón</label><select id="fc"></select></div>
-          <div><label for="fy">Acero longitudinal</label><select id="fy"></select></div>
-          <div><label for="fyt">Acero transversal</label><select id="fyt"></select></div>
-        </div>
+        <legend>4. Cargas por estado (sin mayorar)</legend>
+        <label for="cunidad">Unidades</label>
+        <select id="cunidad">
+          <option value="tf" selected>tf y tf·m</option>
+          <option value="kgf">kgf y kgf·m</option>
+        </select>
+        <div class="unit" style="margin-top:6px">Esfuerzos de cada estado de carga en la columna: P (compresión positiva), momentos en los extremos superior e inferior con el signo del diagrama del análisis (igual signo en ambos extremos = curvatura simple), cortes en tf. E<sub>x</sub> y E<sub>y</sub>: sismo de la NCh 433 en cada dirección, sin mayorar (en blanco o 0 si no hay).</div>
+        <table class="cargas">
+          <thead><tr><th></th><th>D</th><th>L</th><th>E<sub>x</sub></th><th>E<sub>y</sub></th></tr></thead>
+          <tbody id="tablaCargas"></tbody>
+        </table>
+        <div class="unit" style="margin-top:6px">structura arma las combinaciones de la NCh 3171 con el factor 1.4 del sismo (DS 60 9.1.4): 1.4D; 1.2D + 1.6L; 1.2D + 1.0L ± 1.4E; 0.9D ± 1.4E, con E<sub>x</sub> y E<sub>y</sub> por separado (sin combinación ortogonal).</div>
       </fieldset>
 
       <fieldset>
-        <legend>4. Esbeltez</legend>
+        <legend>5. Esbeltez</legend>
         <div class="row2">
           <div><label for="arrX">Pórtico, flexión M<sub>x</sub></label><select id="arrX"><option value="arr" selected>Arriostrado</option><option value="desp">No arriostrado</option></select></div>
           <div><label for="arrY">Pórtico, flexión M<sub>y</sub></label><select id="arrY"><option value="arr" selected>Arriostrado</option><option value="desp">No arriostrado</option></select></div>
@@ -247,7 +262,7 @@
       </fieldset>
 
       <fieldset>
-        <legend>5. Disposiciones sísmicas</legend>
+        <legend>6. Disposiciones sísmicas</legend>
         <label for="sistema">Sistema sismorresistente</label>
         <select id="sistema">
           <option value="especial" selected>Pórtico especial (18.7)</option>
@@ -257,28 +272,18 @@
         <div id="boxEsp">
           <div class="cbTit">Columna fuerte – viga débil (18.7.3.2)</div>
           <div class="row2">
-            <div><label for="Mnbx">ΣM<sub>nb</sub> plano de M<sub>x</sub> <span class="unit">[tf·m]</span></label><input id="Mnbx" type="number" step="0.5" value="0"></div>
-            <div><label for="Mnby">ΣM<sub>nb</sub> plano de M<sub>y</sub> <span class="unit">[tf·m]</span></label><input id="Mnby" type="number" step="0.5" value="0"></div>
+            <div><label for="Mnbx">ΣM<sub>nb</sub> plano de M<sub>x</sub> <span class="unit">[tf·m, siempre]</span></label><input id="Mnbx" type="number" step="0.5" value="0"></div>
+            <div><label for="Mnby">ΣM<sub>nb</sub> plano de M<sub>y</sub> <span class="unit">[tf·m, siempre]</span></label><input id="Mnby" type="number" step="0.5" value="0"></div>
           </div>
           <label class="chk"><input id="techo" type="checkbox"> Nudo de cielo del último piso (DS 60 21.6.2.2)</label>
           <label class="chk"><input id="discont" type="checkbox"> Columna discontinua sobre el nudo (18.7.3.1)</label>
           <div class="cbTit">Límite opcional del corte V<sub>e</sub> por las vigas</div>
           <div class="row2">
-            <div><label for="Vevx">V<sub>e</sub> según x <span class="unit">[tf]</span></label><input id="Vevx" type="number" step="0.5" value="0"></div>
-            <div><label for="Vevy">V<sub>e</sub> según y <span class="unit">[tf]</span></label><input id="Vevy" type="number" step="0.5" value="0"></div>
+            <div><label for="Vevx">V<sub>e</sub> según x <span class="unit">[tf, siempre]</span></label><input id="Vevx" type="number" step="0.5" value="0"></div>
+            <div><label for="Vevy">V<sub>e</sub> según y <span class="unit">[tf, siempre]</span></label><input id="Vevy" type="number" step="0.5" value="0"></div>
           </div>
           <div class="unit" style="margin-top:4px">ΣM<sub>nb</sub>: suma de los momentos nominales de las vigas en el nudo (0 = sin datos). V<sub>e</sub> de vigas: corte que pueden transmitir con sus M<sub>pr</sub> (0 = no se usa).</div>
         </div>
-      </fieldset>
-
-      <fieldset>
-        <legend>6. Cargas sin mayorar</legend>
-        <div class="unit">Esfuerzos de cada estado de carga en la columna: P en tf (compresión positiva), momentos en tf·m en los extremos superior e inferior con el signo del diagrama del análisis (igual signo en ambos extremos = curvatura simple), cortes en tf. E<sub>x</sub> y E<sub>y</sub>: sismo de la NCh 433 en cada dirección, sin mayorar (en blanco o 0 si no hay).</div>
-        <table class="cargas">
-          <thead><tr><th></th><th>D</th><th>L</th><th>E<sub>x</sub></th><th>E<sub>y</sub></th></tr></thead>
-          <tbody id="tablaCargas"></tbody>
-        </table>
-        <div class="unit" style="margin-top:6px">structura arma las combinaciones de la NCh 3171 con el factor 1.4 del sismo (DS 60 9.1.4): 1.4D; 1.2D + 1.6L; 1.2D + 1.0L ± 1.4E; 0.9D ± 1.4E, con E<sub>x</sub> y E<sub>y</sub> por separado (sin combinación ortogonal).</div>
       </fieldset>
     </div>
   </section>
@@ -379,15 +384,22 @@ const CARGAS_DEF = {           // ejemplo: columna interior de un edificio de ma
   Ex: [8, 6.5, -6.0, 0.5, -0.4, 3.5, 0.3], Ey: [4, 0.6, -0.5, 1.6, -1.4, 0.3, 1.0],
 };
 const idCarga = (e, k) => `${k}${e}`;                       // p. ej. "MxsD", "PEx"
+// Unidad de la tabla de cargas: tf y tf·m (por defecto) o kgf y kgf·m; uCarga() lleva el valor escrito a tf
+const uCarga = () => ($("cunidad").value === "kgf" ? 1 / 1000 : 1);
+function unidadesCargas() {
+  const tf = $("cunidad").value === "tf";
+  document.querySelectorAll(".u-f").forEach(e => e.textContent = tf ? "[tf]" : "[kgf]");
+  document.querySelectorAll(".u-m").forEach(e => e.textContent = tf ? "[tf·m]" : "[kgf·m]");
+}
 function tablaCargas() {
-  $("tablaCargas").innerHTML = ESFUERZOS.map(([k, t, , u], i) => `<tr><td>${t} <span class="unit">[${u}]</span></td>${ESTADOS.map(e =>
+  $("tablaCargas").innerHTML = ESFUERZOS.map(([k, t, , u], i) => `<tr><td>${t} <span class="unit ${u === "tf" ? "u-f" : "u-m"}">[${u}]</span></td>${ESTADOS.map(e =>
     `<td><input id="${idCarga(e, k)}" type="number" step="0.1" value="${CARGAS_DEF[e][i]}" aria-label="${t.replace(/<[^>]+>/g, "")} de ${e}"></td>`).join("")}</tr>`).join("");
 }
 function leerCargas() {
   const c = {};
   for (const e of ESTADOS) {
     c[e] = {};
-    for (const [k, , f] of ESFUERZOS) { const v = parseFloat($(idCarga(e, k)).value); c[e][k] = (Number.isFinite(v) ? v : 0) * f; }
+    for (const [k, , f] of ESFUERZOS) { const v = parseFloat($(idCarga(e, k)).value); c[e][k] = (Number.isFinite(v) ? v : 0) * f * uCarga(); }
   }
   return c;
 }
@@ -1370,6 +1382,7 @@ function visibilidad() {
   $("boxEsp").classList.toggle("hidden", $("sistema").value !== "especial");
 }
 function calcular() {
+  unidadesCargas();                        // rótulos según la unidad (también tras restaurar un borrador)
   visibilidad();
   limpiarInvalidos($("inputs"));
   let malos = datosInvalidos(reglasDatos());
@@ -1497,6 +1510,15 @@ function descargarDXF() {
 
 function init() {
   tablaCargas();
+  // Al cambiar la unidad se convierten los valores escritos (antes de que el panel recalcule)
+  $("cunidad").addEventListener("change", () => {
+    const k = $("cunidad").value === "tf" ? 1 / 1000 : 1000;
+    for (const e of ESTADOS) for (const [c] of ESFUERZOS) {
+      const el = $(idCarga(e, c)), v = parseFloat(el.value);
+      if (Number.isFinite(v)) el.value = +(v * k).toPrecision(8);
+    }
+    unidadesCargas();
+  });
   const opc = (sel, obj, def) => { $(sel).innerHTML = Object.entries(obj).map(([v, t]) => `<option value="${v}"${String(v) === String(def) ? " selected" : ""}>${t}</option>`).join(""); };
   opc("db", Object.fromEntries(BARRAS.map(b => [b, `𝜙${b}`])), 18);
   opc("dbt", Object.fromEntries(ESTRIBOS.map(b => [b, `𝜙${b}`])), 12);

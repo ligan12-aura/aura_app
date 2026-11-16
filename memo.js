@@ -26,7 +26,52 @@ function cargarKatex() {
 
 // Datos obligatorios: reglas [id, mínimo, estricto]. Un campo vacío, no numérico o bajo el
 // mínimo se marca en rojo y se devuelve su nombre; la página no calcula (evita un "CUMPLE" falso).
+// ---------------------------------------------------------------------------
+// Materiales como lista de grados: grados(idCampo, "hormigon" | "refuerzo") pone, junto al campo numérico de f'c o
+// f_y, una lista con los grados chilenos y «Otro valor». El campo sigue siendo el dato que se calcula y se guarda;
+// la lista se deriva de él (sincronizarGrados, al comienzo de cada cálculo, también tras abrir un proyecto).
+// ---------------------------------------------------------------------------
+const GRADOS_MATERIAL = {
+  hormigon: [["170", "G17 (f'c = 170)"], ["200", "G20 (f'c = 200)"], ["250", "G25 (f'c = 250)"], ["300", "G30 (f'c = 300)"],
+    ["350", "G35 (f'c = 350)"], ["400", "G40 (f'c = 400)"], ["450", "G45 (f'c = 450)"]],
+  refuerzo: [["4200", "A630-420H (fy = 4200)"], ["2800", "A440-280H (fy = 2800)"]],
+};
+const camposGrado = [];
+function grados(id, tipo) {
+  const inp = document.getElementById(id);
+  if (!inp || document.getElementById(id + "Grado")) return;
+  const sel = document.createElement("select");
+  sel.id = id + "Grado";
+  sel.innerHTML = GRADOS_MATERIAL[tipo].map(([v, t]) => `<option value="${v}">${t}</option>`).join("") + '<option value="otro">Otro valor</option>';
+  inp.before(sel);
+  const lab = document.querySelector(`label[for="${id}"]`);
+  if (lab) { lab.htmlFor = sel.id; inp.setAttribute("aria-label", lab.textContent.trim()); }
+  inp.style.marginTop = "6px";
+  sel.addEventListener("change", () => {
+    if (sel.value !== "otro") {
+      inp.value = sel.value;
+      inp.dispatchEvent(new Event("input", { bubbles: true }));
+      inp.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    inp.hidden = sel.value !== "otro";
+    if (sel.value === "otro") inp.focus();
+  });
+  inp.addEventListener("change", () => setTimeout(sincronizarGrados));   // al salir del campo, aunque la página no recalcule
+  camposGrado.push([inp, sel]);
+  sincronizarGrados();
+}
+function sincronizarGrados() {
+  for (const [inp, sel] of camposGrado) {
+    if (document.activeElement === inp) continue;                // escribiendo «Otro valor»
+    const v = String(+inp.value);
+    const hay = [...sel.options].some((o) => o.value === v);
+    sel.value = hay ? v : "otro";
+    inp.hidden = hay;
+  }
+}
+
 function datosInvalidos(reglas) {
+  sincronizarGrados();
   const malos = [];
   for (const [id, min = 0, estricto = false] of reglas) {
     const el = document.getElementById(id);
@@ -34,7 +79,7 @@ function datosInvalidos(reglas) {
     const v = parseFloat(el.value);
     const bad = el.value.trim() === "" || !Number.isFinite(v) || (estricto ? v <= min : v < min);
     el.classList.toggle("invalido", bad);
-    if (bad) malos.push((el.labels && el.labels[0] ? el.labels[0].textContent : id).replace(/\s+/g, " ").trim());
+    if (bad) malos.push((el.labels && el.labels[0] ? el.labels[0].textContent : el.getAttribute("aria-label") || id).replace(/\s+/g, " ").trim());
   }
   return malos;
 }
