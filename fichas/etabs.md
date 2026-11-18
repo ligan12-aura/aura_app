@@ -2,7 +2,7 @@
 
 Documenta el análisis modal espectral de un edificio modelado en ETABS y verifica sus resultados globales según la NCh 433:2026. No repite el análisis ni verifica elementos (muros, vigas, columnas, losas ni fundaciones).
 
-Documentos: NCh 433:2026.
+Documentos: NCh 433:2026 y NCh 2369:2025 (se elige en la lista «Norma»).
 
 ## Datos de entrada
 
@@ -23,7 +23,35 @@ Documentos: NCh 433:2026.
 - Torsión accidental: ETABS aplica en los casos espectrales momentos estáticos con excentricidad r·b constante en altura. Con r ≥ 0.10 cubre 0.10 b Zk/H (6.3.3 b) en todos los niveles; con menos, la torsión accidental queda SIN VERIFICAR.
 - El porcentaje de sobrecarga de la fuente de masa se compara con el 25 % de 5.5.1; el 50 % para áreas con aglomeración lo decide el usuario.
 - Quedan fuera: 5.9.5 (desplazamiento de techo con Tag para hormigón armado), 5.10 (separaciones) y el diseño de elementos.
-- NCh 2369:2025 aparece como «próximamente»: su PDF está escaneado y aún no se verificó contra la norma.
+## NCh 2369:2025 (lista «Norma»)
+
+- La página del PDF de la NCh 2369:2025 es la impresa + 7 (PDF escaneado, leído como imagen).
+- Espectro de diseño Sa = I·SaH·(0.05/ξ)^0.4 / R* con SaH = Ar·S·α, Ar = 1.4·A0 y α con r, p y q de la Tabla 6. R* según la Ec. (1b): R si T* ≥ Cr·T1, si no 1.5 + (R − 1.5)·T*/(Cr·T1), con Cr = 0.16·R (acotado a R).
+- La corrección (0.05/ξ)^0.4 vale para ξ entre 0.02 y 0.05 (5.4.2): fuera de ese rango no se calcula.
+- Q0,mín = 0.25·I·Ar·S·P/g (5.12) y Q0,máx = 2.75·I·Ar·S/(g(R + 1))·(0.05/ξ)^0.4·P (5.13). El aumento por corte mínimo no se aplica a los desplazamientos. R1 = R*·mín(Q0/Q0,mín ; 1) se informa (5.14).
+- Desplazamientos con el espectro elástico (6.1): los del caso espectral escalados por la razón entre ese espectro elástico y el espectro del caso en T*, sin depender del factor de la combinación. Simultaneidad direccional de 4.5.2 (que exige 6.1): al drift de cada dirección se suma el 30 % del que produce en ella el caso de la otra dirección (suma de máximos). Límite entre niveles d ≤ dmáx·h (6.3): 0.015 en general, 0.002, 0.003 o 0.0075 según el tipo; se compara con el drift de piso máximo de ETABS. El desplazamiento relativo en el centro de masas se informa como referencia. La excepción que duplica los límites no se aplica. Sobre 0.015 h, el efecto P-Delta (6.4) queda SIN VERIFICAR.
+- Si el espectro del modelo supera al de la norma en más de 10 %, se avisa: la combinación podría traer un factor de carga.
+- Torsión (5.6.4): la norma no fija una excentricidad accidental; se informa la del modelo y no entra al veredicto.
+- Sobrecarga en la masa ≥ 25 % (5.1.2; 50 % en bodegas y acopio lo decide el usuario).
+- Quedan fuera: acción vertical (5.7), separaciones (6.2), P-Delta (6.4) y elementos secundarios (cláusula 7).
+
+| Parte del cálculo | Resultado en structura | Referencia | Documento | Pág. PDF |
+|---|---|---|---|---|
+| Parámetros | Coeficiente de importancia I | 4.3.2 | NCh 2369:2025 | 20 |
+| Peso sísmico | Fracción de sobrecarga en la masa | 5.1.2 | NCh 2369:2025 | 26 |
+| Espectro | Sa y R* | 5.4.1, Ec. (1a) y (1b) | NCh 2369:2025 | 35 |
+| Espectro | SaH y corrección por ξ | 5.4.2, Ec. (3) | NCh 2369:2025 | 36 |
+| Análisis modal | Masa acumulada ≥ 90 % | 5.6.2 | NCh 2369:2025 | 39 |
+| Combinación modal | CQC | 5.6.3, Ec. (8) a (10) | NCh 2369:2025 | 40-41 |
+| Torsión | Efectos de la torsión | 5.6.4 | NCh 2369:2025 | 41 |
+| Corte basal | Q0,mín | 5.12, Ec. (12) | NCh 2369:2025 | 55 |
+| Corte basal | Q0,máx y R1 | 5.13 y 5.14, Ec. (13) y (14) | NCh 2369:2025 | 56 |
+| Parámetros | A0 y Ar | Tabla 3 | NCh 2369:2025 | 64 |
+| Parámetros | S, r, T0, p, q, T1 | Tabla 6 | NCh 2369:2025 | 67 |
+| Parámetros | R y ξ por sistema | Tabla 7 | NCh 2369:2025 | 67-70 |
+| Desplazamientos | Simultaneidad direccional (100 % + 30 %) | 4.5.2 | NCh 2369:2025 | 23 |
+| Desplazamientos | Cálculo con el espectro elástico | 6.1 | NCh 2369:2025 | 75 |
+| Desplazamientos | d ≤ dmáx·h | 6.3 | NCh 2369:2025 | 76-77 |
 
 ## Referencias usadas por el cálculo
 

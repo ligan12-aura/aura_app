@@ -136,8 +136,9 @@ const Guia = (() => {
       { en: "t:5. Cargas", titulo: "5 · Cargas mayoradas", texto: "Tracción mayorada de la diagonal y su ángulo con la horizontal: la página verifica solo tracción." },
     ],
     "etabs.html": [
+      { en: "#norma", titulo: "Norma", texto: "Elija la NCh 433:2026 (edificios) o la NCh 2369:2025 (estructuras e instalaciones industriales)." },
       { en: "#archivo", titulo: "Archivo de ETABS", texto: "Con ETABS abierto y el modelo analizado, ejecute el script structura_etabs.py (enlace bajo el campo) y seleccione aquí el archivo .structura.json.gz que deja junto al modelo." },
-      { en: "t:2. Parámetros sísmicos", titulo: "Parámetros sísmicos", texto: "Categoría, zona y suelo (Tablas 6 a 8) y el sistema estructural de la Tabla 5, que fija R, R₀ y el límite de desplazamiento entre pisos." },
+      { en: "t:2. Parámetros sísmicos", titulo: "Parámetros sísmicos", texto: "Categoría, zona y suelo, y el sistema estructural: en la NCh 433:2026 la Tabla 5 fija R, R₀ y el límite de desplazamiento; en la NCh 2369:2025 la Tabla 7 fija R y ξ, y el límite sale de 6.3." },
       { en: "t:3. Casos sísmicos", titulo: "Casos sísmicos", texto: "Elija el caso espectral de cada dirección y la combinación que lo escala (por ejemplo SEx = Ex/R*), el caso modal y el nivel basal." },
       { en: "#visor", titulo: "Vista del modelo", texto: "Revise el modelo, cada forma modal y las deformadas de los casos espectrales, desde cuatro ángulos." },
     ],

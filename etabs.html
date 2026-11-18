@@ -153,7 +153,7 @@
         <label for="norma">Norma</label>
         <select id="norma">
           <option value="433-2026" selected>NCh 433:2026 — Diseño sísmico de edificios</option>
-          <option value="2369-2025" disabled>NCh 2369:2025 — Estructuras industriales (próximamente)</option>
+          <option value="2369-2025">NCh 2369:2025 — Estructuras e instalaciones industriales</option>
         </select>
       </fieldset>
 
@@ -177,14 +177,24 @@
         </div>
         <label for="suelo">Tipo de suelo</label>
         <select id="suelo"><option>A</option><option>B</option><option>C</option><option selected>D</option><option>E</option></select>
-        <label for="sistema">Sistema estructural (Tabla 5)</label>
+        <label for="sistema" id="lblSistema">Sistema estructural (Tabla 5)</label>
         <select id="sistema"></select>
+        <div id="gLim" class="hidden">
+          <label for="lim2369">Límite de desplazamiento (6.3)</label>
+          <select id="lim2369">
+            <option value="0.015" selected>Estructuras en general (0.015 h)</option>
+            <option value="0.002">Prefabricadas de muros con uniones secas (0.002 h)</option>
+            <option value="0.003">Muros de albañilería con particiones rígidamente unidas (0.003 h)</option>
+            <option value="0.0075">Marcos con rellenos de albañilería dilatados (0.0075 h)</option>
+          </select>
+        </div>
         <div class="row3">
           <div><label for="Rf">R</label><input id="Rf" type="number" step="0.5" min="1" value="7"></div>
-          <div><label for="R0">R<sub>0</sub></label><input id="R0" type="number" step="0.5" min="1" value="11"></div>
-          <div><label for="dcm">Δ<sub>cm</sub>/h máx.</label><input id="dcm" type="number" step="0.0005" min="0.0005" value="0.002"></div>
+          <div id="gR0"><label for="R0">R<sub>0</sub></label><input id="R0" type="number" step="0.5" min="1" value="11"></div>
+          <div id="gXi" class="hidden"><label for="xi">ξ</label><input id="xi" type="number" step="0.005" min="0.02" max="0.05" value="0.05"></div>
+          <div><label for="dcm" id="lblDcm">Δ<sub>cm</sub>/h máx.</label><input id="dcm" type="number" step="0.0005" min="0.0005" value="0.002"></div>
         </div>
-        <div class="unit" style="margin-top:6px">R, R<sub>0</sub> y el límite de desplazamiento entre niveles se toman de la Tabla 5 según el sistema; con «Otro» se ingresan a mano.</div>
+        <div class="unit" style="margin-top:6px" id="notaSistema">R, R<sub>0</sub> y el límite de desplazamiento entre niveles se toman de la Tabla 5 según el sistema; con «Otro» se ingresan a mano.</div>
       </fieldset>
 
       <fieldset>
@@ -227,7 +237,7 @@
     </div>
   </section>
 </main>
-<footer>Memoria del análisis sísmico global según la NCh 433:2026 a partir de los resultados de ETABS. No verifica elementos (muros, vigas, columnas, losas ni fundaciones) ni repite el análisis: revisa y documenta los resultados del modelo. No reemplaza el criterio del profesional que firma. Verifique siempre los resultados.</footer>
+<footer>Memoria del análisis sísmico global según la NCh 433:2026 o la NCh 2369:2025 a partir de los resultados de ETABS. No verifica elementos (muros, vigas, columnas, losas ni fundaciones) ni repite el análisis: revisa y documenta los resultados del modelo. No reemplaza el criterio del profesional que firma. Verifique siempre los resultados.</footer>
 
 <script src="memo.js"></script>
 <script src="tablero.js"></script>
@@ -252,7 +262,7 @@ const cuenta = (n, uno, varios) => `${fmt(n, 0)} ${n === 1 ? uno : varios}`;
 const nv = (x) => { const v = typeof x === "number" ? x : parseFloat(x); return Number.isFinite(v) ? v : NaN; };
 const tag = (ok, txt) => `<span class="tag ${ok ? "ok" : "bad"}">${txt}</span>`;
 const tagDC = (dc) => tag(dc <= 1 + 1e-9, `D/C = ${Number.isFinite(dc) ? fmt(dc, 3) : "∞"}`);
-const REF = (c) => `NCh 433:2026 ${c}`;
+const REF = (c) => `${NOMBRE_NORMA()} ${c}`;
 
 // ---------------------------------------------------------------------------
 // NCh 433:2026: Tablas 5 a 9
@@ -308,7 +318,101 @@ const SISTEMAS = [
     ["md-mp", "Sistema marco plataforma", 6.5, 7, 0.0025],
     ["md-clt", "Muros de madera contralaminada (CLT)", 2, 2, 0.002]]],
 ];
-const SIS = new Map(SISTEMAS.flatMap(([g, l]) => l.map(([id, t, R, R0, d]) => [id, { grupo: g, texto: t, R, R0, d }])));
+// ---------------------------------------------------------------------------
+// NCh 2369:2025 (PDF del proyecto, escaneado; página del PDF = impresa + 7): 4.3.2, Tablas 3, 6 y 7
+// ---------------------------------------------------------------------------
+const N2369 = {
+  I: { I: 0.8, II: 1.0, III: 1.2, IV: 1.2 },                                   // 4.3.2
+  A0: { 1: 0.2, 2: 0.3, 3: 0.4 },                                              // Tabla 3 [g]; A_r = 1.4 A0
+  suelos: {                                                                    // Tabla 6
+    A: { S: 0.90, r: 4.5, T0: 0.15, p: 1.85, q: 3.0, T1: 0.15 },
+    B: { S: 1.00, r: 4.5, T0: 0.30, p: 1.60, q: 3.0, T1: 0.27 },
+    C: { S: 1.05, r: 4.5, T0: 0.40, p: 1.50, q: 3.0, T1: 0.35 },
+    D: { S: 1.00, r: 3.5, T0: 0.60, p: 1.00, q: 2.5, T1: 0.41 },
+    E: { S: 1.00, r: 3.0, T0: 1.20, p: 1.00, q: 2.7, T1: 0.79 },
+  },
+};
+// Tabla 7: sistema, R y ξ. Las de acero (y las de 9.2 a 9.5) dan ξ = 0.02 con uniones soldadas y 0.03 con empernadas.
+const UNIONES = (id, t, R) => [[`${id}s`, `${t} — uniones soldadas`, R, 0.02], [`${id}e`, `${t} — uniones empernadas`, R, 0.03]];
+const SISTEMAS_2369 = [
+  ["Generales", [
+    ["i1", "1. Estructuras diseñadas para permanecer elásticas", 1, 0.03],
+    ["i2", "2. Otras estructuras no incluidas o asimilables a las de esta lista", 1.5, 0.02],
+    ["i3", "3. Estructuras de péndulo invertido", 2, 0.03],
+    ["i4", "4. Estructuras sísmicas isostáticas", 2, 0.03]]],
+  ["5. Estructuras de acero", [
+    ...UNIONES("i5.1", "5.1 Marcos resistentes a momento con anclajes dúctiles", 5),
+    ...UNIONES("i5.2", "5.2 Marcos resistentes a momento sin anclajes dúctiles", 3),
+    ...UNIONES("i5.3", "5.3 Marcos arriostrados con anclajes dúctiles", 5),
+    ...UNIONES("i5.4", "5.4 Marcos arriostrados sin anclajes dúctiles", 3),
+    ...UNIONES("i5.5", "5.5 Edificios industriales de un piso con arriostramiento continuo de techo y anclajes dúctiles", 5),
+    ...UNIONES("i5.6", "5.6 Edificios industriales de un piso sin puente grúa, sin arriostramiento continuo de techo, con anclajes dúctiles", 3),
+    ...UNIONES("i5.7", "5.7 Galpones livianos de acero", 4)]],
+  ["6. Estructuras de hormigón armado", [
+    ["i6.1", "6.1 Marcos resistentes a momento con elementos no estructurales dilatados", 5, 0.05],
+    ["i6.2", "6.2 Marcos resistentes a momento con elementos no estructurales no dilatados e incorporados al modelo", 3, 0.05],
+    ["i6.3", "6.3 Edificios y estructuras de hormigón armado con muros de corte", 5, 0.05],
+    ["i6.4", "6.4 Edificios industriales de un piso con arriostramiento continuo de techo", 5, 0.05],
+    ["i6.5", "6.5 Edificios industriales de un piso sin puente grúa, sin arriostramiento continuo de techo", 3, 0.05]]],
+  ["7. Estructuras de hormigón armado prefabricado", [
+    ["i7.1", "7.1 Uniones dúctiles húmedas, no estructurales no dilatados e incorporados al modelo", 3, 0.05],
+    ["i7.2", "7.2 Uniones dúctiles húmedas, no estructurales dilatados", 5, 0.03],
+    ["i7.3.1", "7.3.1 Uniones fuertes secas, empernadas o con barras embebidas en mortero", 3, 0.03],
+    ["i7.3.2", "7.3.2 Uniones fuertes secas, soldadas", 3, 0.02],
+    ["i7.4", "7.4 Estructuras con pilares en voladizo", 3, 0.02],
+    ["i7.5", "7.5 Estructuras de marcos arriostrados concéntricos", 4, 0.03]]],
+  ["8. Albañilería", [
+    ["i8.1", "8.1 Albañilería armada de bloques con llenado total de huecos", 4, 0.05],
+    ["i8.2", "8.2 Albañilería armada sin llenado total o de unidades cerámicas tipo rejilla", 3, 0.05],
+    ["i8.3", "8.3 Albañilería confinada", 4, 0.05]]],
+  ["9. Estanques, recipientes, chimeneas, silos y tolvas", [
+    ["i9.1", "9.1 Chimeneas de hormigón armado", 2, 0.03],
+    ...UNIONES("i9.2", "9.2 Chimeneas de acero, silos y tolvas con mantos continuos hasta el suelo", 3),
+    ...UNIONES("i9.3", "9.3 Silos, tolvas y estanques apoyados sobre columnas", 4),
+    ...UNIONES("i9.4", "9.4 Estanques de acero de eje vertical con manto continuo y anclajes dúctiles", 4),
+    ...UNIONES("i9.5", "9.5 Estanques de acero de eje vertical con manto continuo sin anclajes para volcamiento", 2.5),
+    ["i9.6", "9.6 Estanques de hormigón armado de eje vertical con manto continuo", 3, 0.03],
+    ["i9.7", "9.7 Estanques y ductos de materiales sintéticos compuestos", 3, 0.02],
+    ["i9.8", "9.8 Recipientes horizontales sobre cunas con anclajes dúctiles", 3, 0.03]]],
+  ["10. Torres, tuberías y equipos", [
+    ["i10.1", "10.1 Torres de proceso", 3, 0.03],
+    ["i10.2", "10.2 Torres de enfriamiento (madera o plásticos)", 3, 0.03],
+    ["i10.3", "10.3 Gabinetes de control eléctrico apoyados en el suelo", 3, 0.02],
+    ["i10.4", "10.4 Tuberías de acero no enterradas", 3, 0.03]]],
+  ["11. Estanterías de almacenamiento", [
+    ["i11.1", "11.1 Estanterías generales", 2, 0.03],
+    ["i11.2", "11.2 Estanterías dúctiles", 4, 0.03]]],
+  ["12. Sistemas estructurales de madera", [
+    ["i12.1", "12.1 Muros de corte con sistema marco plataforma", 4, 0.05],
+    ["i12.2", "12.2 Marcos de momento de madera laminada encolada con conexiones dúctiles", 2.5, 0.03],
+    ["i12.3", "12.3 Sistemas arriostrados verticales con conexiones dúctiles", 3.5, 0.03],
+    ["i12.4", "12.4 Sistemas arriostrados verticales con conexiones semidúctiles", 2.5, 0.03],
+    ["i12.5", "12.5 Sistemas arriostrados verticales con conexiones no dúctiles", 1, 0.03]]],
+];
+const SIS = new Map([
+  ...SISTEMAS.flatMap(([g, l]) => l.map(([id, t, R, R0, d]) => [id, { norma: "433-2026", grupo: g, texto: t, R, R0, d }])),
+  ...SISTEMAS_2369.flatMap(([g, l]) => l.map(([id, t, R, xi]) => [id, { norma: "2369-2025", grupo: g, texto: t, R, xi }])),
+]);
+// Norma activa (la fija calcular) y referencias: REF antepone el nombre de la norma a la cláusula
+let NORMA_ACT = "433-2026";
+const es2369 = () => NORMA_ACT === "2369-2025";
+const NOMBRE_NORMA = () => (es2369() ? "NCh 2369:2025" : "NCh 433:2026");
+// Cláusulas equivalentes en cada norma
+const CL = {
+  masa: ["5.5.1", "5.1.2"], peso: ["6.2.3.3", "5.1.2"], nModos: ["6.3.2", "5.6.2"], espectro: ["6.3.4.1", "5.4.1"], espectroCmp: ["6.3.4", "5.4.1"],
+  rs: ["6.3.4.3", "5.4.1"], cqc: ["6.3.5.2", "5.6.3"], qmin: ["6.3.6.1", "5.12"], qmax: ["6.3.6.2", "5.13"], torsion: ["6.3.3", "5.6.4"],
+  dcm: ["5.9.2", "—"], dpt: ["5.9.3", "6.3"], sistema: ["Tabla 5", "Tabla 7"], I: ["Tabla 6", "4.3.2"], A0: ["Tabla 7", "Tabla 3"], suelo: ["Tabla 8", "Tabla 6"],
+};
+const cl = (k) => CL[k][es2369() ? 1 : 0];
+// NCh 2369:2025: α de la Ec. (3), R* de la Ec. (1b) y espectro de diseño de la Ec. (1a), en g
+const alfa2369 = (T, s) => (1 + s.r * (T / s.T0) ** s.p) / (1 + (T / s.T0) ** s.q);
+function rEstrella2369(Ts, s, R) {
+  if (R <= 1) return 1;
+  const Cr = 0.16 * R, lim = Cr * s.T1;
+  // Con R ≤ 1.5 la interpolación desde 1.5 daría R* > R: se acota a R (no conservador en otro caso)
+  return Ts >= lim ? R : Math.min(R, 1.5 + (R - 1.5) * Ts / lim);
+}
+const fAmort = (xi) => (0.05 / xi) ** 0.4;
 // Tabla 9: C máximo en función de R (nota: 2.5/(R + 0.8) para otros valores)
 function cMaxCoef(R) {
   const T = [[2, 0.90], [3, 0.60], [4, 0.55], [5.5, 0.40]];
@@ -476,14 +580,41 @@ function patrones() {
 // ---------------------------------------------------------------------------
 // Datos de entrada
 // ---------------------------------------------------------------------------
+// Las opciones de ambas normas quedan en la lista (se ocultan las de la otra norma), para que un borrador o un elemento de
+// proyecto se restaure bien sin importar el orden en que se fijan norma y sistema
 function poblarSistemas() {
-  $("sistema").innerHTML = SISTEMAS.map(([g, l]) => `<optgroup label="${escH(g)}">${l.map(([id, t, R, R0, d]) => `<option value="${id}"${id === "w-ha" ? " selected" : ""}>${escH(t)} (R = ${fmt(R, 1)}, R₀ = ${fmt(R0, 0)}, ${fmt(d, 4)} h)</option>`).join("")}</optgroup>`).join("")
-    + `<option value="otro">Otro (ingresar R, R₀ y el límite)</option>`;
+  $("sistema").innerHTML = SISTEMAS.map(([g, l]) => `<optgroup data-norma="433-2026" label="${escH(g)}">${l.map(([id, t, R, R0, d]) => `<option value="${id}"${id === "w-ha" ? " selected" : ""}>${escH(t)} (R = ${fmt(R, 1)}, R₀ = ${fmt(R0, 0)}, ${fmt(d, 4)} h)</option>`).join("")}</optgroup>`).join("")
+    + SISTEMAS_2369.map(([g, l]) => `<optgroup data-norma="2369-2025" label="${escH(g)}">${l.map(([id, t, R, xi]) => `<option value="${id}">${escH(t)} (R = ${fmt(R, 1)}, ξ = ${fmt(xi, 2)})</option>`).join("")}</optgroup>`).join("")
+    + `<option value="otro">Otro (valores ingresados)</option>`;
+}
+function sincNorma(cambio = false) {
+  const n = $("norma").value, i2369 = n === "2369-2025";
+  $("sistema").querySelectorAll("optgroup").forEach((g) => { const ver = g.dataset.norma === n; g.hidden = !ver; g.disabled = !ver; });
+  const s = SIS.get($("sistema").value);
+  // Con «Otro» los valores escritos son de la otra norma (por ejemplo, 0.015 h no es un límite de la Tabla 5): se vuelve al
+  // sistema por defecto de la norma elegida
+  if ((s && s.norma !== n) || (!s && cambio)) $("sistema").value = i2369 ? "i6.3" : "w-ha";
+  $("gR0").classList.toggle("hidden", i2369);
+  $("gXi").classList.toggle("hidden", !i2369);
+  $("gLim").classList.toggle("hidden", !i2369);
+  $("lblSistema").textContent = i2369 ? "Sistema resistente (Tabla 7)" : "Sistema estructural (Tabla 5)";
+  $("lblDcm").innerHTML = i2369 ? "d<sub>máx</sub>/h" : "Δ<sub>cm</sub>/h máx.";
+  $("notaSistema").innerHTML = i2369
+    ? "R y ξ se toman de la Tabla 7 según el sistema, y el límite de desplazamiento de 6.3; con «Otro» se ingresan a mano. La Tabla 7 da valores máximos para la Categoría II."
+    : "R, R<sub>0</sub> y el límite de desplazamiento entre niveles se toman de la Tabla 5 según el sistema; con «Otro» se ingresan a mano.";
+  const I = i2369 ? N2369.I : N433.I;
+  [...$("cat").options].forEach((o) => { o.textContent = `${o.value} (I = ${fmt(I[o.value], i2369 ? 2 : 1)})`; });
+  [...$("zona").options].forEach((o) => { const a = N433.A0[o.value]; o.textContent = i2369 ? `${o.value} (A₀ = ${fmt(a, 2)} g ; Aᵣ = ${fmt(1.4 * a, 2)} g)` : `${o.value} (A₀ = ${fmt(a, 2)} g)`; });
+  $("subNorma").textContent = `${i2369 ? "Estructura industrial" : "Edificio"} desde un modelo de ETABS · Análisis modal espectral · ${i2369 ? "NCh 2369:2025" : "NCh 433:2026"}`;
 }
 function sincSistema() {
-  const s = SIS.get($("sistema").value), otro = !s;
-  ["Rf", "R0", "dcm"].forEach((id) => { $(id).readOnly = !otro; });
-  if (s) { $("Rf").value = s.R; $("R0").value = s.R0; $("dcm").value = s.d; }
+  const s = SIS.get($("sistema").value), otro = !s, i2369 = $("norma").value === "2369-2025";
+  ["Rf", "R0", "xi", "dcm"].forEach((id) => { $(id).readOnly = !otro; });
+  if (i2369) {
+    $("dcm").readOnly = !otro;
+    if (s) { $("Rf").value = s.R; $("xi").value = s.xi; }
+    if (!otro) $("dcm").value = $("lim2369").value;
+  } else if (s) { $("Rf").value = s.R; $("R0").value = s.R0; $("dcm").value = s.d; }
 }
 function opciones(sel, lista, valor) {
   const el = $(sel), prev = valor ?? el.value;
@@ -588,10 +719,15 @@ function analizar(c) {
   A.TsX = A.modos.reduce((a, m) => (m.UX > a.UX ? m : a), A.modos[0]);
   A.TsY = A.modos.reduce((a, m) => (m.UY > a.UY ? m : a), A.modos[0]);
   A.sumX = ult.SUX; A.sumY = ult.SUY;
-  const s = N433.suelos[c.suelo], I = N433.I[c.cat], A0 = N433.A0[c.zona];
+  const NN = es2369() ? N2369 : N433;
+  const s = NN.suelos[c.suelo], I = NN.I[c.cat], A0 = NN.A0[c.zona];
   A.s = s; A.I = I; A.A0 = A0;
-  A.checks.push({ id: "masaX", nombre: "Masa equivalente acumulada en X", dc: 0.9 / A.sumX, ref: REF("6.3.2") });
-  A.checks.push({ id: "masaY", nombre: "Masa equivalente acumulada en Y", dc: 0.9 / A.sumY, ref: REF("6.3.2") });
+  A.Ar = 1.4 * A0;                                         // NCh 2369:2025, Tabla 3
+  A.fxi = es2369() ? fAmort(c.xi) : 1;                     // NCh 2369:2025, (0.05/ξ)^0.4
+  // Espectro elástico (sin R*) en g: el de referencia de la NCh 2369:2025 corregido por ξ y ponderado por I (6.1)
+  A.saElastico = es2369() ? (T) => I * A.Ar * s.S * alfa2369(T, s) * A.fxi : (T) => I * s.S * A0 * alfa(T, s);
+  A.checks.push({ id: "masaX", nombre: "Masa equivalente acumulada en X", dc: 0.9 / A.sumX, ref: REF(cl("nModos")) });
+  A.checks.push({ id: "masaY", nombre: "Masa equivalente acumulada en Y", dc: 0.9 / A.sumY, ref: REF(cl("nModos")) });
 
   // Centros de masa: piso → [{ diafragma, punto }]
   const esp = casosEspectro(), fun = funcionesEspectro(), combos = combinaciones();
@@ -621,25 +757,29 @@ function analizar(c) {
     R.comb = cb ? cb.nombre : null;
     R.f = cb ? cb.items[0].sf : 1;
     R.Ts = d === "X" ? A.TsX : A.TsY;
-    R.Rs = rEstrella(R.Ts.T, s, c.R0);
+    R.Rs = es2369() ? rEstrella2369(R.Ts.T, s, c.R) : rEstrella(R.Ts.T, s, c.R0);
     // Espectro de ETABS en la dirección del caso: función × factor del caso × factor de diseño, en g
     const dd = def.dirs.find((x) => x.dir === u) || def.dirs[0];
     R.dirModelo = dd?.dir || "";
     if (dd && dd.dir !== u) R.avisos.push(`El caso ${escH(caso)} actúa en ${escH(dd.dir)}, no en ${u}.`);
-    if (def.dirs.length > 1) R.avisos.push(`El caso ${escH(caso)} combina ${def.dirs.length} direcciones (${escH(def.dirComb || "")}); la NCh 433:2026 analiza cada dirección por separado (5.8.1).`);
+    if (def.dirs.length > 1) R.avisos.push(`El caso ${escH(caso)} combina ${def.dirs.length} direcciones (${escH(def.dirComb || "")}); ${es2369() ? "la NCh 2369:2025 combina las direcciones con la regla de 4.5.2 a partir de casos de una dirección." : "la NCh 433:2026 analiza cada dirección por separado (5.8.1)."}`);
     if (def.modal && def.modal !== c.modal) R.avisos.push(`El caso ${escH(caso)} usa el caso modal ${escH(def.modal)}, distinto del elegido para T* (${escH(c.modal)}).`);
     R.fn = dd?.fn; R.sfCaso = dd?.sf;
     const lf = fun.get(R.fn);
     R.saEtabs = (T) => interpolar(lf, T) * (R.sfCaso ?? NaN) * R.f / G;
-    R.saNorma = (T) => I * s.S * A0 * alfa(T, s) / R.Rs;
+    R.saNorma = (T) => A.saElastico(T) / R.Rs;
     R.tieneFn = !!lf && Number.isFinite(R.sfCaso);
     // Razón entre el espectro de la norma y el del modelo en los períodos de los modos
     if (R.tieneFn) {
       let peor = null;
       for (const m of A.modos) { const r = R.saNorma(m.T) / R.saEtabs(m.T); if (!peor || !(r <= peor.r)) peor = { r, T: m.T, n: m.n }; }
       R.espPeor = peor;
+      // Un espectro del modelo mucho mayor que el de la norma suele indicar un factor de carga en la combinación elegida
+      // (por ejemplo 1.4E): Q0 queda inflado y el corte mínimo pasaría sin serlo
+      const minR = Math.min(...A.modos.map((m) => R.saNorma(m.T) / R.saEtabs(m.T)));
+      if (minR < 0.9) R.avisos.push(`En ${d} el espectro del modelo supera al de la norma hasta en ${fmt((1 / minR - 1) * 100, 0)} %: revise que el factor de diseño elegido solo escale el espectro (sin factores de carga como 1.4), porque el corte basal y los desplazamientos se toman del modelo.`);
       R.dcEsp = peor.r > 1 && peor.r <= 1 + TOL_ESP ? 1 : peor.r;
-      A.checks.push({ id: "esp" + d, nombre: `Espectro del modelo en ${d} frente al de la norma`, dc: R.dcEsp, ref: REF("6.3.4") });
+      A.checks.push({ id: "esp" + d, nombre: `Espectro del modelo en ${d} frente al de la norma`, dc: R.dcEsp, ref: REF(cl("espectroCmp")) });
     } else A.sinVerificar.push(`espectro en ${d} (función no incluida en el archivo)`);
 
     // Corte basal: Story Forces del caso, en la base del primer piso sobre el nivel basal
@@ -653,21 +793,55 @@ function analizar(c) {
       const br = resultado("reacciones_basales").find((f) => f.Caso === caso);
       R.Q = br ? Math.abs(d === "X" ? br.FX : br.FY) * R.f : NaN;
     }
-    R.Qmin = I * s.S * A0 * A.P / 6;                          // 6.3.6.1: I S A0 P / 6g, con A0 en g
-    R.cmax = cMaxCoef(c.R) * s.S * A0;
-    R.Qmax = I * R.cmax * A.P;                                // 6.3.6.2
+    if (es2369()) {
+      R.Qmin = 0.25 * I * A.Ar * s.S * A.P;                   // 5.12, Ec. (12), con A_r en g
+      R.cmax = 2.75 * I * A.Ar * s.S / (c.R + 1) * A.fxi;      // 5.13, Ec. (13) dividida por P
+      R.Qmax = R.cmax * A.P;
+    } else {
+      R.Qmin = I * s.S * A0 * A.P / 6;                        // 6.3.6.1: I S A0 P / 6g, con A0 en g
+      R.cmax = cMaxCoef(c.R) * s.S * A0;
+      R.Qmax = I * R.cmax * A.P;                              // 6.3.6.2
+    }
     R.fmin = R.Q > 0 ? Math.max(1, R.Qmin / R.Q) : NaN;
     R.fmax = R.Q > R.Qmax ? R.Qmax / R.Q : 1;
-    if (Number.isFinite(R.Q)) A.checks.push({ id: "qmin" + d, nombre: `Corte basal mínimo en ${d}`, dc: R.Q > 0 ? R.Qmin / R.Q : Infinity, ref: REF("6.3.6.1") });
+    if (es2369() && R.Q > 0) R.R1 = R.Rs * Math.min(R.Q / R.Qmin, 1);   // 5.14, Ec. (14)
+    if (Number.isFinite(R.Q)) A.checks.push({ id: "qmin" + d, nombre: `Corte basal mínimo en ${d}`, dc: R.Q > 0 ? R.Qmin / R.Q : Infinity, ref: REF(cl("qmin")) });
     else A.sinVerificar.push(`corte basal mínimo en ${d} (sin corte del caso en el nivel basal)`);
 
     // Desplazamientos: caso espectral × factor de diseño × factor por corte mínimo (6.3.6.1)
-    R.k = R.f * (Number.isFinite(R.fmin) ? R.fmin : 1);
+    // NCh 433:2026: los desplazamientos llevan el factor de corte mínimo (6.3.6.1). NCh 2369:2025: se calculan con el espectro
+    // elástico (6.1), es decir, el de diseño por R*, y el aumento por corte mínimo no se les aplica (5.12)
+    // En la NCh 2369:2025 el factor se toma del espectro del caso (no de la combinación), para que un factor de carga o un
+    // aumento por corte mínimo puesto en la combinación no cambie los desplazamientos
+    const saCaso = R.tieneFn ? interpolar(lf, R.Ts.T) * R.sfCaso / G : NaN;
+    R.k = es2369() ? (saCaso > 0 ? A.saElastico(R.Ts.T) / saCaso : R.f * R.Rs) : R.f * (Number.isFinite(R.fmin) ? R.fmin : 1);
     driftsCentroMasa(A, R, c, { cmPorPiso, despPunto, fp, lf, amort, comp: u });
-    const dmax = new Map();
-    for (const f of drifts) if (f.Caso === caso && f.Direccion === d) dmax.set(String(f.Piso), Math.max(dmax.get(String(f.Piso)) || 0, nv(f.Drift)));
+    // Combinación modal (6.3.5.2)
+    if (def.comb && !/CQC/i.test(def.comb)) A.motivos.push({ h: `combinación modal distinta de CQC en ${d} (${cl("cqc")})`, t: L`el caso ${escTex(caso)} combina los modos con ${escTex(def.comb)} y la norma exige CQC (${cl("cqc")})` });
+    R.ecc = def.ecc;
+  }
+
+  // Desplazamientos relativos en cualquier punto: drift de piso máximo de ETABS por caso y dirección
+  const driftDe = (caso, dir) => {
+    const mp = new Map();
+    for (const f of drifts) if (f.Caso === caso && f.Direccion === dir) mp.set(String(f.Piso), Math.max(mp.get(String(f.Piso)) || 0, nv(f.Drift)));
+    return mp;
+  };
+  for (const d of ["X", "Y"]) {
+    const R = A.dir[d], O = A.dir[d === "X" ? "Y" : "X"], def = R.def;
+    const propio = driftDe(R.caso, d), cruzado = driftDe(O.caso, d);
+    R.simultaneo = es2369();
     for (const n of R.niveles) {
-      n.dpt = dmax.has(n.nombre) ? dmax.get(n.nombre) * R.k : NaN;
+      n.dpt = propio.has(n.nombre) ? propio.get(n.nombre) * R.k : NaN;
+      if (es2369()) {
+        // 4.5.2 (que exige 6.1): E = ±1.0 E_d ± 0.3 E_otra. Se suma el 30 % del drift que el caso de la otra dirección
+        // produce en esta dirección (suma de máximos, conservadora)
+        n.dpt1 = n.dpt;
+        n.dpt03 = cruzado.has(n.nombre) ? 0.3 * cruzado.get(n.nombre) * O.k : NaN;
+        n.dpt = Number.isFinite(n.dpt) && Number.isFinite(n.dpt03) ? n.dpt + n.dpt03 : NaN;
+        n.limPt = c.dcm; n.dcCM = NaN; n.dcPt = n.dpt / c.dcm;   // 6.3: d ≤ d_máx en cualquier punto
+        continue;
+      }
       n.limPt = Math.max((Number.isFinite(n.dcm) ? n.dcm : 0) + 0.001, c.dcm);
       n.dcCM = n.dcm / c.dcm;
       // Sin Δcm no se conoce el límite de 5.9.3 a); como el límite es al menos el de la Tabla 5, Δmáx/(Tabla 5) es una
@@ -676,27 +850,25 @@ function analizar(c) {
     }
     const peor = (campo) => R.niveles.reduce((a, n) => (Number.isFinite(n[campo]) && !(a?.[campo] >= n[campo]) ? n : a), null);
     R.peorCM = peor("dcCM"); R.peorPt = peor("dcPt");
-    const faltanCM = R.niveles.filter((n) => !Number.isFinite(n.dcCM)).length, faltanPt = R.niveles.filter((n) => !Number.isFinite(n.dcPt)).length;
-    const sinTorsion = !(A.hayDiafragmas && (def.ecc || 0) >= 0.10 - 1e-9);
-    if (R.peorCM) A.checks.push({ id: "dcm" + d, nombre: `Desplazamiento relativo en el centro de masas en ${d}`, dc: R.peorCM.dcCM, ref: REF("5.9.2"), sinTorsion });
+    const faltanCM = es2369() ? 0 : R.niveles.filter((n) => !Number.isFinite(n.dcCM)).length, faltanPt = R.niveles.filter((n) => !Number.isFinite(n.dcPt)).length;
+    const sinTorsion = !es2369() && !(A.hayDiafragmas && (def.ecc || 0) >= 0.10 - 1e-9);
+    if (R.peorCM) A.checks.push({ id: "dcm" + d, nombre: `Desplazamiento relativo en el centro de masas en ${d}`, dc: R.peorCM.dcCM, ref: REF(cl("dcm")), sinTorsion });
     if (faltanCM) A.sinVerificar.push(`desplazamiento relativo en el centro de masas en ${d} (${cuenta(faltanCM, "nivel", "niveles")} sin datos)`);
-    if (R.peorPt) A.checks.push({ id: "dpt" + d, nombre: `Desplazamiento relativo en cualquier punto en ${d}`, dc: R.peorPt.dcPt, ref: REF("5.9.3"), sinTorsion });
+    if (R.peorPt) A.checks.push({ id: "dpt" + d, nombre: `Desplazamiento relativo en cualquier punto en ${d}`, dc: R.peorPt.dcPt, ref: REF(cl("dpt")), sinTorsion });
     if (faltanPt) A.sinVerificar.push(`desplazamiento relativo en cualquier punto en ${d} (${cuenta(faltanPt, "nivel", "niveles")} sin datos)`);
-
-    // Combinación modal (6.3.5.2)
-    if (def.comb && !/CQC/i.test(def.comb)) A.motivos.push({ h: `combinación modal distinta de CQC en ${d} (6.3.5.2)`, t: L`el caso ${escTex(caso)} combina los modos con ${escTex(def.comb)} y la norma exige CQC (6.3.5.2)` });
-    R.ecc = def.ecc;
   }
+  // NCh 2369:2025, 6.4: sobre 0.015 h se debe considerar el efecto P-Delta, que esta página no verifica
+  if (es2369() && [A.dir.X, A.dir.Y].some((R) => R.niveles.some((n) => n.dpt > 0.015))) A.sinVerificar.push("efecto P-Delta (6.4)");
   // Torsión accidental: ETABS aplica momentos estáticos en los diafragmas con la excentricidad del caso, constante en
   // altura. Con r ≥ 0.10 cubre 0.10 b (Z_k/H) de 6.3.3 b) en todos los niveles; con menos, o sin diafragmas, no se afirma.
   A.eccX = A.dir.X.ecc; A.eccY = A.dir.Y.ecc;
-  A.torsion = !A.hayDiafragmas ? "sinDiafragma" : Math.min(A.eccX || 0, A.eccY || 0) >= 0.10 - 1e-9 ? "cubre" : Math.max(A.eccX || 0, A.eccY || 0) > 0 ? "parcial" : "no";
-  if (A.torsion !== "cubre") A.sinVerificar.push("torsión accidental (6.3.3)");
+  A.torsion = es2369() ? "2369" : !A.hayDiafragmas ? "sinDiafragma" : Math.min(A.eccX || 0, A.eccY || 0) >= 0.10 - 1e-9 ? "cubre" : Math.max(A.eccX || 0, A.eccY || 0) > 0 ? "parcial" : "no";
+  if (A.torsion !== "cubre" && A.torsion !== "2369") A.sinVerificar.push("torsión accidental (6.3.3)");
 
   // Sobrecarga en la masa sísmica (5.5.1)
-  if (A.vivas.length && !A.masaPorCargas) A.sinVerificar.push("porcentaje de sobrecarga en la masa sísmica (5.5.1)");
-  else for (const v of A.vivas) if (v.k < 0.25 - 1e-9) A.motivos.push({ h: `sobrecarga en la masa sísmica menor que 25 % (5.5.1)`, t: L`la masa sísmica considera ${tn(v.k * 100, 0)}\,\% de la sobrecarga ${escTex(v.patron)}, menos que el mínimo de 25\,\% (5.5.1)` });
-  if (!A.vivas.length) A.avisos.push({ h: "No se encontró un patrón de sobrecarga de uso (tipo Live) en el modelo: revise la fuente de masa (5.5.1).", t: L`No se encontró un patrón de sobrecarga de uso en el modelo; la fuente de masa debe revisarse (5.5.1).` });
+  if (A.vivas.length && !A.masaPorCargas) A.sinVerificar.push(`porcentaje de sobrecarga en la masa sísmica (${cl("masa")})`);
+  else for (const v of A.vivas) if (v.k < 0.25 - 1e-9) A.motivos.push({ h: `sobrecarga en la masa sísmica menor que 25 % (${cl("masa")})`, t: L`la masa sísmica considera ${tn(v.k * 100, 0)}\,\% de la sobrecarga ${escTex(v.patron)}, menos que el mínimo de 25\,\% (${cl("masa")})` });
+  if (!A.vivas.length) A.avisos.push({ h: "No se encontró un patrón de sobrecarga de uso (tipo Live) en el modelo: revise la fuente de masa (" + cl("masa") + ").", t: L`No se encontró un patrón de sobrecarga de uso en el modelo; la fuente de masa debe revisarse (${cl("masa")}).` });
 
   // Un D/C infinito o indefinido manda: la razón máxima no lo puede esconder
   const dcs = A.checks.map((x) => x.dc);
@@ -1033,44 +1205,58 @@ function memoria(m, c, A) {
 
   // 2. Peso sísmico
   m.h("Peso sísmico");
-  m.p(L`Las masas se calculan con las cargas permanentes y un porcentaje de la sobrecarga de uso no menor que 25\,\% en áreas sin aglomeración, ni menor que 50\,\% donde es usual la aglomeración (NCh 433:2026, 5.5.1). El peso sísmico $P$ es la suma de las masas de los pisos sobre el nivel basal por $g$ (6.2.3.3).`);
+  m.p(es2369()
+    ? L`La masa sísmica incluye las cargas permanentes y una fracción de las sobrecargas no menor que 25\,\% en zonas de uso normal y plataformas de operación, ni menor que 50\,\% en bodegas, salas de archivo y zonas de acopio con baja rotación, cuando no se cuenta con una estimación específica (NCh 2369:2025, 5.1.2). El peso $P$ es la suma de las masas de los niveles sobre el nivel basal por $g$.`
+    : L`Las masas se calculan con las cargas permanentes y un porcentaje de la sobrecarga de uso no menor que 25\,\% en áreas sin aglomeración, ni menor que 50\,\% donde es usual la aglomeración (NCh 433:2026, 5.5.1). El peso sísmico $P$ es la suma de las masas de los pisos sobre el nivel basal por $g$ (6.2.3.3).`);
   m.row("Fuente de masa del modelo", escH(A.fuenteMasaTipo || "—"));
-  for (const f of A.fuenteMasa) m.row(`Patrón ${escH(f.patron)}${f.tipo ? ` (${escH(f.tipo)})` : ""}`, `${fmt(f.k * 100, 0)} %`, f.tipo && /live/i.test(f.tipo) && !/roof/i.test(f.tipo) ? REF("5.5.1") : "");
-  if (A.vivas.length && !A.masaPorCargas) m.row("Sobrecarga en la masa", `la masa no se toma de patrones de carga <span class="tag warn">SIN VERIFICAR</span>`, REF("5.5.1"));
-  else for (const v of A.vivas) m.row(`Sobrecarga en la masa, ${escH(v.patron)}`, `${fmt(v.k * 100, 0)} % ${v.k >= 0.25 - 1e-9 ? `<span class="tag ok">≥ 25 %</span>` : `<span class="tag bad">menor que 25 %</span>`}`, REF("5.5.1"));
+  for (const f of A.fuenteMasa) m.row(`Patrón ${escH(f.patron)}${f.tipo ? ` (${escH(f.tipo)})` : ""}`, `${fmt(f.k * 100, 0)} %`, f.tipo && /live/i.test(f.tipo) && !/roof/i.test(f.tipo) ? REF(cl("masa")) : "");
+  if (A.vivas.length && !A.masaPorCargas) m.row("Sobrecarga en la masa", `la masa no se toma de patrones de carga <span class="tag warn">SIN VERIFICAR</span>`, REF(cl("masa")));
+  else for (const v of A.vivas) m.row(`Sobrecarga en la masa, ${escH(v.patron)}`, `${fmt(v.k * 100, 0)} % ${v.k >= 0.25 - 1e-9 ? `<span class="tag ok">≥ 25 %</span>` : `<span class="tag bad">menor que 25 %</span>`}`, REF(cl("masa")));
   tablaDoble(m, [{ h: "Piso", t: "Piso", al: "l" }, { h: "Cota [m]", t: "Cota [m]" }, { h: "Masa [tf·s²/m]", t: "Masa [tf$\\cdot$s$^2$/m]" }, { h: "Peso [tf]", t: "Peso [tf]" }],
     [...A.masas.map((p) => [escH(p.nombre), fmt(p.z, 2), fmt(p.m, 3), fmt(p.W, 1)]), ["<b>Total</b>", "", "", `<b>${fmt(A.P, 1)}</b>`]],
     [...A.masas.map((p) => [escTex(p.nombre), tn(p.z, 2), tn(p.m, 3), tn(p.W, 1)]), ["\\textbf{Total}", "", "", `\\textbf{${tn(A.P, 1)}}`]],
     "Masas y pesos sísmicos por piso sobre el nivel basal.");
-  m.row("Peso sísmico total: P", `${fmt(A.P, 1)} tf`, REF("6.2.3.3"));
+  m.row("Peso sísmico total: P", `${fmt(A.P, 1)} tf`, REF(cl("peso")));
   m.eq(L`P = g\sum_k m_k = 9.80665\cdot ${tn(A.P / G, 3)} = ${tn(A.P, 1)}\ \mathrm{tf}`);
 
   // 3. Parámetros sísmicos
   m.h("Parámetros sísmicos");
   const sis = SIS.get(c.sistema);
-  m.row("Categoría de ocupación ; coeficiente de importancia: I", `${c.cat} ; ${fmt(A.I, 1)}`, REF("Tabla 6"));
-  m.row("Zona sísmica ; aceleración efectiva: A<sub>0</sub>", `${c.zona} ; ${fmt(A.A0, 2)} g`, REF("Tabla 7"));
-  m.row("Tipo de suelo", c.suelo, REF("Tabla 8"));
-  m.row("Parámetros del suelo: S ; T<sub>0</sub> ; T' ; n ; p", `${fmt(s.S, 2)} ; ${fmt(s.T0, 2)} s ; ${fmt(s.Tp, 2)} s ; ${fmt(s.n, 2)} ; ${fmt(s.p, 1)}`, REF("Tabla 8"));
-  m.row("Sistema estructural", escH(sis ? `${sis.grupo}: ${sis.texto}` : "Otro (valores ingresados)"), REF("Tabla 5"));
-  m.row("Factores de modificación de la respuesta: R ; R<sub>0</sub>", `${fmt(c.R, 1)} ; ${fmt(c.R0, 1)}`, REF("Tabla 5"));
-  m.row("Desplazamiento relativo máximo en el centro de masas: Δ<sub>cm</sub>/h", fmt(c.dcm, 4), REF("Tabla 5"));
+  m.row("Categoría de ocupación ; coeficiente de importancia: I", `${c.cat} ; ${fmt(A.I, 2)}`, REF(cl("I")));
+  if (es2369()) {
+    m.row("Zona sísmica ; aceleración efectiva: A<sub>0</sub>", `${c.zona} ; ${fmt(A.A0, 2)} g`, REF(cl("A0")));
+    m.row("Aceleración máxima de referencia: A<sub>r</sub> = 1.4 A<sub>0</sub>", `${fmt(A.Ar, 2)} g`, REF(cl("A0")));
+    m.row("Tipo de suelo", c.suelo, REF(cl("suelo")));
+    m.row("Parámetros del suelo: S ; r ; T<sub>0</sub> ; p ; q ; T<sub>1</sub>", `${fmt(s.S, 2)} ; ${fmt(s.r, 2)} ; ${fmt(s.T0, 2)} s ; ${fmt(s.p, 2)} ; ${fmt(s.q, 2)} ; ${fmt(s.T1, 2)} s`, REF(cl("suelo")));
+    m.row("Sistema resistente", escH(sis ? `${sis.grupo}: ${sis.texto}` : "Otro (valores ingresados)"), REF(cl("sistema")));
+    m.row("Factor de modificación de la respuesta: R", fmt(c.R, 1), REF(cl("sistema")));
+    m.row("Razón de amortiguamiento: ξ ; factor (0.05/ξ)<sup>0.4</sup>", `${fmt(c.xi, 3)} ; ${fmt(A.fxi, 4)}`, REF("5.4.2"));
+    m.row("Desplazamiento máximo entre niveles: d<sub>máx</sub>/h", fmt(c.dcm, 4), REF("6.3"));
+    if (c.cat === "III" || c.cat === "IV") m.note("La Tabla 7 da valores máximos de R para la Categoría II: en las Categorías III y IV podrían requerirse valores menores (nota de la Tabla 7).", L`La Tabla 7 da valores máximos de $R$ para la Categoría II; en las Categorías III y IV podrían requerirse valores menores.`);
+  } else {
+    m.row("Zona sísmica ; aceleración efectiva: A<sub>0</sub>", `${c.zona} ; ${fmt(A.A0, 2)} g`, REF(cl("A0")));
+    m.row("Tipo de suelo", c.suelo, REF(cl("suelo")));
+    m.row("Parámetros del suelo: S ; T<sub>0</sub> ; T' ; n ; p", `${fmt(s.S, 2)} ; ${fmt(s.T0, 2)} s ; ${fmt(s.Tp, 2)} s ; ${fmt(s.n, 2)} ; ${fmt(s.p, 1)}`, REF(cl("suelo")));
+    m.row("Sistema estructural", escH(sis ? `${sis.grupo}: ${sis.texto}` : "Otro (valores ingresados)"), REF(cl("sistema")));
+    m.row("Factores de modificación de la respuesta: R ; R<sub>0</sub>", `${fmt(c.R, 1)} ; ${fmt(c.R0, 1)}`, REF(cl("sistema")));
+    m.row("Desplazamiento relativo máximo en el centro de masas: Δ<sub>cm</sub>/h", fmt(c.dcm, 4), REF(cl("sistema")));
+  }
 
   // 4. Análisis modal
   m.h("Análisis modal");
-  m.p(L`Se incluyen los modos del caso ${escTex(c.modal)} ordenados por período. La suma de las masas equivalentes en cada dirección horizontal debe ser al menos 90\,\% de la masa total (NCh 433:2026, 6.3.2). $T^*$ es el período del modo con mayor masa de traslación equivalente en cada dirección (6.3.4.3).`);
+  m.p(L`Se incluyen los modos del caso ${escTex(c.modal)} ordenados por período. La suma de las masas equivalentes en cada dirección horizontal debe ser al menos 90\,\% de la masa total (${NOMBRE_NORMA()}, ${cl("nModos")}). $T^*$ es el período del modo con mayor masa de traslación equivalente en cada dirección (${cl("rs")}).`);
   const top = (mo) => mo.n === A.TsX.n || mo.n === A.TsY.n;
   tablaDoble(m, [{ h: "Modo", t: "Modo" }, { h: "T [s]", t: "$T$ [s]" }, { h: "U<sub>X</sub>", t: "$U_X$" }, { h: "U<sub>Y</sub>", t: "$U_Y$" }, { h: "R<sub>Z</sub>", t: "$R_Z$" }, { h: "ΣU<sub>X</sub>", t: "$\\sum U_X$" }, { h: "ΣU<sub>Y</sub>", t: "$\\sum U_Y$" }, { h: "ΣR<sub>Z</sub>", t: "$\\sum R_Z$" }],
     A.modos.map((mo) => [top(mo) ? `<b>${mo.n}</b>` : mo.n, fmt(mo.T, 4), fmt(mo.UX, 4), fmt(mo.UY, 4), fmt(mo.RZ, 4), fmt(mo.SUX, 4), fmt(mo.SUY, 4), fmt(mo.SRZ, 4)]),
     A.modos.map((mo) => [top(mo) ? `\\textbf{${mo.n}}` : mo.n, tn(mo.T, 4), tn(mo.UX, 4), tn(mo.UY, 4), tn(mo.RZ, 4), tn(mo.SUX, 4), tn(mo.SUY, 4), tn(mo.SRZ, 4)]),
     "Períodos y razones de masa participante (ETABS, precisión completa).");
-  m.row(`Período del modo con mayor masa en X (modo ${A.TsX.n}): T*<sub>x</sub>`, `${fmt(A.TsX.T, 4)} s`, REF("6.3.4.3"));
-  m.row(`Período del modo con mayor masa en Y (modo ${A.TsY.n}): T*<sub>y</sub>`, `${fmt(A.TsY.T, 4)} s`, REF("6.3.4.3"));
+  m.row(`Período del modo con mayor masa en X (modo ${A.TsX.n}): T*<sub>x</sub>`, `${fmt(A.TsX.T, 4)} s`, REF(cl("rs")));
+  m.row(`Período del modo con mayor masa en Y (modo ${A.TsY.n}): T*<sub>y</sub>`, `${fmt(A.TsY.T, 4)} s`, REF(cl("rs")));
   for (const d of ["X", "Y"]) {
     const sum = d === "X" ? A.sumX : A.sumY;
-    m.row(`Masa equivalente acumulada en ${d}: ΣU<sub>${d}</sub> ≥ 0.90`, `${fmt(sum * 100, 1)} % ${tagDC(0.9 / sum)}`, REF("6.3.2"));
+    m.row(`Masa equivalente acumulada en ${d}: ΣU<sub>${d}</sub> ≥ 0.90`, `${fmt(sum * 100, 1)} % ${tagDC(0.9 / sum)}`, REF(cl("nModos")));
   }
-  m.eq(L`\sum U_X = ${tn(A.sumX, 4)} ${A.sumX >= 0.9 ? L`\ge` : "<"} 0.90 \qquad \sum U_Y = ${tn(A.sumY, 4)} ${A.sumY >= 0.9 ? L`\ge` : "<"} 0.90`, REF("6.3.2"));
+  m.eq(L`\sum U_X = ${tn(A.sumX, 4)} ${A.sumX >= 0.9 ? L`\ge` : "<"} 0.90 \qquad \sum U_Y = ${tn(A.sumY, 4)} ${A.sumY >= 0.9 ? L`\ge` : "<"} 0.90`, REF(cl("nModos")));
   m.fig(grafico({ titulo: "Masa equivalente acumulada", xlab: "Modo", ylab: "Masa acumulada [%]", xmin: 0, xmax: Math.max(1, A.modos.length), ymax: 100,
     series: [{ pts: A.modos.map((mo) => [mo.n, mo.SUX * 100]), color: "#00008B", etiqueta: "X", marcas: true }, { pts: A.modos.map((mo) => [mo.n, mo.SUY * 100]), color: "#e65c00", etiqueta: "Y", marcas: true }, { pts: A.modos.map((mo) => [mo.n, mo.SRZ * 100]), color: "#8a94a3", etiqueta: "RZ", guion: "4 3", marcas: true }],
     lineasH: [{ y: 90, etiqueta: "90 %", color: "#1f8a4c" }] }),
@@ -1090,15 +1276,32 @@ function memoria(m, c, A) {
 
   // 5. Espectro de diseño
   m.h("Espectro de diseño");
-  m.p(L`El espectro de pseudo-aceleraciones de diseño es $S_a = I\,S\,A_0\,\alpha/R^*$ (NCh 433:2026, 6.3.4.1), con el factor de amplificación $\alpha$ de cada modo (6.3.4.2) y el factor de reducción $R^*$ calculado con $T^*$ y $R_0$ de cada dirección (6.3.4.3).`);
-  m.eq(L`\alpha = \frac{1 + 4.5\left(\frac{T_n}{T_0}\right)^{p}}{1 + \left(\frac{T_n}{T_0}\right)^{3}} = \frac{1 + 4.5\left(\frac{T_n}{${tn(s.T0, 2)}}\right)^{${tn(s.p, 1)}}}{1 + \left(\frac{T_n}{${tn(s.T0, 2)}}\right)^{3}}`, REF("Ec. (9)"));
-  for (const R of [X, Y]) {
-    const d = R.d.toLowerCase();
-    m.row(`Factor de reducción en ${R.d}: R*<sub>${d}</sub>`, fmt(R.Rs, 3), REF("6.3.4.3"));
-    m.eq(L`R^*_{${d}} = 1 + \frac{T^*_{${d}}}{0.10\,T_0 + T^*_{${d}}/R_0} = 1 + \frac{${tn(R.Ts.T, 4)}}{0.10\cdot ${tn(s.T0, 2)} + ${tn(R.Ts.T, 4)}/${tn(c.R0, 1)}} = ${tn(R.Rs, 3)}`, REF("Ec. (10)"));
-    const a = alfa(R.Ts.T, s);
-    m.row(`Pseudo-aceleración de diseño en T*<sub>${d}</sub>: S<sub>a</sub>`, `${fmt(R.saNorma(R.Ts.T), 4)} g`, REF("6.3.4.1"));
-    m.eq(L`S_a(T^*_{${d}}) = \frac{I\,S\,A_0\,\alpha}{R^*_{${d}}} = \frac{${tn(A.I, 1)}\cdot ${tn(s.S, 2)}\cdot ${tn(A.A0, 2)}\cdot ${tn(a, 4)}}{${tn(R.Rs, 3)}} = ${tn(R.saNorma(R.Ts.T), 4)}\ \mathrm{g}`, REF("Ec. (8)"));
+  if (es2369()) {
+    m.p(L`El espectro de diseño horizontal es $S_a = \frac{I\,S_{aH}}{R^*}\left(\frac{0.05}{\xi}\right)^{0.4}$ (NCh 2369:2025, 5.4.1), con el espectro de referencia $S_{aH} = A_r\,S\,\alpha$ (5.4.2) y el factor $R^*$ calculado con $T^*$, $R$ y $T_1$ de cada dirección (5.4.1).`);
+    m.eq(L`\alpha = \frac{1 + r\left(\frac{T_H}{T_0}\right)^{p}}{1 + \left(\frac{T_H}{T_0}\right)^{q}} = \frac{1 + ${tn(s.r, 2)}\left(\frac{T_H}{${tn(s.T0, 2)}}\right)^{${tn(s.p, 2)}}}{1 + \left(\frac{T_H}{${tn(s.T0, 2)}}\right)^{${tn(s.q, 2)}}}`, REF("Ec. (3)"));
+    const Cr = 0.16 * c.R, lim = Cr * s.T1;
+    m.eq(L`C_r = 0.16\,R = ${tn(Cr, 3)} \qquad C_r\,T_1 = ${tn(Cr, 3)}\cdot ${tn(s.T1, 2)} = ${tn(lim, 4)}\ \mathrm{s}`, REF("Ec. (1b)"));
+    for (const R of [X, Y]) {
+      const d = R.d.toLowerCase();
+      m.row(`Factor de reducción en ${R.d}: R*<sub>${d}</sub>`, fmt(R.Rs, 3), REF(cl("rs")));
+      m.eq(c.R <= 1 ? L`R = 1 \;\Rightarrow\; R^*_{${d}} = 1`
+        : R.Ts.T >= lim ? L`T^*_{${d}} = ${tn(R.Ts.T, 4)} \ge C_r\,T_1 \;\Rightarrow\; R^*_{${d}} = R = ${tn(R.Rs, 3)}`
+          : L`R^*_{${d}} = 1.5 + (R - 1.5)\frac{T^*_{${d}}}{C_r\,T_1} = 1.5 + (${tn(c.R, 1)} - 1.5)\frac{${tn(R.Ts.T, 4)}}{${tn(lim, 4)}} = ${tn(R.Rs, 3)}`, REF("Ec. (1b)"));
+      const a = alfa2369(R.Ts.T, s);
+      m.row(`Pseudo-aceleración de diseño en T*<sub>${d}</sub>: S<sub>a</sub>`, `${fmt(R.saNorma(R.Ts.T), 4)} g`, REF(cl("espectro")));
+      m.eq(L`S_a(T^*_{${d}}) = \frac{I\,A_r\,S\,\alpha}{R^*_{${d}}}\left(\frac{0.05}{\xi}\right)^{0.4} = \frac{${tn(A.I, 2)}\cdot ${tn(A.Ar, 2)}\cdot ${tn(s.S, 2)}\cdot ${tn(a, 4)}}{${tn(R.Rs, 3)}}\cdot ${tn(A.fxi, 4)} = ${tn(R.saNorma(R.Ts.T), 4)}\ \mathrm{g}`, REF("Ec. (1a)"));
+    }
+  } else {
+    m.p(L`El espectro de pseudo-aceleraciones de diseño es $S_a = I\,S\,A_0\,\alpha/R^*$ (NCh 433:2026, 6.3.4.1), con el factor de amplificación $\alpha$ de cada modo (6.3.4.2) y el factor de reducción $R^*$ calculado con $T^*$ y $R_0$ de cada dirección (6.3.4.3).`);
+    m.eq(L`\alpha = \frac{1 + 4.5\left(\frac{T_n}{T_0}\right)^{p}}{1 + \left(\frac{T_n}{T_0}\right)^{3}} = \frac{1 + 4.5\left(\frac{T_n}{${tn(s.T0, 2)}}\right)^{${tn(s.p, 1)}}}{1 + \left(\frac{T_n}{${tn(s.T0, 2)}}\right)^{3}}`, REF("Ec. (9)"));
+    for (const R of [X, Y]) {
+      const d = R.d.toLowerCase();
+      m.row(`Factor de reducción en ${R.d}: R*<sub>${d}</sub>`, fmt(R.Rs, 3), REF("6.3.4.3"));
+      m.eq(L`R^*_{${d}} = 1 + \frac{T^*_{${d}}}{0.10\,T_0 + T^*_{${d}}/R_0} = 1 + \frac{${tn(R.Ts.T, 4)}}{0.10\cdot ${tn(s.T0, 2)} + ${tn(R.Ts.T, 4)}/${tn(c.R0, 1)}} = ${tn(R.Rs, 3)}`, REF("Ec. (10)"));
+      const a = alfa(R.Ts.T, s);
+      m.row(`Pseudo-aceleración de diseño en T*<sub>${d}</sub>: S<sub>a</sub>`, `${fmt(R.saNorma(R.Ts.T), 4)} g`, REF("6.3.4.1"));
+      m.eq(L`S_a(T^*_{${d}}) = \frac{I\,S\,A_0\,\alpha}{R^*_{${d}}} = \frac{${tn(A.I, 1)}\cdot ${tn(s.S, 2)}\cdot ${tn(A.A0, 2)}\cdot ${tn(a, 4)}}{${tn(R.Rs, 3)}} = ${tn(R.saNorma(R.Ts.T), 4)}\ \mathrm{g}`, REF("Ec. (8)"));
+    }
   }
   m.sub("Espectro del modelo");
   m.p(L`En el modelo, cada caso espectral usa una función multiplicada por el factor del caso y, si corresponde, por el factor de la combinación de diseño. Su producto se compara con el espectro de la norma en los períodos de todos los modos; la razón norma/modelo debe ser a lo más 1.`);
@@ -1108,43 +1311,58 @@ function memoria(m, c, A) {
     if (R.tieneFn) {
       m.row(`Espectro del modelo en T*<sub>${d}</sub>: S<sub>a,ETABS</sub>`, `${fmt(R.saEtabs(R.Ts.T), 4)} g`);
       const dcEsp = R.espPeor.r <= 1 + TOL_ESP && R.espPeor.r > 1 ? 1 : R.espPeor.r;
-      m.row(`Razón norma/modelo, máxima en los modos (modo ${R.espPeor.n}, T = ${fmt(R.espPeor.T, 3)} s)`, `${fmt(R.espPeor.r, 4)} ${tagDC(dcEsp)}`, REF("6.3.4"));
-      m.eq(L`\frac{S_{a,norma}}{S_{a,ETABS}}\Big|_{T = ${tn(R.espPeor.T, 3)}\ \mathrm{s}} = ${tn(R.espPeor.r, 4)} ${R.espPeor.r <= 1 + TOL_ESP ? L`\le` : ">"} 1${R.espPeor.r > 1 && R.espPeor.r <= 1 + TOL_ESP ? L` + ${tn(TOL_ESP * 100, 1)}\,\%` : ""}`, REF("6.3.4"));
+      m.row(`Razón norma/modelo, máxima en los modos (modo ${R.espPeor.n}, T = ${fmt(R.espPeor.T, 3)} s)`, `${fmt(R.espPeor.r, 4)} ${tagDC(dcEsp)}`, REF(cl("espectroCmp")));
+      m.eq(L`\frac{S_{a,norma}}{S_{a,ETABS}}\Big|_{T = ${tn(R.espPeor.T, 3)}\ \mathrm{s}} = ${tn(R.espPeor.r, 4)} ${R.espPeor.r <= 1 + TOL_ESP ? L`\le` : ">"} 1${R.espPeor.r > 1 && R.espPeor.r <= 1 + TOL_ESP ? L` + ${tn(TOL_ESP * 100, 1)}\,\%` : ""}`, REF(cl("espectroCmp")));
       if (R.espPeor.r > 1 && R.espPeor.r <= 1 + TOL_ESP) m.note(`El modelo queda bajo el espectro de la norma en ${fmt((R.espPeor.r - 1) * 100, 2)} %, dentro de la tolerancia de ${fmt(TOL_ESP * 100, 1)} % por el redondeo del factor de diseño.`, L`El espectro del modelo queda bajo el de la norma en ${tn((R.espPeor.r - 1) * 100, 2)}\,\%, dentro de la tolerancia de ${tn(TOL_ESP * 100, 1)}\,\% adoptada por el redondeo del factor de diseño.`);
-      if (Math.abs(1 / R.f - R.Rs) / R.Rs > 0.01 && R.f !== 1) m.note(`El factor de diseño ${fmt(R.f, 4)} equivale a 1/${fmt(1 / R.f, 3)}, distinto de 1/R*<sub>${d}</sub> = 1/${fmt(R.Rs, 3)}: revise el factor de la combinación o el espectro del caso.`, L`El factor de diseño ${tn(R.f, 4)} equivale a $1/${tn(1 / R.f, 3)}$, distinto de $1/R^*_{${d}} = 1/${tn(R.Rs, 3)}$.`);
+      if (!es2369() && Math.abs(1 / R.f - R.Rs) / R.Rs > 0.01 && R.f !== 1) m.note(`El factor de diseño ${fmt(R.f, 4)} equivale a 1/${fmt(1 / R.f, 3)}, distinto de 1/R*<sub>${d}</sub> = 1/${fmt(R.Rs, 3)}: revise el factor de la combinación o el espectro del caso.`, L`El factor de diseño ${tn(R.f, 4)} equivale a $1/${tn(1 / R.f, 3)}$, distinto de $1/R^*_{${d}} = 1/${tn(R.Rs, 3)}$.`);
     }
   }
   const Tmax = Math.max(2, niceMax(Math.max(...A.modos.map((mo) => mo.T)) * 1.5));
   const muestra = (fn) => Array.from({ length: 201 }, (_, i) => { const T = Tmax * i / 200; return [T, fn(T)]; });
   m.fig(grafico({ titulo: "Espectros de diseño", xlab: "Período T [s]", ylab: "Sa [g]", xmax: Tmax,
     series: [
-      { pts: muestra((T) => A.I * s.S * A.A0 * alfa(T, s)), color: "#8a94a3", guion: "6 4", etiqueta: "Elástico NCh 433:2026" },
+      { pts: muestra(A.saElastico), color: "#8a94a3", guion: "6 4", etiqueta: `Elástico ${NOMBRE_NORMA()}` },
       { pts: muestra(X.saNorma), color: "#00008B", etiqueta: `Norma X (R* = ${fmt(X.Rs, 3)})` },
       { pts: muestra(Y.saNorma), color: "#e65c00", etiqueta: `Norma Y (R* = ${fmt(Y.Rs, 3)})` },
       ...(X.tieneFn ? [{ pts: muestra(X.saEtabs), color: "#5b7cff", guion: "2 3", ancho: 2.4, etiqueta: `Modelo ${X.caso}${X.comb ? " · " + X.comb : ""}` }] : []),
       ...(Y.tieneFn ? [{ pts: muestra(Y.saEtabs), color: "#ffb37a", guion: "2 3", ancho: 2.4, etiqueta: `Modelo ${Y.caso}${Y.comb ? " · " + Y.comb : ""}` }] : []),
     ],
     lineasV: [{ x: X.Ts.T, etiqueta: "T*x", color: "#00008B" }, { x: Y.Ts.T, etiqueta: "T*y", color: "#e65c00" }] }),
-    { h: "Espectro elástico y de diseño de la NCh 433:2026 y espectro efectivo del modelo.", t: "Espectro elástico y de diseño de la NCh 433:2026 y espectro efectivo del modelo de ETABS." });
+    { h: `Espectro elástico y de diseño de la ${NOMBRE_NORMA()} y espectro efectivo del modelo.`, t: `Espectro elástico y de diseño de la ${NOMBRE_NORMA()} y espectro efectivo del modelo de ETABS.` });
 
   // 6. Corte basal
   m.h("Corte basal");
-  m.p(L`El corte basal de cada dirección es el corte del caso espectral en la base del primer piso sobre el nivel basal, por el factor de diseño. No debe ser menor que $I\,S\,A_0\,P/6g$; si lo es, los desplazamientos y las solicitaciones se multiplican por un factor para alcanzarlo (6.3.6.1). No necesita ser mayor que $I\,C_{m\acute{a}x}\,P$ (6.3.6.2).`);
-  m.row("Coeficiente sísmico máximo: C<sub>máx</sub>", `${fmt(X.cmax, 4)}`, REF("Tabla 9"));
-  m.eq(L`C_{m\acute{a}x} = ${tn(cMaxCoef(c.R), 3)}\,\frac{S\,A_0}{g} = ${tn(cMaxCoef(c.R), 3)}\cdot ${tn(s.S, 2)}\cdot ${tn(A.A0, 2)} = ${tn(X.cmax, 4)}\qquad (R = ${tn(c.R, 1)})`, REF("Tabla 9"));
+  if (es2369()) {
+    m.p(L`El corte basal de cada dirección es el corte del caso espectral en la base del primer nivel sobre el nivel basal, por el factor de diseño. Si es menor que $Q_0^{m\acute{i}n} = 0.25\,I\,A_r\,S\,P/g$, las fuerzas y esfuerzos se multiplican por $Q_0^{m\acute{i}n}/Q_0$, sin aplicar ese aumento a los desplazamientos (NCh 2369:2025, 5.12). Si es mayor que $Q_0^{m\acute{a}x}$, se pueden reducir por $Q_0^{m\acute{a}x}/Q_0$, tampoco en los desplazamientos (5.13). El factor efectivo es $R_1 = R^*\min(Q_0/Q_0^{m\acute{i}n};\ 1)$ (5.14).`);
+  } else {
+    m.p(L`El corte basal de cada dirección es el corte del caso espectral en la base del primer piso sobre el nivel basal, por el factor de diseño. No debe ser menor que $I\,S\,A_0\,P/6g$; si lo es, los desplazamientos y las solicitaciones se multiplican por un factor para alcanzarlo (6.3.6.1). No necesita ser mayor que $I\,C_{m\acute{a}x}\,P$ (6.3.6.2).`);
+    m.row("Coeficiente sísmico máximo: C<sub>máx</sub>", `${fmt(X.cmax, 4)}`, REF("Tabla 9"));
+    m.eq(L`C_{m\acute{a}x} = ${tn(cMaxCoef(c.R), 3)}\,\frac{S\,A_0}{g} = ${tn(cMaxCoef(c.R), 3)}\cdot ${tn(s.S, 2)}\cdot ${tn(A.A0, 2)} = ${tn(X.cmax, 4)}\qquad (R = ${tn(c.R, 1)})`, REF("Tabla 9"));
+  }
   for (const R of [X, Y]) {
     const d = R.d;
     m.sub(`Dirección ${d}`);
     m.row(`Corte basal del modelo: Q<sub>0${d.toLowerCase()}</sub>`, `${fmt(R.Q, 1)} tf`);
-    m.row(`Corte basal mínimo: Q<sub>mín</sub>`, `${fmt(R.Qmin, 1)} tf`, REF("6.3.6.1"));
-    m.eq(L`Q_{m\acute{i}n} = \frac{I\,S\,A_0\,P}{6\,g} = \frac{${tn(A.I, 1)}\cdot ${tn(s.S, 2)}\cdot ${tn(A.A0, 2)}\cdot ${tn(A.P, 1)}}{6} = ${tn(R.Qmin, 1)}\ \mathrm{tf}`, REF("6.3.6.1"));
-    m.row(`Corte basal máximo: Q<sub>máx</sub>`, `${fmt(R.Qmax, 1)} tf`, REF("6.3.6.2"));
-    m.eq(L`Q_{m\acute{a}x} = I\,C_{m\acute{a}x}\,P = ${tn(A.I, 1)}\cdot ${tn(R.cmax, 4)}\cdot ${tn(A.P, 1)} = ${tn(R.Qmax, 1)}\ \mathrm{tf}`, REF("6.3.6.2"));
-    m.row(`Corte basal mínimo: Q<sub>0</sub> ≥ Q<sub>mín</sub>`, `${fmt(R.Q, 1)} ${R.Q >= R.Qmin ? "≥" : "<"} ${fmt(R.Qmin, 1)} tf ${tagDC(R.Qmin / R.Q)}`, REF("6.3.6.1"));
+    m.row(`Corte basal mínimo: Q<sub>mín</sub>`, `${fmt(R.Qmin, 1)} tf`, REF(cl("qmin")));
+    if (es2369()) m.eq(L`Q_0^{m\acute{i}n} = 0.25\,\frac{I\,A_r\,S}{g}\,P = 0.25\cdot ${tn(A.I, 2)}\cdot ${tn(A.Ar, 2)}\cdot ${tn(s.S, 2)}\cdot ${tn(A.P, 1)} = ${tn(R.Qmin, 1)}\ \mathrm{tf}`, REF("Ec. (12)"));
+    else m.eq(L`Q_{m\acute{i}n} = \frac{I\,S\,A_0\,P}{6\,g} = \frac{${tn(A.I, 1)}\cdot ${tn(s.S, 2)}\cdot ${tn(A.A0, 2)}\cdot ${tn(A.P, 1)}}{6} = ${tn(R.Qmin, 1)}\ \mathrm{tf}`, REF("6.3.6.1"));
+    m.row(`Corte basal máximo: Q<sub>máx</sub>`, `${fmt(R.Qmax, 1)} tf`, REF(cl("qmax")));
+    if (es2369()) m.eq(L`Q_0^{m\acute{a}x} = 2.75\,\frac{I\,A_r\,S}{g\,(R + 1)}\left(\frac{0.05}{\xi}\right)^{0.4} P = 2.75\cdot\frac{${tn(A.I, 2)}\cdot ${tn(A.Ar, 2)}\cdot ${tn(s.S, 2)}}{${tn(c.R, 1)} + 1}\cdot ${tn(A.fxi, 4)}\cdot ${tn(A.P, 1)} = ${tn(R.Qmax, 1)}\ \mathrm{tf}`, REF("Ec. (13)"));
+    else m.eq(L`Q_{m\acute{a}x} = I\,C_{m\acute{a}x}\,P = ${tn(A.I, 1)}\cdot ${tn(R.cmax, 4)}\cdot ${tn(A.P, 1)} = ${tn(R.Qmax, 1)}\ \mathrm{tf}`, REF("6.3.6.2"));
+    m.row(`Corte basal mínimo: Q<sub>0</sub> ≥ Q<sub>mín</sub>`, `${fmt(R.Q, 1)} ${R.Q >= R.Qmin ? "≥" : "<"} ${fmt(R.Qmin, 1)} tf ${tagDC(R.Qmin / R.Q)}`, REF(cl("qmin")));
     m.row(`Coeficiente sísmico efectivo: Q<sub>0</sub>/P`, fmt(R.Q / A.P, 4));
-    if (R.fmin > 1 + 1e-9) m.note(`Q<sub>0</sub> es menor que Q<sub>mín</sub>: los desplazamientos y solicitaciones de ${d} se deben multiplicar por ${fmt(R.fmin, 3)}. Los desplazamientos de esta memoria ya incluyen ese factor; en el modelo, multiplique el factor de diseño por ${fmt(R.fmin, 3)}.`,
-      L`$Q_0 < Q_{m\acute{i}n}$: los desplazamientos y las solicitaciones en ${d} se multiplican por ${tn(R.fmin, 3)}; los desplazamientos de esta memoria ya lo incluyen.`);
-    if (R.fmax < 1) m.note(`Q<sub>0</sub> supera Q<sub>máx</sub>: las solicitaciones de ${d} se pueden multiplicar por ${fmt(R.fmax, 3)} (no los desplazamientos).`, L`$Q_0 > Q_{m\acute{a}x}$: las solicitaciones en ${d} se pueden multiplicar por ${tn(R.fmax, 3)}, sin reducir los desplazamientos (6.3.6.2).`);
+    if (es2369() && Number.isFinite(R.R1)) {
+      m.row(`Factor de modificación efectivo: R<sub>1</sub>`, fmt(R.R1, 3), REF("5.14"));
+      m.eq(L`R_1 = R^*\min\left(\frac{Q_0}{Q_0^{m\acute{i}n}};\ 1\right) = ${tn(R.Rs, 3)}\cdot\min\left(\frac{${tn(R.Q, 1)}}{${tn(R.Qmin, 1)}};\ 1\right) = ${tn(R.R1, 3)}`, REF("Ec. (14)"));
+    }
+    if (R.fmin > 1 + 1e-9) {
+      if (es2369()) m.note(`Q<sub>0</sub> es menor que Q<sub>mín</sub>: las fuerzas y esfuerzos de ${d} se deben multiplicar por ${fmt(R.fmin, 3)}, sin aplicar ese aumento a los desplazamientos (5.12). En el modelo, multiplique el factor de las combinaciones de diseño por ${fmt(R.fmin, 3)}.`,
+        L`$Q_0 < Q_0^{m\acute{i}n}$: las fuerzas y esfuerzos en ${d} se multiplican por ${tn(R.fmin, 3)}, sin aplicar el aumento a los desplazamientos (5.12).`);
+      else m.note(`Q<sub>0</sub> es menor que Q<sub>mín</sub>: los desplazamientos y solicitaciones de ${d} se deben multiplicar por ${fmt(R.fmin, 3)}. Los desplazamientos de esta memoria ya incluyen ese factor; en el modelo, multiplique el factor de diseño por ${fmt(R.fmin, 3)}.`,
+        L`$Q_0 < Q_{m\acute{i}n}$: los desplazamientos y las solicitaciones en ${d} se multiplican por ${tn(R.fmin, 3)}; los desplazamientos de esta memoria ya lo incluyen.`);
+    }
+    if (R.fmax < 1) m.note(`Q<sub>0</sub> supera Q<sub>máx</sub>: las solicitaciones de ${d} se pueden multiplicar por ${fmt(R.fmax, 3)} (no los desplazamientos).${es2369() ? " No aplica si R ≤ 2, en sitios tipo F, en estructuras de las Categorías III o IV de la cláusula 13 ni en instalaciones de generación de energía (5.13)." : ""}`,
+      L`$Q_0 > Q_{m\acute{a}x}$: las solicitaciones en ${d} se pueden multiplicar por ${tn(R.fmax, 3)}, sin reducir los desplazamientos (${cl("qmax")}).`);
   }
   tablaDoble(m, [{ h: "Piso", t: "Piso", al: "l" }, { h: "Cota [m]", t: "Cota [m]" }, { h: "V<sub>x</sub> [tf]", t: "$V_x$ [tf]" }, { h: "V<sub>y</sub> [tf]", t: "$V_y$ [tf]" }],
     A.sobre.map((p, i) => [escH(p.nombre), fmt(p.z, 2), fmt(X.pisosV[i].V, 1), fmt(Y.pisosV[i].V, 1)]),
@@ -1158,9 +1376,12 @@ function memoria(m, c, A) {
   // 7. Combinación modal y torsión accidental
   m.h("Combinación modal y torsión accidental");
   for (const R of [X, Y]) {
-    m.row(`Combinación modal del caso ${escH(R.caso)}`, `${escH(R.def.comb || "—")} ${/CQC/i.test(R.def.comb || "") ? `<span class="tag ok">CQC</span>` : `<span class="tag bad">debe ser CQC</span>`}`, REF("6.3.5.2"));
-    m.row(`Excentricidad accidental del caso ${escH(R.caso)}: r`, Number.isFinite(R.ecc) ? `${fmt(R.ecc, 3)} b` : "—", REF("6.3.3"));
+    m.row(`Combinación modal del caso ${escH(R.caso)}`, `${escH(R.def.comb || "—")} ${/CQC/i.test(R.def.comb || "") ? `<span class="tag ok">CQC</span>` : `<span class="tag bad">debe ser CQC</span>`}`, REF(cl("cqc")));
+    m.row(`Excentricidad accidental del caso ${escH(R.caso)}: r`, Number.isFinite(R.ecc) ? `${fmt(R.ecc, 3)} b` : "—", REF(cl("torsion")));
   }
+  if (es2369()) {
+    m.p(L`La NCh 2369:2025 (5.6.4) pide considerar en el diseño los efectos de la torsión debidos a variaciones en la distribución de las cargas de operación, de las sobrecargas y del peso propio, y clasificar los diafragmas como flexibles o rígidos (5.3.3). No fija una excentricidad accidental: esta memoria informa la excentricidad usada en los casos espectrales del modelo, y los efectos de la torsión se revisan en el diseño de los elementos.`);
+  } else {
   m.p(L`La torsión accidental se incluye desplazando los centros de masas en $\pm 0.05\,b$ (6.3.3 a) o con momentos de torsión estáticos de excentricidad $\pm 0.10\,b\,Z_k/H$ (6.3.3 b). ETABS aplica en los casos espectrales momentos estáticos con una excentricidad constante en altura, $r\,b$: con $r \ge 0.10$ se cubre la Ecuación (7) en todos los niveles.`);
   if (A.torsion === "cubre") m.row("Torsión accidental", `r ≥ 0.10 en ambos casos <span class="tag ok">incluida</span>`, REF("6.3.3"));
   else m.row("Torsión accidental", `<span class="tag warn">SIN VERIFICAR</span>`, REF("6.3.3"));
@@ -1173,31 +1394,40 @@ function memoria(m, c, A) {
       L`El modelo no tiene diafragmas, por lo que ETABS no aplica la excentricidad accidental: la torsión accidental (6.3.3) queda \textbf{sin verificar}.`],
   }[A.torsion];
   if (notaTorsion) m.note(notaTorsion[0], notaTorsion[1]);
+  }
 
   // 8. Desplazamientos relativos
   m.h("Desplazamientos relativos entre pisos");
-  m.p(L`El desplazamiento relativo entre dos niveles consecutivos, medido en el centro de masas, no debe superar el valor de la Tabla 5 (5.9.2). En cualquier punto de la planta no debe superar el mayor entre el desplazamiento relativo del centro de masas más $0.001\,h$ y el límite de la Tabla 5 (5.9.3). Los desplazamientos del centro de masas son los del caso espectral (CQC) por el factor de diseño y por el factor de corte mínimo, y el relativo del centro de masas de cada piso se obtiene, cuando es posible, combinando con CQC ($\xi = ${tn(X.xi ?? 0.05, 2)}$) los desplazamientos relativos modales de los centros de masa, $\Gamma_n\,S_a(T_n)/\omega_n^2\,(\phi_{k,n} - \phi_{k-1,n})$, y no como la diferencia de los desplazamientos CQC, que resulta menor o igual (el método usado en cada dirección se indica abajo). Con varios diafragmas en un piso se toma el mayor. El máximo en cualquier punto es el drift de piso que entrega ETABS.`);
+  if (es2369()) m.p(L`Los desplazamientos sísmicos se estiman con el espectro elástico de referencia, corregido por la razón de amortiguamiento y ponderado por $I$ (NCh 2369:2025, 6.1): los del caso espectral se escalan por la razón entre ese espectro elástico y el espectro del caso en $T^*$, sin depender del factor de la combinación; el aumento por corte mínimo no se aplica a los desplazamientos (5.12). La acción sísmica considera la simultaneidad direccional de 4.5.2: al drift del caso de cada dirección se suma el 30\,\% del que produce en esa dirección el caso de la otra (suma de máximos). El desplazamiento relativo entre dos niveles no debe superar $d_{m\acute{a}x} = ${tn(c.dcm, 4)}\,h$ (6.3), y se toma como el drift de piso máximo de ETABS en la planta. El desplazamiento relativo en el centro de masas se informa solo como referencia.`);
+  else m.p(L`El desplazamiento relativo entre dos niveles consecutivos, medido en el centro de masas, no debe superar el valor de la Tabla 5 (5.9.2). En cualquier punto de la planta no debe superar el mayor entre el desplazamiento relativo del centro de masas más $0.001\,h$ y el límite de la Tabla 5 (5.9.3). Los desplazamientos del centro de masas son los del caso espectral (CQC) por el factor de diseño y por el factor de corte mínimo, y el relativo del centro de masas de cada piso se obtiene, cuando es posible, combinando con CQC ($\xi = ${tn(X.xi ?? 0.05, 2)}$) los desplazamientos relativos modales de los centros de masa, $\Gamma_n\,S_a(T_n)/\omega_n^2\,(\phi_{k,n} - \phi_{k-1,n})$, y no como la diferencia de los desplazamientos CQC, que resulta menor o igual (el método usado en cada dirección se indica abajo). Con varios diafragmas en un piso se toma el mayor. El máximo en cualquier punto es el drift de piso que entrega ETABS.`);
   for (const R of [X, Y]) {
     const d = R.d;
     m.sub(`Dirección ${d}`);
     m.row(`Factor sobre los desplazamientos del caso ${escH(R.caso)}: k`, fmt(R.k, 4));
     m.row("Método del desplazamiento relativo en el centro de masas", R.metodoCM === "cqc" ? `CQC de los modos (${R.nModosCQC} modos)` : `diferencia de desplazamientos CQC <span class="tag warn">puede subestimarlo</span>`);
-    if (R.fmin > 1 + 1e-9) m.eq(L`k = f_{dise\tilde{n}o}\cdot f_{m\acute{i}n} = ${tn(R.f, 4)}\cdot ${tn(R.fmin, 3)} = ${tn(R.k, 4)}`);
+    if (es2369()) m.eq(R.tieneFn
+      ? L`k = \frac{S_{a,el\acute{a}stico}(T^*)}{S_{a,caso}(T^*)} = \frac{${tn(A.saElastico(R.Ts.T), 4)}}{${tn(R.k > 0 ? A.saElastico(R.Ts.T) / R.k : NaN, 4)}} = ${tn(R.k, 4)}`
+      : L`k = f_{dise\tilde{n}o}\cdot R^* = ${tn(R.f, 4)}\cdot ${tn(R.Rs, 3)} = ${tn(R.k, 4)}`, REF("6.1"));
+    else if (R.fmin > 1 + 1e-9) m.eq(L`k = f_{dise\tilde{n}o}\cdot f_{m\acute{i}n} = ${tn(R.f, 4)}\cdot ${tn(R.fmin, 3)} = ${tn(R.k, 4)}`);
     tablaDoble(m, [{ h: "Piso", t: "Piso", al: "l" }, { h: "h [m]", t: "$h$ [m]" }, { h: "u<sub>cm</sub> [mm]", t: "$u_{cm}$ [mm]" }, { h: "Δ<sub>cm</sub>/h", t: "$\\Delta_{cm}/h$" }, { h: "D/C cm", t: "D/C cm" }, { h: "Δ<sub>máx</sub>/h", t: "$\\Delta_{m\\acute{a}x}/h$" }, { h: "Límite", t: "Límite" }, { h: "D/C punto", t: "D/C punto" }],
       R.niveles.map((n) => [escH(n.nombre), fmt(n.h, 2), fmt(n.u * 1000, 2), fmt(n.dcm, 5), fmt(n.dcCM, 3), fmt(n.dpt, 5), fmt(n.limPt, 5), fmt(n.dcPt, 3)]),
       R.niveles.map((n) => [escTex(n.nombre), tn(n.h, 2), tn(n.u * 1000, 2), tn(n.dcm, 5), tn(n.dcCM, 3), tn(n.dpt, 5), tn(n.limPt, 5), tn(n.dcPt, 3)]),
-      `Desplazamientos relativos entre pisos en la dirección ${d} (límite en el centro de masas: ${tn(c.dcm, 4)}).`,
+      es2369() ? `Desplazamientos relativos entre pisos en la dirección ${d} (límite: ${tn(c.dcm, 4)}; en el centro de masas, solo como referencia).` : `Desplazamientos relativos entre pisos en la dirección ${d} (límite en el centro de masas: ${tn(c.dcm, 4)}).`,
       R.niveles.map((n) => [null, null, null, null, n.dcCM > 1 + 1e-9 ? "malo" : "", null, null, n.dcPt > 1 + 1e-9 ? "malo" : ""]));
     if (R.peorCM) {
       m.row(`Máximo en el centro de masas (${escH(R.peorCM.nombre)}): Δ<sub>cm</sub>/h ≤ ${fmt(c.dcm, 4)}`, `${fmt(R.peorCM.dcm, 5)} ${tagDC(R.peorCM.dcCM)}`, REF("5.9.2"));
       m.eq(L`\frac{\Delta_{cm}}{h} = ${tn(R.peorCM.dcm, 5)} ${cmp(R.peorCM.dcm, c.dcm)} ${tn(c.dcm, 4)}`, REF("5.9.2"));
     }
-    if (R.peorPt) {
+    if (R.peorPt && es2369()) {
+      const o = R.d === "X" ? "Y" : "X";
+      m.row(`Máximo entre niveles (${escH(R.peorPt.nombre)}): d/h ≤ ${fmt(c.dcm, 4)}`, `${fmt(R.peorPt.dpt, 5)} ${tagDC(R.peorPt.dcPt)}`, REF("6.3"));
+      m.eq(L`\frac{d}{h} = \frac{d_{${R.d}}}{h} + 0.3\,\frac{d_{${o}\to ${R.d}}}{h} = ${tn(R.peorPt.dpt1, 5)} + ${tn(R.peorPt.dpt03, 5)} = ${tn(R.peorPt.dpt, 5)} ${cmp(R.peorPt.dpt, c.dcm)} ${tn(c.dcm, 4)}`, REF("4.5.2 y 6.3"));
+    } else if (R.peorPt) {
       m.row(`Máximo en cualquier punto (${escH(R.peorPt.nombre)}): Δ<sub>máx</sub>/h ≤ máx(Δ<sub>cm</sub>/h + 0.001 ; ${fmt(c.dcm, 4)})`, `${fmt(R.peorPt.dpt, 5)} ${tagDC(R.peorPt.dcPt)}`, REF("5.9.3"));
       m.eq(L`\frac{\Delta_{m\acute{a}x}}{h} = ${tn(R.peorPt.dpt, 5)} ${cmp(R.peorPt.dpt, R.peorPt.limPt)} \max\left(${tn(R.peorPt.dcm, 5)} + 0.001;\ ${tn(c.dcm, 4)}\right) = ${tn(R.peorPt.limPt, 5)}`, REF("5.9.3"));
     }
     m.fig(grafico({ titulo: `Desplazamientos relativos en ${d}`, xlab: "Δ/h", ylab: "Cota [m]", ymin: A.zBasal, ymax: A.sobre[0].z,
-      series: [{ pts: escalones(R.niveles, "dcm", A.zBasal), color: "#00008B", etiqueta: "Centro de masas" }, { pts: escalones(R.niveles, "dpt", A.zBasal), color: "#e65c00", etiqueta: "Máximo en la planta" }],
+      series: [{ pts: escalones(R.niveles, "dcm", A.zBasal), color: "#00008B", etiqueta: es2369() ? "Centro de masas (referencia)" : "Centro de masas" }, { pts: escalones(R.niveles, "dpt", A.zBasal), color: "#e65c00", etiqueta: "Máximo en la planta" }],
       lineasV: [{ x: c.dcm, etiqueta: `Límite ${fmt(c.dcm, 4)}`, color: "#c62828" }] }),
       { h: `Desplazamientos relativos entre pisos en la dirección ${d}.`, t: `Desplazamientos relativos entre pisos en la dirección ${d}.` });
     const u = g.despl.get(`${R.caso}|0`);
@@ -1220,7 +1450,7 @@ function memoria(m, c, A) {
   tablaDoble(m, [{ h: "Verificación", t: "Verificación", al: "l" }, { h: "Referencia", t: "Referencia", al: "l" }, { h: "D/C", t: "D/C" }, { h: "Estado", t: "Estado", al: "l" }],
     [...A.checks.map((x) => [escH(x.nombre), escH(x.ref), fmt(x.dc, 3), estadoCheck(x)]), ...A.motivos.map((x) => [escH(mayusc(x.h)), "", "—", "No cumple"]), ...sv.map((x) => [escH(mayusc(x)), "", "—", "Sin verificar"])],
     [...A.checks.map((x) => [escTex(x.nombre), escTex(x.ref), tn(x.dc, 3), x.dc <= 1 + 1e-9 ? escTex(estadoCheck(x)) : "\\textbf{No cumple}"]), ...A.motivos.map((x) => [escTex(mayusc(x.h)), "", "---", "\\textbf{No cumple}"]), ...sv.map((x) => [escTex(mayusc(x)), "", "---", "\\textbf{Sin verificar}"])],
-    "Resumen de verificaciones de la NCh 433:2026.",
+    `Resumen de verificaciones de la ${NOMBRE_NORMA()}.`,
     [...A.checks.map((x) => [null, null, x.dc > 1 + 1e-9 ? "malo" : "", x.dc > 1 + 1e-9 ? "malo" : x.sinTorsion ? "aviso" : ""]), ...A.motivos.map(() => [null, null, "malo", "malo"]), ...sv.map(() => [null, null, "aviso", "aviso"])]);
 }
 
@@ -1248,7 +1478,7 @@ ${TEX_ESTILO}
 \pagestyle{fancy}
 \fancyhf{}
 \chead{Memoria sísmica --- ${escTex(D.modelo?.archivo || "Modelo ETABS")}}
-\lfoot{Memoria de cálculo --- Análisis sísmico, NCh 433:2026}
+\lfoot{Memoria de cálculo --- Análisis sísmico, ${NOMBRE_NORMA()}}
 \rfoot{\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\footrulewidth}{0.4pt}
@@ -1258,16 +1488,16 @@ ${TEX_ESTILO}
 
 \begin{center}
 {\Large\bfseries Memoria de Cálculo}\\[4pt]
-{\large Análisis sísmico del edificio según NCh 433:2026}\\[2pt]
+{\large Análisis sísmico ${es2369() ? "de la estructura" : "del edificio"} según ${NOMBRE_NORMA()}}\\[2pt]
 {\small Modelo ${escTex(D.modelo?.archivo || "")} --- ${fecha}}
 \end{center}
 
 \section*{Objetivo y alcance}
-Esta memoria documenta el análisis modal espectral del edificio realizado en ETABS y verifica, según la NCh 433:2026, la masa participante, el espectro de diseño, el corte basal mínimo, la combinación modal, la torsión accidental y los desplazamientos relativos entre pisos. No verifica el diseño de los elementos estructurales (muros, vigas, columnas, losas ni fundaciones), que se documenta por separado.
+Esta memoria documenta el análisis modal espectral ${es2369() ? "de la estructura" : "del edificio"} realizado en ETABS y verifica, según la ${NOMBRE_NORMA()}, la masa participante, el espectro de diseño, el corte basal mínimo, la combinación modal, ${es2369() ? "y los desplazamientos sísmicos entre niveles" : "la torsión accidental y los desplazamientos relativos entre pisos"}. No verifica el diseño de los elementos estructurales (muros, vigas, columnas, losas ni fundaciones), que se documenta por separado.
 
 \section*{Normativa}
 \begin{itemize}
-\item NCh 433:2026 --- Diseño sísmico de edificios.
+\item ${es2369() ? "NCh 2369:2025 --- Diseño sísmico de estructuras e instalaciones industriales." : "NCh 433:2026 --- Diseño sísmico de edificios."}
 \item NCh 3171 --- Diseño estructural: disposiciones generales y combinaciones de carga (combinaciones definidas en el modelo).
 \end{itemize}
 
@@ -1280,7 +1510,11 @@ ${[A.dir.X, A.dir.Y].map((R) => R.metodoCM === "cqc"
     ? L`\item Dirección ${R.d}: el desplazamiento relativo en el centro de masas se obtiene combinando con CQC los desplazamientos relativos modales de los centros de masa de dos niveles consecutivos, con la escala de las formas modales calibrada con los desplazamientos de ETABS del caso, y se divide por la altura del piso.`
     : L`\item Dirección ${R.d}: el desplazamiento relativo en el centro de masas se toma como la diferencia de los desplazamientos del caso en los centros de masa de dos niveles consecutivos, dividida por la altura del piso. Este criterio puede subestimarlo, porque no combina con CQC los desplazamientos relativos de cada modo.`).join("\n")}
 \item El desplazamiento relativo máximo en cualquier punto es el drift de piso que entrega ETABS.
-\item La verificación de 5.9.5 (desplazamiento de techo para el diseño de estructuras de hormigón armado con $T_{ag}$), las separaciones entre edificios (5.10) y el diseño de los elementos quedan fuera de esta memoria.
+${es2369()
+    ? L`\item Los desplazamientos se calculan con el espectro elástico (el del caso por el factor de diseño y por $R^*$), según 6.1. La excepción de 6.3, que permite duplicar los límites si se demuestra que el desplazamiento no compromete la operación, no se aplica.
+\item ${(() => { const dm = Math.max(...[A.dir.X, A.dir.Y].flatMap((R) => R.niveles.map((n) => n.dpt)).filter(Number.isFinite)); return dm <= 0.015 ? L`Los desplazamientos entre niveles no superan $0.015\,h$ (máximo $${tn(dm, 5)}\,h$), por lo que no se requiere considerar el efecto P-Delta (6.4).` : L`Los desplazamientos entre niveles superan $0.015\,h$ (máximo $${tn(dm, 5)}\,h$): se debe considerar el efecto P-Delta (6.4), que esta memoria no verifica.`; })()}
+\item La acción sísmica vertical (5.7), la torsión por variación de cargas (5.6.4), las separaciones entre estructuras (6.2), los elementos secundarios y equipos (cláusula 7) y el diseño de los elementos quedan fuera de esta memoria.`
+    : L`\item La verificación de 5.9.5 (desplazamiento de techo para el diseño de estructuras de hormigón armado con $T_{ag}$), las separaciones entre edificios (5.10) y el diseño de los elementos quedan fuera de esta memoria.`}
 ${A.avisosTex.map((t) => `\\item ${t}`).join("\n")}
 \end{itemize}
 
@@ -1304,7 +1538,7 @@ function limpiar(html) {
 function leerDatos() {
   return {
     cat: $("cat").value, zona: +$("zona").value, suelo: $("suelo").value, sistema: $("sistema").value,
-    R: parseFloat($("Rf").value), R0: parseFloat($("R0").value), dcm: parseFloat($("dcm").value),
+    norma: $("norma").value, R: parseFloat($("Rf").value), R0: parseFloat($("R0").value), xi: parseFloat($("xi").value), dcm: parseFloat($("dcm").value),
     casoX: $("casoX").value, casoY: $("casoY").value, combX: $("combX").value, combY: $("combY").value,
     modal: $("modal").value, basal: $("basal").value,
   };
@@ -1312,8 +1546,11 @@ function leerDatos() {
 function calcular() {
   ultimoTex = ""; ultimoA = null;
   limpiarInvalidos($("inputs"));
+  NORMA_ACT = $("norma").value;
   if (!D) { limpiar(`<div class="note">Seleccione el archivo .structura.json.gz que genera el script con ETABS abierto para comenzar.</div>`); return; }
-  const malos = datosInvalidos([["Rf", 1], ["R0", 1], ["dcm", 0.0001]]);
+  let malos = datosInvalidos(es2369() ? [["Rf", 1], ["xi", 0.02], ["dcm", 0.0001]] : [["Rf", 1], ["R0", 1], ["dcm", 0.0001]]);
+  // NCh 2369:2025, 5.4.2: la corrección (0.05/ξ)^0.4 vale para ξ entre 0.02 y 0.05
+  if (!malos.length && es2369()) malos = datosSobreMaximo([["xi", 0.05, "ξ debe estar entre 0.02 y 0.05 (NCh 2369:2025, 5.4.2)"]]);
   if (malos.length) { limpiar(avisoInvalidos(malos)); return; }
   const c = leerDatos();
   if (!c.casoX || !c.casoY) { limpiar(`<div class="note">El modelo no tiene casos de espectro de respuesta analizados: no se puede preparar la memoria sísmica.</div>`); return; }
@@ -1334,16 +1571,16 @@ function calcular() {
   const lista = (l) => l.length > 1 ? l.slice(0, -1).join(", ") + " y " + l[l.length - 1] : l.join("");
   // El veredicto no lleva nombres que vengan del archivo (casos, patrones): proyectos.js y tablero.js leen su texto
   const minus = (t) => t.charAt(0).toLowerCase() + t.slice(1);
-  const fallasTxt = [...A.fallan.map((x) => `${minus(x.nombre)} (${x.ref.replace("NCh 433:2026 ", "")})`), ...motivos];
+  const fallasTxt = [...A.fallan.map((x) => `${minus(x.nombre)} (${x.ref.replace(NOMBRE_NORMA() + " ", "")})`), ...motivos];
   $("verdict").innerHTML = (falla
     ? `<div class="verdict bad">✘ NO CUMPLE — razón máxima = ${rm} · ${fallasTxt.join("; ")}${sv.length ? ` (además SIN VERIFICAR: ${lista(sv)})` : ""}</div>`
     : sv.length
       ? `<div class="verdict ok">✔ Cumple lo verificado — razón máxima = ${rm} · SIN VERIFICAR: ${lista(sv)}</div>`
-      : `<div class="verdict ok">✔ CUMPLE la NCh 433:2026 en lo verificado — razón máxima = ${rm}</div>`)
+      : `<div class="verdict ok">✔ CUMPLE la ${NOMBRE_NORMA()} en lo verificado — razón máxima = ${rm}</div>`)
     + A.avisos.map((a) => `<div class="note">⚠ ${a.h}</div>`).join("");
   const veredictoTex = falla
-    ? L`El análisis \textbf{no cumple} la NCh 433:2026: ${[...A.fallan.map((x) => escTex(`${minus(x.nombre)} (${x.ref})`)), ...A.motivos.map((x) => x.t)].join("; ")}. La razón demanda/capacidad máxima es $${tn(A.dcMax, 3)}$.${sv.length ? L` Quedan \textbf{sin verificar}: ${escTex(lista(sv).replace(/<[^>]+>/g, ""))}.` : ""}`
-    : L`Las verificaciones realizadas \textbf{cumplen} la NCh 433:2026, con razón demanda/capacidad máxima $${tn(A.dcMax, 3)}$.${sv.length ? L` Quedan \textbf{sin verificar}: ${escTex(lista(sv).replace(/<[^>]+>/g, ""))}.` : ""}`;
+    ? L`El análisis \textbf{no cumple} la ${NOMBRE_NORMA()}: ${[...A.fallan.map((x) => escTex(`${minus(x.nombre)} (${x.ref})`)), ...A.motivos.map((x) => x.t)].join("; ")}. La razón demanda/capacidad máxima es $${tn(A.dcMax, 3)}$.${sv.length ? L` Quedan \textbf{sin verificar}: ${escTex(lista(sv).replace(/<[^>]+>/g, ""))}.` : ""}`
+    : L`Las verificaciones realizadas \textbf{cumplen} la ${NOMBRE_NORMA()}, con razón demanda/capacidad máxima $${tn(A.dcMax, 3)}$.${sv.length ? L` Quedan \textbf{sin verificar}: ${escTex(lista(sv).replace(/<[^>]+>/g, ""))}.` : ""}`;
 
   // Tarjetas
   const X = A.dir.X, Y = A.dir.Y;
@@ -1351,11 +1588,11 @@ function calcular() {
   const dcm = Math.max(X.peorCM?.dcCM ?? 0, Y.peorCM?.dcCM ?? 0), dpt = Math.max(X.peorPt?.dcPt ?? 0, Y.peorPt?.dcPt ?? 0);
   $("summary").innerHTML =
     card("Períodos T*<sub>x</sub> ; T*<sub>y</sub>", `${fmt(A.TsX.T, 3)} ; ${fmt(A.TsY.T, 3)} s`, `modos ${A.TsX.n} y ${A.TsY.n} · ${cuenta(A.modos.length, "modo", "modos")}`)
-    + card("Masa acumulada X ; Y", `${fmt(A.sumX * 100, 1)} ; ${fmt(A.sumY * 100, 1)} %`, "mínimo 90 % (6.3.2)", Math.max(0.9 / A.sumX, 0.9 / A.sumY))
+    + card("Masa acumulada X ; Y", `${fmt(A.sumX * 100, 1)} ; ${fmt(A.sumY * 100, 1)} %`, `mínimo 90 % (${cl("nModos")})`, Math.max(0.9 / A.sumX, 0.9 / A.sumY))
     + card("Corte basal Q<sub>0</sub>/Q<sub>mín</sub>", `${fmt(X.Q / X.Qmin, 2)} ; ${fmt(Y.Q / Y.Qmin, 2)}`, `X ; Y · Q<sub>mín</sub> = ${fmt(X.Qmin, 1)} tf`, Math.max(X.Qmin / X.Q, Y.Qmin / Y.Q))
-    + card("Δ/h máximo en el centro de masas", fmt(Math.max(X.peorCM?.dcm ?? 0, Y.peorCM?.dcm ?? 0), 5), `límite ${fmt(c.dcm, 4)} (5.9.2)`, dcm)
-    + card("Δ/h máximo en la planta", fmt(Math.max(X.peorPt?.dpt ?? 0, Y.peorPt?.dpt ?? 0), 5), "5.9.3", dpt);
-  $("resTitle").textContent = `Resultados — ${D.modelo?.archivo || "Modelo"} · NCh 433:2026`;
+    + (es2369() ? "" : card("Δ/h máximo en el centro de masas", fmt(Math.max(X.peorCM?.dcm ?? 0, Y.peorCM?.dcm ?? 0), 5), `límite ${fmt(c.dcm, 4)} (5.9.2)`, dcm))
+    + card(es2369() ? "d/h máximo entre niveles" : "Δ/h máximo en la planta", fmt(Math.max(X.peorPt?.dpt ?? 0, Y.peorPt?.dpt ?? 0), 5), es2369() ? `límite ${fmt(c.dcm, 4)} (6.3)` : "5.9.3", dpt);
+  $("resTitle").textContent = `Resultados — ${D.modelo?.archivo || "Modelo"} · ${NOMBRE_NORMA()}`;
 
   const m = new Memo();
   memoria(m, c, A);
@@ -1395,10 +1632,12 @@ function dibujarVisor() {
 
 $("archivo").addEventListener("change", importar);
 $("sistema").addEventListener("change", () => { sincSistema(); calcular(); });
+$("norma").addEventListener("change", () => { sincNorma(true); sincSistema(); calcular(); });
+$("lim2369").addEventListener("change", () => { sincSistema(); calcular(); });
 ["casoX", "casoY"].forEach((id) => $(id).addEventListener("change", () => { poblarListas(); calcular(); }));
-["cat", "zona", "suelo", "Rf", "R0", "dcm", "combX", "combY", "modal", "basal"].forEach((id) => $(id).addEventListener("input", calcular));
+["cat", "zona", "suelo", "Rf", "R0", "xi", "dcm", "combX", "combY", "modal", "basal"].forEach((id) => $(id).addEventListener("input", calcular));
 ["verForma", "verAz"].forEach((id) => $(id).addEventListener("change", dibujarVisor));
-poblarSistemas(); sincSistema(); infoArchivo();
+poblarSistemas(); sincNorma(); sincSistema(); infoArchivo();
 calcular();
 
 // Integración con proyectos (proyectos.js): se guardan los parámetros; el archivo de ETABS no se guarda
@@ -1406,7 +1645,7 @@ window.AURA_MEMO = {
   tipo: "Memoria ETABS",
   sinMemoria: "Seleccione el archivo de ETABS y revise los parámetros antes de agregar la memoria al proyecto.",
   elemento: () => D?.modelo?.archivo || "", tex: () => ultimoTex, nombre: () => ultimoNombre,
-  recalcular: () => { const s = SIS.get($("sistema").value); if (s) sincSistema(); infoArchivo(); poblarListas(); calcular(); },
+  recalcular: () => { sincNorma(); if (SIS.get($("sistema").value)) sincSistema(); infoArchivo(); poblarListas(); calcular(); },
 };
 </script>
 <script src="proyectos.js"></script>

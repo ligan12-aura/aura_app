@@ -114,7 +114,7 @@
       ]),
     ]),
     R("memoriaEtabs", "Memoria ETABS", "secEtabs", [
-      E("etabs.html", "Edificio · NCh 433:2026", "etabs"),
+      E("etabs.html", "Edificio o estructura industrial", "etabs"),
     ]),
     R("cargas", "Cargas", "secCargas", [
       E("viento.html", "Viento NCh 432 (prueba)", "viento"),
