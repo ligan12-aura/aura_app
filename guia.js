@@ -135,6 +135,12 @@ const Guia = (() => {
       { en: "t:4. Placa nodal", titulo: "4 · Placa nodal", texto: "Espesor, tamaño y soldadura a la columna, a la viga o a ambas. Se verifican el bloque de corte, la sección de Whitmore y los filetes." },
       { en: "t:5. Cargas", titulo: "5 · Cargas mayoradas", texto: "Tracción mayorada de la diagonal y su ángulo con la horizontal: la página verifica solo tracción." },
     ],
+    "etabs.html": [
+      { en: "#archivo", titulo: "Archivo de ETABS", texto: "Con ETABS abierto y el modelo analizado, ejecute el script structura_etabs.py (enlace bajo el campo) y seleccione aquí el archivo .structura.json.gz que deja junto al modelo." },
+      { en: "t:2. Parámetros sísmicos", titulo: "Parámetros sísmicos", texto: "Categoría, zona y suelo (Tablas 6 a 8) y el sistema estructural de la Tabla 5, que fija R, R₀ y el límite de desplazamiento entre pisos." },
+      { en: "t:3. Casos sísmicos", titulo: "Casos sísmicos", texto: "Elija el caso espectral de cada dirección y la combinación que lo escala (por ejemplo SEx = Ex/R*), el caso modal y el nivel basal." },
+      { en: "#visor", titulo: "Vista del modelo", texto: "Revise el modelo, cada forma modal y las deformadas de los casos espectrales, desde cuatro ángulos." },
+    ],
     "piers.html": [
       { en: "t:Código de diseño", titulo: "Versión del código", texto: "Elija la planilla IIO348 con ACI 318-08 (por defecto) o el ACI 318-19 para muros especiales, que amplifica el corte con Ωv y ωv y usa 𝜙 = 0.60 salvo que usted verifique la condición de 21.2.4.1." },
       { en: "t:1. Tablas", titulo: "1 · Tablas de ETABS", texto: "Importe las tablas de piers exportadas desde ETABS: cada pier trae sus fuerzas por combinación." },

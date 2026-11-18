@@ -20,6 +20,7 @@ Las fichas registran dónde buscar cada referencia. El texto de las normas no es
 | Pavimento rígido | Manual de Carreteras Vol. 3 (jun. 2025) |
 | Espectros de diseño | NCh 433 Of.1996; DS 117 (2011); NCh 433:2026; NCh 2369:2025 |
 | Cargas de viento (versión de prueba) | NCh 432:2025 |
+| Memoria ETABS (edificio) | NCh 433:2026 |
 
 ACI 318M-19 (opción): Building Code Requirements for Structural Concrete, versión en unidades SI, en la carpeta hormigon (ACI_318M_19.pdf). Aún no está vigente en Chile; las páginas de vigas, losas, zapata, muro de contención, muros de corte y placa colaborante la ofrecen en la casilla «Versión del código», con ACI 318-08 por defecto. La página del PDF es la impresa + 2.
 

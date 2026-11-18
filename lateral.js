@@ -40,6 +40,8 @@
     madera: svg('<rect x="3" y="7" width="18" height="10" rx="1"/><path d="M6 10c3 1.5 6-1.5 9 0s3 1.5 4 .5M6 14c3 1.5 6-1.5 9 0"/>'),
     mle: svg('<rect x="7" y="2" width="10" height="20" rx="1"/><path d="M7 6.5h10M7 11h10M7 15.5h10"/>'),
     espectros: svg('<path d="M3 3v18h18"/><path d="M3 16c2-8 4-10 6-9s5 8 12 10"/>'),
+    etabs: svg('<path d="M5 21V5h14v16"/><path d="M5 10h14M5 15h14M10 5v16"/>'),
+    secEtabs: svg('<path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5M9 12h8M9 16h8"/>'),
     vial: svg('<path d="M2 6h20M2 11h20M2 16h20"/><path d="M6 8.5h3M12 8.5h3M18 8.5h2"/>'),
     base: svg('<path d="M10 3h4v12h-4z"/><path d="M5 15h14v2H5z"/><path d="M3 17h18v4H3z"/><path d="M7 15v6M17 15v6"/>'),
     conexion: svg('<path d="M3 3v18M6 3v18"/><path d="M9 8h12M9 16h12"/><path d="M6 10h6v4H6z"/>'),
@@ -110,6 +112,9 @@
         norma("433-2026", "NCh 433:2026"),
         norma("2369-2025", "NCh 2369:2025"),
       ]),
+    ]),
+    R("memoriaEtabs", "Memoria ETABS", "secEtabs", [
+      E("etabs.html", "Edificio · NCh 433:2026", "etabs"),
     ]),
     R("cargas", "Cargas", "secCargas", [
       E("viento.html", "Viento NCh 432 (prueba)", "viento"),

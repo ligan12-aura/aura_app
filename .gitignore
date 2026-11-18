@@ -1,0 +1,9 @@
+
+# MemPalace per-project files (issue #185)
+mempalace.yaml
+entities.json
+
+# Script de ETABS: caché de Python y extracciones (traen el modelo del usuario)
+__pycache__/
+*.structura.json.gz
+*.json.gz.tmp

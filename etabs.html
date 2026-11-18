@@ -1,0 +1,1417 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#00008B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="structura">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="icon" type="image/svg+xml" href="icons/structura-s.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-s-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-s.png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js" integrity="sha384-K0oxqktRvaThvYgGL4G+OK2Ih6VS6Uyu7j3+7WJgp/uWM0Yv6Xi4YEiw0BB+mPfi" crossorigin="anonymous"></script>
+<script src="nube.js"></script>
+<style>
+  /* PWA: sin zoom automático de iOS al enfocar campos y texto estable al rotar */
+  html { -webkit-text-size-adjust: 100%; }
+  @media (max-width: 900px) { input, select, textarea { font-size: 16px !important; } }
+  main > *, .row2 > *, .row3 > *, fieldset { min-width: 0; }
+  input, select { min-width: 0; max-width: 100%; }
+  .memo, .tablaWrap { overflow-x: auto; }
+  svg { max-width: 100%; }
+</style>
+<title>Memoria ETABS — structura</title>
+<style>
+  :root {
+    --bg: #e3e6ea;
+    --panel: #fffafa;
+    --ink: #1d2330;
+    --muted: #5f6b7a;
+    --line: #dde1e7;
+    --accent: #5b7c99;
+    --accent-ink: #ffffff;
+    --head: #00008B;
+    --ok: #1f8a4c;
+    --ok-bg: #e6f4ec;
+    --bad: #c62828;
+    --bad-bg: #fbe9e9;
+    --warn: #9a6400;
+    --warn-bg: #fff4dc;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 "Segoe UI", system-ui, -apple-system, sans-serif; }
+  header { background: var(--head); color: #fff; padding: 10px 24px; display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap; }
+  header h1 { margin: 0; font-size: 19px; font-weight: 600; }
+  header a.home { color: #fff; text-decoration: none; font-size: 13px; border: 1px solid rgba(255,255,255,.35); border-radius: var(--r-s); padding: 3px 9px; }
+  header span { color: #c8cbe8; font-size: 13px; }
+  main { display: grid; grid-template-columns: 380px 1fr; gap: 20px; padding: 20px 24px; max-width: 1400px; margin: 0 auto; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; padding: 16px; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-l); }
+  .panel > h2 { margin: 0; padding: 10px 16px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); border-bottom: 1px solid var(--line); }
+  .body { padding: 14px 16px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
+  select, input[type=number] { width: 100%; padding: 7px 9px; border: 1px solid var(--line); border-radius: var(--r-m); font: inherit; background: #fff; color: var(--ink); }
+  select:focus, input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  input[type=file] { width: 100%; font-size: 13px; }
+  input[readonly] { background: var(--sup-2, #f3f4f6); color: var(--muted); }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .unit { color: var(--muted); font-size: 11px; }
+  fieldset { border: 1px solid var(--line); border-radius: var(--r-m); margin: 14px 0 0; padding: 4px 12px 12px; }
+  legend { font-size: 12px; font-weight: 600; color: var(--head); padding: 0 4px; }
+  .hidden { display: none !important; }
+  .invalido { border-color: var(--bad) !important; background: var(--bad-bg) !important; }
+  .ayuda { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .ayuda a { color: var(--acento, var(--head)); }
+
+  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; padding: 14px 16px; }
+  .card { border: 1px solid var(--line); border-radius: var(--r-m); padding: 10px 12px; }
+  .card .t { font-size: 12px; color: var(--muted); }
+  .card .v { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .card .s { font-size: 12px; color: var(--muted); }
+  .bar { height: 6px; background: #eceef1; border-radius: var(--r-s); margin-top: 6px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; background: var(--ok); }
+  .bar.bad > i { background: var(--bad); }
+  .verdict { margin: 0 16px 14px; padding: 12px 14px; border-radius: var(--r-m); font-weight: 600; font-size: 15px; }
+  .verdict.ok { background: var(--ok-bg); color: var(--ok); }
+  .verdict.bad { background: var(--bad-bg); color: var(--bad); }
+  .note { margin: 8px 0; padding: 8px 10px; border-radius: var(--r-m); background: var(--warn-bg); color: var(--warn); font-size: 12.5px; }
+  #verdict .note { margin: -6px 16px 14px; }
+  #verdict > .note:first-child { margin: 14px 16px; }
+
+  .memo { padding: 4px 16px 16px; }
+  .memo h3 { font-size: 14px; margin: 18px 0 6px; padding-bottom: 4px; border-bottom: 2px solid var(--accent); color: var(--head); }
+  .memo h4 { font-size: 13px; margin: 12px 0 4px; color: var(--head); }
+  table.calc { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.calc td { padding: 4px 8px; border-bottom: 1px solid #eef0f3; vertical-align: top; }
+  table.calc td.k { color: var(--ink); }
+  table.calc td.v { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .ref { display: inline-block; font-size: 10.5px; color: var(--accent); border: 1px solid #c3d0dc; border-radius: var(--r-s); padding: 0 4px; margin-left: 6px; font-weight: 500; }
+  .tag { display: inline-block; padding: 1px 7px; border-radius: var(--r-l); font-size: 11.5px; font-weight: 600; }
+  .tag.ok { background: var(--ok-bg); color: var(--ok); }
+  .tag.bad { background: var(--bad-bg); color: var(--bad); }
+  .tag.warn { background: var(--warn-bg); color: var(--warn); }
+  table.alt { width: 100%; border-collapse: collapse; font-size: 12.5px; margin: 6px 0 10px; }
+  table.alt th { text-align: right; font-size: 11.5px; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); padding: 5px 7px; white-space: nowrap; }
+  table.alt th:first-child, table.alt td:first-child { text-align: left; }
+  table.alt td { padding: 4px 7px; border-bottom: 1px solid #eef0f3; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  table.alt td.malo { color: var(--bad); font-weight: 600; }
+  table.alt td.aviso { color: var(--warn); font-weight: 600; }
+  table.alt td.txt { text-align: left; white-space: normal; }
+  /* Figuras de resultados: siempre sobre fondo blanco, también en modo oscuro */
+  .fig { margin: 10px 0 14px; text-align: center; }
+  .fig svg { width: 100%; max-width: 760px; background: #fff; border: 1px solid var(--line); border-radius: var(--r-m); }
+  .fig .cap { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .figs2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; }
+  .visor { padding: 6px 16px 4px; }
+  .visor .ctrl { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+  .visor .ctrl > div { flex: 1 1 160px; }
+  .visor .ctrl label { margin-top: 0; }
+  .visor .lienzo svg { width: 100%; background: #fff; border: 1px solid var(--line); border-radius: var(--r-m); }
+  .toolbar { display: flex; justify-content: flex-end; padding: 10px 16px 0; gap: 8px; flex-wrap: wrap; }
+  .btn { padding: 7px 14px; border-radius: var(--r-m); border: 1px solid var(--head); background: var(--head); color: #fff; font: inherit; font-size: 13px; cursor: pointer; text-decoration: none; display: inline-block; }
+  .btn.sec { background: #fff; color: var(--head); }
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 10px 0 24px; }
+
+  @media print {
+    body { background: #fff; }
+    header { background: #fff; color: #000; border-bottom: 2px solid #000; }
+    header span { color: #333; }
+    header a.home { display: none; }
+    main { display: block; padding: 0; }
+    #inputs, .toolbar, footer, .visor .ctrl { display: none; }
+    .panel { border: 0; }
+    .memo h3 { break-after: avoid; }
+    table.calc tr, .fig { break-inside: avoid; }
+  }
+</style>
+<link rel="stylesheet" href="aura.css">
+<script src="lateral.js"></script>
+<script src="asistente.js" defer></script>
+</head>
+<body>
+<header>
+  <a class="marca" href="index.html" aria-label="Inicio"><span class="marca-s"><svg class="iso" viewBox="0 0 32 32" aria-hidden="true"><rect class="iso-f" width="32" height="32" rx="7"/><path class="iso-s" d="M22 9H10V16H22V23H10"/><circle class="iso-n" cx="22" cy="16" r="2.6"/></svg><span class="marca-t">structura</span></span></a>
+  <a class="home" href="index.html">← Inicio</a>
+  <h1>Memoria ETABS</h1>
+  <span id="subNorma">Edificio desde un modelo de ETABS · Análisis modal espectral · NCh 433:2026</span>
+</header>
+
+<main>
+  <!-- ===================== ENTRADAS ===================== -->
+  <section class="panel" id="inputs">
+    <h2>Datos de entrada</h2>
+    <div class="body">
+      <fieldset class="fsNorma">
+        <legend>Norma sísmica</legend>
+        <label for="norma">Norma</label>
+        <select id="norma">
+          <option value="433-2026" selected>NCh 433:2026 — Diseño sísmico de edificios</option>
+          <option value="2369-2025" disabled>NCh 2369:2025 — Estructuras industriales (próximamente)</option>
+        </select>
+      </fieldset>
+
+      <fieldset>
+        <legend>1. Modelo de ETABS</legend>
+        <label for="archivo">Archivo de structura (.structura.json.gz)</label>
+        <input type="file" id="archivo" accept=".gz,.json,application/gzip,application/json">
+        <input type="hidden" id="nombreArchivo">
+        <input type="hidden" id="selCasos">
+        <div class="unit" id="infoArchivo" style="margin-top:6px"></div>
+        <div class="ayuda">El archivo lo genera el script <a href="herramientas/structura_etabs.py" download>structura_etabs.py</a> con ETABS 22 abierto y el modelo analizado: <code>python structura_etabs.py</code>. Los datos se procesan solo en este navegador.</div>
+      </fieldset>
+
+      <fieldset>
+        <legend>2. Parámetros sísmicos</legend>
+        <div class="row2">
+          <div><label for="cat">Categoría de ocupación</label>
+            <select id="cat"><option value="I">I (I = 0.6)</option><option value="II" selected>II (I = 1.0)</option><option value="III">III (I = 1.2)</option><option value="IV">IV (I = 1.2)</option></select></div>
+          <div><label for="zona">Zona sísmica</label>
+            <select id="zona"><option value="1">1 (A₀ = 0.20 g)</option><option value="2" selected>2 (A₀ = 0.30 g)</option><option value="3">3 (A₀ = 0.40 g)</option></select></div>
+        </div>
+        <label for="suelo">Tipo de suelo</label>
+        <select id="suelo"><option>A</option><option>B</option><option>C</option><option selected>D</option><option>E</option></select>
+        <label for="sistema">Sistema estructural (Tabla 5)</label>
+        <select id="sistema"></select>
+        <div class="row3">
+          <div><label for="Rf">R</label><input id="Rf" type="number" step="0.5" min="1" value="7"></div>
+          <div><label for="R0">R<sub>0</sub></label><input id="R0" type="number" step="0.5" min="1" value="11"></div>
+          <div><label for="dcm">Δ<sub>cm</sub>/h máx.</label><input id="dcm" type="number" step="0.0005" min="0.0005" value="0.002"></div>
+        </div>
+        <div class="unit" style="margin-top:6px">R, R<sub>0</sub> y el límite de desplazamiento entre niveles se toman de la Tabla 5 según el sistema; con «Otro» se ingresan a mano.</div>
+      </fieldset>
+
+      <fieldset>
+        <legend>3. Casos sísmicos del modelo</legend>
+        <div class="row2">
+          <div><label for="casoX">Espectro en X</label><select id="casoX"></select></div>
+          <div><label for="combX">Factor de diseño en X</label><select id="combX"></select></div>
+        </div>
+        <div class="row2">
+          <div><label for="casoY">Espectro en Y</label><select id="casoY"></select></div>
+          <div><label for="combY">Factor de diseño en Y</label><select id="combY"></select></div>
+        </div>
+        <div class="row2">
+          <div><label for="modal">Caso modal</label><select id="modal"></select></div>
+          <div><label for="basal">Nivel basal</label><select id="basal"></select></div>
+        </div>
+        <div class="unit" style="margin-top:6px">El factor de diseño es la combinación que escala el caso espectral (por ejemplo, SEx = Ex/R*). Si el espectro ya está reducido en el caso, elija «Caso sin escalar».</div>
+      </fieldset>
+    </div>
+  </section>
+
+  <!-- ===================== RESULTADOS ===================== -->
+  <section>
+    <div class="panel">
+      <h2 id="resTitle">Resultados</h2>
+      <div class="summary" id="summary"></div>
+      <div id="verdict"></div>
+      <div class="visor hidden" id="visor">
+        <div class="ctrl">
+          <div><label for="verForma">Vista del modelo</label><select id="verForma"></select></div>
+          <div><label for="verAz">Ángulo de vista</label><select id="verAz"><option value="-35">Isométrica 1</option><option value="35">Isométrica 2</option><option value="145">Isométrica 3</option><option value="-145">Isométrica 4</option></select></div>
+        </div>
+        <div class="lienzo" id="lienzo" data-sin-figura></div>
+      </div>
+      <div class="toolbar">
+        <button class="btn sec" type="button" onclick="window.print()">Imprimir</button>
+        <button class="btn" type="button" onclick="descargarZipMemoria(ultimoTex, ultimoNombre, document.getElementById('memo'))">Descargar memoria (.zip)</button>
+      </div>
+      <div class="memo" id="memo"></div>
+    </div>
+  </section>
+</main>
+<footer>Memoria del análisis sísmico global según la NCh 433:2026 a partir de los resultados de ETABS. No verifica elementos (muros, vigas, columnas, losas ni fundaciones) ni repite el análisis: revisa y documenta los resultados del modelo. No reemplaza el criterio del profesional que firma. Verifique siempre los resultados.</footer>
+
+<script src="memo.js"></script>
+<script src="tablero.js"></script>
+<script src="guia.js"></script>
+<script>
+"use strict";
+// ---------------------------------------------------------------------------
+// Memoria ETABS: análisis sísmico de un edificio a partir del archivo que genera herramientas/structura_etabs.py
+// (modelo .$et, tablas de "Show Tables" y resultados de la API de ETABS, en tonf, m y s).
+// Verificaciones de la NCh 433:2026 (PDF del proyecto, página del PDF = impresa + 5).
+// ---------------------------------------------------------------------------
+const G = 9.80665;                                        // m/s², para pasar masa (tonf·s²/m) a peso (tonf)
+const fmt = (x, d = 2) => Number.isFinite(x)
+  ? x.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/,/g, " ")
+  : "—";
+const $ = (id) => document.getElementById(id);
+const L = String.raw;
+const tn = (x, d = 2) => Number.isFinite(x) ? fmt(x, d).replace(/ /g, "\\,") : "\\infty";
+const cmp = (a, b) => (a <= b + 1e-12 ? L`\le` : ">");
+const escH = (t) => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const cuenta = (n, uno, varios) => `${fmt(n, 0)} ${n === 1 ? uno : varios}`;
+const nv = (x) => { const v = typeof x === "number" ? x : parseFloat(x); return Number.isFinite(v) ? v : NaN; };
+const tag = (ok, txt) => `<span class="tag ${ok ? "ok" : "bad"}">${txt}</span>`;
+const tagDC = (dc) => tag(dc <= 1 + 1e-9, `D/C = ${Number.isFinite(dc) ? fmt(dc, 3) : "∞"}`);
+const REF = (c) => `NCh 433:2026 ${c}`;
+
+// ---------------------------------------------------------------------------
+// NCh 433:2026: Tablas 5 a 9
+// ---------------------------------------------------------------------------
+const N433 = {
+  I: { I: 0.6, II: 1.0, III: 1.2, IV: 1.2 },                                   // Tabla 6
+  A0: { 1: 0.2, 2: 0.3, 3: 0.4 },                                              // Tabla 7 [g]
+  suelos: {                                                                    // Tabla 8
+    A: { S: 0.90, T0: 0.15, Tp: 0.20, n: 1.00, p: 2.0 },
+    B: { S: 1.00, T0: 0.30, Tp: 0.35, n: 1.33, p: 1.5 },
+    C: { S: 1.05, T0: 0.40, Tp: 0.45, n: 1.40, p: 1.6 },
+    D: { S: 1.20, T0: 0.75, Tp: 0.85, n: 1.80, p: 1.0 },
+    E: { S: 1.30, T0: 1.20, Tp: 1.35, n: 1.80, p: 1.0 },
+  },
+};
+// Tabla 5: sistema, R, R0 y desplazamiento relativo máximo en el centro de masas (Δcm/h)
+const SISTEMAS = [
+  ["Marcos — acero", [
+    ["m-omf", "Marcos corrientes (OMF)", 3.5, 3.5, 0.0025],
+    ["m-imf", "Marcos intermedios (IMF)", 5, 6, 0.0025],
+    ["m-smf", "Marcos especiales (SMF)", 7, 11, 0.0025],
+    ["m-stmf", "Marcos de vigas enrejadas (STMF)", 6, 10, 0.0025],
+    ["m-cfs", "Marcos de elementos conformados en frío apernados", 3.5, 3, 0.0025]]],
+  ["Marcos — hormigón armado", [
+    ["m-ha", "Marcos especiales vaciados en sitio", 7, 11, 0.002],
+    ["m-ha-pnr", "Marcos especiales vaciados en sitio con prefabricados no sismorresistentes", 7, 11, 0.002],
+    ["m-ha-pd", "Marcos especiales prefabricados, uniones dúctiles húmedas o conexiones especiales", 7, 11, 0.002],
+    ["m-ha-ps", "Marcos especiales prefabricados, uniones fuertes secas apernadas o soldadas", 5, 6, 0.002]]],
+  ["Muros y sistemas arriostrados — acero", [
+    ["a-ocbf", "Marcos concéntricos corrientes (OCBF)", 3, 3, 0.0025],
+    ["a-scbf", "Marcos concéntricos especiales (SCBF)", 5.5, 8, 0.0025],
+    ["a-ebf", "Marcos excéntricos (EBF)", 6, 10, 0.0025],
+    ["a-cfs-dp", "Muros de conformados en frío con diagonales o placas de madera o acero (AISI S240)", 3, 4, 0.002],
+    ["a-cfs-p", "Muros de conformados en frío revestidos con placas de madera o acero (AISI S400)", 5.5, 7, 0.002],
+    ["a-cfs-d", "Muros de conformados en frío con diagonales metálicas (AISI S400)", 4, 5, 0.002]]],
+  ["Muros — hormigón armado", [
+    ["w-ha", "Muros especiales vaciados en sitio", 7, 11, 0.002],
+    ["w-ha-pnr", "Muros especiales vaciados en sitio con prefabricados no sismorresistentes", 7, 11, 0.002],
+    ["w-ha-pd", "Muros especiales prefabricados, uniones dúctiles húmedas o conexiones especiales", 7, 11, 0.002],
+    ["w-ha-ps", "Muros especiales prefabricados, uniones fuertes secas apernadas o soldadas", 5, 6, 0.002],
+    ["w-ha-ip", "Muros intermedios prefabricados con uniones dúctiles", 4, 4, 0.002],
+    ["w-ha-o", "Muros ordinarios vaciados en sitio", 4, 4, 0.002],
+    ["w-ha-op", "Muros ordinarios prefabricados", 3, 3, 0.002]]],
+  ["Hormigón armado y albañilería confinada", [
+    ["hc-a", "Cumple el criterio A (muros de H.A. con ≥ 50 % del corte de cada piso)", 6, 9, 0.002],
+    ["hc-b", "No cumple el criterio A", 4, 4, 0.002]]],
+  ["Albañilería", [
+    ["al-c", "Albañilería confinada", 4, 4, 0.002],
+    ["al-ab", "Armada de bloques con todos los huecos llenos, o de doble chapa", 4, 4, 0.002],
+    ["al-ar", "Armada de ladrillos tipo rejilla, o de bloques sin llenar todos los huecos", 3, 3, 0.002]]],
+  ["Madera", [
+    ["md-g", "Muros y sistemas arriostrados generales", 5.5, 7, 0.002],
+    ["md-mp", "Sistema marco plataforma", 6.5, 7, 0.0025],
+    ["md-clt", "Muros de madera contralaminada (CLT)", 2, 2, 0.002]]],
+];
+const SIS = new Map(SISTEMAS.flatMap(([g, l]) => l.map(([id, t, R, R0, d]) => [id, { grupo: g, texto: t, R, R0, d }])));
+// Tabla 9: C máximo en función de R (nota: 2.5/(R + 0.8) para otros valores)
+function cMaxCoef(R) {
+  const T = [[2, 0.90], [3, 0.60], [4, 0.55], [5.5, 0.40]];
+  if (R >= 6) return 0.35;
+  const f = T.find(([r]) => Math.abs(r - R) < 1e-9);
+  return f ? f[1] : 2.5 / (R + 0.8);
+}
+const TOL_ESP = 0.001;                                    // tolerancia en la comparación de espectros (redondeo del factor)
+const alfa = (T, s) => (1 + 4.5 * (T / s.T0) ** s.p) / (1 + (T / s.T0) ** 3);      // Ec. (9)
+const rEstrella = (Ts, s, R0) => 1 + Ts / (0.10 * s.T0 + Ts / R0);              // Ec. (10)
+
+// ---------------------------------------------------------------------------
+// Lectura del archivo
+// ---------------------------------------------------------------------------
+let D = null;                                              // datos del archivo (solo en memoria)
+const MAX_ARCHIVO = 200e6, MAX_JSON = 800e6;            // comprimido ; descomprimido
+async function leerArchivo(archivo) {
+  if (archivo.size > MAX_ARCHIVO) throw new Error("supera los 200 MB");
+  const buf = await archivo.arrayBuffer();
+  const u8 = new Uint8Array(buf);
+  let texto;
+  if (u8[0] === 0x1f && u8[1] === 0x8b) {
+    if (typeof DecompressionStream !== "function") throw new Error("este navegador no puede descomprimir .gz; use Chrome, Edge o Firefox actualizados");
+    // Se cuentan los bytes descomprimidos: un .gz muy comprimido no debe colgar la pestaña
+    const lector = new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip")).getReader();
+    const partes = []; let total = 0;
+    for (;;) {
+      const { done, value } = await lector.read();
+      if (done) break;
+      total += value.length;
+      if (total > MAX_JSON) { await lector.cancel(); throw new Error("descomprimido supera los 800 MB"); }
+      partes.push(value);
+    }
+    texto = new TextDecoder().decode(await new Blob(partes).arrayBuffer());
+  } else texto = new TextDecoder().decode(u8);
+  let d;
+  try { d = JSON.parse(texto); } catch { throw new Error("no es un archivo JSON válido"); }
+  if (!d || d.formato !== "structura-etabs") throw new Error("no es un archivo generado por structura_etabs.py");
+  if (d.version !== 1) throw new Error(`formato versión ${escH(d.version)}, esta página lee la versión 1: actualice el script o la página`);
+  if (!d.tablas || !d.resultados) throw new Error("el archivo está incompleto");
+  return d;
+}
+
+// Tabla de "Show Tables" como lista de objetos { campo: valor }. Con rellenar, las filas de continuación (primera
+// columna vacía, como en las definiciones de combinaciones) toman el nombre de la fila anterior.
+function filas(nombre, rellenar = false) {
+  const t = D?.tablas?.[nombre];
+  if (!t) return [];
+  let previo = null;
+  return t.filas.map((f) => {
+    const o = {};
+    t.campos.forEach((c, i) => { o[c] = f[i]; });
+    if (rellenar) { if (o[t.campos[0]] == null || o[t.campos[0]] === "") o[t.campos[0]] = previo; else previo = o[t.campos[0]]; }
+    return o;
+  });
+}
+const resultado = (clave) => {
+  const r = D?.resultados?.[clave];
+  return r ? r.filas.map((f) => Object.fromEntries(r.campos.map((c, i) => [c, f[i]]))) : [];
+};
+
+// Pisos de arriba hacia abajo, con su altura y cota [m]
+function leerPisos() {
+  const def = filas("Story Definitions");
+  const torres = [...new Set(def.map((f) => f.Tower).filter(Boolean))];
+  const lista = def.filter((f) => !torres.length || f.Tower === torres[0]).map((f) => ({ nombre: String(f.Story), h: nv(f.Height) }));
+  const m = /STORY\s+"([^"]+)"\s+ELEV\s+([-\d.Ee+]+)/.exec(D?.modelo?.et || "");
+  const base = { nombre: m ? m[1] : "Base", z: m ? nv(m[2]) * unidadesEt().L : 0 };
+  let z = Number.isFinite(base.z) ? base.z : 0;
+  for (let i = lista.length - 1; i >= 0; i--) { z += lista[i].h; lista[i].z = z; }
+  return { lista, base, torres };
+}
+
+// Definiciones de los casos de espectro de respuesta
+function casosEspectro() {
+  const def = filas("Load Case Definitions - Response Spectrum", true);
+  const casos = new Map();
+  for (const f of def) {
+    if (!f.Name) continue;
+    const c = casos.get(f.Name) || { nombre: f.Name, dirs: [], modal: f.ModalCase, comb: f.ModalCombo, dirComb: f.DirCombo, ecc: nv(f.EccenRatio) };
+    if (f.LoadName) c.dirs.push({ dir: f.LoadName, fn: f.Function, sf: nv(f.TransAccSF) });
+    if (f.ModalCase) c.modal = f.ModalCase;
+    if (f.ModalCombo) c.comb = f.ModalCombo;
+    if (f.DirCombo) c.dirComb = f.DirCombo;
+    if (Number.isFinite(nv(f.EccenRatio))) c.ecc = nv(f.EccenRatio);
+    casos.set(f.Name, c);
+  }
+  // Casos de espectro que la API informa como analizados, aunque falte su definición
+  for (const c of D?.casos || []) if (c.codigo_tipo === 4 && !casos.has(c.nombre)) casos.set(c.nombre, { nombre: c.nombre, dirs: [], ecc: NaN });
+  return casos;
+}
+// Funciones de espectro [{T, v}] por nombre
+function funcionesEspectro() {
+  const fun = new Map();
+  for (const nombre of ["Functions - Response Spectrum - From File", "Functions - Response Spectrum - User Defined"]) {
+    for (const f of filas(nombre, true)) {
+      if (!f.Name || !Number.isFinite(nv(f.Period)) || !Number.isFinite(nv(f.Value))) continue;
+      if (!fun.has(f.Name)) fun.set(f.Name, []);
+      fun.get(f.Name).push({ T: nv(f.Period), v: nv(f.Value) });
+    }
+  }
+  for (const l of fun.values()) l.sort((a, b) => a.T - b.T);
+  return fun;
+}
+function interpolar(l, T) {
+  if (!l?.length) return NaN;
+  if (T <= l[0].T) return l[0].v;
+  for (let i = 1; i < l.length; i++) if (T <= l[i].T) return l[i - 1].v + (l[i].v - l[i - 1].v) * (T - l[i - 1].T) / (l[i].T - l[i - 1].T);
+  return l[l.length - 1].v;
+}
+// Combinaciones: { nombre: { tipo, items: [{ carga, sf }] } }
+function combinaciones() {
+  const out = new Map();
+  for (const f of filas("Load Combination Definitions", true)) {
+    if (!f.Name) continue;
+    const c = out.get(f.Name) || { nombre: f.Name, tipo: f.Type || "", items: [] };
+    if (f.Type) c.tipo = f.Type;
+    if (f.LoadName) c.items.push({ carga: f.LoadName, sf: nv(f.SF) });
+    out.set(f.Name, c);
+  }
+  return out;
+}
+// Combinaciones que solo escalan un caso (por ejemplo SEx = 0.4172 Ex): candidatas a factor de diseño
+const combosDeCaso = (combos, caso) => [...combos.values()].filter((c) => /linear add/i.test(c.tipo) && c.items.length === 1 && c.items[0].carga === caso && c.items[0].sf > 0);
+
+// Unidades del .$et (línea UNITS "fuerza" "largo"): factores a N y a m
+function unidadesEt() {
+  const m = /^\s*UNITS\s+"([^"]+)"\s+"([^"]+)"/m.exec(D?.modelo?.et || "");
+  const F = { N: 1, KN: 1000, KGF: 9.80665, TONF: 9806.65, KIP: 4448.222, LB: 4.448222 }[String(m?.[1] || "N").toUpperCase()];
+  const Lg = { MM: 0.001, CM: 0.01, M: 1, IN: 0.0254, FT: 0.3048 }[String(m?.[2] || "MM").toUpperCase()];
+  return { F: F ?? NaN, L: Lg ?? NaN, conocidas: F != null && Lg != null, texto: m ? `${m[1]}, ${m[2]}` : "N, mm" };
+}
+// Materiales del .$et → kgf/cm² y tf/m³
+function materiales() {
+  const et = D?.modelo?.et || "", out = new Map(), u = unidadesEt();
+  const aMPa = u.F / (u.L * 1000) ** 2, aNmm3 = u.F / (u.L * 1000) ** 3;   // fuerza/largo² → N/mm² ; fuerza/largo³ → N/mm³
+  const ini = et.indexOf("$ MATERIAL PROPERTIES");
+  if (ini < 0) return [];
+  const fin = et.indexOf("\n$ ", ini + 5);
+  for (const l of et.slice(ini, fin < 0 ? undefined : fin).split(/\r?\n/)) {
+    const m = /^\s*MATERIAL\s+"([^"]+)"(.*)$/.exec(l);
+    if (!m) continue;
+    const o = out.get(m[1]) || { nombre: m[1] };
+    const k = (re) => { const x = re.exec(m[2]); return x ? x[1] : null; };
+    o.tipo = k(/(?<![A-Z])TYPE\s+"([^"]+)"/) ?? o.tipo;     // no HYSTYPE ni SYMTYPE
+    o.grado = k(/GRADE\s+"([^"]+)"/) ?? o.grado;
+    const E = k(/\bE\s+([-\d.Ee+]+)/), fc = k(/\bFC\s+([-\d.Ee+]+)/), fy = k(/\bFY\s+([-\d.Ee+]+)/), w = k(/WEIGHTPERVOLUME\s+([-\d.Ee+]+)/);
+    if (E) o.E = nv(E) * aMPa * 10.19716;               // N/mm² → kgf/cm²
+    if (fc) o.fc = nv(fc) * aMPa * 10.19716;
+    if (fy) o.fy = nv(fy) * aMPa * 10.19716;
+    if (w) o.w = nv(w) * aNmm3 * 1e9 / G / 1000;        // N/mm³ → tf/m³
+    out.set(m[1], o);
+  }
+  // Solo los materiales que usa alguna sección del modelo
+  const usadosSecc = new Set([...et.matchAll(/(?:FRAMESECTION|SHELLPROP)[^\n]*?(?:MATERIAL|CONCMATERIAL)\s+"([^"]+)"/g)].map((x) => x[1]));
+  return [...out.values()].filter((o) => !usadosSecc.size || usadosSecc.has(o.nombre));
+}
+// Tipos de patrón de carga del .$et (para saber cuál es sobrecarga)
+function patrones() {
+  const out = new Map();
+  for (const m of (D?.modelo?.et || "").matchAll(/LOADPATTERN\s+"([^"]+)"\s+TYPE\s+"([^"]+)"/g)) out.set(m[1], m[2]);
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// Datos de entrada
+// ---------------------------------------------------------------------------
+function poblarSistemas() {
+  $("sistema").innerHTML = SISTEMAS.map(([g, l]) => `<optgroup label="${escH(g)}">${l.map(([id, t, R, R0, d]) => `<option value="${id}"${id === "w-ha" ? " selected" : ""}>${escH(t)} (R = ${fmt(R, 1)}, R₀ = ${fmt(R0, 0)}, ${fmt(d, 4)} h)</option>`).join("")}</optgroup>`).join("")
+    + `<option value="otro">Otro (ingresar R, R₀ y el límite)</option>`;
+}
+function sincSistema() {
+  const s = SIS.get($("sistema").value), otro = !s;
+  ["Rf", "R0", "dcm"].forEach((id) => { $(id).readOnly = !otro; });
+  if (s) { $("Rf").value = s.R; $("R0").value = s.R0; $("dcm").value = s.d; }
+}
+function opciones(sel, lista, valor) {
+  const el = $(sel), prev = valor ?? el.value;
+  el.innerHTML = lista.map(([v, t]) => `<option value="${escH(v)}">${escH(t)}</option>`).join("");
+  if (lista.some(([v]) => v === prev)) el.value = prev;
+}
+// Listas que dependen del archivo: casos de espectro, factores, caso modal y nivel basal
+function poblarListas() {
+  if (!D) { ["casoX", "casoY", "combX", "combY", "modal", "basal"].forEach((id) => { $(id).innerHTML = ""; }); return; }
+  const esp = casosEspectro(), combos = combinaciones();
+  // Elección guardada (borrador o proyecto): se aplica si existe en este archivo
+  let pedido = {};
+  try { pedido = JSON.parse($("selCasos").value || "{}") || {}; } catch { pedido = {}; }
+  const quiere = (id) => $(id).value || pedido[id];
+  const lista = [...esp.values()].map((c) => [c.nombre, c.nombre]);
+  const dirDe = (c, d) => c.dirs.some((x) => x.dir === d);
+  const porDir = (d) => [...esp.values()].find((c) => dirDe(c, d))?.nombre;
+  const hay = (v) => lista.some(([x]) => x === v);
+  opciones("casoX", lista, hay(quiere("casoX")) ? quiere("casoX") : porDir("U1"));
+  opciones("casoY", lista, hay(quiere("casoY")) ? quiere("casoY") : porDir("U2"));
+  if (!$("casoX").value && lista[0]) $("casoX").value = lista[0][0];
+  if (!$("casoY").value && lista[1]) $("casoY").value = lista[1][0];
+  for (const [dir, caso, comb] of [["X", "casoX", "combX"], ["Y", "casoY", "combY"]]) {
+    const cand = combosDeCaso(combos, $(caso).value);
+    const ops = [...cand.map((c) => [c.nombre, `${c.nombre} (× ${fmt(c.items[0].sf, 4)})`]), ["__1", "Caso sin escalar (× 1)"]];
+    const prev = $(comb).dataset.caso === $(caso).value ? $(comb).value : pedido[caso] === $(caso).value ? pedido[comb] : null;
+    opciones(comb, ops, ops.some(([v]) => v === prev) ? prev : ops[0][0]);
+    $(comb).dataset.caso = $(caso).value;
+    void dir;
+  }
+  const modales = (D.casos || []).filter((c) => c.codigo_tipo === 3).map((c) => [c.nombre, c.nombre]);
+  const modalEsp = esp.get($("casoX").value)?.modal;
+  opciones("modal", modales, modales.some(([v]) => v === quiere("modal")) ? quiere("modal") : modalEsp);
+  const P = leerPisos();
+  const basales = [[P.base.nombre, `${P.base.nombre} (base del modelo)`], ...P.lista.slice(1).reverse().map((p) => [p.nombre, `${p.nombre} (z = ${fmt(p.z, 2)} m)`])];
+  opciones("basal", basales, basales.some(([v]) => v === quiere("basal")) ? quiere("basal") : P.base.nombre);
+}
+function infoArchivo(extra = "") {
+  const n = $("nombreArchivo").value;
+  $("infoArchivo").innerHTML = D
+    ? `Modelo <b>${escH(D.modelo?.archivo || "")}</b> · ETABS ${escH(D.etabs?.version || "")} · extraído el ${escH(String(D.generado || "").replace("T", " "))}.${extra ? " " + extra : ""}`
+    : (n ? `Antes se usó <b>${escH(n)}</b>: el archivo no se guarda en el navegador, vuelva a seleccionarlo.` : "Seleccione el archivo generado por el script.") + (extra ? " " + extra : "");
+}
+async function importar(ev) {
+  const a = ev.target.files?.[0];
+  if (!a) return;
+  try {
+    D = await leerArchivo(a);
+    $("nombreArchivo").value = a.name;
+    ["casoX", "casoY", "combX", "combY", "modal", "basal"].forEach((id) => { $(id).value = ""; delete $(id).dataset.caso; });
+    poblarListas();
+    infoArchivo(D.avisos?.length ? `<br>⚠ Avisos del script: ${D.avisos.map(escH).join(" ")}` : "");
+  } catch (e) {
+    D = null; poblarListas();
+    infoArchivo(`<span style="color:var(--bad)">No se pudo leer ${escH(a.name)}: ${e.message}.</span>`);
+  }
+  ev.target.value = "";
+  calcular();
+}
+
+// ---------------------------------------------------------------------------
+// Análisis
+// ---------------------------------------------------------------------------
+function analizar(c) {
+  const A = { avisos: [], sinVerificar: [], checks: [], motivos: [] };
+  const P = leerPisos();
+  A.pisos = P;
+  if (P.torres.length > 1) throw new Error(`el modelo tiene ${P.torres.length} torres; esta página verifica modelos de una sola torre`);
+  if (!P.lista.length) throw new Error("el archivo no trae la tabla Story Definitions");
+  // Pisos sobre el nivel basal
+  const iBasal = P.lista.findIndex((p) => p.nombre === c.basal);
+  A.sobre = iBasal < 0 ? P.lista : P.lista.slice(0, iBasal);
+  A.pisoBasal = iBasal < 0 ? null : P.lista[iBasal];
+  A.zBasal = iBasal < 0 ? P.base.z : P.lista[iBasal].z;
+  if (!A.sobre.length) throw new Error("no hay pisos sobre el nivel basal elegido");
+  A.H = A.sobre[0].z - A.zBasal;
+
+  // Peso sísmico (5.5.1 y 6.2.3.3)
+  const masas = new Map(filas("Mass Summary by Story").map((f) => [String(f.Story), nv(f.UX)]));
+  A.masas = A.sobre.map((p) => ({ ...p, m: masas.get(p.nombre), W: (masas.get(p.nombre) || 0) * G }));
+  A.P = A.masas.reduce((s, p) => s + p.W, 0);
+  if (!(A.P > 0)) throw new Error("el archivo no trae las masas por piso (Mass Summary by Story)");
+  const sinMasa = A.masas.filter((p) => !Number.isFinite(p.m));
+  if (!unidadesEt().conocidas) A.avisos.push({ h: `Unidades del archivo .$et no reconocidas (${escH(unidadesEt().texto)}): la cota de la base y los materiales pueden quedar mal.`, t: L`Las unidades del archivo del modelo no se reconocieron; la cota de la base y los materiales deben revisarse.` });
+  if (sinMasa.length) A.avisos.push({ h: `${cuenta(sinMasa.length, "piso no tiene", "pisos no tienen")} masa en la tabla Mass Summary by Story: se toman con masa nula.`, t: L`Algunos pisos no tienen masa en la tabla Mass Summary by Story y se tomaron con masa nula.` });
+  // Fuente de masa por defecto: las filas de continuación solo traen el nombre (relleno) y el patrón
+  const pat = patrones(), ms = filas("Mass Source Definition", true);
+  const nombresDef = new Set(ms.filter((f) => f.IsDefault === "Yes").map((f) => f.Name));
+  const msDef = ms.filter((f) => !nombresDef.size || nombresDef.has(f.Name));
+  const cab = msDef[0];
+  A.fuenteMasa = msDef.filter((f) => f.LoadPattern).map((f) => ({ patron: f.LoadPattern, k: nv(f.Multiplier), tipo: pat.get(f.LoadPattern) || "" }));
+  A.fuenteMasaTipo = cab ? [cab.SourceSelf === "Yes" ? "masa de los elementos" : "", cab.SourceAdded === "Yes" ? "masa adicional" : "", cab.SourceLoads === "Yes" ? "patrones de carga" : ""].filter(Boolean).join(", ") : "";
+  A.masaPorCargas = cab?.SourceLoads === "Yes";
+  const vivas = [...pat.entries()].filter(([, t]) => /live/i.test(t) && !/roof/i.test(t)).map(([n]) => n);
+  A.vivas = vivas.map((n) => ({ patron: n, k: A.fuenteMasa.find((f) => f.patron === n)?.k ?? 0 }));
+
+  // Modal
+  const modos = resultado("masa_participante").filter((f) => f.Caso === c.modal);
+  if (!modos.length) throw new Error("el caso modal elegido no tiene resultados");
+  A.modos = modos.map((f) => ({ n: f.Modo, T: f.Periodo, UX: f.UX, UY: f.UY, RZ: f.RZ, SUX: f.SumUX, SUY: f.SumUY, SRZ: f.SumRZ }));
+  const ult = A.modos[A.modos.length - 1];
+  A.TsX = A.modos.reduce((a, m) => (m.UX > a.UX ? m : a), A.modos[0]);
+  A.TsY = A.modos.reduce((a, m) => (m.UY > a.UY ? m : a), A.modos[0]);
+  A.sumX = ult.SUX; A.sumY = ult.SUY;
+  const s = N433.suelos[c.suelo], I = N433.I[c.cat], A0 = N433.A0[c.zona];
+  A.s = s; A.I = I; A.A0 = A0;
+  A.checks.push({ id: "masaX", nombre: "Masa equivalente acumulada en X", dc: 0.9 / A.sumX, ref: REF("6.3.2") });
+  A.checks.push({ id: "masaY", nombre: "Masa equivalente acumulada en Y", dc: 0.9 / A.sumY, ref: REF("6.3.2") });
+
+  // Centros de masa: piso → [{ diafragma, punto }]
+  const esp = casosEspectro(), fun = funcionesEspectro(), combos = combinaciones();
+  const corte = filas("Story Forces"), cm = resultado("desplazamientos_cm"), drifts = resultado("drifts");
+  const cmPorPiso = new Map();
+  for (const f of filas("Diaphragm Center Of Mass Displacements")) {
+    if (!f.Point) continue;
+    const l = cmPorPiso.get(String(f.Story)) || [];
+    if (!l.some((x) => x.punto === String(f.Point))) l.push({ diaf: String(f.Diaphragm), punto: String(f.Point) });
+    cmPorPiso.set(String(f.Story), l);
+  }
+  A.hayDiafragmas = cmPorPiso.size > 0;
+  // Desplazamientos del centro de masa por "punto|caso|paso" (U1, U2)
+  const despPunto = new Map();
+  for (const f of cm) despPunto.set(`${f.Punto}|${f.Caso}|${Math.round(f.Paso)}`, f);
+  const fp = resultado("factores_participacion");
+  const amort = nv([...filas("Functions - Response Spectrum - From File", true), ...filas("Functions - Response Spectrum - User Defined", true)].find((f) => f.DampRatio != null)?.DampRatio);
+
+  A.dir = {};
+  for (const [d, caso, comb, u, comp] of [["X", c.casoX, c.combX, "U1", "VX"], ["Y", c.casoY, c.combY, "U2", "VY"]]) {
+    const R = { d, caso, avisos: [] };
+    A.dir[d] = R;
+    const def = esp.get(caso);
+    if (!def) throw new Error(`no se encontró el caso de espectro elegido en ${d}`);
+    R.def = def;
+    const cb = comb === "__1" ? null : combos.get(comb);
+    R.comb = cb ? cb.nombre : null;
+    R.f = cb ? cb.items[0].sf : 1;
+    R.Ts = d === "X" ? A.TsX : A.TsY;
+    R.Rs = rEstrella(R.Ts.T, s, c.R0);
+    // Espectro de ETABS en la dirección del caso: función × factor del caso × factor de diseño, en g
+    const dd = def.dirs.find((x) => x.dir === u) || def.dirs[0];
+    R.dirModelo = dd?.dir || "";
+    if (dd && dd.dir !== u) R.avisos.push(`El caso ${escH(caso)} actúa en ${escH(dd.dir)}, no en ${u}.`);
+    if (def.dirs.length > 1) R.avisos.push(`El caso ${escH(caso)} combina ${def.dirs.length} direcciones (${escH(def.dirComb || "")}); la NCh 433:2026 analiza cada dirección por separado (5.8.1).`);
+    if (def.modal && def.modal !== c.modal) R.avisos.push(`El caso ${escH(caso)} usa el caso modal ${escH(def.modal)}, distinto del elegido para T* (${escH(c.modal)}).`);
+    R.fn = dd?.fn; R.sfCaso = dd?.sf;
+    const lf = fun.get(R.fn);
+    R.saEtabs = (T) => interpolar(lf, T) * (R.sfCaso ?? NaN) * R.f / G;
+    R.saNorma = (T) => I * s.S * A0 * alfa(T, s) / R.Rs;
+    R.tieneFn = !!lf && Number.isFinite(R.sfCaso);
+    // Razón entre el espectro de la norma y el del modelo en los períodos de los modos
+    if (R.tieneFn) {
+      let peor = null;
+      for (const m of A.modos) { const r = R.saNorma(m.T) / R.saEtabs(m.T); if (!peor || !(r <= peor.r)) peor = { r, T: m.T, n: m.n }; }
+      R.espPeor = peor;
+      R.dcEsp = peor.r > 1 && peor.r <= 1 + TOL_ESP ? 1 : peor.r;
+      A.checks.push({ id: "esp" + d, nombre: `Espectro del modelo en ${d} frente al de la norma`, dc: R.dcEsp, ref: REF("6.3.4") });
+    } else A.sinVerificar.push(`espectro en ${d} (función no incluida en el archivo)`);
+
+    // Corte basal: Story Forces del caso, en la base del primer piso sobre el nivel basal
+    const pisoInf = A.sobre[A.sobre.length - 1].nombre;
+    R.pisosV = A.sobre.map((p) => {
+      const l = corte.filter((f) => f.OutputCase === caso && String(f.Story) === p.nombre), b = l.find((f) => f.Location === "Bottom") || l[l.length - 1];
+      return { ...p, V: b ? Math.abs(nv(b[comp])) * R.f : NaN };
+    });
+    R.Q = R.pisosV.find((p) => p.nombre === pisoInf)?.V;
+    if (!Number.isFinite(R.Q) && !A.pisoBasal) {
+      const br = resultado("reacciones_basales").find((f) => f.Caso === caso);
+      R.Q = br ? Math.abs(d === "X" ? br.FX : br.FY) * R.f : NaN;
+    }
+    R.Qmin = I * s.S * A0 * A.P / 6;                          // 6.3.6.1: I S A0 P / 6g, con A0 en g
+    R.cmax = cMaxCoef(c.R) * s.S * A0;
+    R.Qmax = I * R.cmax * A.P;                                // 6.3.6.2
+    R.fmin = R.Q > 0 ? Math.max(1, R.Qmin / R.Q) : NaN;
+    R.fmax = R.Q > R.Qmax ? R.Qmax / R.Q : 1;
+    if (Number.isFinite(R.Q)) A.checks.push({ id: "qmin" + d, nombre: `Corte basal mínimo en ${d}`, dc: R.Q > 0 ? R.Qmin / R.Q : Infinity, ref: REF("6.3.6.1") });
+    else A.sinVerificar.push(`corte basal mínimo en ${d} (sin corte del caso en el nivel basal)`);
+
+    // Desplazamientos: caso espectral × factor de diseño × factor por corte mínimo (6.3.6.1)
+    R.k = R.f * (Number.isFinite(R.fmin) ? R.fmin : 1);
+    driftsCentroMasa(A, R, c, { cmPorPiso, despPunto, fp, lf, amort, comp: u });
+    const dmax = new Map();
+    for (const f of drifts) if (f.Caso === caso && f.Direccion === d) dmax.set(String(f.Piso), Math.max(dmax.get(String(f.Piso)) || 0, nv(f.Drift)));
+    for (const n of R.niveles) {
+      n.dpt = dmax.has(n.nombre) ? dmax.get(n.nombre) * R.k : NaN;
+      n.limPt = Math.max((Number.isFinite(n.dcm) ? n.dcm : 0) + 0.001, c.dcm);
+      n.dcCM = n.dcm / c.dcm;
+      // Sin Δcm no se conoce el límite de 5.9.3 a); como el límite es al menos el de la Tabla 5, Δmáx/(Tabla 5) es una
+      // cota superior del D/C y basta si es ≤ 1
+      n.dcPt = Number.isFinite(n.dcm) ? n.dpt / n.limPt : n.dpt / c.dcm <= 1 ? n.dpt / c.dcm : NaN;
+    }
+    const peor = (campo) => R.niveles.reduce((a, n) => (Number.isFinite(n[campo]) && !(a?.[campo] >= n[campo]) ? n : a), null);
+    R.peorCM = peor("dcCM"); R.peorPt = peor("dcPt");
+    const faltanCM = R.niveles.filter((n) => !Number.isFinite(n.dcCM)).length, faltanPt = R.niveles.filter((n) => !Number.isFinite(n.dcPt)).length;
+    const sinTorsion = !(A.hayDiafragmas && (def.ecc || 0) >= 0.10 - 1e-9);
+    if (R.peorCM) A.checks.push({ id: "dcm" + d, nombre: `Desplazamiento relativo en el centro de masas en ${d}`, dc: R.peorCM.dcCM, ref: REF("5.9.2"), sinTorsion });
+    if (faltanCM) A.sinVerificar.push(`desplazamiento relativo en el centro de masas en ${d} (${cuenta(faltanCM, "nivel", "niveles")} sin datos)`);
+    if (R.peorPt) A.checks.push({ id: "dpt" + d, nombre: `Desplazamiento relativo en cualquier punto en ${d}`, dc: R.peorPt.dcPt, ref: REF("5.9.3"), sinTorsion });
+    if (faltanPt) A.sinVerificar.push(`desplazamiento relativo en cualquier punto en ${d} (${cuenta(faltanPt, "nivel", "niveles")} sin datos)`);
+
+    // Combinación modal (6.3.5.2)
+    if (def.comb && !/CQC/i.test(def.comb)) A.motivos.push({ h: `combinación modal distinta de CQC en ${d} (6.3.5.2)`, t: L`el caso ${escTex(caso)} combina los modos con ${escTex(def.comb)} y la norma exige CQC (6.3.5.2)` });
+    R.ecc = def.ecc;
+  }
+  // Torsión accidental: ETABS aplica momentos estáticos en los diafragmas con la excentricidad del caso, constante en
+  // altura. Con r ≥ 0.10 cubre 0.10 b (Z_k/H) de 6.3.3 b) en todos los niveles; con menos, o sin diafragmas, no se afirma.
+  A.eccX = A.dir.X.ecc; A.eccY = A.dir.Y.ecc;
+  A.torsion = !A.hayDiafragmas ? "sinDiafragma" : Math.min(A.eccX || 0, A.eccY || 0) >= 0.10 - 1e-9 ? "cubre" : Math.max(A.eccX || 0, A.eccY || 0) > 0 ? "parcial" : "no";
+  if (A.torsion !== "cubre") A.sinVerificar.push("torsión accidental (6.3.3)");
+
+  // Sobrecarga en la masa sísmica (5.5.1)
+  if (A.vivas.length && !A.masaPorCargas) A.sinVerificar.push("porcentaje de sobrecarga en la masa sísmica (5.5.1)");
+  else for (const v of A.vivas) if (v.k < 0.25 - 1e-9) A.motivos.push({ h: `sobrecarga en la masa sísmica menor que 25 % (5.5.1)`, t: L`la masa sísmica considera ${tn(v.k * 100, 0)}\,\% de la sobrecarga ${escTex(v.patron)}, menos que el mínimo de 25\,\% (5.5.1)` });
+  if (!A.vivas.length) A.avisos.push({ h: "No se encontró un patrón de sobrecarga de uso (tipo Live) en el modelo: revise la fuente de masa (5.5.1).", t: L`No se encontró un patrón de sobrecarga de uso en el modelo; la fuente de masa debe revisarse (5.5.1).` });
+
+  // Un D/C infinito o indefinido manda: la razón máxima no lo puede esconder
+  const dcs = A.checks.map((x) => x.dc);
+  A.dcMax = dcs.some((x) => !Number.isFinite(x)) ? Infinity : Math.max(...dcs);
+  A.fallan = A.checks.filter((x) => !(x.dc <= 1 + 1e-9));
+  return A;
+}
+
+// Desplazamiento relativo en el centro de masas de cada nivel (5.9.2). Se combinan con CQC los desplazamientos relativos
+// modales de los centros de masa (Γ_n S_a(T_n)/ω_n² · (φ_k − φ_k−1)), que es el drift CQC, y no la diferencia de los
+// desplazamientos CQC, que siempre resulta menor o igual. La escala de las formas modales de la API depende de las unidades
+// del modelo: se calibra con los desplazamientos CQC que entrega ETABS para el caso y, si la razón no es constante, se usa
+// la diferencia de desplazamientos con un aviso.
+function driftsCentroMasa(A, R, c, { cmPorPiso, despPunto, fp, lf, amort, comp }) {
+  // Amortiguamiento de la función del caso; si no lo trae, el de otra función o 5 %
+  const xiFn = nv([...filas("Functions - Response Spectrum - From File", true), ...filas("Functions - Response Spectrum - User Defined", true)].find((f) => f.Name === R.fn && f.DampRatio != null)?.DampRatio);
+  const modal = R.def.modal || c.modal, xi = xiFn > 0 ? xiFn : amort > 0 ? amort : 0.05;
+  const modos = fp.filter((f) => f.Caso === modal).map((f) => ({ n: f.Modo, w: 2 * Math.PI / f.Periodo, gam: comp === "U1" ? f.UX : f.UY, T: f.Periodo }));
+  const sa = (T) => interpolar(lf, T) * (R.sfCaso ?? NaN);
+  const phi = (punto, n) => despPunto.get(`${punto}|${modal}|${n}`)?.[comp];
+  const uCaso = (punto) => { const f = despPunto.get(`${punto}|${R.caso}|0`); return f ? Math.abs(f[comp]) : NaN; };
+  const rho = (wi, wj) => { const r = wj / wi; return 8 * xi * xi * (1 + r) * r ** 1.5 / ((1 - r * r) ** 2 + 4 * xi * xi * r * (1 + r) ** 2); };
+  const cqc = (q) => { let s2 = 0; for (let i = 0; i < q.length; i++) for (let j = 0; j < q.length; j++) s2 += rho(modos[i].w, modos[j].w) * q[i] * q[j]; return Math.sqrt(Math.max(0, s2)); };
+  const qModal = (vec) => modos.map((m, i) => m.gam * sa(m.T) / m.w ** 2 * vec[i]);
+  // Calibración: desplazamiento CQC propio frente al de ETABS en cada centro de masa
+  let cal = NaN;
+  const puntos = [...cmPorPiso.values()].flat();
+  if (modos.length && R.tieneFn) {
+    const razones = [];
+    for (const p of puntos) {
+      const v = modos.map((m) => phi(p.punto, m.n));
+      if (v.some((x) => !Number.isFinite(x))) continue;
+      const propio = cqc(qModal(v)), etabs = uCaso(p.punto);
+      if (propio > 0 && etabs > 0) razones.push({ r: etabs / propio, u: etabs });
+    }
+    const umax = Math.max(0, ...razones.map((x) => x.u));
+    const utiles = razones.filter((x) => x.u > 1e-3 * umax).map((x) => x.r).sort((a, b) => a - b);
+    if (utiles.length) {
+      const med = utiles[Math.floor(utiles.length / 2)];
+      // La razón debe ser la misma en todos los centros de masa (solo escala de unidades). Si varía, ETABS sumó otra
+      // respuesta al caso (por ejemplo, los momentos de la torsión accidental) y el CQC propio no la tendría.
+      if (utiles.every((r) => Math.abs(r / med - 1) < 1e-3)) cal = med;
+    }
+  }
+  R.cal = cal; R.xi = xi; R.nModosCQC = modos.length;
+  R.metodoCM = Number.isFinite(cal) ? "cqc" : "diferencia";
+  if (R.metodoCM === "diferencia") R.avisos.push(`En ${R.d} no se pudo combinar con CQC el desplazamiento relativo de los centros de masa (faltan modos, factores de participación o la función del espectro, o el caso incluye otra respuesta, como la torsión accidental): se usa la diferencia de desplazamientos del caso, que puede subestimarlo.`);
+  const k = R.k;
+  R.niveles = A.sobre.map((p, i) => {
+    const abajo = A.sobre[i + 1] || A.pisoBasal;             // null: base del modelo (desplazamiento nulo)
+    const h = p.z - (abajo ? abajo.z : A.zBasal);
+    const lista = cmPorPiso.get(p.nombre) || [], listaAbajo = abajo ? cmPorPiso.get(abajo.nombre) || [] : null;
+    let dcm = lista.length ? -Infinity : NaN, uMax = NaN;
+    for (const pt of lista) {
+      const pAbajo = listaAbajo ? (listaAbajo.find((x) => x.diaf === pt.diaf) || listaAbajo[0]) : null;
+      const u = uCaso(pt.punto);
+      if (Number.isFinite(u)) uMax = Number.isFinite(uMax) ? Math.max(uMax, u) : u;
+      if (listaAbajo && !pAbajo) { dcm = NaN; break; }
+      const u0 = pAbajo ? uCaso(pAbajo.punto) : 0;
+      let d;
+      if (R.metodoCM === "cqc") {
+        const v = modos.map((m) => { const a = phi(pt.punto, m.n), b = pAbajo ? phi(pAbajo.punto, m.n) : 0; return a - b; });
+        d = v.every(Number.isFinite) ? cal * cqc(qModal(v)) : NaN;
+      } else d = Number.isFinite(u) && Number.isFinite(u0) ? Math.abs(u - u0) : NaN;
+      if (!Number.isFinite(d)) { dcm = NaN; break; }
+      dcm = Math.max(dcm, d * k / h);
+    }
+    return { ...p, h, u: uMax * k, dcm };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Geometría del modelo y dibujos isométricos (SVG, fondo blanco)
+// ---------------------------------------------------------------------------
+let GEO = null;
+function geometria() {
+  if (GEO && GEO.datos === D) return GEO;
+  const pts = new Map();
+  for (const f of filas("Point Object Connectivity")) {
+    const x = nv(f.X), y = nv(f.Y), z = nv(f.Z);
+    if (Number.isFinite(x + y + z)) pts.set(String(f.UniqueName), [x, y, z]);
+  }
+  const lineas = [];
+  // Muros y losas: solo los bordes de cada grupo (los de la malla interior se repiten y no se dibujan)
+  const bordes = (tabla) => {
+    const cuenta = new Map();
+    for (const f of filas(tabla)) {
+      const ids = Object.keys(f).filter((k) => /^UniquePt\d+$/.test(k)).sort((a, b) => parseInt(a.slice(8), 10) - parseInt(b.slice(8), 10)).map((k) => f[k]).filter((v) => v != null && pts.has(String(v))).map(String);
+      for (let i = 0; i < ids.length; i++) {
+        const a = ids[i], b = ids[(i + 1) % ids.length], k = a < b ? `${a}|${b}` : `${b}|${a}`;
+        cuenta.set(k, (cuenta.get(k) || 0) + 1);
+      }
+    }
+    for (const [k, n] of cuenta) if (n === 1) lineas.push(k.split("|"));
+  };
+  bordes("Wall Object Connectivity");
+  bordes("Floor Object Connectivity");
+  for (const t of ["Column Object Connectivity", "Beam Object Connectivity", "Brace Object Connectivity"]) {
+    for (const f of filas(t)) {
+      const ids = Object.keys(f).filter((k) => /^UniquePt/.test(k)).map((k) => f[k]).filter((v) => v != null && pts.has(String(v))).map(String);
+      if (ids.length >= 2) lineas.push([ids[0], ids[ids.length - 1]]);
+    }
+  }
+  const usados = new Set(lineas.flat());
+  // Desplazamientos de los nudos, por "caso|paso"
+  const dn = D?.resultados?.desplazamientos_nudos, despl = new Map(), idx = new Map();
+  if (dn) {
+    dn.puntos.forEach((p, i) => idx.set(String(p), i));
+    for (const p of dn.pasos) despl.set(`${p.caso}|${Math.round(p.paso)}`, p.u);
+  }
+  GEO = { datos: D, pts, lineas, usados, despl, idx };
+  return GEO;
+}
+// forma: null (sin deformar) o { u (arreglo plano), escala }
+function svgModelo(az, forma, titulo, sub, opc = {}) {
+  const g = geometria();
+  if (!g.lineas.length) return "";
+  const a = az * Math.PI / 180, el = 30 * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a), ce = Math.cos(el), se = Math.sin(el);
+  const proy = ([x, y, z]) => { const xp = x * ca - y * sa, yp = x * sa + y * ca; return [xp, -(z * ce + yp * se)]; };
+  // Tamaño del modelo y escala de la deformada (máximo desplazamiento = 7 % de la mayor dimensión)
+  let min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
+  for (const id of g.usados) { const p = g.pts.get(id); for (let k = 0; k < 3; k++) { min[k] = Math.min(min[k], p[k]); max[k] = Math.max(max[k], p[k]); } }
+  const tam = Math.max(max[0] - min[0], max[1] - min[1], max[2] - min[2]) || 1;
+  let esc = 0;
+  const U = forma?.u, idx = g.idx;
+  const desp = (id) => { const i = idx.get(id); return U && i != null && U[3 * i] != null ? [U[3 * i], U[3 * i + 1], U[3 * i + 2]] : [0, 0, 0]; };
+  if (U) {
+    let umax = 0;
+    for (const id of g.usados) { const u = desp(id); umax = Math.max(umax, Math.hypot(u[0], u[1], u[2])); }
+    esc = umax > 0 ? 0.07 * tam / umax : 0;
+  }
+  const W = 760, H = 520, m = 18, mt = titulo ? 46 : 18;
+  let pmin = [Infinity, Infinity], pmax = [-Infinity, -Infinity];
+  const reg = (q) => { pmin = [Math.min(pmin[0], q[0]), Math.min(pmin[1], q[1])]; pmax = [Math.max(pmax[0], q[0]), Math.max(pmax[1], q[1])]; return q; };
+  const base = new Map(), def = new Map();
+  for (const id of g.usados) {
+    const p = g.pts.get(id);
+    base.set(id, reg(proy(p)));
+    if (U) { const u = desp(id); def.set(id, reg(proy([p[0] + esc * u[0], p[1] + esc * u[1], p[2] + esc * u[2]]))); }
+  }
+  const k =Math.min((W - 2 * m) / (pmax[0] - pmin[0] || 1), (H - mt - m) / (pmax[1] - pmin[1] || 1));
+  const ox = (W - k * (pmax[0] - pmin[0])) / 2 - k * pmin[0], oy = mt + (H - mt - m - k * (pmax[1] - pmin[1])) / 2 - k * pmin[1];
+  const ruta = (mapa) => {
+    let s = "";
+    for (const [i, j] of g.lineas) { const p = mapa.get(i), q = mapa.get(j); if (p && q) s += `M${(ox + k * p[0]).toFixed(1)} ${(oy + k * p[1]).toFixed(1)}L${(ox + k * q[0]).toFixed(1)} ${(oy + k * q[1]).toFixed(1)}`; }
+    return s;
+  };
+  const etiqueta = escH(`${titulo || "Modelo"}${sub ? " · " + sub : ""}`);
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"${opc.figura === false ? "" : ' role="img"'} aria-label="${etiqueta}">
+  <rect width="${W}" height="${H}" fill="#ffffff"/>
+  ${titulo ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="15" font-weight="600" fill="#1d2330">${escH(titulo)}</text>` : ""}
+  ${sub ? `<text x="${W / 2}" y="38" text-anchor="middle" font-size="12" fill="#5f6b7a">${escH(sub)}</text>` : ""}
+  <path d="${ruta(base)}" fill="none" stroke="${U ? "#b9c0ca" : "#1d2330"}" stroke-width="${U ? 0.6 : 0.8}" stroke-linecap="round"/>
+  ${U ? `<path d="${ruta(def)}" fill="none" stroke="#00008B" stroke-width="0.9" stroke-linecap="round"/>` : ""}
+  ${ejes(az, W - 70, H - 26)}
+</svg>`;
+}
+// Ejes globales X, Y, Z en la esquina
+function ejes(az, cx, cy) {
+  const a = az * Math.PI / 180, el = 30 * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a), ce = Math.cos(el), se = Math.sin(el);
+  const pr = ([x, y, z]) => [x * ca - y * sa, -(z * ce + (x * sa + y * ca) * se)];
+  return [["X", [1, 0, 0], "#c62828"], ["Y", [0, 1, 0], "#1f8a4c"], ["Z", [0, 0, 1], "#00008B"]].map(([t, v, col]) => {
+    const [dx, dy] = pr(v);
+    return `<line x1="${cx}" y1="${cy}" x2="${(cx + 26 * dx).toFixed(1)}" y2="${(cy + 26 * dy).toFixed(1)}" stroke="${col}" stroke-width="1.6"/><text x="${(cx + 34 * dx).toFixed(1)}" y="${(cy + 34 * dy + 4).toFixed(1)}" font-size="11" text-anchor="middle" fill="${col}">${t}</text>`;
+  }).join("");
+}
+
+// Gráfico de líneas genérico (SVG): series [{ pts: [[x, y]], color, ancho, guion, etiqueta, marcas }]
+function grafico({ titulo, xlab, ylab, series, xmin = 0, ymin = 0, xmax, ymax, lineasV = [], lineasH = [], ancho = 760, alto = 380 }) {
+  const ml = 64, mr = 20, mt = titulo ? 34 : 14, mb = 46;
+  const todas = series.flatMap((s) => s.pts).filter(([x, y]) => Number.isFinite(x) && Number.isFinite(y));
+  const xM = xmax ?? niceMax(Math.max(...todas.map((p) => p[0]), ...lineasV.map((l) => l.x)) * 1.05);
+  const yM = ymax ?? niceMax(Math.max(...todas.map((p) => p[1]), ...lineasH.map((l) => l.y)) * 1.05);
+  const X = (x) => ml + (x - xmin) / (xM - xmin) * (ancho - ml - mr), Y = (y) => mt + (1 - (y - ymin) / (yM - ymin)) * (alto - mt - mb);
+  const tics = (a, b) => { const paso = nicePaso((b - a) / 6); const l = []; for (let v = Math.ceil(a / paso) * paso; v <= b + 1e-9; v += paso) l.push(+v.toPrecision(10)); return l; };
+  const dec = (paso) => Math.max(0, -Math.floor(Math.log10(paso) + 1e-9));
+  const tx = tics(xmin, xM), ty = tics(ymin, yM), dx = dec(tx[1] - tx[0] || 1), dy = dec(ty[1] - ty[0] || 1);
+  let s = `<svg viewBox="0 0 ${ancho} ${alto}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escH(titulo || ylab)}"><rect width="${ancho}" height="${alto}" fill="#ffffff"/>`;
+  if (titulo) s += `<text x="${ancho / 2}" y="20" text-anchor="middle" font-size="14" font-weight="600" fill="#1d2330">${escH(titulo)}</text>`;
+  for (const v of tx) s += `<line x1="${X(v)}" y1="${mt}" x2="${X(v)}" y2="${alto - mb}" stroke="#eceef1"/><text x="${X(v)}" y="${alto - mb + 16}" text-anchor="middle" font-size="11" fill="#5f6b7a">${fmt(v, dx)}</text>`;
+  for (const v of ty) s += `<line x1="${ml}" y1="${Y(v)}" x2="${ancho - mr}" y2="${Y(v)}" stroke="#eceef1"/><text x="${ml - 6}" y="${Y(v) + 4}" text-anchor="end" font-size="11" fill="#5f6b7a">${fmt(v, dy)}</text>`;
+  s += `<line x1="${ml}" y1="${alto - mb}" x2="${ancho - mr}" y2="${alto - mb}" stroke="#1d2330"/><line x1="${ml}" y1="${mt}" x2="${ml}" y2="${alto - mb}" stroke="#1d2330"/>`;
+  s += `<text x="${(ml + ancho - mr) / 2}" y="${alto - 8}" text-anchor="middle" font-size="12" fill="#1d2330">${xlab}</text>`;
+  s += `<text transform="translate(16 ${(mt + alto - mb) / 2}) rotate(-90)" text-anchor="middle" font-size="12" fill="#1d2330">${ylab}</text>`;
+  for (const l of lineasV) s += `<line x1="${X(l.x)}" y1="${mt}" x2="${X(l.x)}" y2="${alto - mb}" stroke="${l.color || "#e65c00"}" stroke-dasharray="5 4" stroke-width="1.3"/>${l.etiqueta ? `<text x="${X(l.x) + 4}" y="${mt + 12}" font-size="11" fill="${l.color || "#e65c00"}">${escH(l.etiqueta)}</text>` : ""}`;
+  for (const l of lineasH) s += `<line x1="${ml}" y1="${Y(l.y)}" x2="${ancho - mr}" y2="${Y(l.y)}" stroke="${l.color || "#e65c00"}" stroke-dasharray="5 4" stroke-width="1.3"/>${l.etiqueta ? `<text x="${ancho - mr - 4}" y="${Y(l.y) - 5}" text-anchor="end" font-size="11" fill="${l.color || "#e65c00"}">${escH(l.etiqueta)}</text>` : ""}`;
+  for (const se of series) {
+    const p = se.pts.filter(([x, y]) => Number.isFinite(x) && Number.isFinite(y));
+    if (!p.length) continue;
+    s += `<polyline points="${p.map(([x, y]) => `${X(x).toFixed(1)},${Y(y).toFixed(1)}`).join(" ")}" fill="none" stroke="${se.color}" stroke-width="${se.ancho || 2}"${se.guion ? ` stroke-dasharray="${se.guion}"` : ""}/>`;
+    if (se.marcas) s += p.map(([x, y]) => `<circle cx="${X(x).toFixed(1)}" cy="${Y(y).toFixed(1)}" r="3" fill="${se.color}"/>`).join("");
+  }
+  // Leyenda
+  const ley = series.filter((x) => x.etiqueta);
+  const anchoLey = Math.max(0, ...ley.map((se) => se.etiqueta.length)) * 6.2 + 40;
+  if (ley.length) s += `<rect x="${ancho - mr - anchoLey - 6}" y="${mt + 2}" width="${anchoLey}" height="${ley.length * 16 + 8}" fill="#ffffff" fill-opacity="0.9" stroke="#dde1e7"/>`;
+  ley.forEach((se, i) => {
+    const y = mt + 14 + i * 16, x = ancho - mr - anchoLey;
+    s += `<line x1="${x}" y1="${y}" x2="${x + 22}" y2="${y}" stroke="${se.color}" stroke-width="${se.ancho || 2}"${se.guion ? ` stroke-dasharray="${se.guion}"` : ""}/><text x="${x + 28}" y="${y + 4}" font-size="11" fill="#1d2330">${escH(se.etiqueta)}</text>`;
+  });
+  return s + "</svg>";
+}
+function niceMax(v) {
+  if (!(v > 0)) return 1;
+  const e = 10 ** Math.floor(Math.log10(v)), f = v / e;
+  return (f <= 1 ? 1 : f <= 1.2 ? 1.2 : f <= 1.5 ? 1.5 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 3 ? 3 : f <= 4 ? 4 : f <= 5 ? 5 : f <= 6 ? 6 : f <= 8 ? 8 : 10) * e;
+}
+function nicePaso(v) {
+  if (!(v > 0)) return 1;
+  const e = 10 ** Math.floor(Math.log10(v)), f = v / e;
+  return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * e;
+}
+// Perfil por piso como escalones (x en cada piso, de la cota inferior a la superior)
+function escalones(niveles, campo, zBasal) {
+  const pts = [];
+  for (let i = niveles.length - 1; i >= 0; i--) {
+    const n = niveles[i], z0 = i < niveles.length - 1 ? niveles[i + 1].z : zBasal;
+    if (!Number.isFinite(n[campo])) continue;
+    pts.push([n[campo], z0], [n[campo], n.z]);
+  }
+  return pts;
+}
+
+// ---------------------------------------------------------------------------
+// Memoria
+// ---------------------------------------------------------------------------
+// Texto HTML de una fila (sub/sup, marcas de estado, entidades) → texto LaTeX
+function htmlATex(h) {
+  const esc = (t) => t.replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&amp;/g, "&")
+    .replace(/[\\{}&%$#_~^]/g, (ch) => ({ "\\": "\\textbackslash{}", "{": "\\{", "}": "\\}", "&": "\\&", "%": "\\%", "$": "\\$", "#": "\\#", "_": "\\_", "~": "\\textasciitilde{}", "^": "\\textasciicircum{}" }[ch]))
+    .replace(/</g, "\\textless{}").replace(/>/g, "\\textgreater{}");
+  const s = String(h ?? "").replace(/<span class="tag[^"]*">([\s\S]*?)<\/span>/g, " ($1)");
+  let out = "";
+  for (const p of s.split(/(<\/?[a-zA-Z]+[^>]*>)/)) {
+    const m = /^<(\/?)([a-zA-Z]+)/.exec(p);
+    if (!m) { out += esc(p); continue; }
+    const t = m[2].toLowerCase();
+    if (t === "sub") out += m[1] ? "}" : "\\textsubscript{";
+    else if (t === "sup") out += m[1] ? "}" : "\\textsuperscript{";
+    else if (t === "b") out += m[1] ? "}" : "\\textbf{";
+  }
+  return out.replace(/\s{2,}/g, " ").trim();
+}
+class Memo {
+  constructor() { this.out = []; this.tex = []; this.n = 0; this.filasT = []; }
+  // Las filas de resultados también van al .tex, agrupadas en una tabla hasta el próximo bloque
+  vaciar() {
+    if (!this.filasT.length) return;
+    memoTexCerrar(this);
+    this.tex.push(L`{\small
+\begin{longtable}{@{}p{0.55\linewidth}p{0.27\linewidth}p{0.14\linewidth}@{}}
+${this.filasT.map((f) => f.join(" & ") + "\\\\").join("\n")}
+\end{longtable}}`);
+    this.filasT = [];
+  }
+  h(t) { this.vaciar(); memoTexCerrar(this); this.n++; this.out.push(`<h3>${this.n}. ${escH(t)}</h3>`); this.tex.push(`\\section{${escTex(t)}}`); }
+  sub(t) { this.vaciar(); memoTexCerrar(this); this.out.push(`<h4>${escH(t)}</h4>`); this.tex.push(`\\subsection{${escTex(t)}}`); }
+  row(k, v, ref) { this.out.push({ k, v, ref }); this.filasT.push([htmlATex(k), htmlATex(v), ref ? `{\\footnotesize ${escTex(ref)}}` : ""]); }
+  note(t, tt) { this.out.push(`<div class="note">${t}</div>`); if (tt) { this.vaciar(); this.tex.push(`\\textit{${tt}}\n`); } }
+  eq(s, ref) { this.vaciar(); this.tex.push(texDisplay(s, ref)); this.out.push({ tex: s + (ref ? `\\tag*{(${ref})}` : ""), eq: true }); }
+  p(s, soloTex) { this.vaciar(); memoTexP(this, s); if (!soloTex) this.out.push({ tex: s }); }
+  html_(h) { this.out.push(h); }
+  raw(t) { this.vaciar(); memoTexCerrar(this); this.tex.push(t); }
+  // Figura: el SVG va en pantalla y, en el .tex, un marcador TikZ que descargarZipMemoria reemplaza por su PNG
+  fig(svg, caption) {
+    if (!svg) return;
+    this.out.push(`<div class="fig">${svg}<div class="cap">${caption.h}</div></div>`);
+    this.raw(L`\begin{figure}[H]
+\centering
+\begin{tikzpicture}\node[draw, inner sep=12pt]{Figura generada por structura};\end{tikzpicture}
+\caption{${caption.t}}
+\end{figure}`);
+  }
+  texto() { this.vaciar(); memoTexCerrar(this); return this.tex.join("\n"); }
+  html() { return memoHTML(this.out); }
+}
+// Tabla en pantalla y en LaTeX (longtable). cols: [{ h, t, al }]; filas: [[celdas html], [celdas tex]] o celdas comunes
+function tablaDoble(m, cols, filasH, filasT, caption, clases = []) {
+  m.html_(`<div class="tablaWrap"><table class="alt"><tr>${cols.map((c) => `<th>${c.h}</th>`).join("")}</tr>${filasH.map((f, i) => `<tr>${f.map((x, j) => `<td class="${clases[i]?.[j] || (cols[j].al === "l" || cols[j].al === "p" ? "txt" : "")}">${x}</td>`).join("")}</tr>`).join("")}</table></div>`);
+  m.raw(L`{\small
+\begin{longtable}{${cols.map((c) => c.al === "p" ? "p{0.5\\linewidth}" : c.al || "r").join("")}}
+\caption{${caption}}\\
+\toprule
+${cols.map((c) => c.t).join(" & ")}\\
+\midrule
+\endhead
+${filasT.map((f) => f.map((x) => (x === "\\infty" ? "---" : x)).join(" & ") + "\\\\").join("\n")}
+\bottomrule
+\end{longtable}}`);
+}
+
+function memoria(m, c, A) {
+  const P = A.pisos, X = A.dir.X, Y = A.dir.Y, s = A.s;
+  const mats = materiales(), esp = casosEspectro(), combos = combinaciones();
+  const nombre = escH(D.modelo?.archivo || "");
+
+  // 1. Antecedentes del modelo
+  m.h("Antecedentes del modelo");
+  m.p(L`La memoria se elabora a partir del modelo de ETABS ${escTex(D.modelo?.archivo || "")} (versión ${escTex(D.etabs?.version || "")}), cuyos datos y resultados se extrajeron el ${escTex(String(D.generado || "").replace("T", " "))} con la API de ETABS. Fuerzas en tf y longitudes en m.`);
+  m.row("Archivo del modelo", nombre);
+  m.row("Versión de ETABS", escH(D.etabs?.version || "—"));
+  m.row("Número de pisos sobre el nivel basal", fmt(A.sobre.length, 0));
+  m.row("Altura sobre el nivel basal: H", `${fmt(A.H, 2)} m`);
+  const nObj = (t) => (D.tablas[t]?.filas.length || 0);
+  m.row("Objetos: muros ; losas ; columnas ; vigas ; diagonales", `${fmt(nObj("Wall Object Connectivity"), 0)} ; ${fmt(nObj("Floor Object Connectivity"), 0)} ; ${fmt(nObj("Column Object Connectivity"), 0)} ; ${fmt(nObj("Beam Object Connectivity"), 0)} ; ${fmt(nObj("Brace Object Connectivity"), 0)}`);
+  m.sub("Pisos");
+  tablaDoble(m, [{ h: "Piso", t: "Piso", al: "l" }, { h: "Altura [m]", t: "Altura [m]" }, { h: "Cota [m]", t: "Cota [m]" }],
+    [...P.lista.map((p) => [escH(p.nombre), fmt(p.h, 2), fmt(p.z, 2)]), [escH(P.base.nombre), "—", fmt(P.base.z, 2)]],
+    [...P.lista.map((p) => [escTex(p.nombre), tn(p.h, 2), tn(p.z, 2)]), [escTex(P.base.nombre), "---", tn(P.base.z, 2)]],
+    "Pisos del modelo.");
+  if (mats.length) {
+    m.sub("Materiales");
+    tablaDoble(m, [{ h: "Material", t: "Material", al: "l" }, { h: "Tipo", t: "Tipo", al: "l" }, { h: "E [kgf/cm²]", t: "$E$ [kgf/cm$^2$]" }, { h: "f'<sub>c</sub> o f<sub>y</sub> [kgf/cm²]", t: "$f'_c$ o $f_y$ [kgf/cm$^2$]" }, { h: "γ [tf/m³]", t: "$\\gamma$ [tf/m$^3$]" }],
+      mats.map((o) => [escH(o.nombre), escH(o.tipo || ""), fmt(o.E, 0), fmt(o.fc ?? o.fy, 0), fmt(o.w, 3)]),
+      mats.map((o) => [escTex(o.nombre), escTex(o.tipo || ""), tn(o.E, 0), tn(o.fc ?? o.fy, 0), tn(o.w, 3)]),
+      `Materiales usados en las secciones del modelo (convertidos desde las unidades del modelo, ${escTex(unidadesEt().texto)}).`);
+  }
+  const casos = D.casos || [];
+  m.sub("Casos de carga y combinaciones");
+  tablaDoble(m, [{ h: "Caso", t: "Caso", al: "l" }, { h: "Tipo", t: "Tipo", al: "l" }, { h: "Estado", t: "Estado", al: "l" }],
+    casos.filter((x) => !x.nombre.startsWith("~")).map((x) => [escH(x.nombre), escH(x.tipo), escH(x.estado)]),
+    casos.filter((x) => !x.nombre.startsWith("~")).map((x) => [escTex(x.nombre), escTex(x.tipo), escTex(x.estado)]),
+    "Casos de carga del modelo.");
+  const lc = [...combos.values()];
+  if (lc.length) {
+    const coef = (x) => String(+x.toFixed(4));
+    const expr = (cb, tex) => cb.items.map((it) => `${coef(it.sf)} ${tex ? escTex(it.carga) : escH(it.carga)}`).join(" + ");
+    tablaDoble(m, [{ h: "Combinación", t: "Combinación", al: "l" }, { h: "Tipo", t: "Tipo", al: "l" }, { h: "Expresión", t: "Expresión", al: "p" }],
+      lc.map((cb) => [escH(cb.nombre), escH(cb.tipo), expr(cb, false)]),
+      lc.map((cb) => [escTex(cb.nombre), escTex(cb.tipo), expr(cb, true)]),
+      "Combinaciones de carga definidas en el modelo.");
+  }
+  m.fig(svgModelo(-35, null, "Modelo estructural", nombre ? D.modelo.archivo : ""), { h: "Vista isométrica del modelo (bordes de muros y losas, ejes de vigas y columnas).", t: "Vista isométrica del modelo estructural (bordes de muros y losas, ejes de vigas y columnas)." });
+
+  // 2. Peso sísmico
+  m.h("Peso sísmico");
+  m.p(L`Las masas se calculan con las cargas permanentes y un porcentaje de la sobrecarga de uso no menor que 25\,\% en áreas sin aglomeración, ni menor que 50\,\% donde es usual la aglomeración (NCh 433:2026, 5.5.1). El peso sísmico $P$ es la suma de las masas de los pisos sobre el nivel basal por $g$ (6.2.3.3).`);
+  m.row("Fuente de masa del modelo", escH(A.fuenteMasaTipo || "—"));
+  for (const f of A.fuenteMasa) m.row(`Patrón ${escH(f.patron)}${f.tipo ? ` (${escH(f.tipo)})` : ""}`, `${fmt(f.k * 100, 0)} %`, f.tipo && /live/i.test(f.tipo) && !/roof/i.test(f.tipo) ? REF("5.5.1") : "");
+  if (A.vivas.length && !A.masaPorCargas) m.row("Sobrecarga en la masa", `la masa no se toma de patrones de carga <span class="tag warn">SIN VERIFICAR</span>`, REF("5.5.1"));
+  else for (const v of A.vivas) m.row(`Sobrecarga en la masa, ${escH(v.patron)}`, `${fmt(v.k * 100, 0)} % ${v.k >= 0.25 - 1e-9 ? `<span class="tag ok">≥ 25 %</span>` : `<span class="tag bad">menor que 25 %</span>`}`, REF("5.5.1"));
+  tablaDoble(m, [{ h: "Piso", t: "Piso", al: "l" }, { h: "Cota [m]", t: "Cota [m]" }, { h: "Masa [tf·s²/m]", t: "Masa [tf$\\cdot$s$^2$/m]" }, { h: "Peso [tf]", t: "Peso [tf]" }],
+    [...A.masas.map((p) => [escH(p.nombre), fmt(p.z, 2), fmt(p.m, 3), fmt(p.W, 1)]), ["<b>Total</b>", "", "", `<b>${fmt(A.P, 1)}</b>`]],
+    [...A.masas.map((p) => [escTex(p.nombre), tn(p.z, 2), tn(p.m, 3), tn(p.W, 1)]), ["\\textbf{Total}", "", "", `\\textbf{${tn(A.P, 1)}}`]],
+    "Masas y pesos sísmicos por piso sobre el nivel basal.");
+  m.row("Peso sísmico total: P", `${fmt(A.P, 1)} tf`, REF("6.2.3.3"));
+  m.eq(L`P = g\sum_k m_k = 9.80665\cdot ${tn(A.P / G, 3)} = ${tn(A.P, 1)}\ \mathrm{tf}`);
+
+  // 3. Parámetros sísmicos
+  m.h("Parámetros sísmicos");
+  const sis = SIS.get(c.sistema);
+  m.row("Categoría de ocupación ; coeficiente de importancia: I", `${c.cat} ; ${fmt(A.I, 1)}`, REF("Tabla 6"));
+  m.row("Zona sísmica ; aceleración efectiva: A<sub>0</sub>", `${c.zona} ; ${fmt(A.A0, 2)} g`, REF("Tabla 7"));
+  m.row("Tipo de suelo", c.suelo, REF("Tabla 8"));
+  m.row("Parámetros del suelo: S ; T<sub>0</sub> ; T' ; n ; p", `${fmt(s.S, 2)} ; ${fmt(s.T0, 2)} s ; ${fmt(s.Tp, 2)} s ; ${fmt(s.n, 2)} ; ${fmt(s.p, 1)}`, REF("Tabla 8"));
+  m.row("Sistema estructural", escH(sis ? `${sis.grupo}: ${sis.texto}` : "Otro (valores ingresados)"), REF("Tabla 5"));
+  m.row("Factores de modificación de la respuesta: R ; R<sub>0</sub>", `${fmt(c.R, 1)} ; ${fmt(c.R0, 1)}`, REF("Tabla 5"));
+  m.row("Desplazamiento relativo máximo en el centro de masas: Δ<sub>cm</sub>/h", fmt(c.dcm, 4), REF("Tabla 5"));
+
+  // 4. Análisis modal
+  m.h("Análisis modal");
+  m.p(L`Se incluyen los modos del caso ${escTex(c.modal)} ordenados por período. La suma de las masas equivalentes en cada dirección horizontal debe ser al menos 90\,\% de la masa total (NCh 433:2026, 6.3.2). $T^*$ es el período del modo con mayor masa de traslación equivalente en cada dirección (6.3.4.3).`);
+  const top = (mo) => mo.n === A.TsX.n || mo.n === A.TsY.n;
+  tablaDoble(m, [{ h: "Modo", t: "Modo" }, { h: "T [s]", t: "$T$ [s]" }, { h: "U<sub>X</sub>", t: "$U_X$" }, { h: "U<sub>Y</sub>", t: "$U_Y$" }, { h: "R<sub>Z</sub>", t: "$R_Z$" }, { h: "ΣU<sub>X</sub>", t: "$\\sum U_X$" }, { h: "ΣU<sub>Y</sub>", t: "$\\sum U_Y$" }, { h: "ΣR<sub>Z</sub>", t: "$\\sum R_Z$" }],
+    A.modos.map((mo) => [top(mo) ? `<b>${mo.n}</b>` : mo.n, fmt(mo.T, 4), fmt(mo.UX, 4), fmt(mo.UY, 4), fmt(mo.RZ, 4), fmt(mo.SUX, 4), fmt(mo.SUY, 4), fmt(mo.SRZ, 4)]),
+    A.modos.map((mo) => [top(mo) ? `\\textbf{${mo.n}}` : mo.n, tn(mo.T, 4), tn(mo.UX, 4), tn(mo.UY, 4), tn(mo.RZ, 4), tn(mo.SUX, 4), tn(mo.SUY, 4), tn(mo.SRZ, 4)]),
+    "Períodos y razones de masa participante (ETABS, precisión completa).");
+  m.row(`Período del modo con mayor masa en X (modo ${A.TsX.n}): T*<sub>x</sub>`, `${fmt(A.TsX.T, 4)} s`, REF("6.3.4.3"));
+  m.row(`Período del modo con mayor masa en Y (modo ${A.TsY.n}): T*<sub>y</sub>`, `${fmt(A.TsY.T, 4)} s`, REF("6.3.4.3"));
+  for (const d of ["X", "Y"]) {
+    const sum = d === "X" ? A.sumX : A.sumY;
+    m.row(`Masa equivalente acumulada en ${d}: ΣU<sub>${d}</sub> ≥ 0.90`, `${fmt(sum * 100, 1)} % ${tagDC(0.9 / sum)}`, REF("6.3.2"));
+  }
+  m.eq(L`\sum U_X = ${tn(A.sumX, 4)} ${A.sumX >= 0.9 ? L`\ge` : "<"} 0.90 \qquad \sum U_Y = ${tn(A.sumY, 4)} ${A.sumY >= 0.9 ? L`\ge` : "<"} 0.90`, REF("6.3.2"));
+  m.fig(grafico({ titulo: "Masa equivalente acumulada", xlab: "Modo", ylab: "Masa acumulada [%]", xmin: 0, xmax: Math.max(1, A.modos.length), ymax: 100,
+    series: [{ pts: A.modos.map((mo) => [mo.n, mo.SUX * 100]), color: "#00008B", etiqueta: "X", marcas: true }, { pts: A.modos.map((mo) => [mo.n, mo.SUY * 100]), color: "#e65c00", etiqueta: "Y", marcas: true }, { pts: A.modos.map((mo) => [mo.n, mo.SRZ * 100]), color: "#8a94a3", etiqueta: "RZ", guion: "4 3", marcas: true }],
+    lineasH: [{ y: 90, etiqueta: "90 %", color: "#1f8a4c" }] }),
+    { h: "Masa equivalente acumulada por modo.", t: "Masa equivalente acumulada por modo." });
+  // Formas modales: hasta 6 modos, además de los de T*x y T*y
+  const g = geometria();
+  const verModos = [...new Set([...A.modos.slice(0, 6).map((mo) => mo.n), A.TsX.n, A.TsY.n])].sort((a, b) => a - b);
+  if (g.despl.size) {
+    m.sub("Formas modales");
+    for (const n of verModos) {
+      const mo = A.modos.find((x) => x.n === n), u = g.despl.get(`${c.modal}|${n}`);
+      if (!u) continue;
+      const sub = `T = ${fmt(mo.T, 3)} s · UX ${fmt(mo.UX * 100, 1)} % · UY ${fmt(mo.UY * 100, 1)} % · RZ ${fmt(mo.RZ * 100, 1)} %`;
+      m.fig(svgModelo(-35, { u }, `Modo ${n}`, sub), { h: `Forma del modo ${n} (amplificada; en gris, sin deformar).`, t: `Forma del modo ${n}: $T = ${tn(mo.T, 3)}$ s, $U_X = ${tn(mo.UX * 100, 1)}\\,\\%$, $U_Y = ${tn(mo.UY * 100, 1)}\\,\\%$, $R_Z = ${tn(mo.RZ * 100, 1)}\\,\\%$ (amplificada; en gris, sin deformar).` });
+    }
+  } else m.note("El archivo no trae los desplazamientos de los nudos (se generó con --sin-nudos): no se dibujan las formas modales.");
+
+  // 5. Espectro de diseño
+  m.h("Espectro de diseño");
+  m.p(L`El espectro de pseudo-aceleraciones de diseño es $S_a = I\,S\,A_0\,\alpha/R^*$ (NCh 433:2026, 6.3.4.1), con el factor de amplificación $\alpha$ de cada modo (6.3.4.2) y el factor de reducción $R^*$ calculado con $T^*$ y $R_0$ de cada dirección (6.3.4.3).`);
+  m.eq(L`\alpha = \frac{1 + 4.5\left(\frac{T_n}{T_0}\right)^{p}}{1 + \left(\frac{T_n}{T_0}\right)^{3}} = \frac{1 + 4.5\left(\frac{T_n}{${tn(s.T0, 2)}}\right)^{${tn(s.p, 1)}}}{1 + \left(\frac{T_n}{${tn(s.T0, 2)}}\right)^{3}}`, REF("Ec. (9)"));
+  for (const R of [X, Y]) {
+    const d = R.d.toLowerCase();
+    m.row(`Factor de reducción en ${R.d}: R*<sub>${d}</sub>`, fmt(R.Rs, 3), REF("6.3.4.3"));
+    m.eq(L`R^*_{${d}} = 1 + \frac{T^*_{${d}}}{0.10\,T_0 + T^*_{${d}}/R_0} = 1 + \frac{${tn(R.Ts.T, 4)}}{0.10\cdot ${tn(s.T0, 2)} + ${tn(R.Ts.T, 4)}/${tn(c.R0, 1)}} = ${tn(R.Rs, 3)}`, REF("Ec. (10)"));
+    const a = alfa(R.Ts.T, s);
+    m.row(`Pseudo-aceleración de diseño en T*<sub>${d}</sub>: S<sub>a</sub>`, `${fmt(R.saNorma(R.Ts.T), 4)} g`, REF("6.3.4.1"));
+    m.eq(L`S_a(T^*_{${d}}) = \frac{I\,S\,A_0\,\alpha}{R^*_{${d}}} = \frac{${tn(A.I, 1)}\cdot ${tn(s.S, 2)}\cdot ${tn(A.A0, 2)}\cdot ${tn(a, 4)}}{${tn(R.Rs, 3)}} = ${tn(R.saNorma(R.Ts.T), 4)}\ \mathrm{g}`, REF("Ec. (8)"));
+  }
+  m.sub("Espectro del modelo");
+  m.p(L`En el modelo, cada caso espectral usa una función multiplicada por el factor del caso y, si corresponde, por el factor de la combinación de diseño. Su producto se compara con el espectro de la norma en los períodos de todos los modos; la razón norma/modelo debe ser a lo más 1.`);
+  for (const R of [X, Y]) {
+    const d = R.d.toLowerCase();
+    m.row(`Caso ${escH(R.caso)}: función ; factor del caso ; factor de diseño`, `${escH(R.fn || "—")} ; ${fmt(R.sfCaso, 4)} m/s² ; ${fmt(R.f, 4)}${R.comb ? ` (${escH(R.comb)})` : ""}`);
+    if (R.tieneFn) {
+      m.row(`Espectro del modelo en T*<sub>${d}</sub>: S<sub>a,ETABS</sub>`, `${fmt(R.saEtabs(R.Ts.T), 4)} g`);
+      const dcEsp = R.espPeor.r <= 1 + TOL_ESP && R.espPeor.r > 1 ? 1 : R.espPeor.r;
+      m.row(`Razón norma/modelo, máxima en los modos (modo ${R.espPeor.n}, T = ${fmt(R.espPeor.T, 3)} s)`, `${fmt(R.espPeor.r, 4)} ${tagDC(dcEsp)}`, REF("6.3.4"));
+      m.eq(L`\frac{S_{a,norma}}{S_{a,ETABS}}\Big|_{T = ${tn(R.espPeor.T, 3)}\ \mathrm{s}} = ${tn(R.espPeor.r, 4)} ${R.espPeor.r <= 1 + TOL_ESP ? L`\le` : ">"} 1${R.espPeor.r > 1 && R.espPeor.r <= 1 + TOL_ESP ? L` + ${tn(TOL_ESP * 100, 1)}\,\%` : ""}`, REF("6.3.4"));
+      if (R.espPeor.r > 1 && R.espPeor.r <= 1 + TOL_ESP) m.note(`El modelo queda bajo el espectro de la norma en ${fmt((R.espPeor.r - 1) * 100, 2)} %, dentro de la tolerancia de ${fmt(TOL_ESP * 100, 1)} % por el redondeo del factor de diseño.`, L`El espectro del modelo queda bajo el de la norma en ${tn((R.espPeor.r - 1) * 100, 2)}\,\%, dentro de la tolerancia de ${tn(TOL_ESP * 100, 1)}\,\% adoptada por el redondeo del factor de diseño.`);
+      if (Math.abs(1 / R.f - R.Rs) / R.Rs > 0.01 && R.f !== 1) m.note(`El factor de diseño ${fmt(R.f, 4)} equivale a 1/${fmt(1 / R.f, 3)}, distinto de 1/R*<sub>${d}</sub> = 1/${fmt(R.Rs, 3)}: revise el factor de la combinación o el espectro del caso.`, L`El factor de diseño ${tn(R.f, 4)} equivale a $1/${tn(1 / R.f, 3)}$, distinto de $1/R^*_{${d}} = 1/${tn(R.Rs, 3)}$.`);
+    }
+  }
+  const Tmax = Math.max(2, niceMax(Math.max(...A.modos.map((mo) => mo.T)) * 1.5));
+  const muestra = (fn) => Array.from({ length: 201 }, (_, i) => { const T = Tmax * i / 200; return [T, fn(T)]; });
+  m.fig(grafico({ titulo: "Espectros de diseño", xlab: "Período T [s]", ylab: "Sa [g]", xmax: Tmax,
+    series: [
+      { pts: muestra((T) => A.I * s.S * A.A0 * alfa(T, s)), color: "#8a94a3", guion: "6 4", etiqueta: "Elástico NCh 433:2026" },
+      { pts: muestra(X.saNorma), color: "#00008B", etiqueta: `Norma X (R* = ${fmt(X.Rs, 3)})` },
+      { pts: muestra(Y.saNorma), color: "#e65c00", etiqueta: `Norma Y (R* = ${fmt(Y.Rs, 3)})` },
+      ...(X.tieneFn ? [{ pts: muestra(X.saEtabs), color: "#5b7cff", guion: "2 3", ancho: 2.4, etiqueta: `Modelo ${X.caso}${X.comb ? " · " + X.comb : ""}` }] : []),
+      ...(Y.tieneFn ? [{ pts: muestra(Y.saEtabs), color: "#ffb37a", guion: "2 3", ancho: 2.4, etiqueta: `Modelo ${Y.caso}${Y.comb ? " · " + Y.comb : ""}` }] : []),
+    ],
+    lineasV: [{ x: X.Ts.T, etiqueta: "T*x", color: "#00008B" }, { x: Y.Ts.T, etiqueta: "T*y", color: "#e65c00" }] }),
+    { h: "Espectro elástico y de diseño de la NCh 433:2026 y espectro efectivo del modelo.", t: "Espectro elástico y de diseño de la NCh 433:2026 y espectro efectivo del modelo de ETABS." });
+
+  // 6. Corte basal
+  m.h("Corte basal");
+  m.p(L`El corte basal de cada dirección es el corte del caso espectral en la base del primer piso sobre el nivel basal, por el factor de diseño. No debe ser menor que $I\,S\,A_0\,P/6g$; si lo es, los desplazamientos y las solicitaciones se multiplican por un factor para alcanzarlo (6.3.6.1). No necesita ser mayor que $I\,C_{m\acute{a}x}\,P$ (6.3.6.2).`);
+  m.row("Coeficiente sísmico máximo: C<sub>máx</sub>", `${fmt(X.cmax, 4)}`, REF("Tabla 9"));
+  m.eq(L`C_{m\acute{a}x} = ${tn(cMaxCoef(c.R), 3)}\,\frac{S\,A_0}{g} = ${tn(cMaxCoef(c.R), 3)}\cdot ${tn(s.S, 2)}\cdot ${tn(A.A0, 2)} = ${tn(X.cmax, 4)}\qquad (R = ${tn(c.R, 1)})`, REF("Tabla 9"));
+  for (const R of [X, Y]) {
+    const d = R.d;
+    m.sub(`Dirección ${d}`);
+    m.row(`Corte basal del modelo: Q<sub>0${d.toLowerCase()}</sub>`, `${fmt(R.Q, 1)} tf`);
+    m.row(`Corte basal mínimo: Q<sub>mín</sub>`, `${fmt(R.Qmin, 1)} tf`, REF("6.3.6.1"));
+    m.eq(L`Q_{m\acute{i}n} = \frac{I\,S\,A_0\,P}{6\,g} = \frac{${tn(A.I, 1)}\cdot ${tn(s.S, 2)}\cdot ${tn(A.A0, 2)}\cdot ${tn(A.P, 1)}}{6} = ${tn(R.Qmin, 1)}\ \mathrm{tf}`, REF("6.3.6.1"));
+    m.row(`Corte basal máximo: Q<sub>máx</sub>`, `${fmt(R.Qmax, 1)} tf`, REF("6.3.6.2"));
+    m.eq(L`Q_{m\acute{a}x} = I\,C_{m\acute{a}x}\,P = ${tn(A.I, 1)}\cdot ${tn(R.cmax, 4)}\cdot ${tn(A.P, 1)} = ${tn(R.Qmax, 1)}\ \mathrm{tf}`, REF("6.3.6.2"));
+    m.row(`Corte basal mínimo: Q<sub>0</sub> ≥ Q<sub>mín</sub>`, `${fmt(R.Q, 1)} ${R.Q >= R.Qmin ? "≥" : "<"} ${fmt(R.Qmin, 1)} tf ${tagDC(R.Qmin / R.Q)}`, REF("6.3.6.1"));
+    m.row(`Coeficiente sísmico efectivo: Q<sub>0</sub>/P`, fmt(R.Q / A.P, 4));
+    if (R.fmin > 1 + 1e-9) m.note(`Q<sub>0</sub> es menor que Q<sub>mín</sub>: los desplazamientos y solicitaciones de ${d} se deben multiplicar por ${fmt(R.fmin, 3)}. Los desplazamientos de esta memoria ya incluyen ese factor; en el modelo, multiplique el factor de diseño por ${fmt(R.fmin, 3)}.`,
+      L`$Q_0 < Q_{m\acute{i}n}$: los desplazamientos y las solicitaciones en ${d} se multiplican por ${tn(R.fmin, 3)}; los desplazamientos de esta memoria ya lo incluyen.`);
+    if (R.fmax < 1) m.note(`Q<sub>0</sub> supera Q<sub>máx</sub>: las solicitaciones de ${d} se pueden multiplicar por ${fmt(R.fmax, 3)} (no los desplazamientos).`, L`$Q_0 > Q_{m\acute{a}x}$: las solicitaciones en ${d} se pueden multiplicar por ${tn(R.fmax, 3)}, sin reducir los desplazamientos (6.3.6.2).`);
+  }
+  tablaDoble(m, [{ h: "Piso", t: "Piso", al: "l" }, { h: "Cota [m]", t: "Cota [m]" }, { h: "V<sub>x</sub> [tf]", t: "$V_x$ [tf]" }, { h: "V<sub>y</sub> [tf]", t: "$V_y$ [tf]" }],
+    A.sobre.map((p, i) => [escH(p.nombre), fmt(p.z, 2), fmt(X.pisosV[i].V, 1), fmt(Y.pisosV[i].V, 1)]),
+    A.sobre.map((p, i) => [escTex(p.nombre), tn(p.z, 2), tn(X.pisosV[i].V, 1), tn(Y.pisosV[i].V, 1)]),
+    "Corte por piso de los casos espectrales por el factor de diseño (en la base de cada piso).");
+  m.fig(grafico({ titulo: "Corte por piso", xlab: "Corte [tf]", ylab: "Cota [m]", ymin: A.zBasal, ymax: A.sobre[0].z,
+    series: [{ pts: escalones(X.pisosV, "V", A.zBasal), color: "#00008B", etiqueta: "Vx" }, { pts: escalones(Y.pisosV, "V", A.zBasal), color: "#e65c00", etiqueta: "Vy" }],
+    lineasV: [{ x: X.Qmin, etiqueta: "Qmín", color: "#1f8a4c" }] }),
+    { h: "Corte por piso en cada dirección y corte basal mínimo.", t: "Corte por piso en cada dirección y corte basal mínimo $Q_{m\\acute{i}n}$." });
+
+  // 7. Combinación modal y torsión accidental
+  m.h("Combinación modal y torsión accidental");
+  for (const R of [X, Y]) {
+    m.row(`Combinación modal del caso ${escH(R.caso)}`, `${escH(R.def.comb || "—")} ${/CQC/i.test(R.def.comb || "") ? `<span class="tag ok">CQC</span>` : `<span class="tag bad">debe ser CQC</span>`}`, REF("6.3.5.2"));
+    m.row(`Excentricidad accidental del caso ${escH(R.caso)}: r`, Number.isFinite(R.ecc) ? `${fmt(R.ecc, 3)} b` : "—", REF("6.3.3"));
+  }
+  m.p(L`La torsión accidental se incluye desplazando los centros de masas en $\pm 0.05\,b$ (6.3.3 a) o con momentos de torsión estáticos de excentricidad $\pm 0.10\,b\,Z_k/H$ (6.3.3 b). ETABS aplica en los casos espectrales momentos estáticos con una excentricidad constante en altura, $r\,b$: con $r \ge 0.10$ se cubre la Ecuación (7) en todos los niveles.`);
+  if (A.torsion === "cubre") m.row("Torsión accidental", `r ≥ 0.10 en ambos casos <span class="tag ok">incluida</span>`, REF("6.3.3"));
+  else m.row("Torsión accidental", `<span class="tag warn">SIN VERIFICAR</span>`, REF("6.3.3"));
+  const notaTorsion = {
+    parcial: [`Los casos espectrales tienen excentricidad menor que 0.10 b: no cubre 0.10 b Z<sub>k</sub>/H en los niveles altos. La torsión accidental y su efecto en los desplazamientos (5.9.1) quedan SIN VERIFICAR; inclúyala según 6.3.3 a) (cinco modelos) o con r ≥ 0.10.`,
+      L`La torsión accidental (6.3.3) se incluye en el modelo con una excentricidad menor que $0.10\,b$, que no cubre $0.10\,b\,Z_k/H$ en los niveles altos: queda \textbf{sin verificar}, y los desplazamientos de esta memoria la incluyen solo en parte (5.9.1).`],
+    no: [`Los casos espectrales no tienen excentricidad accidental: la torsión accidental (6.3.3) y su efecto en los desplazamientos (5.9.1) quedan SIN VERIFICAR.`,
+      L`La torsión accidental (6.3.3) no se incluye en el modelo y queda \textbf{sin verificar}; los desplazamientos de esta memoria no la incluyen (5.9.1).`],
+    sinDiafragma: [`El modelo no tiene diafragmas: ETABS no aplica la excentricidad accidental y la torsión accidental (6.3.3) queda SIN VERIFICAR.`,
+      L`El modelo no tiene diafragmas, por lo que ETABS no aplica la excentricidad accidental: la torsión accidental (6.3.3) queda \textbf{sin verificar}.`],
+  }[A.torsion];
+  if (notaTorsion) m.note(notaTorsion[0], notaTorsion[1]);
+
+  // 8. Desplazamientos relativos
+  m.h("Desplazamientos relativos entre pisos");
+  m.p(L`El desplazamiento relativo entre dos niveles consecutivos, medido en el centro de masas, no debe superar el valor de la Tabla 5 (5.9.2). En cualquier punto de la planta no debe superar el mayor entre el desplazamiento relativo del centro de masas más $0.001\,h$ y el límite de la Tabla 5 (5.9.3). Los desplazamientos del centro de masas son los del caso espectral (CQC) por el factor de diseño y por el factor de corte mínimo, y el relativo del centro de masas de cada piso se obtiene, cuando es posible, combinando con CQC ($\xi = ${tn(X.xi ?? 0.05, 2)}$) los desplazamientos relativos modales de los centros de masa, $\Gamma_n\,S_a(T_n)/\omega_n^2\,(\phi_{k,n} - \phi_{k-1,n})$, y no como la diferencia de los desplazamientos CQC, que resulta menor o igual (el método usado en cada dirección se indica abajo). Con varios diafragmas en un piso se toma el mayor. El máximo en cualquier punto es el drift de piso que entrega ETABS.`);
+  for (const R of [X, Y]) {
+    const d = R.d;
+    m.sub(`Dirección ${d}`);
+    m.row(`Factor sobre los desplazamientos del caso ${escH(R.caso)}: k`, fmt(R.k, 4));
+    m.row("Método del desplazamiento relativo en el centro de masas", R.metodoCM === "cqc" ? `CQC de los modos (${R.nModosCQC} modos)` : `diferencia de desplazamientos CQC <span class="tag warn">puede subestimarlo</span>`);
+    if (R.fmin > 1 + 1e-9) m.eq(L`k = f_{dise\tilde{n}o}\cdot f_{m\acute{i}n} = ${tn(R.f, 4)}\cdot ${tn(R.fmin, 3)} = ${tn(R.k, 4)}`);
+    tablaDoble(m, [{ h: "Piso", t: "Piso", al: "l" }, { h: "h [m]", t: "$h$ [m]" }, { h: "u<sub>cm</sub> [mm]", t: "$u_{cm}$ [mm]" }, { h: "Δ<sub>cm</sub>/h", t: "$\\Delta_{cm}/h$" }, { h: "D/C cm", t: "D/C cm" }, { h: "Δ<sub>máx</sub>/h", t: "$\\Delta_{m\\acute{a}x}/h$" }, { h: "Límite", t: "Límite" }, { h: "D/C punto", t: "D/C punto" }],
+      R.niveles.map((n) => [escH(n.nombre), fmt(n.h, 2), fmt(n.u * 1000, 2), fmt(n.dcm, 5), fmt(n.dcCM, 3), fmt(n.dpt, 5), fmt(n.limPt, 5), fmt(n.dcPt, 3)]),
+      R.niveles.map((n) => [escTex(n.nombre), tn(n.h, 2), tn(n.u * 1000, 2), tn(n.dcm, 5), tn(n.dcCM, 3), tn(n.dpt, 5), tn(n.limPt, 5), tn(n.dcPt, 3)]),
+      `Desplazamientos relativos entre pisos en la dirección ${d} (límite en el centro de masas: ${tn(c.dcm, 4)}).`,
+      R.niveles.map((n) => [null, null, null, null, n.dcCM > 1 + 1e-9 ? "malo" : "", null, null, n.dcPt > 1 + 1e-9 ? "malo" : ""]));
+    if (R.peorCM) {
+      m.row(`Máximo en el centro de masas (${escH(R.peorCM.nombre)}): Δ<sub>cm</sub>/h ≤ ${fmt(c.dcm, 4)}`, `${fmt(R.peorCM.dcm, 5)} ${tagDC(R.peorCM.dcCM)}`, REF("5.9.2"));
+      m.eq(L`\frac{\Delta_{cm}}{h} = ${tn(R.peorCM.dcm, 5)} ${cmp(R.peorCM.dcm, c.dcm)} ${tn(c.dcm, 4)}`, REF("5.9.2"));
+    }
+    if (R.peorPt) {
+      m.row(`Máximo en cualquier punto (${escH(R.peorPt.nombre)}): Δ<sub>máx</sub>/h ≤ máx(Δ<sub>cm</sub>/h + 0.001 ; ${fmt(c.dcm, 4)})`, `${fmt(R.peorPt.dpt, 5)} ${tagDC(R.peorPt.dcPt)}`, REF("5.9.3"));
+      m.eq(L`\frac{\Delta_{m\acute{a}x}}{h} = ${tn(R.peorPt.dpt, 5)} ${cmp(R.peorPt.dpt, R.peorPt.limPt)} \max\left(${tn(R.peorPt.dcm, 5)} + 0.001;\ ${tn(c.dcm, 4)}\right) = ${tn(R.peorPt.limPt, 5)}`, REF("5.9.3"));
+    }
+    m.fig(grafico({ titulo: `Desplazamientos relativos en ${d}`, xlab: "Δ/h", ylab: "Cota [m]", ymin: A.zBasal, ymax: A.sobre[0].z,
+      series: [{ pts: escalones(R.niveles, "dcm", A.zBasal), color: "#00008B", etiqueta: "Centro de masas" }, { pts: escalones(R.niveles, "dpt", A.zBasal), color: "#e65c00", etiqueta: "Máximo en la planta" }],
+      lineasV: [{ x: c.dcm, etiqueta: `Límite ${fmt(c.dcm, 4)}`, color: "#c62828" }] }),
+      { h: `Desplazamientos relativos entre pisos en la dirección ${d}.`, t: `Desplazamientos relativos entre pisos en la dirección ${d}.` });
+    const u = g.despl.get(`${R.caso}|0`);
+    if (u) m.fig(svgModelo(R.d === "X" ? -35 : 35, { u }, `Deformada del caso ${R.caso}`, "Envolvente CQC amplificada"), { h: `Deformada del caso ${escH(R.caso)} (envolvente CQC, amplificada).`, t: `Deformada del caso ${escTex(R.caso)} (envolvente CQC, amplificada).` });
+  }
+
+  // 9. Reacciones basales
+  m.h("Reacciones basales");
+  const br = filas("Base Reactions");
+  if (br.length) {
+    tablaDoble(m, [{ h: "Caso o combinación", t: "Caso o combinación", al: "l" }, { h: "Paso", t: "Paso", al: "l" }, { h: "F<sub>X</sub> [tf]", t: "$F_X$ [tf]" }, { h: "F<sub>Y</sub> [tf]", t: "$F_Y$ [tf]" }, { h: "F<sub>Z</sub> [tf]", t: "$F_Z$ [tf]" }, { h: "M<sub>X</sub> [tf·m]", t: "$M_X$ [tf$\\cdot$m]" }, { h: "M<sub>Y</sub> [tf·m]", t: "$M_Y$ [tf$\\cdot$m]" }, { h: "M<sub>Z</sub> [tf·m]", t: "$M_Z$ [tf$\\cdot$m]" }],
+      br.filter((f) => f.CaseType !== "LinModRitz" && f.CaseType !== "LinModEigen" && !String(f.OutputCase).startsWith("~")).map((f) => [escH(f.OutputCase), escH(f.StepType || ""), fmt(nv(f.FX), 2), fmt(nv(f.FY), 2), fmt(nv(f.FZ), 2), fmt(nv(f.MX), 1), fmt(nv(f.MY), 1), fmt(nv(f.MZ), 1)]),
+      br.filter((f) => f.CaseType !== "LinModRitz" && f.CaseType !== "LinModEigen" && !String(f.OutputCase).startsWith("~")).map((f) => [escTex(f.OutputCase), escTex(f.StepType || ""), tn(nv(f.FX), 2), tn(nv(f.FY), 2), tn(nv(f.FZ), 2), tn(nv(f.MX), 1), tn(nv(f.MY), 1), tn(nv(f.MZ), 1)]),
+      "Reacciones basales de los casos y combinaciones del modelo (ETABS).");
+  } else m.note("El archivo no trae la tabla Base Reactions.");
+
+  // 10. Resumen
+  m.h("Resumen de verificaciones");
+  const sv = [...new Set(A.sinVerificar)];
+  tablaDoble(m, [{ h: "Verificación", t: "Verificación", al: "l" }, { h: "Referencia", t: "Referencia", al: "l" }, { h: "D/C", t: "D/C" }, { h: "Estado", t: "Estado", al: "l" }],
+    [...A.checks.map((x) => [escH(x.nombre), escH(x.ref), fmt(x.dc, 3), estadoCheck(x)]), ...A.motivos.map((x) => [escH(mayusc(x.h)), "", "—", "No cumple"]), ...sv.map((x) => [escH(mayusc(x)), "", "—", "Sin verificar"])],
+    [...A.checks.map((x) => [escTex(x.nombre), escTex(x.ref), tn(x.dc, 3), x.dc <= 1 + 1e-9 ? escTex(estadoCheck(x)) : "\\textbf{No cumple}"]), ...A.motivos.map((x) => [escTex(mayusc(x.h)), "", "---", "\\textbf{No cumple}"]), ...sv.map((x) => [escTex(mayusc(x)), "", "---", "\\textbf{Sin verificar}"])],
+    "Resumen de verificaciones de la NCh 433:2026.",
+    [...A.checks.map((x) => [null, null, x.dc > 1 + 1e-9 ? "malo" : "", x.dc > 1 + 1e-9 ? "malo" : x.sinTorsion ? "aviso" : ""]), ...A.motivos.map(() => [null, null, "malo", "malo"]), ...sv.map(() => [null, null, "aviso", "aviso"])]);
+}
+
+const mayusc = (t) => String(t).charAt(0).toUpperCase() + String(t).slice(1);
+// Estado en el resumen: los desplazamientos sin torsión accidental no se declaran cumplidos sin más
+const estadoCheck = (x) => (x.dc <= 1 + 1e-9 ? (x.sinTorsion ? "Cumple sin torsión accidental" : "Cumple") : "No cumple");
+
+function documentoTex(c, A, cuerpo, veredictoTex) {
+  const fecha = new Date().toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
+  return L`\documentclass[11pt,letterpaper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla,es-noshorthands,es-nolists]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+${TEX_ESTILO}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{tikz}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{}
+\chead{Memoria sísmica --- ${escTex(D.modelo?.archivo || "Modelo ETABS")}}
+\lfoot{Memoria de cálculo --- Análisis sísmico, NCh 433:2026}
+\rfoot{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\allowdisplaybreaks
+
+\begin{document}
+
+\begin{center}
+{\Large\bfseries Memoria de Cálculo}\\[4pt]
+{\large Análisis sísmico del edificio según NCh 433:2026}\\[2pt]
+{\small Modelo ${escTex(D.modelo?.archivo || "")} --- ${fecha}}
+\end{center}
+
+\section*{Objetivo y alcance}
+Esta memoria documenta el análisis modal espectral del edificio realizado en ETABS y verifica, según la NCh 433:2026, la masa participante, el espectro de diseño, el corte basal mínimo, la combinación modal, la torsión accidental y los desplazamientos relativos entre pisos. No verifica el diseño de los elementos estructurales (muros, vigas, columnas, losas ni fundaciones), que se documenta por separado.
+
+\section*{Normativa}
+\begin{itemize}
+\item NCh 433:2026 --- Diseño sísmico de edificios.
+\item NCh 3171 --- Diseño estructural: disposiciones generales y combinaciones de carga (combinaciones definidas en el modelo).
+\end{itemize}
+
+${cuerpo}
+
+\section{Alcance, hipótesis y limitaciones}
+\begin{itemize}
+\item Los resultados provienen del modelo de ETABS tal como se analizó; esta memoria no repite el análisis.
+${[A.dir.X, A.dir.Y].map((R) => R.metodoCM === "cqc"
+    ? L`\item Dirección ${R.d}: el desplazamiento relativo en el centro de masas se obtiene combinando con CQC los desplazamientos relativos modales de los centros de masa de dos niveles consecutivos, con la escala de las formas modales calibrada con los desplazamientos de ETABS del caso, y se divide por la altura del piso.`
+    : L`\item Dirección ${R.d}: el desplazamiento relativo en el centro de masas se toma como la diferencia de los desplazamientos del caso en los centros de masa de dos niveles consecutivos, dividida por la altura del piso. Este criterio puede subestimarlo, porque no combina con CQC los desplazamientos relativos de cada modo.`).join("\n")}
+\item El desplazamiento relativo máximo en cualquier punto es el drift de piso que entrega ETABS.
+\item La verificación de 5.9.5 (desplazamiento de techo para el diseño de estructuras de hormigón armado con $T_{ag}$), las separaciones entre edificios (5.10) y el diseño de los elementos quedan fuera de esta memoria.
+${A.avisosTex.map((t) => `\\item ${t}`).join("\n")}
+\end{itemize}
+
+\section{Conclusión}
+${veredictoTex}
+
+\end{document}
+`;
+}
+
+// ---------------------------------------------------------------------------
+// Cálculo e interfaz
+// ---------------------------------------------------------------------------
+let ultimoTex = "", ultimoNombre = "memoria_etabs.tex", ultimoA = null;
+function limpiar(html) {
+  $("resTitle").textContent = "Resultados";
+  if (!esAvisoInvalidos(html)) { $("summary").innerHTML = ""; $("memo").innerHTML = ""; $("visor").classList.add("hidden"); $("lienzo").innerHTML = ""; }
+  $("verdict").innerHTML = html;
+  ultimoTex = ""; ultimoA = null;
+}
+function leerDatos() {
+  return {
+    cat: $("cat").value, zona: +$("zona").value, suelo: $("suelo").value, sistema: $("sistema").value,
+    R: parseFloat($("Rf").value), R0: parseFloat($("R0").value), dcm: parseFloat($("dcm").value),
+    casoX: $("casoX").value, casoY: $("casoY").value, combX: $("combX").value, combY: $("combY").value,
+    modal: $("modal").value, basal: $("basal").value,
+  };
+}
+function calcular() {
+  ultimoTex = ""; ultimoA = null;
+  limpiarInvalidos($("inputs"));
+  if (!D) { limpiar(`<div class="note">Seleccione el archivo .structura.json.gz que genera el script con ETABS abierto para comenzar.</div>`); return; }
+  const malos = datosInvalidos([["Rf", 1], ["R0", 1], ["dcm", 0.0001]]);
+  if (malos.length) { limpiar(avisoInvalidos(malos)); return; }
+  const c = leerDatos();
+  if (!c.casoX || !c.casoY) { limpiar(`<div class="note">El modelo no tiene casos de espectro de respuesta analizados: no se puede preparar la memoria sísmica.</div>`); return; }
+  if (!c.modal) { limpiar(`<div class="note">El modelo no tiene un caso modal analizado.</div>`); return; }
+  let A;
+  try { A = analizar(c); } catch (e) { limpiar(`<div class="verdict bad">✘ No se pudo analizar el archivo: ${e.message}.</div>`); console.error(e); return; }
+  // Avisos de cada dirección
+  for (const R of [A.dir.X, A.dir.Y]) for (const a of R.avisos) A.avisos.push({ h: a, t: htmlATex(a) });
+  if (c.casoX === c.casoY) A.avisos.push({ h: "Se eligió el mismo caso espectral para X e Y.", t: "Se usó el mismo caso espectral para X e Y." });
+  if (D.avisos?.length) A.avisos.push({ h: `Avisos del script de extracción: ${D.avisos.map(escH).join(" ")}`, t: L`Avisos de la extracción del modelo: ${D.avisos.map(escTex).join(" ")}` });
+  A.avisosTex = A.avisos.map((a) => a.t).filter(Boolean);
+
+  // Veredicto: debe contener "razón máxima = X" (proyectos.js y tablero.js lo leen)
+  const rm = Number.isFinite(A.dcMax) ? fmt(A.dcMax, 3) : "∞";
+  const sv = [...new Set(A.sinVerificar)];
+  const motivos = A.motivos.map((x) => x.h);
+  const falla = A.fallan.length || motivos.length;
+  const lista = (l) => l.length > 1 ? l.slice(0, -1).join(", ") + " y " + l[l.length - 1] : l.join("");
+  // El veredicto no lleva nombres que vengan del archivo (casos, patrones): proyectos.js y tablero.js leen su texto
+  const minus = (t) => t.charAt(0).toLowerCase() + t.slice(1);
+  const fallasTxt = [...A.fallan.map((x) => `${minus(x.nombre)} (${x.ref.replace("NCh 433:2026 ", "")})`), ...motivos];
+  $("verdict").innerHTML = (falla
+    ? `<div class="verdict bad">✘ NO CUMPLE — razón máxima = ${rm} · ${fallasTxt.join("; ")}${sv.length ? ` (además SIN VERIFICAR: ${lista(sv)})` : ""}</div>`
+    : sv.length
+      ? `<div class="verdict ok">✔ Cumple lo verificado — razón máxima = ${rm} · SIN VERIFICAR: ${lista(sv)}</div>`
+      : `<div class="verdict ok">✔ CUMPLE la NCh 433:2026 en lo verificado — razón máxima = ${rm}</div>`)
+    + A.avisos.map((a) => `<div class="note">⚠ ${a.h}</div>`).join("");
+  const veredictoTex = falla
+    ? L`El análisis \textbf{no cumple} la NCh 433:2026: ${[...A.fallan.map((x) => escTex(`${minus(x.nombre)} (${x.ref})`)), ...A.motivos.map((x) => x.t)].join("; ")}. La razón demanda/capacidad máxima es $${tn(A.dcMax, 3)}$.${sv.length ? L` Quedan \textbf{sin verificar}: ${escTex(lista(sv).replace(/<[^>]+>/g, ""))}.` : ""}`
+    : L`Las verificaciones realizadas \textbf{cumplen} la NCh 433:2026, con razón demanda/capacidad máxima $${tn(A.dcMax, 3)}$.${sv.length ? L` Quedan \textbf{sin verificar}: ${escTex(lista(sv).replace(/<[^>]+>/g, ""))}.` : ""}`;
+
+  // Tarjetas
+  const X = A.dir.X, Y = A.dir.Y;
+  const card = (t, v, s, dc) => `<div class="card"><div class="t">${t}</div><div class="v">${v}</div>${Number.isFinite(dc) ? `<div class="bar ${dc > 1 + 1e-9 ? "bad" : ""}"><i style="width:${Math.min(100, Math.max(0, dc * 100))}%"></i></div>` : ""}<div class="s">${s}</div></div>`;
+  const dcm = Math.max(X.peorCM?.dcCM ?? 0, Y.peorCM?.dcCM ?? 0), dpt = Math.max(X.peorPt?.dcPt ?? 0, Y.peorPt?.dcPt ?? 0);
+  $("summary").innerHTML =
+    card("Períodos T*<sub>x</sub> ; T*<sub>y</sub>", `${fmt(A.TsX.T, 3)} ; ${fmt(A.TsY.T, 3)} s`, `modos ${A.TsX.n} y ${A.TsY.n} · ${cuenta(A.modos.length, "modo", "modos")}`)
+    + card("Masa acumulada X ; Y", `${fmt(A.sumX * 100, 1)} ; ${fmt(A.sumY * 100, 1)} %`, "mínimo 90 % (6.3.2)", Math.max(0.9 / A.sumX, 0.9 / A.sumY))
+    + card("Corte basal Q<sub>0</sub>/Q<sub>mín</sub>", `${fmt(X.Q / X.Qmin, 2)} ; ${fmt(Y.Q / Y.Qmin, 2)}`, `X ; Y · Q<sub>mín</sub> = ${fmt(X.Qmin, 1)} tf`, Math.max(X.Qmin / X.Q, Y.Qmin / Y.Q))
+    + card("Δ/h máximo en el centro de masas", fmt(Math.max(X.peorCM?.dcm ?? 0, Y.peorCM?.dcm ?? 0), 5), `límite ${fmt(c.dcm, 4)} (5.9.2)`, dcm)
+    + card("Δ/h máximo en la planta", fmt(Math.max(X.peorPt?.dpt ?? 0, Y.peorPt?.dpt ?? 0), 5), "5.9.3", dpt);
+  $("resTitle").textContent = `Resultados — ${D.modelo?.archivo || "Modelo"} · NCh 433:2026`;
+
+  const m = new Memo();
+  memoria(m, c, A);
+  $("memo").innerHTML = m.html();
+  ultimoA = A;
+  ultimoTex = documentoTex(c, A, m.texto(), veredictoTex);
+  ultimoNombre = `memoria_sismica_${String(D.modelo?.archivo || "modelo").replace(/\.[^.]+$/, "").replace(/[^\w-]+/g, "_")}.tex`;
+  // Elección de casos, para restaurarla al volver a cargar el archivo (borrador o elemento de proyecto)
+  $("selCasos").value = JSON.stringify({ casoX: c.casoX, casoY: c.casoY, combX: c.combX, combY: c.combY, modal: c.modal, basal: c.basal });
+  pintarVisor(c, A);
+}
+
+// Visor de pantalla (no va a la memoria): modelo, modos y deformadas
+function pintarVisor(c, A) {
+  const g = geometria();
+  if (!g.lineas.length) { $("visor").classList.add("hidden"); return; }
+  $("visor").classList.remove("hidden");
+  const ops = [["0", "Modelo sin deformar"]];
+  for (const mo of A.modos) if (g.despl.has(`${c.modal}|${mo.n}`)) ops.push([`m${mo.n}`, `Modo ${mo.n} · T = ${fmt(mo.T, 3)} s`]);
+  for (const R of [A.dir.X, A.dir.Y]) if (g.despl.has(`${R.caso}|0`)) ops.push([`c${R.d}`, `Deformada ${R.caso}`]);
+  opciones("verForma", ops);
+  dibujarVisor();
+}
+function dibujarVisor() {
+  if (!ultimoA) return;
+  const g = geometria(), v = $("verForma").value, az = +$("verAz").value, c = leerDatos();
+  let svg = "";
+  if (v.startsWith("m")) {
+    const n = +v.slice(1), mo = ultimoA.modos.find((x) => x.n === n);
+    svg = svgModelo(az, { u: g.despl.get(`${c.modal}|${n}`) }, `Modo ${n}`, `T = ${fmt(mo.T, 3)} s · UX ${fmt(mo.UX * 100, 1)} % · UY ${fmt(mo.UY * 100, 1)} % · RZ ${fmt(mo.RZ * 100, 1)} %`, { figura: false });
+  } else if (v.startsWith("c")) {
+    const R = ultimoA.dir[v.slice(1)];
+    svg = svgModelo(az, { u: g.despl.get(`${R.caso}|0`) }, `Deformada del caso ${R.caso}`, "Envolvente CQC amplificada", { figura: false });
+  } else svg = svgModelo(az, null, "Modelo estructural", D.modelo?.archivo || "", { figura: false });
+  $("lienzo").innerHTML = svg;
+}
+
+$("archivo").addEventListener("change", importar);
+$("sistema").addEventListener("change", () => { sincSistema(); calcular(); });
+["casoX", "casoY"].forEach((id) => $(id).addEventListener("change", () => { poblarListas(); calcular(); }));
+["cat", "zona", "suelo", "Rf", "R0", "dcm", "combX", "combY", "modal", "basal"].forEach((id) => $(id).addEventListener("input", calcular));
+["verForma", "verAz"].forEach((id) => $(id).addEventListener("change", dibujarVisor));
+poblarSistemas(); sincSistema(); infoArchivo();
+calcular();
+
+// Integración con proyectos (proyectos.js): se guardan los parámetros; el archivo de ETABS no se guarda
+window.AURA_MEMO = {
+  tipo: "Memoria ETABS",
+  sinMemoria: "Seleccione el archivo de ETABS y revise los parámetros antes de agregar la memoria al proyecto.",
+  elemento: () => D?.modelo?.archivo || "", tex: () => ultimoTex, nombre: () => ultimoNombre,
+  recalcular: () => { const s = SIS.get($("sistema").value); if (s) sincSistema(); infoArchivo(); poblarListas(); calcular(); },
+};
+</script>
+<script src="proyectos.js"></script>
+<script>
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+</script>
+</body>
+</html>
